@@ -1,6 +1,7 @@
 import { Whiskey } from "@shared/schema";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils/calculations";
 
 interface WhiskeyCardProps {
@@ -60,6 +61,35 @@ const WhiskeyCard = ({ whiskey, onViewDetails, onReview }: WhiskeyCardProps) => 
           </p>
         </div>
         
+        {/* Bourbon badges */}
+        {whiskey.type === "Bourbon" && (
+          <div className="flex flex-wrap gap-1 mt-2">
+            {whiskey.bottleType && whiskey.bottleType !== "none" && (
+              <Badge variant="secondary" className="bg-amber-100 text-amber-800 hover:bg-amber-200 text-xs">
+                {whiskey.bottleType}
+              </Badge>
+            )}
+            
+            {whiskey.mashBill && whiskey.mashBill !== "none" && (
+              <Badge variant="secondary" className="bg-orange-100 text-orange-800 hover:bg-orange-200 text-xs">
+                {whiskey.mashBill}
+              </Badge>
+            )}
+            
+            {whiskey.caskStrength === "Yes" && (
+              <Badge variant="secondary" className="bg-red-100 text-red-800 hover:bg-red-200 text-xs">
+                Cask Strength
+              </Badge>
+            )}
+            
+            {whiskey.finished === "Yes" && (
+              <Badge variant="secondary" className="bg-purple-100 text-purple-800 hover:bg-purple-200 text-xs">
+                {whiskey.finishType ? `${whiskey.finishType} Finish` : 'Finished'}
+              </Badge>
+            )}
+          </div>
+        )}
+
         <div className="flex items-center mt-3">
           {[1, 2, 3, 4, 5].map((star) => (
             <svg 

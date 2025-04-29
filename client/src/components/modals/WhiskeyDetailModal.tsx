@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Pencil, Star } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 import { Whiskey } from "@shared/schema";
 import { formatDate } from "@/lib/utils/calculations";
 
@@ -112,6 +113,51 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview }: WhiskeyDetai
                   <span className="text-gray-600">Last Reviewed:</span>
                   <span className="font-medium">{lastReviewed}</span>
                 </div>
+
+                {/* Bourbon specific details */}
+                {whiskey.type === "Bourbon" && (
+                  <>
+                    <Separator className="my-3" />
+                    <div className="mb-2 font-medium text-whiskey-800">Bourbon Details</div>
+                    
+                    {whiskey.bottleType && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Bottle Type:</span>
+                        <span className="font-medium">{whiskey.bottleType}</span>
+                      </div>
+                    )}
+                    
+                    {whiskey.mashBill && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Mash Bill:</span>
+                        <span className="font-medium">{whiskey.mashBill}</span>
+                      </div>
+                    )}
+                    
+                    {whiskey.caskStrength && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Cask Strength:</span>
+                        <span className="font-medium">{whiskey.caskStrength}</span>
+                      </div>
+                    )}
+                    
+                    {whiskey.finished && whiskey.finished === "Yes" && (
+                      <>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Finished:</span>
+                          <span className="font-medium">Yes</span>
+                        </div>
+                        
+                        {whiskey.finishType && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Finish Type:</span>
+                            <span className="font-medium">{whiskey.finishType}</span>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </>
+                )}
               </div>
             </div>
             

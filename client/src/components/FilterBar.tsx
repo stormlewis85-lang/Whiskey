@@ -11,6 +11,13 @@ interface FilterBarProps {
   setTypeFilter: (type: string) => void;
   ratingFilter: string;
   setRatingFilter: (rating: string) => void;
+  // Optional bourbon-specific filters (only used when type is Bourbon)
+  bottleTypeFilter?: string;
+  setBottleTypeFilter?: (bottleType: string) => void;
+  mashBillFilter?: string;
+  setMashBillFilter?: (mashBill: string) => void;
+  caskStrengthFilter?: string;
+  setCaskStrengthFilter?: (caskStrength: string) => void;
 }
 
 const FilterBar = ({
