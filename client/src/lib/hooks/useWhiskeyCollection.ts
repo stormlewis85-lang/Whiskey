@@ -53,6 +53,24 @@ const useWhiskeyCollection = (filterOptions: WhiskeyFilterOptions) => {
       }
     }
     
+    // Apply bourbon-specific filters if the type is Bourbon
+    if (typeFilter === "Bourbon") {
+      // Bottle Type filter
+      if (bottleTypeFilter && bottleTypeFilter !== "all") {
+        filtered = filtered.filter(w => w.bottleType === bottleTypeFilter);
+      }
+      
+      // Mash Bill filter
+      if (mashBillFilter && mashBillFilter !== "all") {
+        filtered = filtered.filter(w => w.mashBill === mashBillFilter);
+      }
+      
+      // Cask Strength filter
+      if (caskStrengthFilter && caskStrengthFilter !== "all") {
+        filtered = filtered.filter(w => w.caskStrength === caskStrengthFilter);
+      }
+    }
+    
     // Apply search
     if (searchQuery.trim() !== "") {
       const query = searchQuery.toLowerCase();
@@ -87,7 +105,8 @@ const useWhiskeyCollection = (filterOptions: WhiskeyFilterOptions) => {
     });
     
     return filtered;
-  }, [whiskeys, searchQuery, sortBy, typeFilter, ratingFilter]);
+  }, [whiskeys, searchQuery, sortBy, typeFilter, ratingFilter, 
+      bottleTypeFilter, mashBillFilter, caskStrengthFilter]);
 
   // Function to update filters
   const setFilters = (filters: Partial<WhiskeyFilterOptions>) => {

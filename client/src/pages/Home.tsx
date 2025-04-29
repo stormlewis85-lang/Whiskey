@@ -42,7 +42,11 @@ const Home = () => {
     searchQuery, 
     sortBy, 
     typeFilter, 
-    ratingFilter 
+    ratingFilter,
+    // Add bourbon-specific filters
+    bottleTypeFilter,
+    mashBillFilter,
+    caskStrengthFilter
   });
 
   // Modal handlers
