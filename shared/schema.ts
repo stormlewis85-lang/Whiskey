@@ -17,6 +17,12 @@ export const whiskeys = pgTable("whiskeys", {
   lastReviewed: timestamp("last_reviewed"),
   image: text("image"),
   notes: jsonb("notes").default([]),
+  // Additional bourbon/whiskey categorization fields
+  bottleType: text("bottle_type"), // Single Barrel, Small Batch, etc.
+  mashBill: text("mash_bill"), // High Corn, High Rye, Wheated
+  caskStrength: text("cask_strength"), // Yes/No
+  finished: text("finished"), // Yes/No
+  finishType: text("finish_type"), // What it was finished in
 });
 
 // Review Note Schema - used within the notes field
@@ -51,6 +57,12 @@ export const excelImportSchema = z.object({
   region: z.string().optional(),
   rating: z.number().min(0).max(5).optional().nullable(),
   notes: z.array(reviewNoteSchema).optional().default([]),
+  // Additional categorization fields
+  bottleType: z.string().optional(),
+  mashBill: z.string().optional(),
+  caskStrength: z.string().optional(),
+  finished: z.string().optional(),
+  finishType: z.string().optional(),
 });
 
 export type InsertWhiskey = z.infer<typeof insertWhiskeySchema>;
