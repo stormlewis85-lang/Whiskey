@@ -7,13 +7,25 @@ interface WhiskeyFilterOptions {
   sortBy: string;
   typeFilter: string;
   ratingFilter: string;
+  // Optional bourbon-specific filters
+  bottleTypeFilter?: string;
+  mashBillFilter?: string;
+  caskStrengthFilter?: string;
 }
 
 /**
  * Hook to manage the whiskey collection with filtering and sorting
  */
 const useWhiskeyCollection = (filterOptions: WhiskeyFilterOptions) => {
-  const { searchQuery, sortBy, typeFilter, ratingFilter } = filterOptions;
+  const { 
+    searchQuery, 
+    sortBy, 
+    typeFilter, 
+    ratingFilter,
+    bottleTypeFilter,
+    mashBillFilter,
+    caskStrengthFilter
+  } = filterOptions;
   
   // Get whiskeys from API
   const { data: whiskeys, isLoading, isError, refetch } = useQuery<Whiskey[]>({

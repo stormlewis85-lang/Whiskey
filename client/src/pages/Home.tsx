@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Whiskey } from "@shared/schema";
-import { Header } from "@/components/ui/sidebar";
 import CollectionStats from "@/components/CollectionStats";
 import FilterBar from "@/components/FilterBar";
 import CollectionGrid from "@/components/CollectionGrid";
@@ -26,6 +25,11 @@ const Home = () => {
   const [sortBy, setSortBy] = useState<string>("name");
   const [typeFilter, setTypeFilter] = useState<string>("");
   const [ratingFilter, setRatingFilter] = useState<string>("");
+  
+  // Bourbon-specific filters
+  const [bottleTypeFilter, setBottleTypeFilter] = useState<string>("all");
+  const [mashBillFilter, setMashBillFilter] = useState<string>("all");
+  const [caskStrengthFilter, setCaskStrengthFilter] = useState<string>("all");
 
   // Get whiskey collection
   const { 
@@ -95,6 +99,13 @@ const Home = () => {
           setTypeFilter={setTypeFilter}
           ratingFilter={ratingFilter}
           setRatingFilter={setRatingFilter}
+          // Bourbon-specific filters
+          bottleTypeFilter={bottleTypeFilter}
+          setBottleTypeFilter={setBottleTypeFilter}
+          mashBillFilter={mashBillFilter}
+          setMashBillFilter={setMashBillFilter}
+          caskStrengthFilter={caskStrengthFilter}
+          setCaskStrengthFilter={setCaskStrengthFilter}
         />
         
         {/* Stats */}

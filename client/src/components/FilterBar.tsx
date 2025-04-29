@@ -28,8 +28,16 @@ const FilterBar = ({
   typeFilter,
   setTypeFilter,
   ratingFilter,
-  setRatingFilter
+  setRatingFilter,
+  bottleTypeFilter,
+  setBottleTypeFilter,
+  mashBillFilter,
+  setMashBillFilter,
+  caskStrengthFilter,
+  setCaskStrengthFilter
 }: FilterBarProps) => {
+  // Check if bourbon is selected to show bourbon-specific filters
+  const isBourbonSelected = typeFilter === "Bourbon";
   return (
     <div className="flex flex-col md:flex-row justify-between mb-6 space-y-4 md:space-y-0">
       <div className="flex items-center space-x-2">
@@ -81,6 +89,59 @@ const FilterBar = ({
             <SelectItem value="0">Unrated</SelectItem>
           </SelectContent>
         </Select>
+        
+        {/* Bourbon-specific filters */}
+        {isBourbonSelected && setBottleTypeFilter && (
+          <Select 
+            value={bottleTypeFilter} 
+            onValueChange={setBottleTypeFilter}
+          >
+            <SelectTrigger className="w-[140px] border border-gray-300 rounded py-1 px-2 text-sm bg-white h-9">
+              <SelectValue placeholder="All Bottle Types" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Bottle Types</SelectItem>
+              <SelectItem value="Single Barrel">Single Barrel</SelectItem>
+              <SelectItem value="Small Batch">Small Batch</SelectItem>
+              <SelectItem value="Blend">Blend</SelectItem>
+              <SelectItem value="Other">Other</SelectItem>
+            </SelectContent>
+          </Select>
+        )}
+        
+        {isBourbonSelected && setMashBillFilter && (
+          <Select 
+            value={mashBillFilter} 
+            onValueChange={setMashBillFilter}
+          >
+            <SelectTrigger className="w-[130px] border border-gray-300 rounded py-1 px-2 text-sm bg-white h-9">
+              <SelectValue placeholder="All Mash Bills" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Mash Bills</SelectItem>
+              <SelectItem value="High Corn">High Corn</SelectItem>
+              <SelectItem value="High Rye">High Rye</SelectItem>
+              <SelectItem value="Wheated">Wheated</SelectItem>
+              <SelectItem value="Other">Other</SelectItem>
+            </SelectContent>
+          </Select>
+        )}
+        
+        {isBourbonSelected && setCaskStrengthFilter && (
+          <Select 
+            value={caskStrengthFilter} 
+            onValueChange={setCaskStrengthFilter}
+          >
+            <SelectTrigger className="w-[140px] border border-gray-300 rounded py-1 px-2 text-sm bg-white h-9">
+              <SelectValue placeholder="Cask Strength" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="Yes">Cask Strength</SelectItem>
+              <SelectItem value="No">Standard Proof</SelectItem>
+            </SelectContent>
+          </Select>
+        )}
         
         <div className="relative">
           <Input
