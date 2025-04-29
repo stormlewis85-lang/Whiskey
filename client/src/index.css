@@ -1,0 +1,126 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 0 0% 100%;
+  --foreground: 20 14.3% 4.1%;
+  --muted: 60 4.8% 95.9%;
+  --muted-foreground: 25 5.3% 44.7%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 20 14.3% 4.1%;
+  --card: 0 0% 100%;
+  --card-foreground: 20 14.3% 4.1%;
+  --border: 20 5.9% 90%;
+  --input: 20 5.9% 90%;
+  
+  /* Customize primary to whiskey colors */
+  --primary: 25 70% 45%;
+  --primary-foreground: 0 0% 100%;
+  
+  --secondary: 60 4.8% 95.9%;
+  --secondary-foreground: 24 9.8% 10%;
+  
+  /* Accent for secondary whiskey actions */
+  --accent: 28 100% 97%;
+  --accent-foreground: 24 9.8% 10%;
+  
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 60 9.1% 97.8%;
+  --ring: 25 70% 45%;
+  --radius: 0.5rem;
+
+  /* Whiskey theme colors */
+  --whiskey-100: 30 54% 92%;
+  --whiskey-200: 30 54% 82%;
+  --whiskey-300: 28 56% 70%;
+  --whiskey-400: 24 50% 52%;
+  --whiskey-500: 25 70% 45%;
+  --whiskey-600: 25 50% 33%;
+  --whiskey-700: 25 50% 25%;
+  --whiskey-800: 25 40% 15%;
+  --whiskey-900: 25 30% 8%;
+  
+  /* Burgundy accent colors */
+  --burgundy-400: 350 44% 46%;
+  --burgundy-500: 350 44% 32%;
+  --burgundy-600: 350 44% 26%;
+
+  /* Chart colors for visualization */
+  --chart-1: 25 70% 45%;
+  --chart-2: 350 44% 32%;
+  --chart-3: 28 56% 70%;
+  --chart-4: 30 54% 82%;
+  --chart-5: 25 30% 8%;
+}
+
+.dark {
+  --background: 240 10% 3.9%;
+  --foreground: 0 0% 98%;
+  --muted: 240 3.7% 15.9%;
+  --muted-foreground: 240 5% 64.9%;
+  --popover: 240 10% 3.9%;
+  --popover-foreground: 0 0% 98%;
+  --card: 240 10% 3.9%;
+  --card-foreground: 0 0% 98%;
+  --border: 240 3.7% 15.9%;
+  --input: 240 3.7% 15.9%;
+  
+  /* Whiskey colors for dark mode */
+  --primary: 28 56% 70%;
+  --primary-foreground: 0 0% 0%;
+  
+  --secondary: 240 3.7% 15.9%;
+  --secondary-foreground: 0 0% 98%;
+  
+  --accent: 25 30% 16%;
+  --accent-foreground: 28 56% 70%;
+  
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --ring: 28 56% 70%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-gray-50 font-sans text-gray-800;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif;
+  }
+}
+
+/* Custom utility classes for the whiskey app */
+.bg-whiskey-100 { @apply bg-[hsl(var(--whiskey-100))]; }
+.bg-whiskey-200 { @apply bg-[hsl(var(--whiskey-200))]; }
+.bg-whiskey-300 { @apply bg-[hsl(var(--whiskey-300))]; }
+.bg-whiskey-400 { @apply bg-[hsl(var(--whiskey-400))]; }
+.bg-whiskey-500 { @apply bg-[hsl(var(--whiskey-500))]; }
+.bg-whiskey-600 { @apply bg-[hsl(var(--whiskey-600))]; }
+.bg-whiskey-700 { @apply bg-[hsl(var(--whiskey-700))]; }
+.bg-whiskey-800 { @apply bg-[hsl(var(--whiskey-800))]; }
+.bg-whiskey-900 { @apply bg-[hsl(var(--whiskey-900))]; }
+
+.bg-burgundy-400 { @apply bg-[hsl(var(--burgundy-400))]; }
+.bg-burgundy-500 { @apply bg-[hsl(var(--burgundy-500))]; }
+.bg-burgundy-600 { @apply bg-[hsl(var(--burgundy-600))]; }
+
+.text-whiskey-400 { @apply text-[hsl(var(--whiskey-400))]; }
+.text-whiskey-500 { @apply text-[hsl(var(--whiskey-500))]; }
+.text-whiskey-600 { @apply text-[hsl(var(--whiskey-600))]; }
+.text-whiskey-700 { @apply text-[hsl(var(--whiskey-700))]; }
+
+.text-burgundy-400 { @apply text-[hsl(var(--burgundy-400))]; }
+.text-burgundy-500 { @apply text-[hsl(var(--burgundy-500))]; }
+
+.hover\:bg-whiskey-400:hover { @apply hover:bg-[hsl(var(--whiskey-400))]; }
+.hover\:bg-whiskey-500:hover { @apply hover:bg-[hsl(var(--whiskey-500))]; }
+.hover\:bg-burgundy-400:hover { @apply hover:bg-[hsl(var(--burgundy-400))]; }
+
+.border-whiskey-100 { @apply border-[hsl(var(--whiskey-100))]; }
+.border-whiskey-200 { @apply border-[hsl(var(--whiskey-200))]; }
