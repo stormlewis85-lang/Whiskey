@@ -33,6 +33,13 @@ export const reviewNoteSchema = z.object({
   date: z.string(),
   text: z.string(),
   flavor: z.string().optional(),
+  // Detailed review categories
+  visual: z.string().optional(),
+  nose: z.string().optional(),
+  mouthfeel: z.string().optional(),
+  taste: z.string().optional(),
+  finish: z.string().optional(),
+  value: z.string().optional(),
 });
 
 export type ReviewNote = z.infer<typeof reviewNoteSchema>;

@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { nanoid } from "nanoid";
+import { Progress } from "@/components/ui/progress";
 
 interface ReviewModalProps {
   isOpen: boolean;
@@ -19,8 +20,59 @@ interface ReviewModalProps {
   whiskey: Whiskey;
 }
 
+// Define the review pages
+enum ReviewPage {
+  Visual = 0,
+  Nose = 1,
+  MouthFeel = 2,
+  Taste = 3,
+  Finish = 4,
+  Value = 5,
+  Summary = 6
+}
+
+// Page titles and descriptions
+const pageData = [
+  {
+    title: "Visual",
+    description: "Describe the color, clarity, and appearance of the whiskey.",
+    placeholder: "Golden amber with slow, thick legs..."
+  },
+  {
+    title: "Nose",
+    description: "What aromas do you detect?",
+    placeholder: "Vanilla, caramel, hints of oak and spice..."
+  },
+  {
+    title: "Mouth Feel",
+    description: "How does it feel in your mouth? Texture, weight, etc.",
+    placeholder: "Velvety, creamy, oily, light bodied..."
+  },
+  {
+    title: "Taste",
+    description: "What flavors come through on the palate?",
+    placeholder: "Rich caramel, vanilla, baking spices with hints of dried fruits..."
+  },
+  {
+    title: "Finish",
+    description: "How long does the flavor last? What notes linger?",
+    placeholder: "Long finish with warming spice and oak tannins..."
+  },
+  {
+    title: "Value",
+    description: "Is this whiskey worth the price? How would you rate its value?",
+    placeholder: "Good value for the complexity and age..."
+  },
+  {
+    title: "Summary",
+    description: "Overall impression and final rating.",
+    placeholder: "Overall an excellent bourbon that balances..."
+  }
+];
+
 const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
   const { toast } = useToast();
+  const [currentPage, setCurrentPage] = useState<ReviewPage>(ReviewPage.Visual);
   const [rating, setRating] = useState(0);
   
   const form = useForm<ReviewNote>({
@@ -31,11 +83,34 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
       text: "",
       flavor: "",
       id: nanoid(),
+      visual: "",
+      nose: "",
+      mouthfeel: "",
+      taste: "",
+      finish: "",
+      value: ""
     },
   });
 
+  // Calculate progress percentage
+  const progressPercentage = (currentPage / pageData.length) * 100;
+
   const addReviewMutation = useMutation({
     mutationFn: async (data: ReviewNote) => {
+      // Generate a summary from all the review sections
+      const summary = [
+        `Visual: ${data.visual}`,
+        `Nose: ${data.nose}`,
+        `Mouthfeel: ${data.mouthfeel}`,
+        `Taste: ${data.taste}`,
+        `Finish: ${data.finish}`,
+        `Value: ${data.value}`,
+        `Overall: ${data.text}`
+      ].filter(Boolean).join("\n\n");
+      
+      // Update the main text field with our comprehensive notes
+      data.text = summary;
+      
       const response = await apiRequest("POST", `/api/whiskeys/${whiskey.id}/reviews`, data);
       return response.json();
     },
@@ -43,9 +118,10 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
       queryClient.invalidateQueries({ queryKey: ["/api/whiskeys"] });
       toast({
         title: "Review Added",
-        description: "Your tasting notes have been saved.",
+        description: "Your detailed tasting notes have been saved.",
       });
       form.reset();
+      setCurrentPage(ReviewPage.Visual);
       onClose();
     },
     onError: (error) => {
@@ -57,27 +133,164 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
     },
   });
 
+  // Handle page navigation
+  const nextPage = () => {
+    if (currentPage < ReviewPage.Summary) {
+      setCurrentPage(prevPage => (prevPage + 1) as ReviewPage);
+    }
+  };
+
+  const prevPage = () => {
+    if (currentPage > ReviewPage.Visual) {
+      setCurrentPage(prevPage => (prevPage - 1) as ReviewPage);
+    }
+  };
+
   const onSubmit = (data: ReviewNote) => {
     data.rating = rating;
     addReviewMutation.mutate(data);
   };
 
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="text-lg font-medium text-gray-900">Review Whiskey</DialogTitle>
-        </DialogHeader>
-        
-        <div className="text-center mb-6">
-          <h4 className="font-bold text-xl">{whiskey.name}</h4>
-          <p className="text-gray-600">{whiskey.distillery}</p>
-        </div>
-        
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+  // Render content based on current page
+  const renderPageContent = () => {
+    switch(currentPage) {
+      case ReviewPage.Visual:
+        return (
+          <FormField
+            control={form.control}
+            name="visual"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{pageData[currentPage].title}</FormLabel>
+                <p className="text-sm text-gray-500 mb-2">{pageData[currentPage].description}</p>
+                <FormControl>
+                  <Textarea
+                    placeholder={pageData[currentPage].placeholder}
+                    className="resize-none"
+                    rows={4}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        );
+      case ReviewPage.Nose:
+        return (
+          <FormField
+            control={form.control}
+            name="nose"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{pageData[currentPage].title}</FormLabel>
+                <p className="text-sm text-gray-500 mb-2">{pageData[currentPage].description}</p>
+                <FormControl>
+                  <Textarea
+                    placeholder={pageData[currentPage].placeholder}
+                    className="resize-none"
+                    rows={4}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        );
+      case ReviewPage.MouthFeel:
+        return (
+          <FormField
+            control={form.control}
+            name="mouthfeel"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{pageData[currentPage].title}</FormLabel>
+                <p className="text-sm text-gray-500 mb-2">{pageData[currentPage].description}</p>
+                <FormControl>
+                  <Textarea
+                    placeholder={pageData[currentPage].placeholder}
+                    className="resize-none"
+                    rows={4}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        );
+      case ReviewPage.Taste:
+        return (
+          <FormField
+            control={form.control}
+            name="taste"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{pageData[currentPage].title}</FormLabel>
+                <p className="text-sm text-gray-500 mb-2">{pageData[currentPage].description}</p>
+                <FormControl>
+                  <Textarea
+                    placeholder={pageData[currentPage].placeholder}
+                    className="resize-none"
+                    rows={4}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        );
+      case ReviewPage.Finish:
+        return (
+          <FormField
+            control={form.control}
+            name="finish"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{pageData[currentPage].title}</FormLabel>
+                <p className="text-sm text-gray-500 mb-2">{pageData[currentPage].description}</p>
+                <FormControl>
+                  <Textarea
+                    placeholder={pageData[currentPage].placeholder}
+                    className="resize-none"
+                    rows={4}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        );
+      case ReviewPage.Value:
+        return (
+          <FormField
+            control={form.control}
+            name="value"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{pageData[currentPage].title}</FormLabel>
+                <p className="text-sm text-gray-500 mb-2">{pageData[currentPage].description}</p>
+                <FormControl>
+                  <Textarea
+                    placeholder={pageData[currentPage].placeholder}
+                    className="resize-none"
+                    rows={4}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        );
+      case ReviewPage.Summary:
+        return (
+          <>
             <div className="mb-4">
-              <FormLabel>Rating</FormLabel>
+              <FormLabel>Overall Rating</FormLabel>
               <div className="flex justify-center space-x-1 mt-2">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button
@@ -110,10 +323,10 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
               name="text"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Tasting Notes</FormLabel>
+                  <FormLabel>Overall Impression</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Describe the aroma, taste, finish, and overall impression..."
+                      placeholder="Provide your final thoughts and summary of this whiskey..."
                       className="resize-none"
                       rows={4}
                       {...field}
@@ -140,7 +353,6 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="none">Select Profile</SelectItem>
                         <SelectItem value="Sweet">Sweet</SelectItem>
                         <SelectItem value="Spicy">Spicy</SelectItem>
                         <SelectItem value="Smoky">Smoky</SelectItem>
@@ -172,22 +384,79 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                 )}
               />
             </div>
+          </>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-medium text-gray-900">
+            Review Whiskey - {pageData[currentPage].title}
+          </DialogTitle>
+        </DialogHeader>
+        
+        <div className="text-center mb-4">
+          <h4 className="font-bold text-xl">{whiskey.name}</h4>
+          <p className="text-gray-600">{whiskey.distillery}</p>
+        </div>
+        
+        {/* Progress bar */}
+        <div className="mb-4">
+          <Progress value={progressPercentage} className="h-2" />
+          <p className="text-xs text-right mt-1 text-gray-500">
+            Step {currentPage + 1} of {pageData.length}
+          </p>
+        </div>
+        
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {renderPageContent()}
             
-            <div className="flex justify-end space-x-3 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onClose}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                className="bg-whiskey-600 hover:bg-whiskey-500 text-white"
-                disabled={addReviewMutation.isPending}
-              >
-                {addReviewMutation.isPending ? "Submitting..." : "Submit Review"}
-              </Button>
+            <div className="flex justify-between pt-2">
+              <div>
+                {currentPage > 0 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={prevPage}
+                  >
+                    Previous
+                  </Button>
+                )}
+              </div>
+              
+              <div className="flex space-x-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onClose}
+                >
+                  Cancel
+                </Button>
+                
+                {currentPage < ReviewPage.Summary ? (
+                  <Button
+                    type="button"
+                    className="bg-whiskey-600 hover:bg-whiskey-500 text-white"
+                    onClick={nextPage}
+                  >
+                    Next
+                  </Button>
+                ) : (
+                  <Button
+                    type="submit"
+                    className="bg-whiskey-600 hover:bg-whiskey-500 text-white"
+                    disabled={addReviewMutation.isPending || !rating}
+                  >
+                    {addReviewMutation.isPending ? "Submitting..." : "Submit Review"}
+                  </Button>
+                )}
+              </div>
             </div>
           </form>
         </Form>
