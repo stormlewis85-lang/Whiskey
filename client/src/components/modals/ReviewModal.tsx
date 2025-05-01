@@ -2018,14 +2018,16 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
         </div>
         
         <Form {...form}>
-          <form onSubmit={(e) => {
-            if (currentPage !== ReviewPage.FinalScores) {
+          <form 
+            // Disable the normal form submission behavior entirely
+            onSubmit={(e) => {
               e.preventDefault();
-              nextPage();
+              // Only call form.handleSubmit manually when the submit button is clicked
+              // This happens in the Submit button's onClick handler instead
               return false;
-            }
-            return form.handleSubmit(onSubmit)(e);
-          }} className="space-y-4 scrollable-content">
+            }} 
+            className="space-y-4 scrollable-content"
+          >
             {renderPageContent()}
             
             <div className="flex justify-between pt-2">
@@ -2062,9 +2064,15 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                   </Button>
                 ) : (
                   <Button
-                    type="submit"
+                    type="button"
                     className="barrel-button"
                     disabled={addReviewMutation.isPending}
+                    onClick={() => {
+                      if (currentPage === ReviewPage.FinalScores) {
+                        // Only call the submission manually when explicitly clicked
+                        form.handleSubmit(onSubmit)();
+                      }
+                    }}
                   >
                     {addReviewMutation.isPending ? "Submitting..." : "Submit Review"}
                   </Button>
