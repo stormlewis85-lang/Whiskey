@@ -1,7 +1,27 @@
-import { pgTable, text, serial, integer, real, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, real, timestamp, jsonb, uuid, boolean, unique } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+
+// User Schema
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  username: text("username").notNull(),
+  password: text("password").notNull(),
+  email: text("email"),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  profileImage: text("profile_image"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => {
+  return {
+    usernameUnique: unique("username_unique").on(table.username),
+    emailUnique: unique("email_unique").on(table.email),
+  };
+});
+
+// Whiskey to Users Relations will be defined after whiskeys is defined
 
 // Whiskey Collection Schema
 export const whiskeys = pgTable("whiskeys", {
@@ -24,6 +44,8 @@ export const whiskeys = pgTable("whiskeys", {
   caskStrength: text("cask_strength"), // Yes/No
   finished: text("finished"), // Yes/No
   finishType: text("finish_type"), // What it was finished in
+  // User relationship
+  userId: integer("user_id").references(() => users.id, { onDelete: 'cascade' }),
 });
 
 // Review Note Schema - used within the notes field
@@ -107,7 +129,38 @@ export const excelImportSchema = z.object({
   finishType: z.string().optional(),
 });
 
+// Add relations after tables are defined
+export const usersRelations = relations(users, ({ many }) => ({
+  whiskeys: many(whiskeys),
+}));
+
+export const whiskeysRelations = relations(whiskeys, ({ one }) => ({
+  user: one(users, {
+    fields: [whiskeys.userId],
+    references: [users.id],
+  }),
+}));
+
+// Create User Schemas
+export const insertUserSchema = createInsertSchema(users)
+  .omit({ id: true, createdAt: true, updatedAt: true });
+
+export const loginUserSchema = z.object({
+  username: z.string().min(1, "Username is required"),
+  password: z.string().min(1, "Password is required"),
+});
+
+export const updateUserSchema = createInsertSchema(users)
+  .omit({ id: true, password: true, createdAt: true, updatedAt: true })
+  .partial();
+
+// Export all types
 export type InsertWhiskey = z.infer<typeof insertWhiskeySchema>;
 export type UpdateWhiskey = z.infer<typeof updateWhiskeySchema>;
 export type Whiskey = typeof whiskeys.$inferSelect;
 export type ExcelImportWhiskey = z.infer<typeof excelImportSchema>;
+
+export type User = typeof users.$inferSelect;
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type LoginUser = z.infer<typeof loginUserSchema>;
+export type UpdateUser = z.infer<typeof updateUserSchema>;
