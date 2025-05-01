@@ -116,7 +116,6 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
       visualColor: "",
       visualViscosity: "",
       visualClarity: "",
-      visualScore: undefined,
       visualNotes: "",
       noseAromas: [],
       noseScore: undefined,
@@ -180,7 +179,6 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
         `COLOR: ${data.visualColor || 'Not specified'}`,
         `VISCOSITY: ${data.visualViscosity || 'Not specified'}`,
         `CLARITY: ${data.visualClarity || 'Not specified'}`,
-        `SCORE: ${data.visualScore}/5`,
         `NOTES: ${data.visualNotes || 'None'}`
       ].join('\n');
       
@@ -388,32 +386,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
               />
             </div>
             
-            <div>
-              <h3 className="font-medium mb-2">Visual Score (1-5)</h3>
-              <FormField
-                control={form.control}
-                name="visualScore"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <RadioGroup 
-                        onValueChange={(value) => field.onChange(parseInt(value))} 
-                        defaultValue={field.value?.toString()}
-                        className="flex justify-between"
-                      >
-                        {SCORE_OPTIONS.map((score) => (
-                          <div key={score.value} className="flex flex-col items-center">
-                            <RadioGroupItem value={score.value.toString()} id={`visual-score-${score.value}`} />
-                            <Label htmlFor={`visual-score-${score.value}`} className="text-xs mt-1">{score.value}</Label>
-                          </div>
-                        ))}
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+
             
             <FormField
               control={form.control}
@@ -1409,8 +1382,6 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                       `, Viscosity: ${VISCOSITY_OPTIONS.find(v => v.value === form.getValues('visualViscosity'))?.label || form.getValues('visualViscosity')}`}
                     {form.getValues('visualClarity') && 
                       `, Clarity: ${CLARITY_OPTIONS.find(c => c.value === form.getValues('visualClarity'))?.label || form.getValues('visualClarity')}`}
-                    {form.getValues('visualScore') && 
-                      `, Score: ${form.getValues('visualScore')}/5`}
                   </p>
                 </div>
                 

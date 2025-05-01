@@ -65,6 +65,7 @@ export const AROMA_FLAVOR_OPTIONS = {
   fruit: [
     { value: 'apple', label: 'Apple' },
     { value: 'pear', label: 'Pear' },
+    { value: 'banana', label: 'Banana' },
     { value: 'cherry', label: 'Cherry' },
     { value: 'orange', label: 'Orange' },
     { value: 'lemon', label: 'Lemon' },
