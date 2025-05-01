@@ -75,10 +75,7 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit }: Whis
       const formData = new FormData();
       formData.append('image', file);
       
-      const response = await apiRequest("POST", `/api/whiskeys/${whiskey.id}/image`, null, {
-        body: formData,
-        // Don't set Content-Type header, it will be set automatically with boundary
-      });
+      const response = await apiRequest("POST", `/api/whiskeys/${whiskey.id}/image`, formData);
       
       if (response.ok) {
         const result = await response.json();
@@ -121,8 +118,7 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit }: Whis
     try {
       const response = await apiRequest(
         "DELETE", 
-        `/api/whiskeys/${whiskey.id}/reviews/${reviewId}`,
-        null
+        `/api/whiskeys/${whiskey.id}/reviews/${reviewId}`
       );
       
       if (response.ok) {
@@ -510,7 +506,7 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit }: Whis
                   variant="outline"
                   className="inline-flex items-center border-amber-300 text-amber-700"
                 >
-                  <Pencil className="h-4 w-4 mr-2" />
+                  <PencilIcon className="h-4 w-4 mr-2" />
                   Edit Whiskey
                 </Button>
                 <Button
