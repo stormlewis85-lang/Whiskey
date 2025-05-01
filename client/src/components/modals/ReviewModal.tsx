@@ -370,8 +370,8 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
   // Handle page navigation
   const nextPage = () => {
     if (currentPage < ReviewPage.FinalScores) {
-      // Reset value fields when entering and leaving the value page
-      if (currentPage === ReviewPage.Finish || currentPage === ReviewPage.Value) {
+      // When going to Value page, clear value fields
+      if (currentPage === ReviewPage.Finish) {
         // Reset all the value-related fields to ensure no data carryover
         form.setValue('valueAvailability', '');
         form.setValue('valueBuyAgain', '');
@@ -380,7 +380,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
         form.setValue('valueNotes', '');
       }
       
-      // When moving from Value to Summary, clear the text field
+      // Going to Summary page, clear the text field
       if (currentPage === ReviewPage.Value) {
         form.setValue('text', '');
       }
