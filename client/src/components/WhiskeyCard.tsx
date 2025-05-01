@@ -18,7 +18,7 @@ const WhiskeyCard = ({ whiskey, onViewDetails, onReview, onEdit }: WhiskeyCardPr
       <div className="flex flex-col md:flex-row h-full">
         {/* Left side: Image with 3:4 aspect ratio */}
         <div className="md:w-1/3 relative">
-          <div className="aspect-[3/4] bg-whiskey-100 h-full">
+          <div className="aspect-[3/4] bg-amber-50 h-full">
             {whiskey.image ? (
               <img 
                 src={whiskey.image} 
@@ -26,8 +26,8 @@ const WhiskeyCard = ({ whiskey, onViewDetails, onReview, onEdit }: WhiskeyCardPr
                 className="object-cover h-full w-full"
               />
             ) : (
-              <div className="text-whiskey-400 text-center p-4 h-full flex items-center justify-center">
-                <div className="border-2 border-whiskey-200 border-dashed rounded-md p-4 flex flex-col items-center justify-center h-[80%] w-[80%]">
+              <div className="text-amber-500 text-center p-4 h-full flex items-center justify-center">
+                <div className="border-2 border-amber-200 border-dashed rounded-md p-4 flex flex-col items-center justify-center h-[80%] w-[80%]">
                   <svg 
                     xmlns="http://www.w3.org/2000/svg" 
                     className="h-12 w-12 mb-2" 
@@ -56,10 +56,10 @@ const WhiskeyCard = ({ whiskey, onViewDetails, onReview, onEdit }: WhiskeyCardPr
         
         {/* Right side: Whiskey details */}
         <CardContent className="p-4 md:w-2/3 flex flex-col">
-          <h3 className="font-serif font-semibold text-lg truncate text-[#593d25]">{whiskey.name}</h3>
+          <h3 className="font-medium text-lg truncate text-slate-800">{whiskey.name}</h3>
           <div className="flex justify-between items-center mt-1">
-            <p className="text-[#986A44] text-sm truncate">{whiskey.distillery || 'Unknown Distillery'}</p>
-            <p className="text-[#794e2f] font-medium">
+            <p className="text-amber-700 text-sm truncate">{whiskey.distillery || 'Unknown Distillery'}</p>
+            <p className="text-amber-800 font-medium">
               {whiskey.price ? `$${whiskey.price}` : ''}
             </p>
           </div>
@@ -116,7 +116,7 @@ const WhiskeyCard = ({ whiskey, onViewDetails, onReview, onEdit }: WhiskeyCardPr
               onClick={() => onEdit(whiskey)}
               variant="ghost"
               size="icon"
-              className="text-[#794e2f] hover:bg-[#f5efe0] h-9 w-9 p-0 rounded-full"
+              className="text-amber-700 hover:bg-amber-50 h-9 w-9 p-0 rounded-full"
               title="Edit whiskey"
             >
               <PencilIcon className="h-4 w-4" />
@@ -124,13 +124,13 @@ const WhiskeyCard = ({ whiskey, onViewDetails, onReview, onEdit }: WhiskeyCardPr
             <Button
               onClick={() => onViewDetails(whiskey)}
               variant="outline"
-              className="border-[#d9c4a3] text-[#794e2f] hover:bg-[#f5efe0] flex-grow"
+              className="border-amber-300 text-amber-700 hover:bg-amber-50 flex-grow"
             >
               Details
             </Button>
             <Button
               onClick={() => onReview(whiskey)}
-              className="barrel-button flex-grow"
+              className="bg-amber-600 hover:bg-amber-500 text-white flex-grow"
             >
               Review
             </Button>

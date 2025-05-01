@@ -1,14 +1,15 @@
 import { useMemo, useState, useRef } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Camera, ImageIcon, Pencil, Star, Upload, Edit, Trash2 } from "lucide-react";
+import { ImageIcon, Pencil, Star, Upload, Edit, Trash2, BookOpen, PenIcon, XIcon } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import { Whiskey, ReviewNote } from "@shared/schema";
-import { formatDate } from "@/lib/utils/calculations"; // Import properly defined
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import EditReviewModal from "./EditReviewModal";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 interface WhiskeyDetailModalProps {
   isOpen: boolean;
@@ -24,6 +25,15 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit }: Whis
   const [isEditReviewModalOpen, setIsEditReviewModalOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Format dates
+  const formatDate = (date: Date): string => {
+    return date.toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
   
   // Get formatted date strings
   const dateAdded = whiskey.dateAdded 
@@ -45,76 +55,58 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit }: Whis
     });
   }, [whiskey.notes]);
   
-  // Direct file upload handler
+  // Handle file upload
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("File input change event triggered");
-    const file = event.target.files?.[0];
-    if (!file) return;
+    if (!event.target.files || event.target.files.length === 0) return;
+    
+    const file = event.target.files[0];
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload an image file.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsUploading(true);
     
     try {
-      setIsUploading(true);
-      console.log("Starting file upload for:", file.name);
-      
       const formData = new FormData();
       formData.append('image', file);
       
-      // Direct fetch for more control
-      const response = await fetch(`/api/whiskeys/${whiskey.id}/image`, {
-        method: 'POST',
+      const response = await apiRequest("POST", `/api/whiskeys/${whiskey.id}/image`, null, {
         body: formData,
+        // Don't set Content-Type header, it will be set automatically with boundary
       });
       
-      console.log("Upload response status:", response.status);
-      
-      if (!response.ok) {
-        throw new Error(`Upload failed with status: ${response.status}`);
+      if (response.ok) {
+        const result = await response.json();
+        
+        // Update the cache with the new image path
+        queryClient.setQueryData(["/api/whiskeys"], (oldData: Whiskey[] | undefined) => {
+          if (!oldData) return undefined;
+          
+          return oldData.map(item => 
+            item.id === whiskey.id ? result.whiskey : item
+          );
+        });
+        
+        toast({
+          title: "Image uploaded",
+          description: "The image has been uploaded successfully.",
+        });
+      } else {
+        throw new Error("Failed to upload image");
       }
-      
-      // Success handling
-      queryClient.invalidateQueries({ queryKey: ['/api/whiskeys'] });
-      toast({
-        title: "Image uploaded",
-        description: "The bottle image has been uploaded successfully.",
-      });
-      
     } catch (error) {
-      console.error("Upload error:", error);
       toast({
         title: "Upload failed",
-        description: "There was an error uploading the image. Please try again.",
-        variant: "destructive"
+        description: error instanceof Error ? error.message : "An unknown error occurred",
+        variant: "destructive",
       });
     } finally {
       setIsUploading(false);
-    }
-  };
-
-  // Review deletion
-  const deleteMutation = useMutation({
-    mutationFn: async (reviewId: string) => {
-      return apiRequest(`/api/whiskeys/${whiskey.id}/reviews/${reviewId}`, {
-        method: 'DELETE',
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/whiskeys'] });
-      toast({
-        title: "Review deleted",
-        description: "The review has been successfully deleted.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "There was an error deleting the review. Please try again.",
-        variant: "destructive"
-      });
-    }
-  });
-
-  const handleDeleteReview = (reviewId: string) => {
-    if (window.confirm("Are you sure you want to delete this review? This action cannot be undone.")) {
-      deleteMutation.mutate(reviewId);
     }
   };
   
@@ -122,167 +114,395 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit }: Whis
     setSelectedReview(review);
     setIsEditReviewModalOpen(true);
   };
-
+  
+  const handleDeleteReview = async (reviewId: string) => {
+    if (!confirmRemoval()) return;
+    
+    try {
+      const response = await apiRequest(
+        "DELETE", 
+        `/api/whiskeys/${whiskey.id}/reviews/${reviewId}`,
+        null
+      );
+      
+      if (response.ok) {
+        const updatedWhiskey = await response.json();
+        
+        // Update the cache
+        queryClient.setQueryData(["/api/whiskeys"], (oldData: Whiskey[] | undefined) => {
+          if (!oldData) return undefined;
+          
+          return oldData.map(item => 
+            item.id === whiskey.id ? updatedWhiskey : item
+          );
+        });
+        
+        toast({
+          title: "Review deleted",
+          description: "The review has been deleted successfully.",
+        });
+      } else {
+        throw new Error("Failed to delete review");
+      }
+    } catch (error) {
+      toast({
+        title: "Deletion failed",
+        description: error instanceof Error ? error.message : "An unknown error occurred",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  const confirmRemoval = () => {
+    return window.confirm("Are you sure you want to delete this review? This action cannot be undone.");
+  };
+  
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-2xl p-0 overflow-hidden">
-          <DialogHeader className="hidden">
-            <DialogTitle>Whiskey Details</DialogTitle>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle className="text-xl md:text-2xl font-semibold pb-2 relative flex items-center">
+              <div className="flex-1 pr-10">
+                {whiskey.name}
+                {whiskey.distillery && (
+                  <span className="text-gray-500 font-normal ml-2">by {whiskey.distillery}</span>
+                )}
+              </div>
+              <div className="absolute right-0 top-0">
+                <div className="flex items-center space-x-2">
+                  <Button variant="outline" size="icon" onClick={() => onEdit(whiskey)}>
+                    <PencilIcon className="h-4 w-4" />
+                  </Button>
+                  <DialogClose asChild>
+                    <Button variant="outline" size="icon">
+                      <XIcon className="h-4 w-4" />
+                    </Button>
+                  </DialogClose>
+                </div>
+              </div>
+            </DialogTitle>
           </DialogHeader>
-          <div className="relative">
-            <div className="h-48 w-full bg-whiskey-100">
-              {whiskey.image ? (
-                <div className="relative h-full w-full">
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto pr-2" style={{maxHeight: "calc(90vh - 80px)"}}>
+            {/* Left column - Image & details */}
+            <div>
+              <div className="aspect-square overflow-hidden rounded-md bg-gray-100 mb-4">
+                {whiskey.image ? (
                   <img 
-                    src={whiskey.image} 
-                    alt={`Bottle of ${whiskey.name}`}
+                    src={whiskey.image}
+                    alt={whiskey.name}
                     className="h-full w-full object-cover"
                   />
-                  <label 
-                    htmlFor="bottle-image-upload"
-                    className="absolute bottom-3 right-3 bg-whiskey-600 text-white p-2 rounded-full shadow-md hover:bg-whiskey-500 focus:outline-none z-10 cursor-pointer"
-                  >
-                    {isUploading ? (
-                      <div className="animate-spin h-5 w-5 border-2 border-white border-opacity-20 border-t-white rounded-full"></div>
-                    ) : (
-                      <Camera className="h-5 w-5" />
-                    )}
-                  </label>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                    <ImageIcon className="h-16 w-16 text-gray-400" />
+                  </div>
+                )}
+              </div>
+              
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="font-medium">Rating</div>
+                  <div className="flex items-center">
+                    <Star className="h-5 w-5 text-amber-400 mr-1 fill-amber-400" />
+                    <span className="font-medium">{whiskey.rating.toFixed(1)}</span>
+                    <span className="text-gray-500 text-sm ml-1">/5</span>
+                  </div>
                 </div>
-              ) : (
-                <div className="h-full w-full flex flex-col items-center justify-center bg-amber-50 text-amber-700">
-                  <label 
-                    htmlFor="bottle-image-upload"
-                    className="cursor-pointer p-4 rounded-full bg-amber-100 hover:bg-amber-200 transition-colors"
-                  >
-                    {isUploading ? (
-                      <div className="animate-spin h-8 w-8 border-2 border-amber-700 border-opacity-20 border-t-amber-700 rounded-full"></div>
-                    ) : (
-                      <Upload className="h-8 w-8" />
-                    )}
-                  </label>
-                  <span className="mt-2 text-sm font-medium">Add bottle image</span>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  {whiskey.type && (
+                    <div>
+                      <div className="text-sm text-gray-500">Type</div>
+                      <div>{whiskey.type}</div>
+                    </div>
+                  )}
+                  
+                  {whiskey.region && (
+                    <div>
+                      <div className="text-sm text-gray-500">Region</div>
+                      <div>{whiskey.region}</div>
+                    </div>
+                  )}
+                  
+                  {whiskey.age !== null && (
+                    <div>
+                      <div className="text-sm text-gray-500">Age</div>
+                      <div>{whiskey.age} {whiskey.age === 1 ? 'year' : 'years'}</div>
+                    </div>
+                  )}
+                  
+                  {whiskey.abv !== null && (
+                    <div>
+                      <div className="text-sm text-gray-500">ABV</div>
+                      <div>{whiskey.abv}%</div>
+                    </div>
+                  )}
+                  
+                  {whiskey.price !== null && (
+                    <div>
+                      <div className="text-sm text-gray-500">Price</div>
+                      <div>${whiskey.price.toFixed(2)}</div>
+                    </div>
+                  )}
+                  
+                  {whiskey.dateAdded && (
+                    <div>
+                      <div className="text-sm text-gray-500">Added</div>
+                      <div>{new Date(whiskey.dateAdded).toLocaleDateString()}</div>
+                    </div>
+                  )}
+                  
+                  {/* Bourbon specific fields */}
+                  {whiskey.type === 'Bourbon' && (
+                    <>
+                      {whiskey.bottleType && (
+                        <div>
+                          <div className="text-sm text-gray-500">Bottle Type</div>
+                          <div>{whiskey.bottleType}</div>
+                        </div>
+                      )}
+                      
+                      {whiskey.mashBill && (
+                        <div>
+                          <div className="text-sm text-gray-500">Mash Bill</div>
+                          <div>{whiskey.mashBill}</div>
+                        </div>
+                      )}
+                      
+                      {whiskey.caskStrength && (
+                        <div>
+                          <div className="text-sm text-gray-500">Cask Strength</div>
+                          <div>{whiskey.caskStrength}</div>
+                        </div>
+                      )}
+                      
+                      {whiskey.finished && (
+                        <div>
+                          <div className="text-sm text-gray-500">Finished</div>
+                          <div>{whiskey.finished}</div>
+                        </div>
+                      )}
+                      
+                      {whiskey.finishType && (
+                        <div>
+                          <div className="text-sm text-gray-500">Finish Type</div>
+                          <div>{whiskey.finishType}</div>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
-              )}
-              <input 
-                id="bottle-image-upload"
-                type="file" 
-                accept="image/*" 
-                className="hidden"
-                onChange={handleFileUpload}
-                disabled={isUploading}
-              />
+              </div>
             </div>
             
-            <div className="p-6">
-              <h2 className="text-2xl font-bold text-gray-900">{whiskey.name}</h2>
-              {whiskey.distillery && (
-                <p className="text-gray-600 mt-1">{whiskey.distillery}</p>
-              )}
-              
-              <div className="mt-4 grid grid-cols-2 gap-4">
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Type</h3>
-                  <p className="mt-1">{whiskey.type || 'N/A'}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Region</h3>
-                  <p className="mt-1">{whiskey.region || 'N/A'}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Age</h3>
-                  <p className="mt-1">{whiskey.age ? `${whiskey.age} years` : 'N/A'}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">ABV</h3>
-                  <p className="mt-1">{whiskey.abv ? `${whiskey.abv}%` : 'N/A'}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Price</h3>
-                  <p className="mt-1">{whiskey.price ? `$${whiskey.price.toFixed(2)}` : 'N/A'}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Rating</h3>
-                  <p className="mt-1">{whiskey.rating ? `${whiskey.rating.toFixed(1)} / 5.0` : 'Not rated'}</p>
-                </div>
+            {/* Right column - Reviews */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-medium text-lg">Tasting Notes</h3>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => onReview(whiskey)}
+                >
+                  <PenIcon className="h-4 w-4 mr-1" />
+                  Add Review
+                </Button>
               </div>
-
-              {/* Bourbon-specific fields */}
-              {whiskey.type === 'Bourbon' && (
-                <>
-                  <Separator className="my-4" />
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-500">Bottle Type</h3>
-                      <p className="mt-1">{whiskey.bottleType || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-500">Mash Bill</h3>
-                      <p className="mt-1">{whiskey.mashBill || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-500">Cask Strength</h3>
-                      <p className="mt-1">{whiskey.caskStrength ? 'Yes' : 'No'}</p>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-500">Finish Type</h3>
-                      <p className="mt-1">{whiskey.finishType || 'N/A'}</p>
-                    </div>
-                  </div>
-                </>
-              )}
               
-              {/* Notes section */}
-              {sortedNotes.length > 0 && (
-                <>
-                  <Separator className="my-4" />
-                  <h3 className="text-lg font-semibold text-gray-900">Tasting Notes</h3>
-                  <div className="mt-2 space-y-3">
-                    {sortedNotes.map((note) => (
-                      <div key={note.id} className="bg-amber-50 p-3 rounded-md">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <span className="text-xs text-gray-500">{formatDate(new Date(note.date))}</span>
-                            <div className="flex items-center mt-1">
-                              <span className="font-medium">{note.rating.toFixed(1)}</span>
-                              <span className="text-xs text-gray-500 ml-1">/ 5.0</span>
+              {sortedNotes.length > 0 ? (
+                <div className="space-y-4">
+                  {sortedNotes.map((note) => (
+                    <div key={note.id} className="border border-gray-200 rounded-md p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <div className="flex items-center">
+                            <Star className="h-4 w-4 text-amber-400 fill-amber-400 mr-1" />
+                            <span className="font-medium">{note.rating.toFixed(1)}</span>
+                            <span className="text-gray-500 text-sm ml-1">/5</span>
+                          </div>
+                          {note.date && (
+                            <div className="text-xs text-gray-500">
+                              {new Date(note.date).toLocaleDateString()}
                             </div>
-                          </div>
-                          <div className="flex space-x-1">
-                            <Button
-                              onClick={() => handleEditReview(note)}
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              onClick={() => handleDeleteReview(note.id!)}
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
+                          )}
                         </div>
-                        <p className="text-sm mt-2">{note.text}</p>
+                        <div className="flex space-x-1">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-7 w-7" 
+                            onClick={() => handleEditReview(note)}
+                          >
+                            <Edit className="h-3 w-3" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-7 w-7 text-red-600 hover:text-red-700 hover:bg-red-50" 
+                            onClick={() => handleDeleteReview(note.id!)}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                </>
+                      
+                      {note.flavor && (
+                        <div className="mb-2">
+                          <Badge variant="outline">{note.flavor}</Badge>
+                        </div>
+                      )}
+                      
+                      {note.text && (
+                        <p className="text-sm whitespace-pre-line">{note.text}</p>
+                      )}
+                      
+                      {/* If this is a detailed review, show the sections */}
+                      {(note.visualColor || note.noseAromas || note.mouthfeelAlcohol || 
+                        note.tasteFlavors || note.finishLength || note.valueAvailability) && (
+                        <div className="mt-3 pt-3 border-t border-gray-100">
+                          <Accordion type="single" collapsible>
+                            <AccordionItem value="details">
+                              <AccordionTrigger className="text-sm font-medium py-1">
+                                View Detailed Notes
+                              </AccordionTrigger>
+                              <AccordionContent className="max-h-[300px] overflow-y-auto pr-2">
+                                <div className="space-y-3 text-sm">
+                                  {/* Visual details */}
+                                  {(note.visualColor || note.visualViscosity || note.visualClarity) && (
+                                    <div>
+                                      <h4 className="font-medium text-sm">Visual:</h4>
+                                      <ul className="list-disc list-inside text-xs">
+                                        {note.visualColor && <li>Color: {note.visualColor}</li>}
+                                        {note.visualViscosity && <li>Viscosity: {note.visualViscosity}</li>}
+                                        {note.visualClarity && <li>Clarity: {note.visualClarity}</li>}
+                                      </ul>
+                                      {note.visualNotes && (
+                                        <p className="text-xs mt-1 italic">{note.visualNotes}</p>
+                                      )}
+                                    </div>
+                                  )}
+                                  
+                                  {/* Nose details */}
+                                  {(note.noseAromas && note.noseAromas.length > 0) && (
+                                    <div>
+                                      <h4 className="font-medium text-sm">Nose:</h4>
+                                      <p className="text-xs">
+                                        {note.noseAromas.join(', ')}
+                                      </p>
+                                      {note.noseScore && (
+                                        <p className="text-xs">Score: {note.noseScore}/5</p>
+                                      )}
+                                      {note.noseNotes && (
+                                        <p className="text-xs mt-1 italic">{note.noseNotes}</p>
+                                      )}
+                                    </div>
+                                  )}
+                                  
+                                  {/* Mouthfeel details */}
+                                  {(note.mouthfeelAlcohol || note.mouthfeelViscosity || note.mouthfeelPleasantness) && (
+                                    <div>
+                                      <h4 className="font-medium text-sm">Mouthfeel:</h4>
+                                      <ul className="list-disc list-inside text-xs">
+                                        {note.mouthfeelAlcohol && <li>Alcohol: {note.mouthfeelAlcohol}</li>}
+                                        {note.mouthfeelViscosity && <li>Viscosity: {note.mouthfeelViscosity}</li>}
+                                        {note.mouthfeelPleasantness && <li>Pleasantness: {note.mouthfeelPleasantness}</li>}
+                                      </ul>
+                                      {note.mouthfeelScore && (
+                                        <p className="text-xs">Score: {note.mouthfeelScore}/5</p>
+                                      )}
+                                      {note.mouthfeelNotes && (
+                                        <p className="text-xs mt-1 italic">{note.mouthfeelNotes}</p>
+                                      )}
+                                    </div>
+                                  )}
+                                  
+                                  {/* Taste details */}
+                                  {(note.tasteFlavors && note.tasteFlavors.length > 0) && (
+                                    <div>
+                                      <h4 className="font-medium text-sm">Taste:</h4>
+                                      <p className="text-xs">
+                                        {note.tasteFlavors.join(', ')}
+                                      </p>
+                                      {note.tasteCorrelation !== undefined && (
+                                        <p className="text-xs">Correlates with nose: {note.tasteCorrelation ? 'Yes' : 'No'}</p>
+                                      )}
+                                      {note.tasteScore && (
+                                        <p className="text-xs">Score: {note.tasteScore}/5</p>
+                                      )}
+                                      {note.tasteNotes && (
+                                        <p className="text-xs mt-1 italic">{note.tasteNotes}</p>
+                                      )}
+                                    </div>
+                                  )}
+                                  
+                                  {/* Finish details */}
+                                  {(note.finishFlavors || note.finishLength || note.finishPleasantness) && (
+                                    <div>
+                                      <h4 className="font-medium text-sm">Finish:</h4>
+                                      {note.finishFlavors && note.finishFlavors.length > 0 && (
+                                        <p className="text-xs">
+                                          Flavors: {note.finishFlavors.join(', ')}
+                                        </p>
+                                      )}
+                                      <ul className="list-disc list-inside text-xs">
+                                        {note.finishLength && <li>Length: {note.finishLength}</li>}
+                                        {note.finishPleasantness && <li>Pleasantness: {note.finishPleasantness}</li>}
+                                      </ul>
+                                      {note.finishCorrelation !== undefined && (
+                                        <p className="text-xs">Correlates with taste: {note.finishCorrelation ? 'Yes' : 'No'}</p>
+                                      )}
+                                      {note.finishScore && (
+                                        <p className="text-xs">Score: {note.finishScore}/5</p>
+                                      )}
+                                      {note.finishNotes && (
+                                        <p className="text-xs mt-1 italic">{note.finishNotes}</p>
+                                      )}
+                                    </div>
+                                  )}
+                                  
+                                  {/* Value details */}
+                                  {(note.valueAvailability || note.valueBuyAgain || note.valueOccasion) && (
+                                    <div>
+                                      <h4 className="font-medium text-sm">Value:</h4>
+                                      <ul className="list-disc list-inside text-xs">
+                                        {note.valueAvailability && <li>Availability: {note.valueAvailability}</li>}
+                                        {note.valueBuyAgain && <li>Buy Again: {note.valueBuyAgain}</li>}
+                                        {note.valueOccasion && <li>Occasion: {note.valueOccasion}</li>}
+                                      </ul>
+                                      {note.valueScore && (
+                                        <p className="text-xs">Score: {note.valueScore}/5</p>
+                                      )}
+                                      {note.valueNotes && (
+                                        <p className="text-xs mt-1 italic">{note.valueNotes}</p>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              </AccordionContent>
+                            </AccordionItem>
+                          </Accordion>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 border border-dashed border-gray-200 rounded-md">
+                  <BookOpen className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+                  <p className="text-gray-500">No tasting notes yet</p>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="mt-4"
+                    onClick={() => onReview(whiskey)}
+                  >
+                    <PenIcon className="h-4 w-4 mr-1" />
+                    Add Your First Review
+                  </Button>
+                </div>
               )}
-              
-              <div className="mt-4 grid grid-cols-2 gap-4 text-sm text-gray-500">
-                <div>
-                  <p>Added on: {dateAdded}</p>
-                </div>
-                <div>
-                  <p>Last reviewed: {lastReviewed}</p>
-                </div>
-              </div>
               
               <div className="mt-6 flex justify-between">
                 <Button
