@@ -9,6 +9,7 @@ interface CollectionGridProps {
   isError: boolean;
   onViewDetails: (whiskey: Whiskey) => void;
   onReview: (whiskey: Whiskey) => void;
+  onEdit?: (whiskey: Whiskey) => void;
   onAddNew: () => void;
 }
 
@@ -18,6 +19,7 @@ const CollectionGrid = ({
   isError, 
   onViewDetails, 
   onReview,
+  onEdit,
   onAddNew
 }: CollectionGridProps) => {
   // Loading state

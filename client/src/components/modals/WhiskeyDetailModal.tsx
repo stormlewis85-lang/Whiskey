@@ -18,8 +18,10 @@ interface WhiskeyDetailModalProps {
   onEdit: (whiskey: Whiskey) => void;
 }
 
-const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview }: WhiskeyDetailModalProps) => {
+const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit }: WhiskeyDetailModalProps) => {
   const [isUploading, setIsUploading] = useState(false);
+  const [selectedReview, setSelectedReview] = useState<ReviewNote | null>(null);
+  const [isEditReviewModalOpen, setIsEditReviewModalOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -47,44 +49,14 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview }: WhiskeyDetai
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     console.log("File input change event triggered");
     const file = event.target.files?.[0];
-    if (!file) {
-      console.log("No file selected");
-      return;
-    }
-    
-    console.log("File selected:", file.name, file.type, file.size);
-    
-    // Validate file type
-    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    if (!validTypes.includes(file.type)) {
-      console.log("Invalid file type:", file.type);
-      toast({
-        title: "Invalid file type",
-        description: "Please select a JPEG, PNG, GIF, or WebP image.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    // Validate file size (5MB max)
-    if (file.size > 5 * 1024 * 1024) {
-      console.log("File too large:", file.size);
-      toast({
-        title: "File too large",
-        description: "Please select an image smaller than 5MB.",
-        variant: "destructive",
-      });
-      return;
-    }
+    if (!file) return;
     
     try {
-      // Set uploading state
       setIsUploading(true);
-      console.log("Starting upload for whiskey ID:", whiskey.id);
+      console.log("Starting file upload for:", file.name);
       
-      // Create form data
       const formData = new FormData();
-      formData.append("image", file);
+      formData.append('image', file);
       
       // Direct fetch for more control
       const response = await fetch(`/api/whiskeys/${whiskey.id}/image`, {
@@ -110,231 +82,243 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview }: WhiskeyDetai
       toast({
         title: "Upload failed",
         description: "There was an error uploading the image. Please try again.",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setIsUploading(false);
     }
   };
 
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl p-0 overflow-hidden">
-        <DialogHeader className="hidden">
-          <DialogTitle>Whiskey Details</DialogTitle>
-        </DialogHeader>
-        <div className="relative">
-          <div className="h-48 w-full bg-whiskey-100">
-            {whiskey.image ? (
-              <div className="relative h-full w-full">
-                <img 
-                  src={whiskey.image} 
-                  alt={`Bottle of ${whiskey.name}`}
-                  className="h-full w-full object-cover"
-                />
-                <label 
-                  htmlFor="bottle-image-upload"
-                  className="absolute bottom-3 right-3 bg-whiskey-600 text-white p-2 rounded-full shadow-md hover:bg-whiskey-500 focus:outline-none z-10 cursor-pointer"
-                >
-                  {isUploading ? (
-                    <div className="animate-spin h-5 w-5 border-2 border-white border-opacity-20 border-t-white rounded-full"></div>
-                  ) : (
-                    <Camera className="h-5 w-5" />
-                  )}
-                </label>
-              </div>
-            ) : (
-              <div className="h-full w-full flex flex-col items-center justify-center bg-whiskey-100 text-whiskey-600">
-                <label
-                  htmlFor="bottle-image-upload"
-                  className="flex flex-col items-center justify-center p-4 hover:bg-whiskey-200 rounded-lg transition-colors focus:outline-none cursor-pointer"
-                >
-                  {isUploading ? (
-                    <div className="animate-spin h-8 w-8 border-4 border-whiskey-600 border-opacity-20 border-t-whiskey-600 rounded-full mb-2"></div>
-                  ) : (
-                    <ImageIcon className="h-16 w-16 mb-2" />
-                  )}
-                  <span className="text-sm font-medium">
-                    {isUploading ? "Uploading..." : "Click to add bottle photo"}
-                  </span>
-                </label>
-              </div>
-            )}
-            <input 
-              type="file"
-              id="bottle-image-upload"
-              onChange={handleFileUpload}
-              accept=".jpg,.jpeg,.png,.gif,.webp"
-              className="hidden"
-              disabled={isUploading}
-            />
-          </div>
-          <button 
-            onClick={onClose} 
-            className="absolute top-4 right-4 text-white bg-black bg-opacity-50 rounded-full p-1 hover:bg-opacity-75 focus:outline-none"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent text-white p-4">
-            {whiskey.type && (
-              <span className="inline-block bg-whiskey-600 rounded-full px-3 py-1 text-xs font-semibold">
-                {whiskey.type}
-              </span>
-            )}
-            <h2 className="text-2xl font-bold mt-1">{whiskey.name}</h2>
-            <p className="text-gray-300">{whiskey.distillery || 'Unknown Distillery'}</p>
-          </div>
-        </div>
-        
-        <div className="p-6">
-          <div className="flex flex-wrap gap-6">
-            <div className="flex-1 min-w-[200px]">
-              <h3 className="font-medium text-[#F5F5F0] mb-4">Details</h3>
-              
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Age:</span>
-                  <span className="font-medium">{whiskey.age ? `${whiskey.age} years` : 'N/A'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Price:</span>
-                  <span className="font-medium">{whiskey.price ? `$${whiskey.price}` : 'N/A'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">ABV:</span>
-                  <span className="font-medium">{whiskey.abv ? `${whiskey.abv}%` : 'N/A'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Region:</span>
-                  <span className="font-medium">{whiskey.region || 'N/A'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Date Added:</span>
-                  <span className="font-medium">{dateAdded}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Last Reviewed:</span>
-                  <span className="font-medium">{lastReviewed}</span>
-                </div>
+  // Review deletion
+  const deleteMutation = useMutation({
+    mutationFn: async (reviewId: string) => {
+      return apiRequest(`/api/whiskeys/${whiskey.id}/reviews/${reviewId}`, {
+        method: 'DELETE',
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/whiskeys'] });
+      toast({
+        title: "Review deleted",
+        description: "The review has been successfully deleted.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "There was an error deleting the review. Please try again.",
+        variant: "destructive"
+      });
+    }
+  });
 
-                {/* Bourbon specific details */}
-                {whiskey.type === "Bourbon" && (
-                  <>
-                    <Separator className="my-3" />
-                    <div className="mb-2 font-medium text-[#F5F5F0]">Bourbon Details</div>
-                    
-                    {whiskey.bottleType && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Bottle Type:</span>
-                        <span className="font-medium">{whiskey.bottleType}</span>
-                      </div>
-                    )}
-                    
-                    {whiskey.mashBill && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Mash Bill:</span>
-                        <span className="font-medium">{whiskey.mashBill}</span>
-                      </div>
-                    )}
-                    
-                    {whiskey.caskStrength && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Cask Strength:</span>
-                        <span className="font-medium">{whiskey.caskStrength}</span>
-                      </div>
-                    )}
-                    
-                    {whiskey.finished && whiskey.finished === "Yes" && (
-                      <>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Finished:</span>
-                          <span className="font-medium">Yes</span>
-                        </div>
-                        
-                        {whiskey.finishType && (
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Finish Type:</span>
-                            <span className="font-medium">{whiskey.finishType}</span>
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </>
-                )}
-              </div>
-            </div>
-            
-            <div className="flex-1 min-w-[200px]">
-              <h3 className="font-medium text-[#F5F5F0] mb-4">Rating & Tasting Notes</h3>
-              
-              <div className="flex mb-2">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <svg
-                    key={star}
-                    className={`w-6 h-6 ${star <= (whiskey.rating || 0) ? 'text-yellow-400' : 'text-gray-300'}`}
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                    xmlns="http://www.w3.org/2000/svg"
+  const handleDeleteReview = (reviewId: string) => {
+    if (window.confirm("Are you sure you want to delete this review? This action cannot be undone.")) {
+      deleteMutation.mutate(reviewId);
+    }
+  };
+  
+  const handleEditReview = (review: ReviewNote) => {
+    setSelectedReview(review);
+    setIsEditReviewModalOpen(true);
+  };
+
+  return (
+    <>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-2xl p-0 overflow-hidden">
+          <DialogHeader className="hidden">
+            <DialogTitle>Whiskey Details</DialogTitle>
+          </DialogHeader>
+          <div className="relative">
+            <div className="h-48 w-full bg-whiskey-100">
+              {whiskey.image ? (
+                <div className="relative h-full w-full">
+                  <img 
+                    src={whiskey.image} 
+                    alt={`Bottle of ${whiskey.name}`}
+                    className="h-full w-full object-cover"
+                  />
+                  <label 
+                    htmlFor="bottle-image-upload"
+                    className="absolute bottom-3 right-3 bg-whiskey-600 text-white p-2 rounded-full shadow-md hover:bg-whiskey-500 focus:outline-none z-10 cursor-pointer"
                   >
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                  </svg>
-                ))}
-                <span className="ml-1 text-gray-600">
-                  {whiskey.rating ? `${whiskey.rating}/5` : 'Not Rated'}
-                </span>
-              </div>
-              
-              {sortedNotes && sortedNotes.length > 0 ? (
-                <div className="mt-4 space-y-3">
-                  {sortedNotes.map((note, index) => (
-                    <div key={note.id || index} className="bg-gray-50 p-3 rounded-lg">
-                      <div className="flex justify-between items-start">
-                        <div className="flex items-center">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <svg
-                              key={star}
-                              className={`w-4 h-4 ${star <= (note.rating || 0) ? 'text-yellow-400' : 'text-gray-300'}`}
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                            </svg>
-                          ))}
-                          {note.flavor && (
-                            <span className="ml-2 text-xs bg-whiskey-100 text-whiskey-700 px-2 py-0.5 rounded">
-                              {note.flavor}
-                            </span>
-                          )}
-                        </div>
-                        <span className="text-xs text-gray-500">{note.date}</span>
-                      </div>
-                      <p className="text-sm mt-2">{note.text}</p>
-                    </div>
-                  ))}
+                    {isUploading ? (
+                      <div className="animate-spin h-5 w-5 border-2 border-white border-opacity-20 border-t-white rounded-full"></div>
+                    ) : (
+                      <Camera className="h-5 w-5" />
+                    )}
+                  </label>
                 </div>
               ) : (
-                <div className="mt-2 text-gray-500 italic">
-                  No tasting notes yet.
+                <div className="h-full w-full flex flex-col items-center justify-center bg-whiskey-100 text-whiskey-600">
+                  <label 
+                    htmlFor="bottle-image-upload"
+                    className="cursor-pointer p-4 rounded-full bg-whiskey-200 hover:bg-whiskey-300 transition-colors"
+                  >
+                    {isUploading ? (
+                      <div className="animate-spin h-8 w-8 border-2 border-whiskey-600 border-opacity-20 border-t-whiskey-600 rounded-full"></div>
+                    ) : (
+                      <Upload className="h-8 w-8" />
+                    )}
+                  </label>
+                  <span className="mt-2 text-sm font-medium">Add bottle image</span>
                 </div>
               )}
+              <input 
+                id="bottle-image-upload"
+                type="file" 
+                accept="image/*" 
+                className="hidden"
+                onChange={handleFileUpload}
+                disabled={isUploading}
+              />
+            </div>
+            
+            <div className="p-6">
+              <h2 className="text-2xl font-bold text-gray-900">{whiskey.name}</h2>
+              {whiskey.distillery && (
+                <p className="text-gray-600 mt-1">{whiskey.distillery}</p>
+              )}
+              
+              <div className="mt-4 grid grid-cols-2 gap-4">
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Type</h3>
+                  <p className="mt-1">{whiskey.type || 'N/A'}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Region</h3>
+                  <p className="mt-1">{whiskey.region || 'N/A'}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Age</h3>
+                  <p className="mt-1">{whiskey.age ? `${whiskey.age} years` : 'N/A'}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">ABV</h3>
+                  <p className="mt-1">{whiskey.abv ? `${whiskey.abv}%` : 'N/A'}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Price</h3>
+                  <p className="mt-1">{whiskey.price ? `$${whiskey.price.toFixed(2)}` : 'N/A'}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Rating</h3>
+                  <p className="mt-1">{whiskey.rating ? `${whiskey.rating.toFixed(1)} / 5.0` : 'Not rated'}</p>
+                </div>
+              </div>
+
+              {/* Bourbon-specific fields */}
+              {whiskey.type === 'Bourbon' && (
+                <>
+                  <Separator className="my-4" />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500">Bottle Type</h3>
+                      <p className="mt-1">{whiskey.bottleType || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500">Mash Bill</h3>
+                      <p className="mt-1">{whiskey.mashBill || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500">Cask Strength</h3>
+                      <p className="mt-1">{whiskey.caskStrength ? 'Yes' : 'No'}</p>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500">Finish Type</h3>
+                      <p className="mt-1">{whiskey.finishType || 'N/A'}</p>
+                    </div>
+                  </div>
+                </>
+              )}
+              
+              {/* Notes section */}
+              {sortedNotes.length > 0 && (
+                <>
+                  <Separator className="my-4" />
+                  <h3 className="text-lg font-semibold text-gray-900">Tasting Notes</h3>
+                  <div className="mt-2 space-y-3">
+                    {sortedNotes.map((note) => (
+                      <div key={note.id} className="bg-whiskey-50 p-3 rounded-md">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <span className="text-xs text-gray-500">{formatDate(new Date(note.date))}</span>
+                            <div className="flex items-center mt-1">
+                              <span className="font-medium">{note.rating.toFixed(1)}</span>
+                              <span className="text-xs text-gray-500 ml-1">/ 5.0</span>
+                            </div>
+                          </div>
+                          <div className="flex space-x-1">
+                            <Button
+                              onClick={() => handleEditReview(note)}
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              onClick={() => handleDeleteReview(note.id!)}
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                        <p className="text-sm mt-2">{note.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+              
+              <div className="mt-4 grid grid-cols-2 gap-4 text-sm text-gray-500">
+                <div>
+                  <p>Added on: {dateAdded}</p>
+                </div>
+                <div>
+                  <p>Last reviewed: {lastReviewed}</p>
+                </div>
+              </div>
+              
+              <div className="mt-6 flex justify-between">
+                <Button
+                  onClick={() => onEdit(whiskey)}
+                  variant="outline"
+                  className="inline-flex items-center border-whiskey-300 text-whiskey-700"
+                >
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Edit Whiskey
+                </Button>
+                <Button
+                  onClick={() => onReview(whiskey)}
+                  className="inline-flex items-center bg-whiskey-600 hover:bg-whiskey-500 text-white"
+                >
+                  <Star className="h-4 w-4 mr-2" />
+                  Add Review
+                </Button>
+              </div>
             </div>
           </div>
-          
-          <div className="mt-6 flex justify-end">
-            <Button
-              onClick={() => onReview(whiskey)}
-              className="inline-flex items-center bg-whiskey-600 hover:bg-whiskey-500 text-white"
-            >
-              <Star className="h-4 w-4 mr-2" />
-              Add Review
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Edit Review Modal */}
+      {selectedReview && (
+        <EditReviewModal
+          isOpen={isEditReviewModalOpen}
+          onClose={() => {
+            setIsEditReviewModalOpen(false);
+            setSelectedReview(null);
+          }}
+          whiskey={whiskey}
+          review={selectedReview}
+        />
+      )}
+    </>
   );
 };
 

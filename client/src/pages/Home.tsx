@@ -6,6 +6,7 @@ import FilterBar from "@/components/FilterBar";
 import CollectionGrid from "@/components/CollectionGrid";
 import ImportModal from "@/components/modals/ImportModal";
 import AddWhiskeyModal from "@/components/modals/AddWhiskeyModal";
+import EditWhiskeyModal from "@/components/modals/EditWhiskeyModal";
 import ReviewModal from "@/components/modals/ReviewModal";
 import WhiskeyDetailModal from "@/components/modals/WhiskeyDetailModal";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ const Home = () => {
   // Modals state
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isAddWhiskeyModalOpen, setIsAddWhiskeyModalOpen] = useState(false);
+  const [isEditWhiskeyModalOpen, setIsEditWhiskeyModalOpen] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [currentWhiskey, setCurrentWhiskey] = useState<Whiskey | null>(null);
@@ -62,6 +64,12 @@ const Home = () => {
   const openDetailModal = (whiskey: Whiskey) => {
     setCurrentWhiskey(whiskey);
     setIsDetailModalOpen(true);
+  };
+  
+  const openEditWhiskeyModal = (whiskey: Whiskey) => {
+    setCurrentWhiskey(whiskey);
+    setIsEditWhiskeyModalOpen(true);
+    setIsDetailModalOpen(false);
   };
 
   return (
