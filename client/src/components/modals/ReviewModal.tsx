@@ -110,6 +110,61 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
   const [finishAdjustment, setFinishAdjustment] = useState(0);
   const [valueAdjustment, setValueAdjustment] = useState(0);
   const [finalNotes, setFinalNotes] = useState('');
+
+  // Reset function to clear all form values and states
+  const resetReview = () => {
+    setCurrentPage(ReviewPage.Visual);
+    setRating(0);
+    setSelectedNoseAromas([]);
+    setSelectedTasteFlavors([]);
+    setSelectedFinishFlavors([]);
+    setNoseAdjustment(0);
+    setMouthfeelAdjustment(0);
+    setTasteAdjustment(0);
+    setFinishAdjustment(0);
+    setValueAdjustment(0);
+    setFinalNotes('');
+    form.reset({
+      rating: 0,
+      date: new Date().toISOString().split('T')[0],
+      text: "",
+      flavor: "",
+      id: nanoid(),
+      visual: "",
+      nose: "",
+      mouthfeel: "",
+      taste: "",
+      finish: "",
+      value: "",
+      visualColor: "",
+      visualViscosity: "",
+      visualClarity: "",
+      visualNotes: "",
+      noseAromas: [],
+      noseScore: undefined,
+      noseNotes: "",
+      mouthfeelAlcohol: "",
+      mouthfeelViscosity: "",
+      mouthfeelPleasantness: "",
+      mouthfeelScore: undefined,
+      mouthfeelNotes: "",
+      tasteFlavors: [],
+      tasteCorrelation: undefined,
+      tasteScore: undefined,
+      tasteNotes: "",
+      finishFlavors: [],
+      finishCorrelation: undefined,
+      finishLength: "",
+      finishPleasantness: "",
+      finishScore: undefined,
+      finishNotes: "",
+      valueAvailability: "",
+      valueBuyAgain: "",
+      valueOccasion: "",
+      valueScore: undefined,
+      valueNotes: ""
+    });
+  };
   
   const form = useForm<ReviewNote>({
     resolver: zodResolver(reviewNoteSchema),
@@ -1928,6 +1983,13 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
         return null;
     }
   };
+
+  // Reset all form values when the dialog is opened
+  useEffect(() => {
+    if (isOpen) {
+      resetReview();
+    }
+  }, [isOpen]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
