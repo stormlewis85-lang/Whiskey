@@ -14,6 +14,7 @@ import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import path from "path";
 import fs from "fs";
+import { setupAuth, isAuthenticated } from "./auth";
 
 // Ensure upload directory exists
 const uploadDir = path.join(process.cwd(), "uploads");
@@ -57,9 +58,19 @@ const imageUpload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Get all whiskeys
+  // Setup authentication
+  setupAuth(app);
+  
+  // Get all whiskeys (filter by user if authenticated)
   app.get("/api/whiskeys", async (req: Request, res: Response) => {
     try {
+      // If user is authenticated, get only their whiskeys
+      if (req.session && req.session.userId) {
+        const whiskeys = await storage.getWhiskeys(req.session.userId);
+        return res.json(whiskeys);
+      }
+      
+      // If no user, return all whiskeys (public or demo view)
       const whiskeys = await storage.getWhiskeys();
       res.json(whiskeys);
     } catch (error) {
@@ -88,10 +99,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Create a new whiskey
-  app.post("/api/whiskeys", async (req: Request, res: Response) => {
+  // Create a new whiskey (user must be authenticated)
+  app.post("/api/whiskeys", isAuthenticated, async (req: Request, res: Response) => {
     try {
-      const validatedData = insertWhiskeySchema.parse(req.body);
+      // Ensure the whiskey is associated with the current user
+      const whiskey = {
+        ...req.body,
+        userId: req.session.userId
+      };
+      
+      const validatedData = insertWhiskeySchema.parse(whiskey);
       const newWhiskey = await storage.createWhiskey(validatedData);
       res.status(201).json(newWhiskey);
     } catch (error) {
