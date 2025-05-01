@@ -229,3 +229,9 @@
 [role="progressbar"] > div {
   background-color: #986A44 !important;
 }
+
+/* Dialog content styling for review modal */
+.dialog-content {
+  max-height: 85vh;
+  overflow-y: auto;
+}

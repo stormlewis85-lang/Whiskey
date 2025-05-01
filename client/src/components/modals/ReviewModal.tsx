@@ -320,6 +320,15 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
         form.setValue('valueNotes', '');
       }
       
+      // If we're on the Summary page, set the initial rating based on weighted calculations
+      if (currentPage === ReviewPage.Summary) {
+        // Calculate the weighted scores and set the initial rating
+        const scores = calculateWeightedScores();
+        const totalScore = scores.nose + scores.mouthfeel + scores.taste + scores.finish + scores.value;
+        const calculatedRating = parseFloat((totalScore / 11.0).toFixed(1));
+        setRating(calculatedRating);
+      }
+      
       // Go to the next page
       setCurrentPage(prevPage => (prevPage + 1) as ReviewPage);
       
@@ -1689,6 +1698,227 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
               </div>
             </div>
           </>
+        );
+      case ReviewPage.FinalScores:
+        const weightedScores = calculateWeightedScores();
+        const totalScore = weightedScores.nose + weightedScores.mouthfeel + 
+                          weightedScores.taste + weightedScores.finish + 
+                          weightedScores.value;
+        const finalRating = parseFloat((totalScore / 11.0).toFixed(1));
+        
+        return (
+          <div className="space-y-6">
+            <div className="bg-[#F5EFE0] p-4 rounded-lg border border-[#D9C4A3]">
+              <h3 className="text-lg font-serif font-semibold text-[#593D25] mb-4">Weighted Category Scores</h3>
+              
+              <div className="space-y-4">
+                {/* Nose Score */}
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="font-medium text-[#794E2F]">Nose (×2.0)</span>
+                    <span className="text-[#986A44] font-medium">{weightedScores.nose.toFixed(1)}/10</span>
+                  </div>
+                  <div className="flex items-center">
+                    <button 
+                      className="p-1 bg-[#E8D9BD] hover:bg-[#D9C4A3] rounded-l-md border border-[#D9C4A3]"
+                      onClick={() => setNoseAdjustment(prev => Math.max(prev - 0.5, -2.5))}
+                      type="button"
+                    >
+                      −0.5
+                    </button>
+                    <div className="flex-1 h-2 mx-1 bg-[#E8D9BD] relative">
+                      <div 
+                        className="absolute h-full bg-[#986A44]" 
+                        style={{ width: `${(weightedScores.nose / 10) * 100}%` }}
+                      ></div>
+                    </div>
+                    <button 
+                      className="p-1 bg-[#E8D9BD] hover:bg-[#D9C4A3] rounded-r-md border border-[#D9C4A3]"
+                      onClick={() => setNoseAdjustment(prev => Math.min(prev + 0.5, 2.5))}
+                      type="button"
+                    >
+                      +0.5
+                    </button>
+                  </div>
+                  {noseAdjustment !== 0 && (
+                    <div className="text-xs text-[#986A44] mt-1">
+                      Adjustment: {noseAdjustment > 0 ? "+" : ""}{noseAdjustment}
+                    </div>
+                  )}
+                </div>
+                
+                {/* Mouthfeel Score */}
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="font-medium text-[#794E2F]">Mouthfeel (×2.0)</span>
+                    <span className="text-[#986A44] font-medium">{weightedScores.mouthfeel.toFixed(1)}/10</span>
+                  </div>
+                  <div className="flex items-center">
+                    <button 
+                      className="p-1 bg-[#E8D9BD] hover:bg-[#D9C4A3] rounded-l-md border border-[#D9C4A3]"
+                      onClick={() => setMouthfeelAdjustment(prev => Math.max(prev - 0.5, -2.5))}
+                      type="button"
+                    >
+                      −0.5
+                    </button>
+                    <div className="flex-1 h-2 mx-1 bg-[#E8D9BD] relative">
+                      <div 
+                        className="absolute h-full bg-[#986A44]" 
+                        style={{ width: `${(weightedScores.mouthfeel / 10) * 100}%` }}
+                      ></div>
+                    </div>
+                    <button 
+                      className="p-1 bg-[#E8D9BD] hover:bg-[#D9C4A3] rounded-r-md border border-[#D9C4A3]"
+                      onClick={() => setMouthfeelAdjustment(prev => Math.min(prev + 0.5, 2.5))}
+                      type="button"
+                    >
+                      +0.5
+                    </button>
+                  </div>
+                  {mouthfeelAdjustment !== 0 && (
+                    <div className="text-xs text-[#986A44] mt-1">
+                      Adjustment: {mouthfeelAdjustment > 0 ? "+" : ""}{mouthfeelAdjustment}
+                    </div>
+                  )}
+                </div>
+                
+                {/* Taste Score */}
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="font-medium text-[#794E2F]">Taste (×3.0)</span>
+                    <span className="text-[#986A44] font-medium">{weightedScores.taste.toFixed(1)}/15</span>
+                  </div>
+                  <div className="flex items-center">
+                    <button 
+                      className="p-1 bg-[#E8D9BD] hover:bg-[#D9C4A3] rounded-l-md border border-[#D9C4A3]"
+                      onClick={() => setTasteAdjustment(prev => Math.max(prev - 0.5, -2.5))}
+                      type="button"
+                    >
+                      −0.5
+                    </button>
+                    <div className="flex-1 h-2 mx-1 bg-[#E8D9BD] relative">
+                      <div 
+                        className="absolute h-full bg-[#986A44]" 
+                        style={{ width: `${(weightedScores.taste / 15) * 100}%` }}
+                      ></div>
+                    </div>
+                    <button 
+                      className="p-1 bg-[#E8D9BD] hover:bg-[#D9C4A3] rounded-r-md border border-[#D9C4A3]"
+                      onClick={() => setTasteAdjustment(prev => Math.min(prev + 0.5, 2.5))}
+                      type="button"
+                    >
+                      +0.5
+                    </button>
+                  </div>
+                  {tasteAdjustment !== 0 && (
+                    <div className="text-xs text-[#986A44] mt-1">
+                      Adjustment: {tasteAdjustment > 0 ? "+" : ""}{tasteAdjustment}
+                    </div>
+                  )}
+                </div>
+                
+                {/* Finish Score */}
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="font-medium text-[#794E2F]">Finish (×2.5)</span>
+                    <span className="text-[#986A44] font-medium">{weightedScores.finish.toFixed(1)}/12.5</span>
+                  </div>
+                  <div className="flex items-center">
+                    <button 
+                      className="p-1 bg-[#E8D9BD] hover:bg-[#D9C4A3] rounded-l-md border border-[#D9C4A3]"
+                      onClick={() => setFinishAdjustment(prev => Math.max(prev - 0.5, -2.5))}
+                      type="button"
+                    >
+                      −0.5
+                    </button>
+                    <div className="flex-1 h-2 mx-1 bg-[#E8D9BD] relative">
+                      <div 
+                        className="absolute h-full bg-[#986A44]" 
+                        style={{ width: `${(weightedScores.finish / 12.5) * 100}%` }}
+                      ></div>
+                    </div>
+                    <button 
+                      className="p-1 bg-[#E8D9BD] hover:bg-[#D9C4A3] rounded-r-md border border-[#D9C4A3]"
+                      onClick={() => setFinishAdjustment(prev => Math.min(prev + 0.5, 2.5))}
+                      type="button"
+                    >
+                      +0.5
+                    </button>
+                  </div>
+                  {finishAdjustment !== 0 && (
+                    <div className="text-xs text-[#986A44] mt-1">
+                      Adjustment: {finishAdjustment > 0 ? "+" : ""}{finishAdjustment}
+                    </div>
+                  )}
+                </div>
+                
+                {/* Value Score */}
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="font-medium text-[#794E2F]">Value (×1.5)</span>
+                    <span className="text-[#986A44] font-medium">{weightedScores.value.toFixed(1)}/7.5</span>
+                  </div>
+                  <div className="flex items-center">
+                    <button 
+                      className="p-1 bg-[#E8D9BD] hover:bg-[#D9C4A3] rounded-l-md border border-[#D9C4A3]"
+                      onClick={() => setValueAdjustment(prev => Math.max(prev - 0.5, -2.5))}
+                      type="button"
+                    >
+                      −0.5
+                    </button>
+                    <div className="flex-1 h-2 mx-1 bg-[#E8D9BD] relative">
+                      <div 
+                        className="absolute h-full bg-[#986A44]" 
+                        style={{ width: `${(weightedScores.value / 7.5) * 100}%` }}
+                      ></div>
+                    </div>
+                    <button 
+                      className="p-1 bg-[#E8D9BD] hover:bg-[#D9C4A3] rounded-r-md border border-[#D9C4A3]"
+                      onClick={() => setValueAdjustment(prev => Math.min(prev + 0.5, 2.5))}
+                      type="button"
+                    >
+                      +0.5
+                    </button>
+                  </div>
+                  {valueAdjustment !== 0 && (
+                    <div className="text-xs text-[#986A44] mt-1">
+                      Adjustment: {valueAdjustment > 0 ? "+" : ""}{valueAdjustment}
+                    </div>
+                  )}
+                </div>
+                
+                {/* Final Score */}
+                <div className="border-t border-[#D9C4A3] pt-3 mt-4">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium text-[#593D25] text-lg">Final Score</span>
+                    <span className="text-[#794E2F] font-bold text-xl">{finalRating.toFixed(1)}/5</span>
+                  </div>
+                  <div className="w-full h-3 mt-2 bg-[#E8D9BD] rounded-full relative">
+                    <div 
+                      className="absolute h-full bg-[#986A44] rounded-full" 
+                      style={{ width: `${(finalRating / 5) * 100}%` }}
+                    ></div>
+                  </div>
+                  <div className="text-sm text-[#986A44] mt-2">
+                    Total: {totalScore.toFixed(1)}/55 points
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Additional notes for final adjustment */}
+            <div className="mt-6">
+              <label className="block text-sm font-medium text-[#593D25] mb-2">
+                Additional Notes
+              </label>
+              <textarea
+                value={finalNotes}
+                onChange={(e) => setFinalNotes(e.target.value)}
+                placeholder="Any final thoughts or comments about this whiskey..."
+                className="w-full p-3 border border-[#D9C4A3] rounded-md bg-white text-[#593D25] min-h-[100px]"
+              />
+            </div>
+          </div>
         );
       default:
         return null;
