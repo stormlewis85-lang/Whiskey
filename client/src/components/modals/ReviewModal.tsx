@@ -1921,7 +1921,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md dialog-content" ref={dialogContentRef}>
         <DialogHeader>
-          <DialogTitle className="text-lg font-serif font-medium text-[#593d25]">
+          <DialogTitle className="text-lg font-serif font-medium text-[#F5F5F0]">
             Review Whiskey - {pageData[currentPage].title}
           </DialogTitle>
         </DialogHeader>
