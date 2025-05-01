@@ -1609,28 +1609,28 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md dialog-content">
         <DialogHeader>
-          <DialogTitle className="text-lg font-medium text-gray-900">
+          <DialogTitle className="text-lg font-serif font-medium text-[#593d25]">
             Review Whiskey - {pageData[currentPage].title}
           </DialogTitle>
         </DialogHeader>
         
         <div className="text-center mb-4">
-          <h4 className="font-bold text-xl">{whiskey.name}</h4>
-          <p className="text-gray-600">{whiskey.distillery}</p>
+          <h4 className="font-bold text-xl text-[#7d5936]">{whiskey.name}</h4>
+          <p className="text-[#986A44]">{whiskey.distillery}</p>
         </div>
         
         {/* Progress bar */}
         <div className="mb-4">
-          <Progress value={progressPercentage} className="h-2" />
-          <p className="text-xs text-right mt-1 text-gray-500">
+          <Progress value={progressPercentage} className="h-2 bg-[#e8d9bd]" />
+          <p className="text-xs text-right mt-1 text-[#986A44]">
             Step {currentPage + 1} of {pageData.length}
           </p>
         </div>
         
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 scrollable-content">
             {renderPageContent()}
             
             <div className="flex justify-between pt-2">
@@ -1640,6 +1640,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                     type="button"
                     variant="outline"
                     onClick={prevPage}
+                    className="border-[#d9c4a3] text-[#794e2f] hover:bg-[#f5efe0]"
                   >
                     Previous
                   </Button>
@@ -1651,6 +1652,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                   type="button"
                   variant="outline"
                   onClick={onClose}
+                  className="border-[#d9c4a3] text-[#794e2f] hover:bg-[#f5efe0]"
                 >
                   Cancel
                 </Button>
@@ -1658,7 +1660,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                 {currentPage < ReviewPage.Summary ? (
                   <Button
                     type="button"
-                    className="bg-whiskey-600 hover:bg-whiskey-500 text-white"
+                    className="barrel-button"
                     onClick={nextPage}
                   >
                     Next
@@ -1666,7 +1668,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                 ) : (
                   <Button
                     type="submit"
-                    className="bg-whiskey-600 hover:bg-whiskey-500 text-white"
+                    className="barrel-button"
                     disabled={addReviewMutation.isPending || !rating}
                   >
                     {addReviewMutation.isPending ? "Submitting..." : "Submit Review"}

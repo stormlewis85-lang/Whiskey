@@ -150,3 +150,82 @@
 
 .border-whiskey-100 { @apply border-[hsl(var(--whiskey-100))]; }
 .border-whiskey-200 { @apply border-[hsl(var(--whiskey-200))]; }
+
+/* Rustic barrel theme enhancements */
+.card {
+  @apply bg-white/90 border border-[#d9c4a3] shadow-md;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
+}
+
+.dialog-content {
+  @apply bg-[#fffaf0]/95 border-[#d9c4a3];
+  box-shadow: 0 8px 25px rgba(121, 78, 47, 0.2);
+}
+
+.collection-header {
+  @apply font-serif text-4xl font-bold text-[#593d25];
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.6);
+  letter-spacing: 0.05em;
+}
+
+/* Style buttons with barrel wood feel */
+.barrel-button {
+  @apply bg-[#986A44] text-white border-[#794e2f];
+  background-image: linear-gradient(to bottom, #b68751, #986A44, #794e2f);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.barrel-button:hover {
+  @apply bg-[#b68751];
+  background-image: linear-gradient(to bottom, #c9a479, #b68751, #986A44);
+  transform: translateY(-1px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Custom scrollable modal content */
+.scrollable-content {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+/* Style tables with wood feel */
+.whiskey-table {
+  @apply bg-white/90 border border-[#d9c4a3];
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.whiskey-table th {
+  @apply bg-[#986A44] text-white font-serif;
+  background-image: linear-gradient(to bottom, #b68751, #986A44);
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.2);
+}
+
+.whiskey-table tr:nth-child(even) {
+  @apply bg-[#f5efe0];
+}
+
+.whiskey-table tr:hover {
+  @apply bg-[#e8d9bd];
+}
+
+/* Custom progress bar for rustic theme */
+:where(.css-dev-only-do-not-override-nllxry).ant-progress .ant-progress-bg {
+  background-color: #986A44;
+}
+
+/* Customize the progress indicator */
+[role="progressbar"] > div {
+  background-color: #986A44 !important;
+}

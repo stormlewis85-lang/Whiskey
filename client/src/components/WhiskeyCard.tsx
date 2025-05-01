@@ -12,7 +12,7 @@ interface WhiskeyCardProps {
 
 const WhiskeyCard = ({ whiskey, onViewDetails, onReview }: WhiskeyCardProps) => {
   return (
-    <Card className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-300">
+    <Card className="card whiskey-card">
       <div className="relative">
         <div className="aspect-w-4 aspect-h-3 bg-whiskey-100">
           <div className="h-48 w-full bg-whiskey-100 flex items-center justify-center overflow-hidden">
@@ -53,10 +53,10 @@ const WhiskeyCard = ({ whiskey, onViewDetails, onReview }: WhiskeyCardProps) => 
       </div>
       
       <CardContent className="p-4">
-        <h3 className="font-semibold text-lg truncate">{whiskey.name}</h3>
+        <h3 className="font-serif font-semibold text-lg truncate text-[#593d25]">{whiskey.name}</h3>
         <div className="flex justify-between items-center mt-1">
-          <p className="text-gray-600 text-sm truncate">{whiskey.distillery || 'Unknown Distillery'}</p>
-          <p className="text-whiskey-600 font-medium">
+          <p className="text-[#986A44] text-sm truncate">{whiskey.distillery || 'Unknown Distillery'}</p>
+          <p className="text-[#794e2f] font-medium">
             {whiskey.price ? `$${whiskey.price}` : ''}
           </p>
         </div>
@@ -111,13 +111,13 @@ const WhiskeyCard = ({ whiskey, onViewDetails, onReview }: WhiskeyCardProps) => 
           <Button
             onClick={() => onViewDetails(whiskey)}
             variant="outline"
-            className="bg-whiskey-100 hover:bg-whiskey-200 text-whiskey-700 flex-grow"
+            className="border-[#d9c4a3] text-[#794e2f] hover:bg-[#f5efe0] flex-grow"
           >
             Details
           </Button>
           <Button
             onClick={() => onReview(whiskey)}
-            className="bg-whiskey-600 hover:bg-whiskey-500 text-white flex-grow"
+            className="barrel-button flex-grow"
           >
             Review
           </Button>
