@@ -312,12 +312,13 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
     if (currentPage < ReviewPage.FinalScores) {
       // Clear specific values when moving between pages to avoid carrying over data
       if (currentPage === ReviewPage.Finish) {
-        // Reset any values that might be carried over to Value page
+        // Reset any values from the Value page
         form.setValue('valueAvailability', '');
         form.setValue('valueBuyAgain', '');
         form.setValue('valueOccasion', '');
         form.setValue('valueScore', undefined);
         form.setValue('valueNotes', '');
+        // Make sure there are no lingering values
       }
       
       // When moving from Value to Summary, clear the text field

@@ -235,3 +235,9 @@
   max-height: 85vh;
   overflow-y: auto;
 }
+
+/* Ensure only one scrollbar in form content */
+.scrollable-content {
+  max-height: none;
+  overflow-y: visible;
+}
