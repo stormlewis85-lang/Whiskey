@@ -844,7 +844,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                     <FormControl>
                       <RadioGroup 
                         onValueChange={(value) => field.onChange(parseInt(value))} 
-                        defaultValue={field.value?.toString()}
+                        value={field.value?.toString() || ""}
                         className="flex justify-between"
                       >
                         {SCORE_OPTIONS.map((score) => (
@@ -1063,7 +1063,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                     <FormControl>
                       <RadioGroup 
                         onValueChange={(value) => field.onChange(parseInt(value))} 
-                        defaultValue={field.value?.toString()}
+                        value={field.value?.toString() || ""}
                         className="flex justify-between"
                       >
                         {SCORE_OPTIONS.map((score) => (
@@ -1282,7 +1282,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                     <FormControl>
                       <RadioGroup 
                         onValueChange={field.onChange} 
-                        defaultValue={field.value}
+                        value={field.value || ""}
                         className="flex flex-col space-y-1"
                       >
                         <div className="grid grid-cols-2 gap-2">
@@ -1312,7 +1312,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                     <FormControl>
                       <RadioGroup 
                         onValueChange={field.onChange} 
-                        defaultValue={field.value}
+                        value={field.value || ""}
                         className="flex flex-col space-y-1"
                       >
                         <div className="grid grid-cols-2 gap-2">
@@ -1342,7 +1342,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                     <FormControl>
                       <RadioGroup 
                         onValueChange={(value) => field.onChange(parseInt(value))} 
-                        defaultValue={field.value?.toString()}
+                        value={field.value?.toString() || ""}
                         className="flex justify-between"
                       >
                         {SCORE_OPTIONS.map((score) => (
