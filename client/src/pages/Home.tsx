@@ -9,8 +9,9 @@ import AddWhiskeyModal from "@/components/modals/AddWhiskeyModal";
 import EditWhiskeyModal from "@/components/modals/EditWhiskeyModal";
 import ReviewModal from "@/components/modals/ReviewModal";
 import WhiskeyDetailModal from "@/components/modals/WhiskeyDetailModal";
+import ExportModal from "@/components/modals/ExportModal";
 import { Button } from "@/components/ui/button";
-import { PlusIcon, UploadIcon } from "lucide-react";
+import { PlusIcon, UploadIcon, DownloadIcon } from "lucide-react";
 import useWhiskeyCollection from "@/lib/hooks/useWhiskeyCollection";
 
 const Home = () => {
@@ -20,6 +21,7 @@ const Home = () => {
   const [isEditWhiskeyModalOpen, setIsEditWhiskeyModalOpen] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [currentWhiskey, setCurrentWhiskey] = useState<Whiskey | null>(null);
   
   // Filters state
@@ -54,6 +56,7 @@ const Home = () => {
   // Modal handlers
   const openImportModal = () => setIsImportModalOpen(true);
   const openAddWhiskeyModal = () => setIsAddWhiskeyModalOpen(true);
+  const openExportModal = () => setIsExportModalOpen(true);
   
   const openReviewModal = (whiskey: Whiskey) => {
     setCurrentWhiskey(whiskey);
@@ -79,6 +82,14 @@ const Home = () => {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl md:text-3xl font-serif font-bold">Whiskey Vault</h1>
           <div className="flex items-center space-x-2">
+            <Button
+              onClick={openExportModal}
+              variant="secondary"
+              className="bg-blue-600 hover:bg-blue-500 text-white"
+            >
+              <DownloadIcon className="h-4 w-4 mr-1" />
+              Export
+            </Button>
             <Button
               onClick={openImportModal}
               variant="secondary"
@@ -144,6 +155,11 @@ const Home = () => {
       <AddWhiskeyModal 
         isOpen={isAddWhiskeyModalOpen} 
         onClose={() => setIsAddWhiskeyModalOpen(false)} 
+      />
+      
+      <ExportModal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
       />
       
       {currentWhiskey && (
