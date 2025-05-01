@@ -78,7 +78,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get a specific whiskey
+  // Get a specific whiskey (filter by user if authenticated)
   app.get("/api/whiskeys/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
@@ -87,7 +87,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid ID format" });
       }
       
-      const whiskey = await storage.getWhiskey(id);
+      // If user is authenticated, get only their whiskey
+      let whiskey;
+      if (req.session && req.session.userId) {
+        whiskey = await storage.getWhiskey(id, req.session.userId);
+      } else {
+        whiskey = await storage.getWhiskey(id);
+      }
       
       if (!whiskey) {
         return res.status(404).json({ message: "Whiskey not found" });
@@ -120,8 +126,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update a whiskey
-  app.patch("/api/whiskeys/:id", async (req: Request, res: Response) => {
+  // Update a whiskey (user must be authenticated)
+  app.patch("/api/whiskeys/:id", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       
@@ -130,10 +136,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const validatedData = updateWhiskeySchema.parse(req.body);
-      const updatedWhiskey = await storage.updateWhiskey(id, validatedData);
+      // Pass userId to ensure user only updates their own whiskeys
+      const updatedWhiskey = await storage.updateWhiskey(id, validatedData, req.session.userId);
       
       if (!updatedWhiskey) {
-        return res.status(404).json({ message: "Whiskey not found" });
+        return res.status(404).json({ message: "Whiskey not found or not owned by you" });
       }
       
       res.json(updatedWhiskey);
@@ -146,8 +153,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Delete a whiskey
-  app.delete("/api/whiskeys/:id", async (req: Request, res: Response) => {
+  // Delete a whiskey (user must be authenticated)
+  app.delete("/api/whiskeys/:id", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       
@@ -155,10 +162,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid ID format" });
       }
       
-      const success = await storage.deleteWhiskey(id);
+      // Pass userId to ensure user only deletes their own whiskeys
+      const success = await storage.deleteWhiskey(id, req.session.userId);
       
       if (!success) {
-        return res.status(404).json({ message: "Whiskey not found" });
+        return res.status(404).json({ message: "Whiskey not found or not owned by you" });
       }
       
       res.status(204).send();
@@ -167,8 +175,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Add a review to a whiskey
-  app.post("/api/whiskeys/:id/reviews", async (req: Request, res: Response) => {
+  // Add a review to a whiskey (user must be authenticated)
+  app.post("/api/whiskeys/:id/reviews", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       
@@ -177,10 +185,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const validatedReview = reviewNoteSchema.parse(req.body);
-      const updatedWhiskey = await storage.addReview(id, validatedReview);
+      const updatedWhiskey = await storage.addReview(id, validatedReview, req.session.userId);
       
       if (!updatedWhiskey) {
-        return res.status(404).json({ message: "Whiskey not found" });
+        return res.status(404).json({ message: "Whiskey not found or not owned by you" });
       }
       
       res.json(updatedWhiskey);
@@ -193,8 +201,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Update a review
-  app.put("/api/whiskeys/:id/reviews/:reviewId", async (req: Request, res: Response) => {
+  // Update a review (user must be authenticated)
+  app.put("/api/whiskeys/:id/reviews/:reviewId", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       const reviewId = req.params.reviewId;
@@ -204,10 +212,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const validatedReview = reviewNoteSchema.parse(req.body);
-      const updatedWhiskey = await storage.updateReview(id, reviewId, validatedReview);
+      const updatedWhiskey = await storage.updateReview(id, reviewId, validatedReview, req.session.userId);
       
       if (!updatedWhiskey) {
-        return res.status(404).json({ message: "Whiskey or review not found" });
+        return res.status(404).json({ message: "Whiskey or review not found or not owned by you" });
       }
       
       res.json(updatedWhiskey);
@@ -220,8 +228,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Delete a review
-  app.delete("/api/whiskeys/:id/reviews/:reviewId", async (req: Request, res: Response) => {
+  // Delete a review (user must be authenticated)
+  app.delete("/api/whiskeys/:id/reviews/:reviewId", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       const reviewId = req.params.reviewId;
@@ -230,10 +238,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid whiskey ID format" });
       }
       
-      const updatedWhiskey = await storage.deleteReview(id, reviewId);
+      const updatedWhiskey = await storage.deleteReview(id, reviewId, req.session.userId);
       
       if (!updatedWhiskey) {
-        return res.status(404).json({ message: "Whiskey or review not found" });
+        return res.status(404).json({ message: "Whiskey or review not found or not owned by you" });
       }
       
       res.json(updatedWhiskey);
@@ -242,8 +250,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Upload bottle image
-  app.post("/api/whiskeys/:id/image", imageUpload.single("image"), async (req: Request, res: Response) => {
+  // Upload bottle image (user must be authenticated)
+  app.post("/api/whiskeys/:id/image", isAuthenticated, imageUpload.single("image"), async (req: Request, res: Response) => {
     console.log("Image upload request received for whiskey ID:", req.params.id);
     console.log("Request files:", req.file || "No file");
     console.log("Request body:", req.body);
@@ -267,15 +275,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const imagePath = `/uploads/${req.file.filename}`;
       console.log("Image path:", imagePath);
       
-      // Update the whiskey with the new image path
-      const updatedWhiskey = await storage.updateWhiskey(id, { image: imagePath });
+      // Update the whiskey with the new image path - with user ID check
+      const updatedWhiskey = await storage.updateWhiskey(id, { image: imagePath }, req.session.userId);
       console.log("Whiskey updated with image path:", updatedWhiskey ? "success" : "failed");
       
       if (!updatedWhiskey) {
-        console.log("Whiskey not found, deleting uploaded file");
+        console.log("Whiskey not found or not owned by user, deleting uploaded file");
         // If whiskey not found, delete the uploaded file to avoid orphaned files
         fs.unlinkSync(path.join(process.cwd(), "uploads", req.file.filename));
-        return res.status(404).json({ message: "Whiskey not found" });
+        return res.status(404).json({ message: "Whiskey not found or not owned by you" });
       }
       
       console.log("Image upload successful, returning response");
@@ -306,8 +314,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
   console.log("Serving uploads from:", path.join(process.cwd(), 'uploads'));
   
-  // Import Excel file
-  app.post("/api/import", excelUpload.single("file"), async (req: Request, res: Response) => {
+  // Import Excel file (user must be authenticated)
+  app.post("/api/import", isAuthenticated, excelUpload.single("file"), async (req: Request, res: Response) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: "No file uploaded" });
@@ -343,6 +351,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             region: row.Region || row.region,
             rating: row.Rating || row.rating,
             notes: [],
+            // Add the userId to associate with the current user
+            userId: req.session.userId
           };
 
           const validatedData = excelImportSchema.parse(mapped);
