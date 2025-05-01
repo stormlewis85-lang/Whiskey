@@ -1592,34 +1592,20 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
               </div>
             </div>
             
-            {/* Overall Rating */}
-            <div className="mb-4">
-              <FormLabel>Overall Rating</FormLabel>
-              <div className="flex justify-center space-x-1 mt-2">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    type="button"
-                    onClick={() => {
-                      setRating(star);
-                      form.setValue("rating", star);
-                    }}
-                    className="focus:outline-none"
-                  >
-                    <svg
-                      className={`w-8 h-8 ${star <= rating ? "text-yellow-400" : "text-gray-300"}`}
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                    </svg>
-                  </button>
-                ))}
+            {/* Calculated Rating Display */}
+            <div className="mb-4 bg-amber-50 p-3 rounded-lg border border-amber-200">
+              <div className="text-center">
+                <h3 className="font-medium text-amber-800">Calculated Rating</h3>
+                <div className="text-3xl font-bold text-amber-700 my-2">{rating.toFixed(1)}/5</div>
+                <p className="text-sm text-gray-600">Based on your weighted category scores:</p>
+                <div className="text-sm text-gray-600 mt-1">
+                  Nose: {form.getValues('noseScore') || 0}/5 × 1.5, 
+                  Mouth Feel: {form.getValues('mouthfeelScore') || 0}/5 × 2.0, 
+                  Taste: {form.getValues('tasteScore') || 0}/5 × 3.0, 
+                  Finish: {form.getValues('finishScore') || 0}/5 × 2.5, 
+                  Value: {form.getValues('valueScore') || 0}/5 × 1.5
+                </div>
               </div>
-              {form.formState.errors.rating && (
-                <p className="text-sm text-red-500 text-center mt-1">Please select a rating</p>
-              )}
             </div>
             
             {/* Overall Impression */}
@@ -1710,7 +1696,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
         const totalScore = weightedScores.nose + weightedScores.mouthfeel + 
                           weightedScores.taste + weightedScores.finish + 
                           weightedScores.value;
-        const finalRating = parseFloat((totalScore / 11.0).toFixed(1));
+        const finalRating = parseFloat((totalScore / 10.5).toFixed(1));
         
         return (
           <div className="space-y-6">
@@ -1721,8 +1707,8 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                 {/* Nose Score */}
                 <div>
                   <div className="flex justify-between items-center mb-1">
-                    <span className="font-medium text-[#794E2F]">Nose (×2.0)</span>
-                    <span className="text-[#986A44] font-medium">{weightedScores.nose.toFixed(1)}/10</span>
+                    <span className="font-medium text-[#794E2F]">Nose (×1.5)</span>
+                    <span className="text-[#986A44] font-medium">{weightedScores.nose.toFixed(1)}/7.5</span>
                   </div>
                   <div className="flex items-center">
                     <button 
@@ -1735,7 +1721,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                     <div className="flex-1 h-2 mx-1 bg-[#E8D9BD] relative">
                       <div 
                         className="absolute h-full bg-[#986A44]" 
-                        style={{ width: `${(weightedScores.nose / 10) * 100}%` }}
+                        style={{ width: `${(weightedScores.nose / 7.5) * 100}%` }}
                       ></div>
                     </div>
                     <button 
@@ -1906,7 +1892,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                     ></div>
                   </div>
                   <div className="text-sm text-[#986A44] mt-2">
-                    Total: {totalScore.toFixed(1)}/55 points
+                    Total: {totalScore.toFixed(1)}/52.5 points
                   </div>
                 </div>
               </div>
