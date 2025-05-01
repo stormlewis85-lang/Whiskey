@@ -67,6 +67,7 @@ const FilterBar = ({
           <SelectContent>
             <SelectItem value="all">All Types</SelectItem>
             <SelectItem value="Bourbon">Bourbon</SelectItem>
+            <SelectItem value="Tennessee Whiskey">Tennessee Whiskey</SelectItem>
             <SelectItem value="Scotch">Scotch</SelectItem>
             <SelectItem value="Rye">Rye</SelectItem>
             <SelectItem value="Irish">Irish</SelectItem>

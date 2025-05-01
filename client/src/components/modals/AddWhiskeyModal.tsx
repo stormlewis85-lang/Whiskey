@@ -71,8 +71,9 @@ const AddWhiskeyModal = ({ isOpen, onClose }: AddWhiskeyModalProps) => {
   useEffect(() => {
     // Get the current type value
     const watchType = form.watch("type");
-    // Set the bourbon flag when the type is Bourbon
-    setIsBourbonSelected(watchType === "Bourbon");
+    // Set the bourbon flag when the type is Bourbon or Tennessee Whiskey
+    // Both types need the same special fields
+    setIsBourbonSelected(watchType === "Bourbon" || watchType === "Tennessee Whiskey");
     
     // Get the current finished value
     const watchFinished = form.watch("finished");
@@ -148,6 +149,7 @@ const AddWhiskeyModal = ({ isOpen, onClose }: AddWhiskeyModalProps) => {
                       <SelectContent>
                         <SelectItem value="none">Select Type</SelectItem>
                         <SelectItem value="Bourbon">Bourbon</SelectItem>
+                        <SelectItem value="Tennessee Whiskey">Tennessee Whiskey</SelectItem>
                         <SelectItem value="Scotch">Scotch</SelectItem>
                         <SelectItem value="Rye">Rye</SelectItem>
                         <SelectItem value="Irish">Irish</SelectItem>
@@ -245,11 +247,11 @@ const AddWhiskeyModal = ({ isOpen, onClose }: AddWhiskeyModalProps) => {
               />
             </div>
 
-            {/* Bourbon-specific fields */}
+            {/* Bourbon/Tennessee Whiskey-specific fields */}
             {isBourbonSelected && (
               <div className="mt-4">
                 <Separator className="my-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Bourbon Details</h3>
+                <h3 className="text-lg font-medium text-[#F5F5F0] mb-4">Whiskey Details</h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Bottle Type */}
