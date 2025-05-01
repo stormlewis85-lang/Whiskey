@@ -50,10 +50,11 @@ const EditWhiskeyModal = ({ isOpen, onClose, whiskey }: EditWhiskeyModalProps) =
 
   const updateWhiskeyMutation = useMutation({
     mutationFn: async (data: UpdateWhiskey) => {
-      const response = await apiRequest(`/api/whiskeys/${whiskey.id}`, {
-        method: "PATCH",
-        body: JSON.stringify(data),
-      });
+      const response = await apiRequest(
+        "PATCH",
+        `/api/whiskeys/${whiskey.id}`,
+        data
+      );
       return response;
     },
     onSuccess: () => {
@@ -75,9 +76,10 @@ const EditWhiskeyModal = ({ isOpen, onClose, whiskey }: EditWhiskeyModalProps) =
 
   const deleteWhiskeyMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest(`/api/whiskeys/${whiskey.id}`, {
-        method: "DELETE",
-      });
+      const response = await apiRequest(
+        "DELETE",
+        `/api/whiskeys/${whiskey.id}`
+      );
       return response;
     },
     onSuccess: () => {

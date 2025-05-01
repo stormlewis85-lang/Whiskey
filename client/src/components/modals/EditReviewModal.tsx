@@ -22,10 +22,11 @@ const EditReviewModal = ({ isOpen, onClose, whiskey, review }: EditReviewModalPr
   
   const updateReviewMutation = useMutation({
     mutationFn: async (data: ReviewNote) => {
-      const response = await apiRequest(`/api/whiskeys/${whiskey.id}/reviews/${review.id}`, {
-        method: "PUT",
-        body: JSON.stringify(data),
-      });
+      const response = await apiRequest(
+        "PUT",
+        `/api/whiskeys/${whiskey.id}/reviews/${review.id}`,
+        data
+      );
       return response;
     },
     onSuccess: () => {
@@ -47,9 +48,10 @@ const EditReviewModal = ({ isOpen, onClose, whiskey, review }: EditReviewModalPr
 
   const deleteReviewMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest(`/api/whiskeys/${whiskey.id}/reviews/${review.id}`, {
-        method: "DELETE",
-      });
+      const response = await apiRequest(
+        "DELETE",
+        `/api/whiskeys/${whiskey.id}/reviews/${review.id}`
+      );
       return response;
     },
     onSuccess: () => {

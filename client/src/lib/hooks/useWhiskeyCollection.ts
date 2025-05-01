@@ -87,7 +87,7 @@ const useWhiskeyCollection = ({
         const isCaskStrength = caskStrengthFilter === "yes";
         result = result.filter(
           whiskey => whiskey.type === 'Bourbon' && 
-            (whiskey.caskStrength === true) === isCaskStrength
+            (whiskey.caskStrength === "Yes") === isCaskStrength
         );
       }
     }
