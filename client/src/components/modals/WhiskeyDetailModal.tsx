@@ -1,7 +1,7 @@
 import { useMemo, useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ImageIcon, Pencil, Star, Upload, Edit, Trash2, BookOpen, PenIcon, XIcon } from "lucide-react";
+import { ImageIcon, Pencil as PencilIcon, Star, Upload, Edit, Trash2, BookOpen, PenIcon, XIcon } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Whiskey, ReviewNote } from "@shared/schema";
@@ -206,7 +206,7 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit }: Whis
                   <div className="font-medium">Rating</div>
                   <div className="flex items-center">
                     <Star className="h-5 w-5 text-amber-400 mr-1 fill-amber-400" />
-                    <span className="font-medium">{whiskey.rating.toFixed(1)}</span>
+                    <span className="font-medium">{(whiskey.rating || 0).toFixed(1)}</span>
                     <span className="text-gray-500 text-sm ml-1">/5</span>
                   </div>
                 </div>

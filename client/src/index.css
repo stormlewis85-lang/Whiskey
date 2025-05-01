@@ -87,9 +87,7 @@
   }
 
   body {
-    @apply bg-gray-50 font-sans text-gray-800;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 200 200'%3E%3Cdefs%3E%3ClinearGradient id='wood' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23986A44'/%3E%3Cstop offset='50%25' stop-color='%23b68751'/%3E%3Cstop offset='100%25' stop-color='%23794e2f'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='200' height='200' fill='url(%23wood)'/%3E%3Cpath d='M0,40 C50,20 150,20 200,40 M0,80 C50,60 150,60 200,80 M0,120 C50,100 150,100 200,120 M0,160 C50,140 150,140 200,160' stroke='%23593d25' stroke-width='1.5' fill='none' /%3E%3Cpath d='M20,0 C40,50 40,150 20,200 M60,0 C80,50 80,150 60,200 M100,0 C120,50 120,150 100,200 M140,0 C160,50 160,150 140,200 M180,0 C160,50 160,150 180,200' stroke='%23593d25' stroke-width='1.5' fill='none' /%3E%3C/svg%3E");
-    background-attachment: fixed;
+    @apply bg-amber-50/30 font-sans text-gray-800;
   }
   
   /* Custom scrollbar */
@@ -98,26 +96,26 @@
   }
   
   ::-webkit-scrollbar-track {
-    background-color: #d8c1a3;
+    background-color: #f5f5f5;
     border-radius: 8px;
     border: 4px solid transparent;
     background-clip: content-box;
   }
   
   ::-webkit-scrollbar-thumb {
-    background-color: #986A44;
+    background-color: #d97706;
     border-radius: 8px;
     border: 4px solid transparent;
     background-clip: content-box;
   }
   
   ::-webkit-scrollbar-thumb:hover {
-    background-color: #7d5936;
+    background-color: #b45309;
   }
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-serif;
-    color: #7d5936;
+    color: #f8f0dd; /* Cream color */
   }
 }
 
@@ -151,43 +149,38 @@
 .border-whiskey-100 { @apply border-[hsl(var(--whiskey-100))]; }
 .border-whiskey-200 { @apply border-[hsl(var(--whiskey-200))]; }
 
-/* Rustic barrel theme enhancements */
+/* Modern card theme */
 .card {
-  @apply bg-white/90 border border-[#d9c4a3] shadow-md;
+  @apply bg-white/90 border border-gray-200 shadow-sm;
   border-radius: 8px;
   overflow: hidden;
   transition: all 0.3s ease;
 }
 
 .card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
 }
 
 .dialog-content {
-  @apply bg-[#fffaf0]/95 border-[#d9c4a3];
-  box-shadow: 0 8px 25px rgba(121, 78, 47, 0.2);
+  @apply bg-white border-gray-200;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
 }
 
 .collection-header {
-  @apply font-serif text-4xl font-bold text-[#593d25];
-  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.6);
-  letter-spacing: 0.05em;
+  @apply font-serif text-4xl font-bold text-amber-600;
+  letter-spacing: 0.03em;
 }
 
-/* Style buttons with barrel wood feel */
+/* Style buttons with modern amber feel */
 .barrel-button {
-  @apply bg-[#986A44] text-white border-[#794e2f];
-  background-image: linear-gradient(to bottom, #b68751, #986A44, #794e2f);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2);
+  @apply bg-amber-600 text-white border-amber-700;
   transition: all 0.2s ease;
 }
 
 .barrel-button:hover {
-  @apply bg-[#b68751];
-  background-image: linear-gradient(to bottom, #c9a479, #b68751, #986A44);
+  @apply bg-amber-500;
   transform: translateY(-1px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 /* Custom scrollable modal content */
@@ -197,9 +190,9 @@
   padding-right: 10px;
 }
 
-/* Style tables with wood feel */
+/* Style tables with modern feel */
 .whiskey-table {
-  @apply bg-white/90 border border-[#d9c4a3];
+  @apply bg-white border border-gray-200;
   border-collapse: separate;
   border-spacing: 0;
   border-radius: 6px;
@@ -207,27 +200,25 @@
 }
 
 .whiskey-table th {
-  @apply bg-[#986A44] text-white font-serif;
-  background-image: linear-gradient(to bottom, #b68751, #986A44);
-  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.2);
+  @apply bg-amber-600 text-white font-medium;
 }
 
 .whiskey-table tr:nth-child(even) {
-  @apply bg-[#f5efe0];
+  @apply bg-gray-50;
 }
 
 .whiskey-table tr:hover {
-  @apply bg-[#e8d9bd];
+  @apply bg-amber-50;
 }
 
-/* Custom progress bar for rustic theme */
+/* Custom progress bar for amber theme */
 :where(.css-dev-only-do-not-override-nllxry).ant-progress .ant-progress-bg {
-  background-color: #986A44;
+  background-color: #d97706;
 }
 
 /* Customize the progress indicator */
 [role="progressbar"] > div {
-  background-color: #986A44 !important;
+  background-color: #d97706 !important;
 }
 
 /* Dialog content styling for review modal */
