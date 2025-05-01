@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
@@ -45,7 +45,8 @@ enum ReviewPage {
   Taste = 3,
   Finish = 4,
   Value = 5,
-  Summary = 6
+  Summary = 6,
+  FinalScores = 7
 }
 
 // Page titles and descriptions
@@ -84,6 +85,11 @@ const pageData = [
     title: "Summary",
     description: "Overall impression and final rating.",
     placeholder: "Overall an excellent bourbon that balances..."
+  },
+  {
+    title: "Final Scores",
+    description: "Review your weighted category scores and make final adjustments.",
+    placeholder: ""
   }
 ];
 
@@ -266,21 +272,103 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
     },
   });
 
+  // States for final score adjustments
+  const [noseAdjustment, setNoseAdjustment] = useState(0);
+  const [mouthfeelAdjustment, setMouthfeelAdjustment] = useState(0);
+  const [tasteAdjustment, setTasteAdjustment] = useState(0);
+  const [finishAdjustment, setFinishAdjustment] = useState(0);
+  const [valueAdjustment, setValueAdjustment] = useState(0);
+  const [finalNotes, setFinalNotes] = useState("");
+  
+  // Calculate weighted scores
+  const calculateWeightedScores = () => {
+    const noseScore = form.getValues('noseScore') || 0;
+    const mouthfeelScore = form.getValues('mouthfeelScore') || 0;
+    const tasteScore = form.getValues('tasteScore') || 0;
+    const finishScore = form.getValues('finishScore') || 0;
+    const valueScore = form.getValues('valueScore') || 0;
+    
+    return {
+      nose: parseFloat((noseScore * 2.0 + noseAdjustment).toFixed(1)),
+      mouthfeel: parseFloat((mouthfeelScore * 2.0 + mouthfeelAdjustment).toFixed(1)),
+      taste: parseFloat((tasteScore * 3.0 + tasteAdjustment).toFixed(1)),
+      finish: parseFloat((finishScore * 2.5 + finishAdjustment).toFixed(1)),
+      value: parseFloat((valueScore * 1.5 + valueAdjustment).toFixed(1))
+    };
+  };
+  
+  // Reference to dialog content div for scrolling
+  const dialogContentRef = useRef<HTMLDivElement>(null);
+  
+  // Scroll to top of dialog content
+  const scrollToTop = () => {
+    if (dialogContentRef.current) {
+      dialogContentRef.current.scrollTop = 0;
+    }
+  };
+
   // Handle page navigation
   const nextPage = () => {
-    if (currentPage < ReviewPage.Summary) {
+    if (currentPage < ReviewPage.FinalScores) {
+      // Clear values when moving from one page to another to avoid carrying over data
+      if (currentPage === ReviewPage.Finish) {
+        // Reset any values that might be carried over to Value page
+        form.setValue('valueAvailability', '');
+        form.setValue('valueBuyAgain', '');
+        form.setValue('valueOccasion', '');
+        form.setValue('valueScore', undefined);
+        form.setValue('valueNotes', '');
+      }
+      
+      // Go to the next page
       setCurrentPage(prevPage => (prevPage + 1) as ReviewPage);
+      
+      // Scroll to top after state update
+      setTimeout(scrollToTop, 50);
     }
   };
 
   const prevPage = () => {
     if (currentPage > ReviewPage.Visual) {
       setCurrentPage(prevPage => (prevPage - 1) as ReviewPage);
+      
+      // Scroll to top after state update
+      setTimeout(scrollToTop, 50);
     }
   };
 
   const onSubmit = (data: ReviewNote) => {
-    data.rating = rating;
+    // Calculate the final weighted scores with adjustments
+    const scores = calculateWeightedScores();
+    
+    // Calculate final overall rating (sum of all weighted category scores divided by 11, which is the sum of all multipliers)
+    const totalScore = scores.nose + scores.mouthfeel + scores.taste + scores.finish + scores.value;
+    const finalRating = parseFloat((totalScore / 11.0).toFixed(1));
+    
+    // Set the overall rating
+    data.rating = finalRating;
+    
+    // Add the final adjustment notes to the review
+    if (finalNotes) {
+      data.text = data.text ? `${data.text}\n\nFINAL NOTES: ${finalNotes}` : `FINAL NOTES: ${finalNotes}`;
+    }
+    
+    // Add weighted scores to the review text
+    const weightedScoresText = [
+      `WEIGHTED SCORES (with adjustments):`,
+      `- Nose: ${scores.nose}/10 (base score × 2.0${noseAdjustment !== 0 ? ` ${noseAdjustment > 0 ? '+' : ''}${noseAdjustment}` : ''})`,
+      `- Mouth Feel: ${scores.mouthfeel}/10 (base score × 2.0${mouthfeelAdjustment !== 0 ? ` ${mouthfeelAdjustment > 0 ? '+' : ''}${mouthfeelAdjustment}` : ''})`,
+      `- Taste: ${scores.taste}/15 (base score × 3.0${tasteAdjustment !== 0 ? ` ${tasteAdjustment > 0 ? '+' : ''}${tasteAdjustment}` : ''})`,
+      `- Finish: ${scores.finish}/12.5 (base score × 2.5${finishAdjustment !== 0 ? ` ${finishAdjustment > 0 ? '+' : ''}${finishAdjustment}` : ''})`,
+      `- Value: ${scores.value}/7.5 (base score × 1.5${valueAdjustment !== 0 ? ` ${valueAdjustment > 0 ? '+' : ''}${valueAdjustment}` : ''})`,
+      `- Total: ${totalScore}/55`,
+      `- Final Rating: ${finalRating}/5`
+    ].join('\n');
+    
+    // Append the weighted scores to the review text
+    data.text = data.text ? `${data.text}\n\n${weightedScoresText}` : weightedScoresText;
+    
+    // Submit the review
     addReviewMutation.mutate(data);
   };
 
