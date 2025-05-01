@@ -1,52 +1,57 @@
 import { Whiskey } from "@shared/schema";
 
 /**
- * Calculate the average rating for a collection of whiskeys
+ * Format a date in MM/DD/YYYY format
  */
-export function calculateAverageRating(whiskeys: Whiskey[]): string {
-  if (!whiskeys.length) return "0.0";
-  
-  // Filter out whiskeys without a rating
-  const whiskiesWithRating = whiskeys.filter(w => typeof w.rating === 'number');
-  
-  if (!whiskiesWithRating.length) return "0.0";
-  
-  const sum = whiskiesWithRating.reduce((acc, w) => acc + (w.rating || 0), 0);
-  return (sum / whiskiesWithRating.length).toFixed(1);
-}
+export const formatDate = (date: Date | string | null): string => {
+  if (!date) return 'N/A';
+  const d = new Date(date);
+  return `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`;
+};
 
 /**
- * Calculate the average price for a collection of whiskeys
+ * Calculate the average rating of all rated whiskeys in the collection
  */
-export function calculateAveragePrice(whiskeys: Whiskey[]): string {
-  if (!whiskeys.length) return "0";
+export const calculateAverageRating = (whiskeys: Whiskey[]): string => {
+  if (!whiskeys || whiskeys.length === 0) return "0.0";
   
-  // Filter out whiskeys without a price
-  const whiskiesWithPrice = whiskeys.filter(w => typeof w.price === 'number');
+  const ratedWhiskeys = whiskeys.filter(w => w.rating !== null && w.rating !== undefined);
+  if (ratedWhiskeys.length === 0) return "0.0";
   
-  if (!whiskiesWithPrice.length) return "0";
-  
-  const sum = whiskiesWithPrice.reduce((acc, w) => acc + (w.price || 0), 0);
-  return Math.round(sum / whiskiesWithPrice.length).toString();
-}
+  const sum = ratedWhiskeys.reduce((acc, whiskey) => acc + (whiskey.rating || 0), 0);
+  return (sum / ratedWhiskeys.length).toFixed(1);
+};
 
 /**
- * Calculate the total value of a whiskey collection
+ * Calculate the average price of all whiskeys with a price in the collection
  */
-export function calculateTotalValue(whiskeys: Whiskey[]): string {
-  if (!whiskeys.length) return "0";
+export const calculateAveragePrice = (whiskeys: Whiskey[]): string => {
+  if (!whiskeys || whiskeys.length === 0) return "0.00";
   
-  const total = whiskeys.reduce((acc, w) => acc + (w.price || 0), 0);
-  return total.toFixed(0);
-}
+  const pricedWhiskeys = whiskeys.filter(w => w.price !== null && w.price !== undefined);
+  if (pricedWhiskeys.length === 0) return "0.00";
+  
+  const sum = pricedWhiskeys.reduce((acc, whiskey) => acc + (whiskey.price || 0), 0);
+  return (sum / pricedWhiskeys.length).toFixed(2);
+};
 
 /**
- * Format a date to a readable string
+ * Calculate the total value of all whiskeys with a price in the collection
  */
-export function formatDate(date: Date): string {
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  });
-}
+export const calculateTotalValue = (whiskeys: Whiskey[]): string => {
+  if (!whiskeys || whiskeys.length === 0) return "0.00";
+  
+  const sum = whiskeys.reduce((acc, whiskey) => acc + (whiskey.price || 0), 0);
+  return sum.toFixed(2);
+};
+
+/**
+ * Calculate the price per pour for a whiskey (bottle price ÷ 14)
+ */
+export const calculatePricePerPour = (price: number | null): string => {
+  if (price === null || price === undefined) return "N/A";
+  
+  // Assume 14 pours per bottle
+  const pricePerPour = price / 14;
+  return `$${pricePerPour.toFixed(2)}`;
+};

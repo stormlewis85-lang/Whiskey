@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Camera, ImageIcon, Pencil, Star, Upload, Edit, Trash2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Whiskey, ReviewNote } from "@shared/schema";
-import { formatDate } from "@/lib/utils/calculations";
+import { formatDate } from "@/lib/utils/calculations"; // Import properly defined
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";

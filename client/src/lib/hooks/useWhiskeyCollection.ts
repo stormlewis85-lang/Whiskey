@@ -1,125 +1,151 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Whiskey } from "@shared/schema";
 
-interface WhiskeyFilterOptions {
+interface FilterOptions {
   searchQuery: string;
   sortBy: string;
   typeFilter: string;
   ratingFilter: string;
-  // Optional bourbon-specific filters
   bottleTypeFilter?: string;
   mashBillFilter?: string;
   caskStrengthFilter?: string;
 }
 
-/**
- * Hook to manage the whiskey collection with filtering and sorting
- */
-const useWhiskeyCollection = (filterOptions: WhiskeyFilterOptions) => {
-  const { 
-    searchQuery, 
-    sortBy, 
-    typeFilter, 
-    ratingFilter,
-    bottleTypeFilter,
-    mashBillFilter,
-    caskStrengthFilter
-  } = filterOptions;
+const useWhiskeyCollection = ({
+  searchQuery,
+  sortBy,
+  typeFilter,
+  ratingFilter,
+  bottleTypeFilter = "all",
+  mashBillFilter = "all",
+  caskStrengthFilter = "all"
+}: FilterOptions) => {
+  // State to store filtered whiskeys
+  const [filteredWhiskeys, setFilteredWhiskeys] = useState<Whiskey[]>([]);
   
-  // Get whiskeys from API
-  const { data: whiskeys, isLoading, isError, refetch } = useQuery<Whiskey[]>({
+  // Fetch whiskeys from API
+  const { data: whiskeys, isLoading, isError } = useQuery<Whiskey[]>({
     queryKey: ["/api/whiskeys"],
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
-
-  // Apply filters and sorting
-  const filteredWhiskeys = useMemo(() => {
-    if (!whiskeys) return [];
+  
+  // Set filters for collection
+  const setFilters = (options: Partial<FilterOptions>) => {
+    // This function is not currently used, but could be useful for future updates
+    // It would allow updating filters without recreating the entire options object
+  };
+  
+  // Effect for filtering and sorting whiskeys
+  useEffect(() => {
+    if (!whiskeys) return;
     
-    let filtered = [...whiskeys];
+    let result = [...whiskeys];
     
-    // Apply type filter
-    if (typeFilter && typeFilter !== "all") {
-      filtered = filtered.filter(w => w.type === typeFilter);
-    }
-    
-    // Apply rating filter
-    if (ratingFilter && ratingFilter !== "all") {
-      const rating = parseInt(ratingFilter);
-      if (ratingFilter === "0") {
-        filtered = filtered.filter(w => !w.rating || w.rating === 0);
-      } else {
-        filtered = filtered.filter(w => (w.rating || 0) >= rating);
-      }
-    }
-    
-    // Apply bourbon-specific filters if the type is Bourbon
-    if (typeFilter === "Bourbon") {
-      // Bottle Type filter
-      if (bottleTypeFilter && bottleTypeFilter !== "all") {
-        filtered = filtered.filter(w => w.bottleType === bottleTypeFilter);
-      }
-      
-      // Mash Bill filter
-      if (mashBillFilter && mashBillFilter !== "all") {
-        filtered = filtered.filter(w => w.mashBill === mashBillFilter);
-      }
-      
-      // Cask Strength filter
-      if (caskStrengthFilter && caskStrengthFilter !== "all") {
-        filtered = filtered.filter(w => w.caskStrength === caskStrengthFilter);
-      }
-    }
-    
-    // Apply search
-    if (searchQuery.trim() !== "") {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(w => 
-        w.name.toLowerCase().includes(query) || 
-        (w.distillery && w.distillery.toLowerCase().includes(query))
+    // Apply text search
+    if (searchQuery) {
+      const lowerQuery = searchQuery.toLowerCase();
+      result = result.filter(
+        whiskey => 
+          whiskey.name.toLowerCase().includes(lowerQuery) ||
+          (whiskey.distillery && whiskey.distillery.toLowerCase().includes(lowerQuery)) ||
+          (whiskey.type && whiskey.type.toLowerCase().includes(lowerQuery))
       );
     }
     
+    // Apply type filter
+    if (typeFilter) {
+      result = result.filter(whiskey => whiskey.type === typeFilter);
+    }
+    
+    // Apply rating filter
+    if (ratingFilter) {
+      const minRating = parseInt(ratingFilter);
+      result = result.filter(
+        whiskey => whiskey.rating !== null && whiskey.rating >= minRating
+      );
+    }
+    
+    // Apply bourbon-specific filters if type is Bourbon
+    if (typeFilter === 'Bourbon' || (result.some(w => w.type === 'Bourbon'))) {
+      // Filter by bottle type
+      if (bottleTypeFilter && bottleTypeFilter !== "all") {
+        result = result.filter(
+          whiskey => whiskey.type === 'Bourbon' && whiskey.bottleType === bottleTypeFilter
+        );
+      }
+      
+      // Filter by mash bill
+      if (mashBillFilter && mashBillFilter !== "all") {
+        result = result.filter(
+          whiskey => whiskey.type === 'Bourbon' && whiskey.mashBill === mashBillFilter
+        );
+      }
+      
+      // Filter by cask strength
+      if (caskStrengthFilter !== "all") {
+        const isCaskStrength = caskStrengthFilter === "yes";
+        result = result.filter(
+          whiskey => whiskey.type === 'Bourbon' && whiskey.caskStrength === isCaskStrength
+        );
+      }
+    }
+    
     // Apply sorting
-    filtered.sort((a, b) => {
-      switch(sortBy) {
+    result.sort((a, b) => {
+      switch (sortBy) {
         case "name":
           return a.name.localeCompare(b.name);
-        case "nameDesc":
-          return b.name.localeCompare(a.name);
-        case "ratingDesc":
-          return (b.rating || 0) - (a.rating || 0);
         case "rating":
-          return (a.rating || 0) - (b.rating || 0);
-        case "priceDesc":
-          return (b.price || 0) - (a.price || 0);
+          // Sort by rating (highest first), handling null values
+          if (a.rating === null && b.rating === null) return 0;
+          if (a.rating === null) return 1;
+          if (b.rating === null) return -1;
+          return b.rating - a.rating;
         case "price":
-          return (a.price || 0) - (b.price || 0);
-        case "ageDesc":
-          return (b.age || 0) - (a.age || 0);
+          // Sort by price (lowest first), handling null values
+          if (a.price === null && b.price === null) return 0;
+          if (a.price === null) return 1;
+          if (b.price === null) return -1;
+          return a.price - b.price;
+        case "price-high":
+          // Sort by price (highest first), handling null values
+          if (a.price === null && b.price === null) return 0;
+          if (a.price === null) return 1;
+          if (b.price === null) return -1;
+          return b.price - a.price;
         case "age":
-          return (a.age || 0) - (b.age || 0);
+          // Sort by age (oldest first), handling null values
+          if (a.age === null && b.age === null) return 0;
+          if (a.age === null) return 1;
+          if (b.age === null) return -1;
+          return b.age - a.age;
+        case "dateAdded":
+          // Sort by date added (newest first)
+          return new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime();
         default:
           return 0;
       }
     });
     
-    return filtered;
-  }, [whiskeys, searchQuery, sortBy, typeFilter, ratingFilter, 
-      bottleTypeFilter, mashBillFilter, caskStrengthFilter]);
-
-  // Function to update filters
-  const setFilters = (filters: Partial<WhiskeyFilterOptions>) => {
-    return filters;
-  };
-
+    setFilteredWhiskeys(result);
+  }, [
+    whiskeys, 
+    searchQuery, 
+    sortBy, 
+    typeFilter, 
+    ratingFilter, 
+    bottleTypeFilter, 
+    mashBillFilter, 
+    caskStrengthFilter
+  ]);
+  
   return {
-    whiskeys,
+    whiskeys: whiskeys || [],
     filteredWhiskeys,
     isLoading,
     isError,
-    refetch,
-    setFilters,
+    setFilters
   };
 };
 

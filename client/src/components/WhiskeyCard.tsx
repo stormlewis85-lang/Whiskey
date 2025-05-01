@@ -2,7 +2,7 @@ import { Whiskey } from "@shared/schema";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { formatDate } from "@/lib/utils/calculations";
+import { formatDate } from "@/lib/utils/calculations"; // Now properly imported
 import { PencilIcon } from "lucide-react";
 
 interface WhiskeyCardProps {
