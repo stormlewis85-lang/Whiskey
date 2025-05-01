@@ -370,16 +370,6 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
   // Handle page navigation
   const nextPage = () => {
     if (currentPage < ReviewPage.FinalScores) {
-      // When going to Value page, clear value fields
-      if (currentPage === ReviewPage.Finish) {
-        // Reset all the value-related fields to ensure no data carryover
-        form.setValue('valueAvailability', '');
-        form.setValue('valueBuyAgain', '');
-        form.setValue('valueOccasion', '');
-        form.setValue('valueScore', undefined);
-        form.setValue('valueNotes', '');
-      }
-      
       // Going to Summary page, clear the text field
       if (currentPage === ReviewPage.Value) {
         form.setValue('text', '');
@@ -1987,9 +1977,17 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
   // Reset all form values when the dialog is opened
   useEffect(() => {
     if (isOpen) {
+      // Always reset the review completely when opening the dialog
       resetReview();
+      
+      // Additional explicit reset for Value fields to ensure they are properly cleared
+      form.setValue('valueAvailability', '');
+      form.setValue('valueBuyAgain', '');
+      form.setValue('valueOccasion', '');
+      form.setValue('valueScore', undefined);
+      form.setValue('valueNotes', '');
     }
-  }, [isOpen]);
+  }, [isOpen, form]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
