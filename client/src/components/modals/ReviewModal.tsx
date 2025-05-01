@@ -1697,7 +1697,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md dialog-content">
+      <DialogContent className="sm:max-w-md dialog-content" ref={dialogContentRef}>
         <DialogHeader>
           <DialogTitle className="text-lg font-serif font-medium text-[#593d25]">
             Review Whiskey - {pageData[currentPage].title}
@@ -1745,7 +1745,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                   Cancel
                 </Button>
                 
-                {currentPage < ReviewPage.Summary ? (
+                {currentPage < ReviewPage.FinalScores ? (
                   <Button
                     type="button"
                     className="barrel-button"
@@ -1757,7 +1757,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                   <Button
                     type="submit"
                     className="barrel-button"
-                    disabled={addReviewMutation.isPending || !rating}
+                    disabled={addReviewMutation.isPending}
                   >
                     {addReviewMutation.isPending ? "Submitting..." : "Submit Review"}
                   </Button>
