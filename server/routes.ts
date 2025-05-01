@@ -175,6 +175,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to add review", error: String(error) });
     }
   });
+  
+  // Update a review
+  app.put("/api/whiskeys/:id/reviews/:reviewId", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const reviewId = req.params.reviewId;
+      
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid whiskey ID format" });
+      }
+      
+      const validatedReview = reviewNoteSchema.parse(req.body);
+      const updatedWhiskey = await storage.updateReview(id, reviewId, validatedReview);
+      
+      if (!updatedWhiskey) {
+        return res.status(404).json({ message: "Whiskey or review not found" });
+      }
+      
+      res.json(updatedWhiskey);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        return res.status(400).json({ message: "Validation error", error: validationError.message });
+      }
+      res.status(500).json({ message: "Failed to update review", error: String(error) });
+    }
+  });
+  
+  // Delete a review
+  app.delete("/api/whiskeys/:id/reviews/:reviewId", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const reviewId = req.params.reviewId;
+      
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid whiskey ID format" });
+      }
+      
+      const updatedWhiskey = await storage.deleteReview(id, reviewId);
+      
+      if (!updatedWhiskey) {
+        return res.status(404).json({ message: "Whiskey or review not found" });
+      }
+      
+      res.json(updatedWhiskey);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete review", error: String(error) });
+    }
+  });
 
   // Upload bottle image
   app.post("/api/whiskeys/:id/image", imageUpload.single("image"), async (req: Request, res: Response) => {
