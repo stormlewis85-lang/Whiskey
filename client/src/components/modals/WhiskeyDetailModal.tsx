@@ -48,7 +48,7 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview }: WhiskeyDetai
       return apiRequest(`/api/whiskeys/${whiskey.id}/image`, {
         method: 'POST',
         body: formData,
-      } as RequestInit);
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/whiskeys'] });
