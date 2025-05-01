@@ -130,12 +130,14 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
       text: "",
       flavor: "",
       id: nanoid(),
+      // Legacy fields
       visual: "",
       nose: "",
       mouthfeel: "",
       taste: "",
       finish: "",
       value: "",
+      // New detailed fields
       visualColor: "",
       visualViscosity: "",
       visualClarity: "",
@@ -703,7 +705,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                     <FormControl>
                       <RadioGroup 
                         onValueChange={(value) => field.onChange(parseInt(value))} 
-                        defaultValue={field.value?.toString()}
+                        value={field.value?.toString() || ""}
                         className="flex justify-between"
                       >
                         {SCORE_OPTIONS.map((score) => (
