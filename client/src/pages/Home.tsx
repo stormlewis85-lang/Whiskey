@@ -85,35 +85,19 @@ const Home = () => {
       <Header />
       
       {/* App Header */}
-      <header className="bg-whiskey-600 text-white shadow-md">
+      <header className="bg-slate-800 text-white shadow-md">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl md:text-3xl font-serif font-bold">
+          <h1 className="text-2xl md:text-3xl font-bold text-amber-100">
             {user?.displayName || user?.username}'s Whiskey Vault
           </h1>
           <div className="flex items-center space-x-2">
             <Button
-              onClick={openExportModal}
-              variant="secondary"
-              className="bg-blue-600 hover:bg-blue-500 text-white"
-            >
-              <DownloadIcon className="h-4 w-4 mr-1" />
-              Export
-            </Button>
-            <Button
-              onClick={openImportModal}
-              variant="secondary"
-              className="bg-whiskey-500 hover:bg-whiskey-400 text-white"
-            >
-              <UploadIcon className="h-4 w-4 mr-1" />
-              Import
-            </Button>
-            <Button
               onClick={openAddWhiskeyModal}
               variant="secondary"
-              className="bg-burgundy-500 hover:bg-burgundy-400 text-white"
+              className="bg-amber-600 hover:bg-amber-500 text-white"
             >
               <PlusIcon className="h-4 w-4 mr-1" />
-              Add
+              Add Whiskey
             </Button>
           </div>
         </div>
@@ -153,6 +137,26 @@ const Home = () => {
           onEdit={openEditWhiskeyModal}
           onAddNew={openAddWhiskeyModal}
         />
+        
+        {/* Import & Export Buttons at bottom */}
+        <div className="mt-8 flex justify-center gap-4 pb-8">
+          <Button
+            onClick={openImportModal}
+            variant="outline"
+            className="border-amber-700 hover:bg-amber-50"
+          >
+            <UploadIcon className="h-4 w-4 mr-2 text-amber-700" />
+            Import Collection
+          </Button>
+          <Button
+            onClick={openExportModal}
+            variant="outline"
+            className="border-amber-700 hover:bg-amber-50"
+          >
+            <DownloadIcon className="h-4 w-4 mr-2 text-amber-700" />
+            Export Collection
+          </Button>
+        </div>
       </main>
 
       {/* Modals */}

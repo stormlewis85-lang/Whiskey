@@ -1442,7 +1442,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                     <FormControl>
                       <RadioGroup 
                         onValueChange={(value) => field.onChange(parseInt(value))} 
-                        value={field.value?.toString() || undefined}
+                        value={field.value?.toString() || ""}
                         className="flex justify-between"
                       >
                         {SCORE_OPTIONS.map((score) => (
