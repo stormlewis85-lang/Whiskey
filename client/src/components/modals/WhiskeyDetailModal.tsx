@@ -1,5 +1,5 @@
 import { useMemo, useState, useRef } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Camera, ImageIcon, Pencil, Star, Upload } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
@@ -18,7 +18,6 @@ interface WhiskeyDetailModalProps {
 
 const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview }: WhiskeyDetailModalProps) => {
   const [isUploading, setIsUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -42,36 +41,9 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview }: WhiskeyDetai
     });
   }, [whiskey.notes]);
   
-  // Image upload mutation
-  const uploadMutation = useMutation({
-    mutationFn: async (formData: FormData) => {
-      return apiRequest(`/api/whiskeys/${whiskey.id}/image`, {
-        method: 'POST',
-        body: formData,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/whiskeys'] });
-      toast({
-        title: "Image uploaded",
-        description: "The bottle image has been uploaded successfully.",
-      });
-      setIsUploading(false);
-    },
-    onError: (error) => {
-      console.error("Upload error:", error);
-      toast({
-        title: "Upload failed",
-        description: "There was an error uploading the image. Please try again.",
-        variant: "destructive",
-      });
-      setIsUploading(false);
-    }
-  });
-  
-  // Handle file selection
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("File input change detected");
+  // Direct file upload handler
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("File input change event triggered");
     const file = event.target.files?.[0];
     if (!file) {
       console.log("No file selected");
@@ -103,22 +75,52 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview }: WhiskeyDetai
       return;
     }
     
-    // Create form data and upload
-    const formData = new FormData();
-    formData.append("image", file);
-    console.log("FormData created, uploading to whiskey ID:", whiskey.id);
-    setIsUploading(true);
-    uploadMutation.mutate(formData);
-  };
-  
-  // Trigger file input click
-  const triggerFileInput = () => {
-    fileInputRef.current?.click();
+    try {
+      // Set uploading state
+      setIsUploading(true);
+      console.log("Starting upload for whiskey ID:", whiskey.id);
+      
+      // Create form data
+      const formData = new FormData();
+      formData.append("image", file);
+      
+      // Direct fetch for more control
+      const response = await fetch(`/api/whiskeys/${whiskey.id}/image`, {
+        method: 'POST',
+        body: formData,
+      });
+      
+      console.log("Upload response status:", response.status);
+      
+      if (!response.ok) {
+        throw new Error(`Upload failed with status: ${response.status}`);
+      }
+      
+      // Success handling
+      queryClient.invalidateQueries({ queryKey: ['/api/whiskeys'] });
+      toast({
+        title: "Image uploaded",
+        description: "The bottle image has been uploaded successfully.",
+      });
+      
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast({
+        title: "Upload failed",
+        description: "There was an error uploading the image. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-2xl p-0 overflow-hidden">
+        <DialogHeader className="hidden">
+          <DialogTitle>Whiskey Details</DialogTitle>
+        </DialogHeader>
         <div className="relative">
           <div className="h-48 w-full bg-whiskey-100">
             {whiskey.image ? (
@@ -128,26 +130,22 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview }: WhiskeyDetai
                   alt={`Bottle of ${whiskey.name}`}
                   className="h-full w-full object-cover"
                 />
-                <button 
-                  onClick={triggerFileInput}
-                  className="absolute bottom-3 right-3 bg-whiskey-600 text-white p-2 rounded-full shadow-md hover:bg-whiskey-500 focus:outline-none z-10"
-                  disabled={isUploading}
-                  type="button"
+                <label 
+                  htmlFor="bottle-image-upload"
+                  className="absolute bottom-3 right-3 bg-whiskey-600 text-white p-2 rounded-full shadow-md hover:bg-whiskey-500 focus:outline-none z-10 cursor-pointer"
                 >
                   {isUploading ? (
                     <div className="animate-spin h-5 w-5 border-2 border-white border-opacity-20 border-t-white rounded-full"></div>
                   ) : (
                     <Camera className="h-5 w-5" />
                   )}
-                </button>
+                </label>
               </div>
             ) : (
               <div className="h-full w-full flex flex-col items-center justify-center bg-whiskey-100 text-whiskey-600">
-                <button
-                  onClick={triggerFileInput}
-                  className="flex flex-col items-center justify-center p-4 hover:bg-whiskey-200 rounded-lg transition-colors focus:outline-none"
-                  disabled={isUploading}
-                  type="button"
+                <label
+                  htmlFor="bottle-image-upload"
+                  className="flex flex-col items-center justify-center p-4 hover:bg-whiskey-200 rounded-lg transition-colors focus:outline-none cursor-pointer"
                 >
                   {isUploading ? (
                     <div className="animate-spin h-8 w-8 border-4 border-whiskey-600 border-opacity-20 border-t-whiskey-600 rounded-full mb-2"></div>
@@ -157,15 +155,16 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview }: WhiskeyDetai
                   <span className="text-sm font-medium">
                     {isUploading ? "Uploading..." : "Click to add bottle photo"}
                   </span>
-                </button>
+                </label>
               </div>
             )}
             <input 
               type="file"
-              ref={fileInputRef}
-              onChange={handleFileChange}
+              id="bottle-image-upload"
+              onChange={handleFileUpload}
               accept=".jpg,.jpeg,.png,.gif,.webp"
               className="hidden"
+              disabled={isUploading}
             />
           </div>
           <button 

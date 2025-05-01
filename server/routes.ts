@@ -238,6 +238,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Serve uploaded images
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+  console.log("Serving uploads from:", path.join(process.cwd(), 'uploads'));
   
   // Import Excel file
   app.post("/api/import", excelUpload.single("file"), async (req: Request, res: Response) => {
