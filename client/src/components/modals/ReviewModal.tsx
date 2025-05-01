@@ -124,6 +124,12 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
     setFinishAdjustment(0);
     setValueAdjustment(0);
     setFinalNotes('');
+    
+    // Force clear the Value Score explicitly
+    setTimeout(() => {
+      form.setValue('valueScore', undefined);
+    }, 0);
+    
     form.reset({
       rating: 0,
       date: new Date().toISOString().split('T')[0],
@@ -1486,7 +1492,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                     <FormControl>
                       <RadioGroup 
                         onValueChange={(value) => field.onChange(parseInt(value))} 
-                        value={field.value?.toString() || ""}
+                        defaultValue={field.value?.toString()}
                         className="flex justify-between"
                       >
                         {SCORE_OPTIONS.map((score) => (
