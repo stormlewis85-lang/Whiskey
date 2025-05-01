@@ -103,6 +103,14 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
   const [selectedTasteFlavors, setSelectedTasteFlavors] = useState<string[]>([]);
   const [selectedFinishFlavors, setSelectedFinishFlavors] = useState<string[]>([]);
   
+  // State for score adjustments
+  const [noseAdjustment, setNoseAdjustment] = useState(0);
+  const [mouthfeelAdjustment, setMouthfeelAdjustment] = useState(0);
+  const [tasteAdjustment, setTasteAdjustment] = useState(0);
+  const [finishAdjustment, setFinishAdjustment] = useState(0);
+  const [valueAdjustment, setValueAdjustment] = useState(0);
+  const [finalNotes, setFinalNotes] = useState('');
+  
   const form = useForm<ReviewNote>({
     resolver: zodResolver(reviewNoteSchema),
     defaultValues: {
@@ -272,14 +280,6 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
     },
   });
 
-  // States for final score adjustments
-  const [noseAdjustment, setNoseAdjustment] = useState(0);
-  const [mouthfeelAdjustment, setMouthfeelAdjustment] = useState(0);
-  const [tasteAdjustment, setTasteAdjustment] = useState(0);
-  const [finishAdjustment, setFinishAdjustment] = useState(0);
-  const [valueAdjustment, setValueAdjustment] = useState(0);
-  const [finalNotes, setFinalNotes] = useState("");
-  
   // Calculate weighted scores
   const calculateWeightedScores = () => {
     const noseScore = form.getValues('noseScore') || 0;
@@ -310,7 +310,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
   // Handle page navigation
   const nextPage = () => {
     if (currentPage < ReviewPage.FinalScores) {
-      // Clear values when moving from one page to another to avoid carrying over data
+      // Clear specific values when moving between pages to avoid carrying over data
       if (currentPage === ReviewPage.Finish) {
         // Reset any values that might be carried over to Value page
         form.setValue('valueAvailability', '');
@@ -318,6 +318,11 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
         form.setValue('valueOccasion', '');
         form.setValue('valueScore', undefined);
         form.setValue('valueNotes', '');
+      }
+      
+      // When moving from Value to Summary, clear the text field
+      if (currentPage === ReviewPage.Value) {
+        form.setValue('text', '');
       }
       
       // If we're on the Summary page, set the initial rating based on weighted calculations
