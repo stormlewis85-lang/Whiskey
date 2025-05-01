@@ -1,6 +1,7 @@
 import { Whiskey } from "@shared/schema";
 import { Card, CardContent } from "@/components/ui/card";
 import { calculateAverageRating, calculateAveragePrice, calculateTotalValue } from "@/lib/utils/calculations";
+import ExportButton from "./ExportButton";
 
 interface CollectionStatsProps {
   whiskeys: Whiskey[];
@@ -13,6 +14,10 @@ const CollectionStats = ({ whiskeys }: CollectionStatsProps) => {
 
   return (
     <Card className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+      <div className="flex justify-between items-start mb-2">
+        <h2 className="text-lg font-semibold text-gray-700">Collection Summary</h2>
+        <ExportButton />
+      </div>
       <CardContent className="p-0">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
           <div>

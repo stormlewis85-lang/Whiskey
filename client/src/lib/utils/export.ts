@@ -1,9 +1,9 @@
-import { Whiskey } from '@shared/schema';
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import * as XLSX from 'xlsx';
+import { Whiskey } from "@shared/schema";
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
-// Format date to string
+// Helper for date formatting
 const formatDate = (date: Date | string | null): string => {
   if (!date) return 'N/A';
   const d = new Date(date);
@@ -27,7 +27,7 @@ const prepareWhiskeyData = (whiskeys: Whiskey[]) => {
     'Finish Type': whiskey.finishType || 'N/A',
     'Date Added': formatDate(whiskey.dateAdded),
     'Last Reviewed': formatDate(whiskey.lastReviewed),
-    'Reviews': whiskey.notes ? whiskey.notes.length : 0
+    'Reviews': whiskey.notes && Array.isArray(whiskey.notes) ? whiskey.notes.length : 0
   }));
 };
 
@@ -161,7 +161,7 @@ export const exportDetailedPDF = (whiskeys: Whiskey[]) => {
     }
     
     // Display reviews if any
-    if (whiskey.notes && whiskey.notes.length > 0) {
+    if (whiskey.notes && Array.isArray(whiskey.notes) && whiskey.notes.length > 0) {
       doc.setFontSize(11);
       doc.setTextColor(0, 0, 0);
       doc.text(`Reviews (${whiskey.notes.length}):`, 14, pageY);
@@ -188,7 +188,7 @@ export const exportDetailedPDF = (whiskeys: Whiskey[]) => {
         // Note text (multi-line)
         doc.setTextColor(0, 0, 0);
         const textLines = doc.splitTextToSize(note.text, 170);
-        textLines.forEach(line => {
+        textLines.forEach((line: string) => {
           doc.text(line, 20, pageY);
           pageY += 4;
         });

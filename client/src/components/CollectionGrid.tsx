@@ -9,7 +9,7 @@ interface CollectionGridProps {
   isError: boolean;
   onViewDetails: (whiskey: Whiskey) => void;
   onReview: (whiskey: Whiskey) => void;
-  onEdit?: (whiskey: Whiskey) => void;
+  onEdit: (whiskey: Whiskey) => void; // Made non-optional to fix TypeScript error
   onAddNew: () => void;
 }
 

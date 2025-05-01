@@ -1,13 +1,11 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { FileText, FileSpreadsheet, DownloadCloud } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { Whiskey } from "@shared/schema";
-import { useToast } from "@/hooks/use-toast";
-import { exportToExcel, exportToPDF, exportDetailedPDF } from "@/lib/utils/export";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useQuery } from "@tanstack/react-query";
+import { exportToExcel, exportToPDF, exportDetailedPDF } from "@/lib/utils/export";
+import { Loader2 } from "lucide-react";
 
 interface ExportModalProps {
   isOpen: boolean;
@@ -19,27 +17,19 @@ type ExportFormat = "excel" | "pdf-simple" | "pdf-detailed";
 const ExportModal = ({ isOpen, onClose }: ExportModalProps) => {
   const [exportFormat, setExportFormat] = useState<ExportFormat>("excel");
   const [isExporting, setIsExporting] = useState(false);
-  const { toast } = useToast();
-
-  // Get whiskey data for export
-  const { data: whiskeys, isLoading, isError } = useQuery<Whiskey[]>({
-    queryKey: ['/api/whiskeys'],
+  
+  // Fetch whiskey data for export
+  const { data: whiskeys, isLoading } = useQuery({
+    queryKey: ["/api/whiskeys"],
     enabled: isOpen, // Only fetch when modal is open
   });
-
+  
   const handleExport = async () => {
-    if (!whiskeys || whiskeys.length === 0) {
-      toast({
-        title: "No data to export",
-        description: "Your whiskey collection is empty.",
-        variant: "destructive"
-      });
-      return;
-    }
-
+    if (!whiskeys || isLoading || !Array.isArray(whiskeys)) return;
+    
+    setIsExporting(true);
+    
     try {
-      setIsExporting(true);
-
       switch (exportFormat) {
         case "excel":
           exportToExcel(whiskeys);
@@ -50,121 +40,73 @@ const ExportModal = ({ isOpen, onClose }: ExportModalProps) => {
         case "pdf-detailed":
           exportDetailedPDF(whiskeys);
           break;
+        default:
+          console.error("Invalid export format");
       }
-
-      toast({
-        title: "Export successful",
-        description: "Your whiskey collection has been exported successfully."
-      });
+      
+      // Close modal after export
       onClose();
     } catch (error) {
-      console.error("Export error:", error);
-      toast({
-        title: "Export failed",
-        description: "There was an error exporting your whiskey collection.",
-        variant: "destructive"
-      });
+      console.error("Export failed:", error);
     } finally {
       setIsExporting(false);
     }
   };
-
+  
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="text-center text-xl">Export Collection</DialogTitle>
+          <DialogTitle>Export Collection</DialogTitle>
+          <DialogDescription>
+            Choose a format to export your whiskey collection data.
+          </DialogDescription>
         </DialogHeader>
-
-        <div className="py-6">
-          <p className="text-gray-500 mb-4 text-sm">
-            Choose a format to export your whiskey collection.
-          </p>
-
-          <RadioGroup
-            value={exportFormat}
-            onValueChange={(value) => setExportFormat(value as ExportFormat)}
-            className="flex flex-col space-y-3"
-          >
-            <div className="flex items-center space-x-2 border p-3 rounded-md hover:bg-whiskey-50 cursor-pointer">
+        
+        <div className="py-4">
+          <RadioGroup value={exportFormat} onValueChange={(value) => setExportFormat(value as ExportFormat)}>
+            <div className="flex items-center space-x-2 mb-3">
               <RadioGroupItem value="excel" id="excel" />
-              <Label
-                htmlFor="excel"
-                className="flex items-center cursor-pointer w-full"
-              >
-                <FileSpreadsheet className="h-4 w-4 mr-2 text-green-600" />
-                <div>
-                  <span className="font-medium">Excel Spreadsheet</span>
-                  <p className="text-sm text-gray-500">Complete data in tabular format</p>
-                </div>
+              <Label htmlFor="excel" className="cursor-pointer">
+                <span className="font-medium">Excel Spreadsheet</span>
+                <p className="text-sm text-gray-500">Export to Excel (.xlsx) format with all data</p>
               </Label>
             </div>
-
-            <div className="flex items-center space-x-2 border p-3 rounded-md hover:bg-whiskey-50 cursor-pointer">
+            
+            <div className="flex items-center space-x-2 mb-3">
               <RadioGroupItem value="pdf-simple" id="pdf-simple" />
-              <Label
-                htmlFor="pdf-simple"
-                className="flex items-center cursor-pointer w-full"
-              >
-                <FileText className="h-4 w-4 mr-2 text-red-600" />
-                <div>
-                  <span className="font-medium">Simple PDF</span>
-                  <p className="text-sm text-gray-500">Basic collection overview</p>
-                </div>
+              <Label htmlFor="pdf-simple" className="cursor-pointer">
+                <span className="font-medium">Simple PDF</span>
+                <p className="text-sm text-gray-500">Clean table format with essential details</p>
               </Label>
             </div>
-
-            <div className="flex items-center space-x-2 border p-3 rounded-md hover:bg-whiskey-50 cursor-pointer">
+            
+            <div className="flex items-center space-x-2">
               <RadioGroupItem value="pdf-detailed" id="pdf-detailed" />
-              <Label
-                htmlFor="pdf-detailed"
-                className="flex items-center cursor-pointer w-full"
-              >
-                <FileText className="h-4 w-4 mr-2 text-red-600" />
-                <div>
-                  <span className="font-medium">Detailed PDF</span>
-                  <p className="text-sm text-gray-500">Complete details with tasting notes</p>
-                </div>
+              <Label htmlFor="pdf-detailed" className="cursor-pointer">
+                <span className="font-medium">Detailed PDF</span>
+                <p className="text-sm text-gray-500">Full details including review notes</p>
               </Label>
             </div>
           </RadioGroup>
-
-          {isLoading && (
-            <div className="flex justify-center mt-6">
-              <div className="animate-spin h-6 w-6 border-2 border-whiskey-500 border-t-transparent rounded-full"></div>
-            </div>
-          )}
-
-          {isError && (
-            <div className="text-center mt-6 text-red-500">
-              There was an error loading your whiskey collection data.
-            </div>
-          )}
         </div>
-
+        
         <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={onClose}
-            className="w-full sm:w-auto"
-          >
+          <Button variant="outline" onClick={onClose} disabled={isExporting}>
             Cancel
           </Button>
-          <Button
-            onClick={handleExport}
-            className="bg-whiskey-600 hover:bg-whiskey-500 text-white w-full sm:w-auto"
+          <Button 
+            onClick={handleExport} 
             disabled={isLoading || isExporting}
+            className="bg-blue-600 hover:bg-blue-500 text-white"
           >
             {isExporting ? (
               <>
-                <div className="animate-spin h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full"></div>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 Exporting...
               </>
             ) : (
-              <>
-                <DownloadCloud className="h-4 w-4 mr-2" />
-                Export
-              </>
+              "Export Now"
             )}
           </Button>
         </DialogFooter>
