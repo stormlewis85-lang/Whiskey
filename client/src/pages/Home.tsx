@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Whiskey } from "@shared/schema";
+import { Header } from "@/components/Header";
 import CollectionStats from "@/components/CollectionStats";
 import FilterBar from "@/components/FilterBar";
 import CollectionGrid from "@/components/CollectionGrid";
@@ -13,8 +14,11 @@ import ExportModal from "@/components/modals/ExportModal";
 import { Button } from "@/components/ui/button";
 import { PlusIcon, UploadIcon, DownloadIcon } from "lucide-react";
 import useWhiskeyCollection from "@/lib/hooks/useWhiskeyCollection";
+import { useAuth } from "@/hooks/use-auth";
 
 const Home = () => {
+  const { user } = useAuth();
+  
   // Modals state
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isAddWhiskeyModalOpen, setIsAddWhiskeyModalOpen] = useState(false);
@@ -77,10 +81,15 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+      {/* User Authentication Header */}
+      <Header />
+      
+      {/* App Header */}
       <header className="bg-whiskey-600 text-white shadow-md">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl md:text-3xl font-serif font-bold">Whiskey Vault</h1>
+          <h1 className="text-2xl md:text-3xl font-serif font-bold">
+            {user?.displayName || user?.username}'s Whiskey Vault
+          </h1>
           <div className="flex items-center space-x-2">
             <Button
               onClick={openExportModal}

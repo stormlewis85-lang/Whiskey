@@ -35,9 +35,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryFn: getQueryFn({ on401: "returnNull" }),
   });
 
-  const loginMutation = useMutation({
+  const loginMutation = useMutation<User, Error, LoginUser>({
     mutationFn: async (credentials: LoginUser) => {
-      const res = await apiRequest("POST", "/api/login", credentials);
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(credentials),
+        credentials: "include"
+      });
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || "Login failed");
+      }
+      
       return await res.json();
     },
     onSuccess: (user: User) => {
@@ -56,9 +67,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
-  const registerMutation = useMutation({
+  const registerMutation = useMutation<User, Error, InsertUser>({
     mutationFn: async (userData: InsertUser) => {
-      const res = await apiRequest("POST", "/api/register", userData);
+      const res = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(userData),
+        credentials: "include"
+      });
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || "Registration failed");
+      }
+      
       return await res.json();
     },
     onSuccess: (user: User) => {
@@ -77,9 +99,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
-  const logoutMutation = useMutation({
+  const logoutMutation = useMutation<void, Error, void>({
     mutationFn: async () => {
-      await apiRequest("POST", "/api/logout");
+      const res = await fetch("/api/logout", {
+        method: "POST",
+        credentials: "include"
+      });
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || "Logout failed");
+      }
     },
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
