@@ -71,12 +71,19 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview }: WhiskeyDetai
   
   // Handle file selection
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("File input change detected");
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      console.log("No file selected");
+      return;
+    }
+    
+    console.log("File selected:", file.name, file.type, file.size);
     
     // Validate file type
     const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     if (!validTypes.includes(file.type)) {
+      console.log("Invalid file type:", file.type);
       toast({
         title: "Invalid file type",
         description: "Please select a JPEG, PNG, GIF, or WebP image.",
@@ -87,6 +94,7 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview }: WhiskeyDetai
     
     // Validate file size (5MB max)
     if (file.size > 5 * 1024 * 1024) {
+      console.log("File too large:", file.size);
       toast({
         title: "File too large",
         description: "Please select an image smaller than 5MB.",
@@ -98,6 +106,7 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview }: WhiskeyDetai
     // Create form data and upload
     const formData = new FormData();
     formData.append("image", file);
+    console.log("FormData created, uploading to whiskey ID:", whiskey.id);
     setIsUploading(true);
     uploadMutation.mutate(formData);
   };

@@ -178,40 +178,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Upload bottle image
   app.post("/api/whiskeys/:id/image", imageUpload.single("image"), async (req: Request, res: Response) => {
+    console.log("Image upload request received for whiskey ID:", req.params.id);
+    console.log("Request files:", req.file || "No file");
+    console.log("Request body:", req.body);
+    
     try {
       const id = parseInt(req.params.id);
       
       if (isNaN(id)) {
+        console.log("Invalid ID format:", req.params.id);
         return res.status(400).json({ message: "Invalid ID format" });
       }
       
       if (!req.file) {
+        console.log("No image file found in request");
         return res.status(400).json({ message: "No image uploaded" });
       }
       
+      console.log("File uploaded successfully:", req.file.filename);
+      
       // Get the path to the uploaded image
       const imagePath = `/uploads/${req.file.filename}`;
+      console.log("Image path:", imagePath);
       
       // Update the whiskey with the new image path
       const updatedWhiskey = await storage.updateWhiskey(id, { image: imagePath });
+      console.log("Whiskey updated with image path:", updatedWhiskey ? "success" : "failed");
       
       if (!updatedWhiskey) {
+        console.log("Whiskey not found, deleting uploaded file");
         // If whiskey not found, delete the uploaded file to avoid orphaned files
-        fs.unlinkSync(path.join(process.cwd(), imagePath));
+        fs.unlinkSync(path.join(process.cwd(), "uploads", req.file.filename));
         return res.status(404).json({ message: "Whiskey not found" });
       }
       
+      console.log("Image upload successful, returning response");
       res.json({ 
         success: true, 
         whiskey: updatedWhiskey,
         image: imagePath
       });
     } catch (error) {
+      console.error("Error in image upload:", error);
+      
       // If there's an error, try to delete the uploaded file if it exists
       if (req.file) {
         try {
+          console.log("Deleting uploaded file due to error");
           fs.unlinkSync(path.join(process.cwd(), 'uploads', req.file.filename));
         } catch (err) {
+          console.error("Error deleting file:", err);
           // Ignore errors when cleaning up files
         }
       }
