@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@
 import { Button } from "@/components/ui/button";
 import { 
   ImageIcon, Pencil as PencilIcon, Star, Upload, Edit, Trash2, 
-  BookOpen, PenIcon, XIcon, AlertTriangle 
+  BookOpen, PenIcon, XIcon, AlertTriangle, Loader2 
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +26,7 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit }: Whis
   const [isUploading, setIsUploading] = useState(false);
   const [selectedReview, setSelectedReview] = useState<ReviewNote | null>(null);
   const [isEditReviewModalOpen, setIsEditReviewModalOpen] = useState(false);
+  const imageUploadRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -231,7 +232,7 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit }: Whis
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto pr-2" style={{maxHeight: "calc(90vh - 80px)"}}>
             {/* Left column - Image & details */}
             <div>
-              <div className="aspect-square overflow-hidden rounded-md bg-gray-100 mb-4">
+              <div className="aspect-square overflow-hidden rounded-md bg-gray-100 mb-4 relative group">
                 {whiskey.image ? (
                   <img 
                     src={whiskey.image}
@@ -243,6 +244,28 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit }: Whis
                     <ImageIcon className="h-16 w-16 text-gray-400" />
                   </div>
                 )}
+                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button 
+                    variant="secondary" 
+                    className="bg-white hover:bg-gray-100"
+                    onClick={() => imageUploadRef.current?.click()}
+                    disabled={isUploading}
+                  >
+                    {isUploading ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <Upload className="h-4 w-4 mr-2" />
+                    )}
+                    {isUploading ? "Uploading..." : "Upload Image"}
+                  </Button>
+                </div>
+                <input 
+                  type="file" 
+                  ref={imageUploadRef} 
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                />
               </div>
               
               <div className="space-y-4">
