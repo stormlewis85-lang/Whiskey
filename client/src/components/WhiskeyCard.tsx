@@ -3,14 +3,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils/calculations";
+import { PencilIcon } from "lucide-react";
 
 interface WhiskeyCardProps {
   whiskey: Whiskey;
   onViewDetails: (whiskey: Whiskey) => void;
   onReview: (whiskey: Whiskey) => void;
+  onEdit: (whiskey: Whiskey) => void;
 }
 
-const WhiskeyCard = ({ whiskey, onViewDetails, onReview }: WhiskeyCardProps) => {
+const WhiskeyCard = ({ whiskey, onViewDetails, onReview, onEdit }: WhiskeyCardProps) => {
   return (
     <Card className="card whiskey-card overflow-hidden">
       <div className="flex flex-col md:flex-row h-full">
@@ -110,6 +112,15 @@ const WhiskeyCard = ({ whiskey, onViewDetails, onReview }: WhiskeyCardProps) => 
           
           {/* Push buttons to the bottom */}
           <div className="flex mt-auto pt-4 space-x-2">
+            <Button
+              onClick={() => onEdit(whiskey)}
+              variant="ghost"
+              size="icon"
+              className="text-[#794e2f] hover:bg-[#f5efe0] h-9 w-9 p-0 rounded-full"
+              title="Edit whiskey"
+            >
+              <PencilIcon className="h-4 w-4" />
+            </Button>
             <Button
               onClick={() => onViewDetails(whiskey)}
               variant="outline"

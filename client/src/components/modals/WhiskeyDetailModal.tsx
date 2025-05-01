@@ -1,19 +1,21 @@
 import { useMemo, useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Camera, ImageIcon, Pencil, Star, Upload } from "lucide-react";
+import { Camera, ImageIcon, Pencil, Star, Upload, Edit, Trash2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import { Whiskey } from "@shared/schema";
+import { Whiskey, ReviewNote } from "@shared/schema";
 import { formatDate } from "@/lib/utils/calculations";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import EditReviewModal from "./EditReviewModal";
 
 interface WhiskeyDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   whiskey: Whiskey;
   onReview: (whiskey: Whiskey) => void;
+  onEdit: (whiskey: Whiskey) => void;
 }
 
 const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview }: WhiskeyDetailModalProps) => {
