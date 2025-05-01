@@ -33,7 +33,41 @@ export const reviewNoteSchema = z.object({
   date: z.string(),
   text: z.string(),
   flavor: z.string().optional(),
-  // Detailed review categories
+  // Visual details
+  visualColor: z.string().optional(),
+  visualViscosity: z.string().optional(),
+  visualClarity: z.string().optional(),
+  visualScore: z.number().min(1).max(5).optional(),
+  visualNotes: z.string().optional(),
+  // Nose details
+  noseAromas: z.array(z.string()).optional(),
+  noseScore: z.number().min(1).max(5).optional(),
+  noseNotes: z.string().optional(),
+  // Mouthfeel details
+  mouthfeelAlcohol: z.string().optional(),
+  mouthfeelViscosity: z.string().optional(),
+  mouthfeelPleasantness: z.string().optional(),
+  mouthfeelScore: z.number().min(1).max(5).optional(),
+  mouthfeelNotes: z.string().optional(),
+  // Taste details
+  tasteFlavors: z.array(z.string()).optional(),
+  tasteCorrelation: z.boolean().optional(),
+  tasteScore: z.number().min(1).max(5).optional(),
+  tasteNotes: z.string().optional(),
+  // Finish details
+  finishFlavors: z.array(z.string()).optional(),
+  finishCorrelation: z.boolean().optional(),
+  finishLength: z.string().optional(),
+  finishPleasantness: z.string().optional(),
+  finishScore: z.number().min(1).max(5).optional(),
+  finishNotes: z.string().optional(),
+  // Value details
+  valueAvailability: z.string().optional(),
+  valueBuyAgain: z.string().optional(),
+  valueOccasion: z.string().optional(),
+  valueScore: z.number().min(1).max(5).optional(),
+  valueNotes: z.string().optional(),
+  // Legacy fields for compatibility
   visual: z.string().optional(),
   nose: z.string().optional(),
   mouthfeel: z.string().optional(),
