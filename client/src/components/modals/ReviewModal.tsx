@@ -352,39 +352,46 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
   };
 
   const onSubmit = (data: ReviewNote) => {
-    // Calculate the final weighted scores with adjustments
-    const scores = calculateWeightedScores();
-    
-    // Calculate final overall rating (sum of all weighted category scores divided by 10.5, which is the sum of all multipliers)
-    // Nose=1.5, Mouthfeel=2.0, Taste=3.0, Finish=2.5, Value=1.5 (total 10.5)
-    const totalScore = scores.nose + scores.mouthfeel + scores.taste + scores.finish + scores.value;
-    const finalRating = parseFloat((totalScore / 10.5).toFixed(1));
-    
-    // Set the overall rating
-    data.rating = finalRating;
-    
-    // Add the final adjustment notes to the review
-    if (finalNotes) {
-      data.text = data.text ? `${data.text}\n\nFINAL NOTES: ${finalNotes}` : `FINAL NOTES: ${finalNotes}`;
+    // Only process form submission if we're on the final page
+    if (currentPage === ReviewPage.FinalScores) {
+      // Calculate the final weighted scores with adjustments
+      const scores = calculateWeightedScores();
+      
+      // Calculate final overall rating (sum of all weighted category scores divided by 10.5, which is the sum of all multipliers)
+      // Nose=1.5, Mouthfeel=2.0, Taste=3.0, Finish=2.5, Value=1.5 (total 10.5)
+      const totalScore = scores.nose + scores.mouthfeel + scores.taste + scores.finish + scores.value;
+      const finalRating = parseFloat((totalScore / 10.5).toFixed(1));
+      
+      // Set the overall rating
+      data.rating = finalRating;
+      
+      // Add the final adjustment notes to the review
+      if (finalNotes) {
+        data.text = data.text ? `${data.text}\n\nFINAL NOTES: ${finalNotes}` : `FINAL NOTES: ${finalNotes}`;
+      }
+      
+      // Add weighted scores to the review text
+      const weightedScoresText = [
+        `WEIGHTED SCORES (with adjustments):`,
+        `- Nose: ${scores.nose}/7.5 (base score × 1.5${noseAdjustment !== 0 ? ` ${noseAdjustment > 0 ? '+' : ''}${noseAdjustment}` : ''})`,
+        `- Mouth Feel: ${scores.mouthfeel}/10 (base score × 2.0${mouthfeelAdjustment !== 0 ? ` ${mouthfeelAdjustment > 0 ? '+' : ''}${mouthfeelAdjustment}` : ''})`,
+        `- Taste: ${scores.taste}/15 (base score × 3.0${tasteAdjustment !== 0 ? ` ${tasteAdjustment > 0 ? '+' : ''}${tasteAdjustment}` : ''})`,
+        `- Finish: ${scores.finish}/12.5 (base score × 2.5${finishAdjustment !== 0 ? ` ${finishAdjustment > 0 ? '+' : ''}${finishAdjustment}` : ''})`,
+        `- Value: ${scores.value}/7.5 (base score × 1.5${valueAdjustment !== 0 ? ` ${valueAdjustment > 0 ? '+' : ''}${valueAdjustment}` : ''})`,
+        `- Total: ${totalScore}/52.5`,
+        `- Final Rating: ${finalRating}/5`
+      ].join('\n');
+      
+      // Append the weighted scores to the review text
+      data.text = data.text ? `${data.text}\n\n${weightedScoresText}` : weightedScoresText;
+      
+      // Submit the review only when on final page
+      addReviewMutation.mutate(data);
+    } else {
+      // If we're not on the final page, prevent form submission and go to next page instead
+      nextPage();
+      return false;
     }
-    
-    // Add weighted scores to the review text
-    const weightedScoresText = [
-      `WEIGHTED SCORES (with adjustments):`,
-      `- Nose: ${scores.nose}/7.5 (base score × 1.5${noseAdjustment !== 0 ? ` ${noseAdjustment > 0 ? '+' : ''}${noseAdjustment}` : ''})`,
-      `- Mouth Feel: ${scores.mouthfeel}/10 (base score × 2.0${mouthfeelAdjustment !== 0 ? ` ${mouthfeelAdjustment > 0 ? '+' : ''}${mouthfeelAdjustment}` : ''})`,
-      `- Taste: ${scores.taste}/15 (base score × 3.0${tasteAdjustment !== 0 ? ` ${tasteAdjustment > 0 ? '+' : ''}${tasteAdjustment}` : ''})`,
-      `- Finish: ${scores.finish}/12.5 (base score × 2.5${finishAdjustment !== 0 ? ` ${finishAdjustment > 0 ? '+' : ''}${finishAdjustment}` : ''})`,
-      `- Value: ${scores.value}/7.5 (base score × 1.5${valueAdjustment !== 0 ? ` ${valueAdjustment > 0 ? '+' : ''}${valueAdjustment}` : ''})`,
-      `- Total: ${totalScore}/52.5`,
-      `- Final Rating: ${finalRating}/5`
-    ].join('\n');
-    
-    // Append the weighted scores to the review text
-    data.text = data.text ? `${data.text}\n\n${weightedScoresText}` : weightedScoresText;
-    
-    // Submit the review
-    addReviewMutation.mutate(data);
   };
 
   // Render content based on current page
@@ -1940,7 +1947,14 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
         </div>
         
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 scrollable-content">
+          <form onSubmit={(e) => {
+            if (currentPage !== ReviewPage.FinalScores) {
+              e.preventDefault();
+              nextPage();
+              return false;
+            }
+            return form.handleSubmit(onSubmit)(e);
+          }} className="space-y-4 scrollable-content">
             {renderPageContent()}
             
             <div className="flex justify-between pt-2">
