@@ -86,7 +86,8 @@ const useWhiskeyCollection = ({
       if (caskStrengthFilter !== "all") {
         const isCaskStrength = caskStrengthFilter === "yes";
         result = result.filter(
-          whiskey => whiskey.type === 'Bourbon' && whiskey.caskStrength === isCaskStrength
+          whiskey => whiskey.type === 'Bourbon' && 
+            (whiskey.caskStrength === true) === isCaskStrength
         );
       }
     }
@@ -121,8 +122,10 @@ const useWhiskeyCollection = ({
           if (b.age === null) return -1;
           return b.age - a.age;
         case "dateAdded":
-          // Sort by date added (newest first)
-          return new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime();
+          // Sort by date added (newest first), handle null dates safely
+          const dateA = a.dateAdded ? new Date(a.dateAdded).getTime() : 0;
+          const dateB = b.dateAdded ? new Date(b.dateAdded).getTime() : 0;
+          return dateB - dateA;
         default:
           return 0;
       }
