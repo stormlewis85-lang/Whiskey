@@ -86,7 +86,7 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview }: WhiskeyDetai
         <div className="p-6">
           <div className="flex flex-wrap gap-6">
             <div className="flex-1 min-w-[200px]">
-              <h3 className="font-medium text-gray-900 mb-4">Details</h3>
+              <h3 className="font-medium text-[#F5F5F0] mb-4">Details</h3>
               
               <div className="space-y-3">
                 <div className="flex justify-between">
@@ -118,7 +118,7 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview }: WhiskeyDetai
                 {whiskey.type === "Bourbon" && (
                   <>
                     <Separator className="my-3" />
-                    <div className="mb-2 font-medium text-whiskey-800">Bourbon Details</div>
+                    <div className="mb-2 font-medium text-[#F5F5F0]">Bourbon Details</div>
                     
                     {whiskey.bottleType && (
                       <div className="flex justify-between">
@@ -162,7 +162,7 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview }: WhiskeyDetai
             </div>
             
             <div className="flex-1 min-w-[200px]">
-              <h3 className="font-medium text-gray-900 mb-4">Rating & Tasting Notes</h3>
+              <h3 className="font-medium text-[#F5F5F0] mb-4">Rating & Tasting Notes</h3>
               
               <div className="flex mb-2">
                 {[1, 2, 3, 4, 5].map((star) => (
