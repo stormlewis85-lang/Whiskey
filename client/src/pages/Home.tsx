@@ -130,6 +130,7 @@ const Home = () => {
           isError={isError}
           onViewDetails={openDetailModal}
           onReview={openReviewModal}
+          onEdit={openEditWhiskeyModal}
           onAddNew={openAddWhiskeyModal}
         />
       </main>
@@ -153,11 +154,18 @@ const Home = () => {
             whiskey={currentWhiskey} 
           />
           
+          <EditWhiskeyModal
+            isOpen={isEditWhiskeyModalOpen}
+            onClose={() => setIsEditWhiskeyModalOpen(false)}
+            whiskey={currentWhiskey}
+          />
+          
           <WhiskeyDetailModal 
             isOpen={isDetailModalOpen} 
             onClose={() => setIsDetailModalOpen(false)} 
             whiskey={currentWhiskey}
             onReview={openReviewModal}
+            onEdit={openEditWhiskeyModal}
           />
         </>
       )}

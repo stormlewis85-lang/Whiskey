@@ -76,6 +76,7 @@ const CollectionGrid = ({
           whiskey={whiskey}
           onViewDetails={onViewDetails}
           onReview={onReview}
+          onEdit={onEdit}
         />
       ))}
     </div>
