@@ -258,7 +258,13 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
       data.finish = `Length: ${data.finishLength}, Pleasantness: ${data.finishPleasantness} - ${data.finishNotes}`;
       data.value = `Availability: ${data.valueAvailability}, Buy Again: ${data.valueBuyAgain}, Occasion: ${data.valueOccasion}`;
       
-      const response = await apiRequest("POST", `/api/whiskeys/${whiskey.id}/reviews`, data);
+      const response = await apiRequest(`/api/whiskeys/${whiskey.id}/reviews`, {
+        method: "POST", 
+        body: JSON.stringify(data),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
       return response.json();
     },
     onSuccess: () => {
