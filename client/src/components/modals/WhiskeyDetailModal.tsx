@@ -1,10 +1,13 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Pencil, Star } from "lucide-react";
+import { Camera, ImageIcon, Pencil, Star, Upload } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Whiskey } from "@shared/schema";
 import { formatDate } from "@/lib/utils/calculations";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 interface WhiskeyDetailModalProps {
   isOpen: boolean;
@@ -14,6 +17,11 @@ interface WhiskeyDetailModalProps {
 }
 
 const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview }: WhiskeyDetailModalProps) => {
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
   // Get formatted date strings
   const dateAdded = whiskey.dateAdded 
     ? formatDate(new Date(whiskey.dateAdded)) 
@@ -33,6 +41,71 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview }: WhiskeyDetai
       return dateB.getTime() - dateA.getTime();
     });
   }, [whiskey.notes]);
+  
+  // Image upload mutation
+  const uploadMutation = useMutation({
+    mutationFn: async (formData: FormData) => {
+      return apiRequest(`/api/whiskeys/${whiskey.id}/image`, {
+        method: 'POST',
+        body: formData,
+      } as RequestInit);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/whiskeys'] });
+      toast({
+        title: "Image uploaded",
+        description: "The bottle image has been uploaded successfully.",
+      });
+      setIsUploading(false);
+    },
+    onError: (error) => {
+      console.error("Upload error:", error);
+      toast({
+        title: "Upload failed",
+        description: "There was an error uploading the image. Please try again.",
+        variant: "destructive",
+      });
+      setIsUploading(false);
+    }
+  });
+  
+  // Handle file selection
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      toast({
+        title: "Invalid file type",
+        description: "Please select a JPEG, PNG, GIF, or WebP image.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please select an image smaller than 5MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Create form data and upload
+    const formData = new FormData();
+    formData.append("image", file);
+    setIsUploading(true);
+    uploadMutation.mutate(formData);
+  };
+  
+  // Trigger file input click
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -40,29 +113,51 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview }: WhiskeyDetai
         <div className="relative">
           <div className="h-48 w-full bg-whiskey-100">
             {whiskey.image ? (
-              <img 
-                src={whiskey.image} 
-                alt={`Bottle of ${whiskey.name}`}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="h-full w-full flex items-center justify-center bg-whiskey-100 text-whiskey-600">
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  className="h-16 w-16" 
-                  fill="none" 
-                  viewBox="0 0 24 24" 
-                  stroke="currentColor"
+              <div className="relative h-full w-full">
+                <img 
+                  src={whiskey.image} 
+                  alt={`Bottle of ${whiskey.name}`}
+                  className="h-full w-full object-cover"
+                />
+                <button 
+                  onClick={triggerFileInput}
+                  className="absolute bottom-3 right-3 bg-whiskey-600 text-white p-2 rounded-full shadow-md hover:bg-whiskey-500 focus:outline-none z-10"
+                  disabled={isUploading}
+                  type="button"
                 >
-                  <path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth={1.5} 
-                    d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" 
-                  />
-                </svg>
+                  {isUploading ? (
+                    <div className="animate-spin h-5 w-5 border-2 border-white border-opacity-20 border-t-white rounded-full"></div>
+                  ) : (
+                    <Camera className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
+            ) : (
+              <div className="h-full w-full flex flex-col items-center justify-center bg-whiskey-100 text-whiskey-600">
+                <button
+                  onClick={triggerFileInput}
+                  className="flex flex-col items-center justify-center p-4 hover:bg-whiskey-200 rounded-lg transition-colors focus:outline-none"
+                  disabled={isUploading}
+                  type="button"
+                >
+                  {isUploading ? (
+                    <div className="animate-spin h-8 w-8 border-4 border-whiskey-600 border-opacity-20 border-t-whiskey-600 rounded-full mb-2"></div>
+                  ) : (
+                    <ImageIcon className="h-16 w-16 mb-2" />
+                  )}
+                  <span className="text-sm font-medium">
+                    {isUploading ? "Uploading..." : "Click to add bottle photo"}
+                  </span>
+                </button>
               </div>
             )}
+            <input 
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              accept=".jpg,.jpeg,.png,.gif,.webp"
+              className="hidden"
+            />
           </div>
           <button 
             onClick={onClose} 

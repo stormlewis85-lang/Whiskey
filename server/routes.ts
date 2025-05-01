@@ -1,4 +1,4 @@
-import type { Express, Request, Response } from "express";
+import express, { type Express, type Request, type Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import multer from "multer";
@@ -12,13 +12,48 @@ import {
 } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
+import path from "path";
+import fs from "fs";
 
-// Setup multer for file uploads
-const upload = multer({
+// Ensure upload directory exists
+const uploadDir = path.join(process.cwd(), "uploads");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Setup multer for Excel file uploads (in memory)
+const excelUpload = multer({
   storage: multer.memoryStorage(),
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB limit
   },
+});
+
+// Setup multer for image file uploads (on disk)
+const imageUpload = multer({
+  storage: multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, uploadDir);
+    },
+    filename: function (req, file, cb) {
+      // Create a unique filename with timestamp and original extension
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      const ext = path.extname(file.originalname);
+      cb(null, 'bottle-' + uniqueSuffix + ext);
+    }
+  }),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+  fileFilter: function (req, file, cb) {
+    // Accept only image files
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed!'));
+    }
+  }
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -141,8 +176,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Upload bottle image
+  app.post("/api/whiskeys/:id/image", imageUpload.single("image"), async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid ID format" });
+      }
+      
+      if (!req.file) {
+        return res.status(400).json({ message: "No image uploaded" });
+      }
+      
+      // Get the path to the uploaded image
+      const imagePath = `/uploads/${req.file.filename}`;
+      
+      // Update the whiskey with the new image path
+      const updatedWhiskey = await storage.updateWhiskey(id, { image: imagePath });
+      
+      if (!updatedWhiskey) {
+        // If whiskey not found, delete the uploaded file to avoid orphaned files
+        fs.unlinkSync(path.join(process.cwd(), imagePath));
+        return res.status(404).json({ message: "Whiskey not found" });
+      }
+      
+      res.json({ 
+        success: true, 
+        whiskey: updatedWhiskey,
+        image: imagePath
+      });
+    } catch (error) {
+      // If there's an error, try to delete the uploaded file if it exists
+      if (req.file) {
+        try {
+          fs.unlinkSync(path.join(process.cwd(), 'uploads', req.file.filename));
+        } catch (err) {
+          // Ignore errors when cleaning up files
+        }
+      }
+      
+      res.status(500).json({ message: "Failed to upload image", error: String(error) });
+    }
+  });
+
+  // Serve uploaded images
+  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+  
   // Import Excel file
-  app.post("/api/import", upload.single("file"), async (req: Request, res: Response) => {
+  app.post("/api/import", excelUpload.single("file"), async (req: Request, res: Response) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: "No file uploaded" });
@@ -165,7 +247,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const errors = [];
 
       for (let i = 0; i < jsonData.length; i++) {
-        const row = jsonData[i];
+        const row = jsonData[i] as Record<string, any>;
         try {
           // Match Excel column names to our schema
           const mapped = {
