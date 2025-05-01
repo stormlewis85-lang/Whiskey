@@ -1429,7 +1429,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                     <FormControl>
                       <RadioGroup 
                         onValueChange={(value) => field.onChange(parseInt(value))} 
-                        defaultValue={field.value?.toString()}
+                        value={field.value?.toString() || undefined}
                         className="flex justify-between"
                       >
                         {SCORE_OPTIONS.map((score) => (
