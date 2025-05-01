@@ -1,7 +1,10 @@
 import { useMemo, useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ImageIcon, Pencil as PencilIcon, Star, Upload, Edit, Trash2, BookOpen, PenIcon, XIcon } from "lucide-react";
+import { 
+  ImageIcon, Pencil as PencilIcon, Star, Upload, Edit, Trash2, 
+  BookOpen, PenIcon, XIcon, AlertTriangle 
+} from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Whiskey, ReviewNote } from "@shared/schema";
@@ -149,8 +152,45 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit }: Whis
     }
   };
   
-  const confirmRemoval = () => {
-    return window.confirm("Are you sure you want to delete this review? This action cannot be undone.");
+  const confirmRemoval = (type = 'review') => {
+    return window.confirm(`Are you sure you want to delete this ${type}? This action cannot be undone.`);
+  };
+  
+  // Delete the entire whiskey
+  const deleteWhiskey = async () => {
+    if (!confirmRemoval('whiskey')) return;
+    
+    try {
+      const response = await apiRequest(
+        "DELETE", 
+        `/api/whiskeys/${whiskey.id}`
+      );
+      
+      if (response.ok) {
+        // Update the cache by removing the deleted whiskey
+        queryClient.setQueryData(["/api/whiskeys"], (oldData: Whiskey[] | undefined) => {
+          if (!oldData) return undefined;
+          return oldData.filter(item => item.id !== whiskey.id);
+        });
+        
+        // Show success message
+        toast({
+          title: "Whiskey deleted",
+          description: "The whiskey has been deleted successfully.",
+        });
+        
+        // Close the modal
+        onClose();
+      } else {
+        throw new Error("Failed to delete whiskey");
+      }
+    } catch (error) {
+      toast({
+        title: "Deletion failed",
+        description: error instanceof Error ? error.message : "An unknown error occurred",
+        variant: "destructive",
+      });
+    }
   };
   
   return (
@@ -167,6 +207,14 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit }: Whis
               </div>
               <div className="absolute right-0 top-0">
                 <div className="flex items-center space-x-2">
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                    onClick={deleteWhiskey}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                   <Button variant="outline" size="icon" onClick={() => onEdit(whiskey)}>
                     <PencilIcon className="h-4 w-4" />
                   </Button>

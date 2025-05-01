@@ -46,13 +46,11 @@ const AddWhiskeyModal = ({ isOpen, onClose }: AddWhiskeyModalProps) => {
 
   const addWhiskeyMutation = useMutation({
     mutationFn: async (data: InsertWhiskey) => {
-      const response = await apiRequest("/api/whiskeys", {
-        method: "POST",
-        body: JSON.stringify(data),
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await apiRequest(
+        "POST",
+        "/api/whiskeys",
+        data
+      );
       return response.json();
     },
     onSuccess: () => {
