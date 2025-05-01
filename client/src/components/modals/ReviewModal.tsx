@@ -289,7 +289,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
     const valueScore = form.getValues('valueScore') || 0;
     
     return {
-      nose: parseFloat((noseScore * 2.0 + noseAdjustment).toFixed(1)),
+      nose: parseFloat((noseScore * 1.5 + noseAdjustment).toFixed(1)),
       mouthfeel: parseFloat((mouthfeelScore * 2.0 + mouthfeelAdjustment).toFixed(1)),
       taste: parseFloat((tasteScore * 3.0 + tasteAdjustment).toFixed(1)),
       finish: parseFloat((finishScore * 2.5 + finishAdjustment).toFixed(1)),
@@ -310,15 +310,14 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
   // Handle page navigation
   const nextPage = () => {
     if (currentPage < ReviewPage.FinalScores) {
-      // Clear specific values when moving between pages to avoid carrying over data
-      if (currentPage === ReviewPage.Finish) {
-        // Reset any values from the Value page
+      // Reset value fields when entering and leaving the value page
+      if (currentPage === ReviewPage.Finish || currentPage === ReviewPage.Value) {
+        // Reset all the value-related fields to ensure no data carryover
         form.setValue('valueAvailability', '');
         form.setValue('valueBuyAgain', '');
         form.setValue('valueOccasion', '');
         form.setValue('valueScore', undefined);
         form.setValue('valueNotes', '');
-        // Make sure there are no lingering values
       }
       
       // When moving from Value to Summary, clear the text field
@@ -331,7 +330,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
         // Calculate the weighted scores and set the initial rating
         const scores = calculateWeightedScores();
         const totalScore = scores.nose + scores.mouthfeel + scores.taste + scores.finish + scores.value;
-        const calculatedRating = parseFloat((totalScore / 11.0).toFixed(1));
+        const calculatedRating = parseFloat((totalScore / 10.5).toFixed(1));
         setRating(calculatedRating);
       }
       
@@ -356,9 +355,10 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
     // Calculate the final weighted scores with adjustments
     const scores = calculateWeightedScores();
     
-    // Calculate final overall rating (sum of all weighted category scores divided by 11, which is the sum of all multipliers)
+    // Calculate final overall rating (sum of all weighted category scores divided by 10.5, which is the sum of all multipliers)
+    // Nose=1.5, Mouthfeel=2.0, Taste=3.0, Finish=2.5, Value=1.5 (total 10.5)
     const totalScore = scores.nose + scores.mouthfeel + scores.taste + scores.finish + scores.value;
-    const finalRating = parseFloat((totalScore / 11.0).toFixed(1));
+    const finalRating = parseFloat((totalScore / 10.5).toFixed(1));
     
     // Set the overall rating
     data.rating = finalRating;
@@ -371,12 +371,12 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
     // Add weighted scores to the review text
     const weightedScoresText = [
       `WEIGHTED SCORES (with adjustments):`,
-      `- Nose: ${scores.nose}/10 (base score × 2.0${noseAdjustment !== 0 ? ` ${noseAdjustment > 0 ? '+' : ''}${noseAdjustment}` : ''})`,
+      `- Nose: ${scores.nose}/7.5 (base score × 1.5${noseAdjustment !== 0 ? ` ${noseAdjustment > 0 ? '+' : ''}${noseAdjustment}` : ''})`,
       `- Mouth Feel: ${scores.mouthfeel}/10 (base score × 2.0${mouthfeelAdjustment !== 0 ? ` ${mouthfeelAdjustment > 0 ? '+' : ''}${mouthfeelAdjustment}` : ''})`,
       `- Taste: ${scores.taste}/15 (base score × 3.0${tasteAdjustment !== 0 ? ` ${tasteAdjustment > 0 ? '+' : ''}${tasteAdjustment}` : ''})`,
       `- Finish: ${scores.finish}/12.5 (base score × 2.5${finishAdjustment !== 0 ? ` ${finishAdjustment > 0 ? '+' : ''}${finishAdjustment}` : ''})`,
       `- Value: ${scores.value}/7.5 (base score × 1.5${valueAdjustment !== 0 ? ` ${valueAdjustment > 0 ? '+' : ''}${valueAdjustment}` : ''})`,
-      `- Total: ${totalScore}/55`,
+      `- Total: ${totalScore}/52.5`,
       `- Final Rating: ${finalRating}/5`
     ].join('\n');
     
