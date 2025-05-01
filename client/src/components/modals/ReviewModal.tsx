@@ -288,11 +288,12 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
 
   // Calculate weighted scores
   const calculateWeightedScores = () => {
-    const noseScore = form.getValues('noseScore') || 0;
-    const mouthfeelScore = form.getValues('mouthfeelScore') || 0;
-    const tasteScore = form.getValues('tasteScore') || 0;
-    const finishScore = form.getValues('finishScore') || 0;
-    const valueScore = form.getValues('valueScore') || 0;
+    // Get all scores with fallback to 0 for undefined values
+    const noseScore = Number(form.getValues('noseScore')) || 0;
+    const mouthfeelScore = Number(form.getValues('mouthfeelScore')) || 0;
+    const tasteScore = Number(form.getValues('tasteScore')) || 0;
+    const finishScore = Number(form.getValues('finishScore')) || 0;
+    const valueScore = Number(form.getValues('valueScore')) || 0;
     
     return {
       nose: parseFloat((noseScore * 1.5 + noseAdjustment).toFixed(1)),

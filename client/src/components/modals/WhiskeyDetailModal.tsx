@@ -151,13 +151,13 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit }: Whis
                   </label>
                 </div>
               ) : (
-                <div className="h-full w-full flex flex-col items-center justify-center bg-whiskey-100 text-whiskey-600">
+                <div className="h-full w-full flex flex-col items-center justify-center bg-amber-50 text-amber-700">
                   <label 
                     htmlFor="bottle-image-upload"
-                    className="cursor-pointer p-4 rounded-full bg-whiskey-200 hover:bg-whiskey-300 transition-colors"
+                    className="cursor-pointer p-4 rounded-full bg-amber-100 hover:bg-amber-200 transition-colors"
                   >
                     {isUploading ? (
-                      <div className="animate-spin h-8 w-8 border-2 border-whiskey-600 border-opacity-20 border-t-whiskey-600 rounded-full"></div>
+                      <div className="animate-spin h-8 w-8 border-2 border-amber-700 border-opacity-20 border-t-amber-700 rounded-full"></div>
                     ) : (
                       <Upload className="h-8 w-8" />
                     )}
@@ -240,7 +240,7 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit }: Whis
                   <h3 className="text-lg font-semibold text-gray-900">Tasting Notes</h3>
                   <div className="mt-2 space-y-3">
                     {sortedNotes.map((note) => (
-                      <div key={note.id} className="bg-whiskey-50 p-3 rounded-md">
+                      <div key={note.id} className="bg-amber-50 p-3 rounded-md">
                         <div className="flex justify-between items-start">
                           <div>
                             <span className="text-xs text-gray-500">{formatDate(new Date(note.date))}</span>
@@ -288,14 +288,14 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit }: Whis
                 <Button
                   onClick={() => onEdit(whiskey)}
                   variant="outline"
-                  className="inline-flex items-center border-whiskey-300 text-whiskey-700"
+                  className="inline-flex items-center border-amber-300 text-amber-700"
                 >
                   <Pencil className="h-4 w-4 mr-2" />
                   Edit Whiskey
                 </Button>
                 <Button
                   onClick={() => onReview(whiskey)}
-                  className="inline-flex items-center bg-whiskey-600 hover:bg-whiskey-500 text-white"
+                  className="inline-flex items-center bg-amber-600 hover:bg-amber-500 text-white"
                 >
                   <Star className="h-4 w-4 mr-2" />
                   Add Review
