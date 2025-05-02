@@ -2087,7 +2087,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
             <div 
               className={`${swipeDirection ? (swipeDirection === 'left' ? 'animate-slide-left' : 'animate-slide-right') : ''}`}
               ref={contentRef}
-              {...swipeHandlers}
+              {...(isMobile ? swipeHandlers : {})}
             >
               {renderPageContent()}
             </div>

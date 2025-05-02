@@ -131,7 +131,7 @@ const ComparisonTool = ({ whiskeys, className = "" }: ComparisonToolProps) => {
             const latestReview = getLatestReview(whiskey);
             return (
               <TableCell key={`${whiskey.id}-overall`} className="font-bold">
-                {latestReview?.overallScore ? latestReview.overallScore.toFixed(1) : "Not Rated"}
+                {latestReview?.rating ? latestReview.rating.toFixed(1) : "Not Rated"}
               </TableCell>
             );
           })}
@@ -191,7 +191,7 @@ const ComparisonTool = ({ whiskeys, className = "" }: ComparisonToolProps) => {
             const latestReview = getLatestReview(whiskey);
             return (
               <TableCell key={`${whiskey.id}-flavor`} className="max-w-[200px] truncate">
-                {latestReview?.flavorNotes?.join(", ") || "N/A"}
+                {latestReview?.tasteFlavors?.join(", ") || "N/A"}
               </TableCell>
             );
           })}
@@ -202,7 +202,7 @@ const ComparisonTool = ({ whiskeys, className = "" }: ComparisonToolProps) => {
             const latestReview = getLatestReview(whiskey);
             return (
               <TableCell key={`${whiskey.id}-sweetness`}>
-                {latestReview?.sweetness || "N/A"}
+                {latestReview?.tasteNotes || "N/A"}
               </TableCell>
             );
           })}
@@ -213,7 +213,7 @@ const ComparisonTool = ({ whiskeys, className = "" }: ComparisonToolProps) => {
             const latestReview = getLatestReview(whiskey);
             return (
               <TableCell key={`${whiskey.id}-complexity`}>
-                {latestReview?.complexity || "N/A"}
+                {latestReview?.tasteNotes ? "From taste notes" : "N/A"}
               </TableCell>
             );
           })}
@@ -229,7 +229,7 @@ const ComparisonTool = ({ whiskeys, className = "" }: ComparisonToolProps) => {
             const latestReview = getLatestReview(whiskey);
             return (
               <TableCell key={`${whiskey.id}-color`}>
-                {latestReview?.color || "N/A"}
+                {latestReview?.visualColor || "N/A"}
               </TableCell>
             );
           })}
@@ -240,7 +240,7 @@ const ComparisonTool = ({ whiskeys, className = "" }: ComparisonToolProps) => {
             const latestReview = getLatestReview(whiskey);
             return (
               <TableCell key={`${whiskey.id}-clarity`}>
-                {latestReview?.clarity || "N/A"}
+                {latestReview?.visualClarity || "N/A"}
               </TableCell>
             );
           })}
