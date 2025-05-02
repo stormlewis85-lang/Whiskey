@@ -16,6 +16,9 @@ import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { useSwipeable } from "react-swipeable";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { 
   COLOR_OPTIONS, 
   VISCOSITY_OPTIONS, 
