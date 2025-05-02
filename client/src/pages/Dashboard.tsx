@@ -25,13 +25,15 @@ export default function Dashboard() {
   const getReviewsData = (whiskeys: Whiskey[] | undefined) => {
     if (!whiskeys) return { reviewsByMonth: [], scoreDistribution: [] };
     
-    const reviews = whiskeys.flatMap(whiskey => 
-      whiskey.notes?.map((note: ReviewNote) => ({
+    // Ensure notes exists and is an array before mapping
+    const reviews = whiskeys.flatMap(whiskey => {
+      if (!whiskey.notes || !Array.isArray(whiskey.notes)) return [];
+      return whiskey.notes.map((note: ReviewNote) => ({
         ...note,
         whiskey: whiskey.name,
         date: new Date(note.date)
-      })) || []
-    );
+      }));
+    });
     
     // Reviews by month
     const reviewsByMonth: { name: string, count: number }[] = [];
@@ -380,7 +382,10 @@ export default function Dashboard() {
             <div className="bg-amber-50 p-4 rounded-lg text-center">
               <p className="text-sm text-muted-foreground">Reviews Written</p>
               <p className="text-2xl font-bold text-amber-800">
-                {whiskeys.reduce((total, w) => total + (w.notes?.length || 0), 0)}
+                {whiskeys.reduce((total, w) => {
+                  const notesCount = Array.isArray(w.notes) ? w.notes.length : 0;
+                  return total + notesCount;
+                }, 0)}
               </p>
             </div>
             <div className="bg-amber-50 p-4 rounded-lg text-center">
