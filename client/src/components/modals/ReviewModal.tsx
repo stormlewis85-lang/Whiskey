@@ -2065,6 +2065,14 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
           </p>
         </div>
         
+        {isMobile && (
+          <div className="mt-0 mb-2 text-xs text-center text-amber-700 flex items-center justify-center">
+            <ChevronLeft className="h-3 w-3 mr-1" />
+            <span>Swipe to navigate</span>
+            <ChevronRight className="h-3 w-3 ml-1" />
+          </div>
+        )}
+        
         <Form {...form}>
           <form 
             // Disable the normal form submission behavior entirely
@@ -2076,7 +2084,13 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
             }} 
             className="space-y-4 scrollable-content"
           >
-            {renderPageContent()}
+            <div 
+              ref={contentRef}
+              {...(isMobile ? swipeHandlers : {})}
+              className={`${swipeDirection ? (swipeDirection === 'left' ? 'animate-slide-left' : 'animate-slide-right') : ''}`}
+            >
+              {renderPageContent()}
+            </div>
             
             <div className="flex justify-between pt-2">
               <div>
@@ -2085,8 +2099,9 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                     type="button"
                     variant="outline"
                     onClick={prevPage}
-                    className="border-[#d9c4a3] text-[#794e2f] hover:bg-[#f5efe0]"
+                    className="border-[#d9c4a3] text-[#794e2f] hover:bg-[#f5efe0] flex items-center"
                   >
+                    {isMobile && <ArrowLeft className="h-4 w-4 mr-1" />}
                     Previous
                   </Button>
                 )}
@@ -2105,10 +2120,11 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                 {currentPage < ReviewPage.FinalScores ? (
                   <Button
                     type="button"
-                    className="barrel-button"
+                    className="barrel-button flex items-center"
                     onClick={nextPage}
                   >
                     Next
+                    {isMobile && <ArrowRight className="h-4 w-4 ml-1" />}
                   </Button>
                 ) : (
                   <Button
