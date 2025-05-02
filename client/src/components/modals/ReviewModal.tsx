@@ -100,6 +100,9 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
   const { toast } = useToast();
   const [currentPage, setCurrentPage] = useState<ReviewPage>(ReviewPage.Visual);
   const [rating, setRating] = useState(0);
+  const isMobile = useIsMobile();
+  const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   
   // State for selected aromas and flavors
   const [selectedNoseAromas, setSelectedNoseAromas] = useState<string[]>([]);
@@ -113,6 +116,44 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
   const [finishAdjustment, setFinishAdjustment] = useState(0);
   const [valueAdjustment, setValueAdjustment] = useState(0);
   const [finalNotes, setFinalNotes] = useState('');
+  
+  // Handle swipe gestures
+  const swipeHandlers = useSwipeable({
+    onSwipedLeft: () => {
+      if (currentPage < ReviewPage.FinalScores) {
+        setSwipeDirection('left');
+        nextPage();
+      }
+    },
+    onSwipedRight: () => {
+      if (currentPage > ReviewPage.Visual) {
+        setSwipeDirection('right');
+        prevPage();
+      }
+    },
+    trackMouse: false,
+    preventScrollOnSwipe: true,
+    delta: 10, // min distance(px) before a swipe starts
+    swipeDuration: 500, // max time in ms for a swipe
+    touchEventOptions: { passive: true },
+  });
+  
+  // Handle animation end
+  useEffect(() => {
+    if (swipeDirection && contentRef.current) {
+      const handleAnimationEnd = () => {
+        setSwipeDirection(null);
+      };
+      
+      contentRef.current.addEventListener('animationend', handleAnimationEnd);
+      
+      return () => {
+        if (contentRef.current) {
+          contentRef.current.removeEventListener('animationend', handleAnimationEnd);
+        }
+      };
+    }
+  }, [swipeDirection]);
 
   // Reset function to clear all form values and states
   const resetReview = () => {
@@ -377,7 +418,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
   };
 
   // Handle page navigation
-  const nextPage = () => {
+  const handleNext = () => {
     if (currentPage < ReviewPage.FinalScores) {
       // Going to Summary page, clear the text field
       if (currentPage === ReviewPage.Value) {
@@ -401,7 +442,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
     }
   };
 
-  const prevPage = () => {
+  const handlePrevious = () => {
     if (currentPage > ReviewPage.Visual) {
       setCurrentPage(prevPage => (prevPage - 1) as ReviewPage);
       
@@ -409,6 +450,10 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
       setTimeout(scrollToTop, 50);
     }
   };
+  
+  // Alias functions for backward compatibility
+  const nextPage = handleNext;
+  const prevPage = handlePrevious;
 
   const onSubmit = (data: ReviewNote) => {
     // Only process form submission if we're on the final page
