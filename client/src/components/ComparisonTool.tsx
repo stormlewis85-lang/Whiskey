@@ -100,25 +100,25 @@ const ComparisonTool = ({ whiskeys, className = "" }: ComparisonToolProps) => {
     if (selectedAspect === "basic" || selectedAspect === "all") {
       attributes.push(
         <TableRow key="type">
-          <TableCell className="font-medium sticky left-0 bg-white shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Type</TableCell>
+          <TableCell className={`font-medium ${stickyCellClass}`}>Type</TableCell>
           {comparisonWhiskeys.map(whiskey => (
             <TableCell key={`${whiskey.id}-type`}>{whiskey.type}</TableCell>
           ))}
         </TableRow>,
         <TableRow key="region">
-          <TableCell className="font-medium sticky left-0 bg-white">Region</TableCell>
+          <TableCell className={`font-medium ${stickyCellClass}`}>Region</TableCell>
           {comparisonWhiskeys.map(whiskey => (
             <TableCell key={`${whiskey.id}-region`}>{whiskey.region}</TableCell>
           ))}
         </TableRow>,
         <TableRow key="age">
-          <TableCell className="font-medium sticky left-0 bg-white">Age</TableCell>
+          <TableCell className={`font-medium ${stickyCellClass}`}>Age</TableCell>
           {comparisonWhiskeys.map(whiskey => (
             <TableCell key={`${whiskey.id}-age`}>{whiskey.age || "N/A"}</TableCell>
           ))}
         </TableRow>,
         <TableRow key="abv">
-          <TableCell className="font-medium sticky left-0 bg-white">ABV</TableCell>
+          <TableCell className={`font-medium ${stickyCellClass}`}>ABV</TableCell>
           {comparisonWhiskeys.map(whiskey => (
             <TableCell key={`${whiskey.id}-abv`}>{whiskey.abv}%</TableCell>
           ))}
@@ -129,7 +129,7 @@ const ComparisonTool = ({ whiskeys, className = "" }: ComparisonToolProps) => {
     if (selectedAspect === "ratings" || selectedAspect === "all") {
       attributes.push(
         <TableRow key="totalScore">
-          <TableCell className="font-medium sticky left-0 bg-white">Overall Score</TableCell>
+          <TableCell className={`font-medium ${stickyCellClass}`}>Overall Score</TableCell>
           {comparisonWhiskeys.map(whiskey => {
             const latestReview = getLatestReview(whiskey);
             return (
@@ -140,7 +140,7 @@ const ComparisonTool = ({ whiskeys, className = "" }: ComparisonToolProps) => {
           })}
         </TableRow>,
         <TableRow key="noseScore">
-          <TableCell className="font-medium sticky left-0 bg-white">Nose</TableCell>
+          <TableCell className={`font-medium ${stickyCellClass}`}>Nose</TableCell>
           {comparisonWhiskeys.map(whiskey => {
             const latestReview = getLatestReview(whiskey);
             return (
@@ -151,7 +151,7 @@ const ComparisonTool = ({ whiskeys, className = "" }: ComparisonToolProps) => {
           })}
         </TableRow>,
         <TableRow key="tasteScore">
-          <TableCell className="font-medium sticky left-0 bg-white">Taste</TableCell>
+          <TableCell className={`font-medium ${stickyCellClass}`}>Taste</TableCell>
           {comparisonWhiskeys.map(whiskey => {
             const latestReview = getLatestReview(whiskey);
             return (
@@ -162,7 +162,7 @@ const ComparisonTool = ({ whiskeys, className = "" }: ComparisonToolProps) => {
           })}
         </TableRow>,
         <TableRow key="finishScore">
-          <TableCell className="font-medium sticky left-0 bg-white">Finish</TableCell>
+          <TableCell className={`font-medium ${stickyCellClass}`}>Finish</TableCell>
           {comparisonWhiskeys.map(whiskey => {
             const latestReview = getLatestReview(whiskey);
             return (
@@ -173,7 +173,7 @@ const ComparisonTool = ({ whiskeys, className = "" }: ComparisonToolProps) => {
           })}
         </TableRow>,
         <TableRow key="valueScore">
-          <TableCell className="font-medium sticky left-0 bg-white">Value</TableCell>
+          <TableCell className={`font-medium ${stickyCellClass}`}>Value</TableCell>
           {comparisonWhiskeys.map(whiskey => {
             const latestReview = getLatestReview(whiskey);
             return (
@@ -189,7 +189,7 @@ const ComparisonTool = ({ whiskeys, className = "" }: ComparisonToolProps) => {
     if (selectedAspect === "taste" || selectedAspect === "all") {
       attributes.push(
         <TableRow key="flavor">
-          <TableCell className="font-medium sticky left-0 bg-white">Flavor Notes</TableCell>
+          <TableCell className={`font-medium ${stickyCellClass}`}>Flavor Notes</TableCell>
           {comparisonWhiskeys.map(whiskey => {
             const latestReview = getLatestReview(whiskey);
             return (
@@ -200,7 +200,7 @@ const ComparisonTool = ({ whiskeys, className = "" }: ComparisonToolProps) => {
           })}
         </TableRow>,
         <TableRow key="sweetness">
-          <TableCell className="font-medium sticky left-0 bg-white">Sweetness</TableCell>
+          <TableCell className={`font-medium ${stickyCellClass}`}>Sweetness</TableCell>
           {comparisonWhiskeys.map(whiskey => {
             const latestReview = getLatestReview(whiskey);
             return (
@@ -211,7 +211,7 @@ const ComparisonTool = ({ whiskeys, className = "" }: ComparisonToolProps) => {
           })}
         </TableRow>,
         <TableRow key="complexity">
-          <TableCell className="font-medium sticky left-0 bg-white">Complexity</TableCell>
+          <TableCell className={`font-medium ${stickyCellClass}`}>Complexity</TableCell>
           {comparisonWhiskeys.map(whiskey => {
             const latestReview = getLatestReview(whiskey);
             return (
@@ -227,7 +227,7 @@ const ComparisonTool = ({ whiskeys, className = "" }: ComparisonToolProps) => {
     if (selectedAspect === "appearance" || selectedAspect === "all") {
       attributes.push(
         <TableRow key="color">
-          <TableCell className="font-medium sticky left-0 bg-white">Color</TableCell>
+          <TableCell className={`font-medium ${stickyCellClass}`}>Color</TableCell>
           {comparisonWhiskeys.map(whiskey => {
             const latestReview = getLatestReview(whiskey);
             return (
@@ -238,7 +238,7 @@ const ComparisonTool = ({ whiskeys, className = "" }: ComparisonToolProps) => {
           })}
         </TableRow>,
         <TableRow key="clarity">
-          <TableCell className="font-medium sticky left-0 bg-white">Clarity</TableCell>
+          <TableCell className={`font-medium ${stickyCellClass}`}>Clarity</TableCell>
           {comparisonWhiskeys.map(whiskey => {
             const latestReview = getLatestReview(whiskey);
             return (
@@ -249,7 +249,7 @@ const ComparisonTool = ({ whiskeys, className = "" }: ComparisonToolProps) => {
           })}
         </TableRow>,
         <TableRow key="viscosity">
-          <TableCell className="font-medium sticky left-0 bg-white">Viscosity</TableCell>
+          <TableCell className={`font-medium ${stickyCellClass}`}>Viscosity</TableCell>
           {comparisonWhiskeys.map(whiskey => {
             const latestReview = getLatestReview(whiskey);
             return (
@@ -265,7 +265,7 @@ const ComparisonTool = ({ whiskeys, className = "" }: ComparisonToolProps) => {
     if (selectedAspect === "value" || selectedAspect === "all") {
       attributes.push(
         <TableRow key="price">
-          <TableCell className="font-medium sticky left-0 bg-white">Price</TableCell>
+          <TableCell className={`font-medium ${stickyCellClass}`}>Price</TableCell>
           {comparisonWhiskeys.map(whiskey => (
             <TableCell key={`${whiskey.id}-price`}>
               ${whiskey.price ? whiskey.price.toFixed(2) : "N/A"}
@@ -273,7 +273,7 @@ const ComparisonTool = ({ whiskeys, className = "" }: ComparisonToolProps) => {
           ))}
         </TableRow>,
         <TableRow key="availability">
-          <TableCell className="font-medium sticky left-0 bg-white">Availability</TableCell>
+          <TableCell className={`font-medium ${stickyCellClass}`}>Availability</TableCell>
           {comparisonWhiskeys.map(whiskey => {
             const latestReview = getLatestReview(whiskey);
             return (
@@ -284,7 +284,7 @@ const ComparisonTool = ({ whiskeys, className = "" }: ComparisonToolProps) => {
           })}
         </TableRow>,
         <TableRow key="buy-again">
-          <TableCell className="font-medium sticky left-0 bg-white">Buy Again</TableCell>
+          <TableCell className={`font-medium ${stickyCellClass}`}>Buy Again</TableCell>
           {comparisonWhiskeys.map(whiskey => {
             const latestReview = getLatestReview(whiskey);
             return (
