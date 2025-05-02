@@ -57,6 +57,12 @@ const Home = () => {
     mashBillFilter,
     caskStrengthFilter
   });
+  
+  // Debug logging
+  console.log("Home component - whiskeys:", whiskeys?.length || 0);
+  console.log("Home component - filteredWhiskeys:", filteredWhiskeys?.length || 0);
+  console.log("Home component - isLoading:", isLoading);
+  console.log("Home component - isError:", isError);
 
   // Modal handlers
   const openImportModal = () => setIsImportModalOpen(true);

@@ -38,7 +38,12 @@ const useWhiskeyCollection = ({
   
   // Effect for filtering and sorting whiskeys
   useEffect(() => {
-    if (!whiskeys) return;
+    if (!whiskeys) {
+      console.log("No whiskeys data available");
+      return;
+    }
+    
+    console.log("Processing whiskeys in useEffect:", whiskeys.length);
     
     let result = [...whiskeys];
     
@@ -51,11 +56,13 @@ const useWhiskeyCollection = ({
           (whiskey.distillery && whiskey.distillery.toLowerCase().includes(lowerQuery)) ||
           (whiskey.type && whiskey.type.toLowerCase().includes(lowerQuery))
       );
+      console.log("After search query filter:", result.length);
     }
     
     // Apply type filter
     if (typeFilter) {
       result = result.filter(whiskey => whiskey.type === typeFilter);
+      console.log("After type filter:", result.length);
     }
     
     // Apply rating filter
@@ -64,6 +71,7 @@ const useWhiskeyCollection = ({
       result = result.filter(
         whiskey => whiskey.rating !== null && whiskey.rating >= minRating
       );
+      console.log("After rating filter:", result.length);
     }
     
     // Apply bourbon-specific filters if type is Bourbon
@@ -73,6 +81,7 @@ const useWhiskeyCollection = ({
         result = result.filter(
           whiskey => whiskey.type === 'Bourbon' && whiskey.bottleType === bottleTypeFilter
         );
+        console.log("After bottle type filter:", result.length);
       }
       
       // Filter by mash bill
@@ -80,6 +89,7 @@ const useWhiskeyCollection = ({
         result = result.filter(
           whiskey => whiskey.type === 'Bourbon' && whiskey.mashBill === mashBillFilter
         );
+        console.log("After mash bill filter:", result.length);
       }
       
       // Filter by cask strength
@@ -89,6 +99,7 @@ const useWhiskeyCollection = ({
           whiskey => whiskey.type === 'Bourbon' && 
             (whiskey.caskStrength === "Yes") === isCaskStrength
         );
+        console.log("After cask strength filter:", result.length);
       }
     }
     
@@ -131,6 +142,7 @@ const useWhiskeyCollection = ({
       }
     });
     
+    console.log("Final filtered whiskeys:", result.length);
     setFilteredWhiskeys(result);
   }, [
     whiskeys, 
