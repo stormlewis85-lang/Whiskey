@@ -5,9 +5,11 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
+import { Link } from "wouter";
 
 const COLORS = ['#8884d8', '#83a6ed', '#8dd1e1', '#82ca9d', '#a4de6c', '#d0ed57', '#ffc658'];
 
@@ -185,7 +187,20 @@ export default function Dashboard() {
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-serif font-bold text-[#7d5936]">Collection Dashboard</h2>
+        <div className="flex items-center gap-4">
+          <h2 className="text-3xl font-serif font-bold text-[#7d5936]">Collection Dashboard</h2>
+          <Link href="/">
+            <Button variant="outline" className="border-amber-300 text-amber-700 hover:bg-amber-50">
+              <span className="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-home">
+                  <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                  <polyline points="9 22 9 12 15 12 15 22" />
+                </svg>
+                Back to Collection
+              </span>
+            </Button>
+          </Link>
+        </div>
         <div className="text-sm text-muted-foreground">
           {whiskeys.length} whiskeys in collection
         </div>
