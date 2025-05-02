@@ -1,6 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { CircleUser, LogOut } from "lucide-react";
+import { CircleUser, LogOut, BarChart3, Home } from "lucide-react";
+import { Link, useLocation } from "wouter";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,9 +13,14 @@ import {
 
 export function Header() {
   const { user, logoutMutation } = useAuth();
+  const [location] = useLocation();
 
   const handleLogout = () => {
     logoutMutation.mutate();
+  };
+
+  const isActive = (path: string) => {
+    return location === path;
   };
 
   return (
@@ -28,6 +34,34 @@ export function Header() {
             </span>
           </h1>
         </div>
+
+        {/* Navigation */}
+        {user && (
+          <div className="flex-1 flex justify-center">
+            <nav className="flex space-x-6">
+              <Link href="/">
+                <a className={`flex items-center space-x-1 px-2 py-1 rounded-md text-sm font-medium transition-colors ${
+                  isActive('/') 
+                    ? 'text-amber-800 bg-amber-50' 
+                    : 'text-gray-600 hover:text-amber-700 hover:bg-amber-50/50'
+                }`}>
+                  <Home className="h-4 w-4" />
+                  <span>Collection</span>
+                </a>
+              </Link>
+              <Link href="/dashboard">
+                <a className={`flex items-center space-x-1 px-2 py-1 rounded-md text-sm font-medium transition-colors ${
+                  isActive('/dashboard') 
+                    ? 'text-amber-800 bg-amber-50' 
+                    : 'text-gray-600 hover:text-amber-700 hover:bg-amber-50/50'
+                }`}>
+                  <BarChart3 className="h-4 w-4" />
+                  <span>Dashboard</span>
+                </a>
+              </Link>
+            </nav>
+          </div>
+        )}
 
         {/* User menu */}
         {user && (
