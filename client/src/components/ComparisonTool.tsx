@@ -251,7 +251,7 @@ const ComparisonTool = ({ whiskeys, className = "" }: ComparisonToolProps) => {
             const latestReview = getLatestReview(whiskey);
             return (
               <TableCell key={`${whiskey.id}-viscosity`}>
-                {latestReview?.viscosity || "N/A"}
+                {latestReview?.visualViscosity || "N/A"}
               </TableCell>
             );
           })}
@@ -275,7 +275,7 @@ const ComparisonTool = ({ whiskeys, className = "" }: ComparisonToolProps) => {
             const latestReview = getLatestReview(whiskey);
             return (
               <TableCell key={`${whiskey.id}-availability`}>
-                {latestReview?.availability || "N/A"}
+                {latestReview?.valueAvailability || "N/A"}
               </TableCell>
             );
           })}
@@ -286,7 +286,7 @@ const ComparisonTool = ({ whiskeys, className = "" }: ComparisonToolProps) => {
             const latestReview = getLatestReview(whiskey);
             return (
               <TableCell key={`${whiskey.id}-buyAgain`}>
-                {latestReview?.buyAgain || "N/A"}
+                {latestReview?.valueBuyAgain || "N/A"}
               </TableCell>
             );
           })}
