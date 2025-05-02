@@ -5,6 +5,7 @@ import { Header } from "@/components/Header";
 import CollectionStats from "@/components/CollectionStats";
 import FilterBar from "@/components/FilterBar";
 import CollectionGrid from "@/components/CollectionGrid";
+import ComparisonTool from "@/components/ComparisonTool";
 import ImportModal from "@/components/modals/ImportModal";
 import AddWhiskeyModal from "@/components/modals/AddWhiskeyModal";
 import EditWhiskeyModal from "@/components/modals/EditWhiskeyModal";
@@ -138,8 +139,8 @@ const Home = () => {
           onAddNew={openAddWhiskeyModal}
         />
         
-        {/* Import & Export Buttons at bottom */}
-        <div className="mt-8 flex justify-center gap-4 pb-8">
+        {/* Import, Export, and Compare Buttons at bottom */}
+        <div className="mt-8 flex flex-wrap justify-center gap-4 pb-8">
           <Button
             onClick={openImportModal}
             variant="outline"
@@ -156,6 +157,14 @@ const Home = () => {
             <DownloadIcon className="h-4 w-4 mr-2 text-amber-700" />
             Export Collection
           </Button>
+          
+          {/* Comparison Tool */}
+          {whiskeys && whiskeys.length > 1 && (
+            <ComparisonTool 
+              whiskeys={whiskeys}
+              className="border-amber-700 hover:bg-amber-50" 
+            />
+          )}
         </div>
       </main>
 

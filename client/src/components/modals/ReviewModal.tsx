@@ -2085,9 +2085,9 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
             className="space-y-4 scrollable-content"
           >
             <div 
-              ref={contentRef}
-              {...(isMobile ? swipeHandlers : {})}
               className={`${swipeDirection ? (swipeDirection === 'left' ? 'animate-slide-left' : 'animate-slide-right') : ''}`}
+              ref={contentRef}
+              {...swipeHandlers}
             >
               {renderPageContent()}
             </div>
