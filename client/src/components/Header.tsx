@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { CircleUser, LogOut, BarChart3, Home, Menu } from "lucide-react";
+import { CircleUser, LogOut, BarChart3, Home, Menu, Users } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -59,6 +59,19 @@ export function Header() {
         >
           <BarChart3 className="h-4 w-4" />
           <span>Dashboard</span>
+        </button>
+      </Link>
+      <Link href="/community">
+        <button
+          onClick={() => setIsSheetOpen(false)}
+          className={`flex items-center space-x-1 px-2 py-1 rounded-md text-sm font-medium transition-colors ${
+            isActive('/community') 
+              ? 'text-amber-800 bg-amber-50' 
+              : 'text-gray-600 hover:text-amber-700 hover:bg-amber-50/50'
+          }`}
+        >
+          <Users className="h-4 w-4" />
+          <span>Community</span>
         </button>
       </Link>
     </>
