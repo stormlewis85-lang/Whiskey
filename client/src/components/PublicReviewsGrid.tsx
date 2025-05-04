@@ -1,22 +1,15 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getQueryFn } from '@/lib/queryClient';
 import { Whiskey, ReviewNote, User } from '@shared/schema';
-import { Link } from 'wouter';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { WhiskeyCategory } from '@/components/ui/whiskey-category';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { ThumbsUp, ThumbsDown, MessageSquare, Heart, ExternalLink } from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Heart, MessageSquare, Share2 } from 'lucide-react';
+import { Link } from 'wouter';
+import { Button } from '@/components/ui/button';
+import ReviewLikes from './ReviewLikes';
 
 interface PublicReview {
   whiskey: Whiskey;
@@ -27,107 +20,79 @@ interface PublicReview {
   userHasLiked?: boolean;
 }
 
-const PublicReviewCard = ({ 
+const ReviewCard = ({
+  whiskey,
   review,
-  whiskey, 
   user,
   likes = 0,
   comments = 0,
   userHasLiked = false
 }: PublicReview) => {
-  // Format to show a snippet of the review
-  const formatReviewSnippet = (text: string) => {
-    // Remove section headers and formatting
-    const cleanText = text.replace(/## (.*?) ##/g, '')
-                         .replace(/[A-Z]+:/g, '')
-                         .trim();
-    
-    // Get first 120 characters
-    const snippet = cleanText.slice(0, 120);
-    return snippet + (cleanText.length > 120 ? '...' : '');
+  // Calculate preview text (first 150 characters)
+  const previewText = review.text.length > 150 
+    ? `${review.text.substring(0, 150)}...` 
+    : review.text;
+
+  // Format date
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  // Get initials for avatar
+  const getInitials = (username: string) => {
+    return username.substring(0, 2).toUpperCase();
   };
 
   return (
-    <Card className="h-full flex flex-col">
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-start">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <WhiskeyCategory type={whiskey.type} />
-              <Badge variant="outline" className="text-xs">
-                {user.username}
-              </Badge>
+    <Card className="h-full flex flex-col hover:shadow-md transition-shadow">
+      <CardHeader className="pb-2 pt-4">
+        <div className="flex justify-between items-start mb-2">
+          <div className="flex items-center gap-2">
+            <Avatar className="h-8 w-8">
+              <AvatarFallback>{getInitials(user.username)}</AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="text-sm font-medium">{user.username}</p>
+              <p className="text-xs text-muted-foreground">{formatDate(review.date)}</p>
             </div>
-            <CardTitle className="text-xl">{whiskey.name}</CardTitle>
-            <CardDescription>
-              {whiskey.distillery}
-              {whiskey.age && ` • ${whiskey.age} years`}
-              {whiskey.abv && ` • ${whiskey.abv}% ABV`}
-            </CardDescription>
           </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-amber-600">{review.rating.toFixed(1)}</div>
-            <div className="text-xs text-muted-foreground">Rating</div>
-          </div>
+          <Badge variant="outline">{whiskey.type}</Badge>
         </div>
+        <h3 className="text-lg font-semibold line-clamp-1">{whiskey.name}</h3>
+        <p className="text-sm text-muted-foreground line-clamp-1">
+          {whiskey.distillery}
+          {whiskey.age && ` • ${whiskey.age} years`}
+          {whiskey.abv && ` • ${whiskey.abv}% ABV`}
+        </p>
       </CardHeader>
       <CardContent className="flex-grow">
-        <p className="text-sm text-gray-600 mt-2 line-clamp-3">
-          {formatReviewSnippet(review.text)}
-        </p>
-      </CardContent>
-      <CardFooter className="border-t pt-4 flex justify-between">
-        <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-          <div className="flex items-center">
-            <Heart className={`h-4 w-4 mr-1 ${userHasLiked ? 'fill-red-500 text-red-500' : ''}`} />
-            <span>{likes}</span>
-          </div>
-          <div className="flex items-center">
-            <MessageSquare className="h-4 w-4 mr-1" />
-            <span>{comments}</span>
-          </div>
+        <div className="flex justify-between items-start mb-3">
+          <div className="text-2xl font-bold text-amber-600">{review.rating.toFixed(1)}</div>
         </div>
-        <Button asChild variant="outline" size="sm">
-          <Link to={`/shared/${review.shareId}`} className="flex items-center">
-            <span className="mr-1">View</span>
-            <ExternalLink className="h-3 w-3" />
+        <p className="text-sm line-clamp-4">{previewText}</p>
+      </CardContent>
+      <CardFooter className="flex justify-between border-t pt-4 gap-2">
+        <ReviewLikes whiskey={whiskey} review={review} size="sm" />
+        
+        <Button 
+          asChild
+          variant="outline" 
+          size="sm"
+          className="h-7 px-2 text-xs"
+        >
+          <Link to={`/shared/${review.shareId}`}>
+            <Share2 className="h-3 w-3 mr-1" /> 
+            View
           </Link>
         </Button>
       </CardFooter>
     </Card>
   );
-};
-
-const SkeletonReviewCard = () => {
-  return (
-    <Card className="h-full flex flex-col">
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-start">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <Skeleton className="h-5 w-16" />
-              <Skeleton className="h-5 w-20" />
-            </div>
-            <Skeleton className="h-7 w-3/4 mb-2" />
-            <Skeleton className="h-4 w-2/3" />
-          </div>
-          <Skeleton className="h-10 w-10 rounded-full" />
-        </div>
-      </CardHeader>
-      <CardContent className="flex-grow">
-        <Skeleton className="h-4 w-full mb-2" />
-        <Skeleton className="h-4 w-5/6 mb-2" />
-        <Skeleton className="h-4 w-4/6" />
-      </CardContent>
-      <CardFooter className="border-t pt-4 flex justify-between">
-        <div className="flex items-center space-x-4">
-          <Skeleton className="h-5 w-10" />
-          <Skeleton className="h-5 w-10" />
-        </div>
-        <Skeleton className="h-8 w-16" />
-      </CardFooter>
-    </Card>
-  )
 };
 
 interface PublicReviewsGridProps {
@@ -136,76 +101,77 @@ interface PublicReviewsGridProps {
 }
 
 const PublicReviewsGrid = ({ limit = 6, className = '' }: PublicReviewsGridProps) => {
-  const { user } = useAuth();
-  const [page, setPage] = useState(1);
-  const pageSize = limit;
-  
-  const { data, isLoading, error } = useQuery<PublicReview[]>({
-    queryKey: ['/api/reviews/public', page, pageSize],
+  const { data: reviews = [], isLoading, error } = useQuery<PublicReview[]>({
+    queryKey: [`/api/reviews/public?limit=${limit}`],
     queryFn: getQueryFn({ on401: 'returnNull' }),
   });
 
   if (error) {
     return (
-      <div className={`${className} p-4 bg-red-50 rounded-lg border border-red-200 text-red-700`}>
-        Error loading public reviews. Please try again later.
+      <div className={`p-6 bg-red-50 text-red-700 rounded-md ${className}`}>
+        Failed to load public reviews. Please try again later.
       </div>
     );
   }
 
   return (
     <div className={className}>
-      <h2 className="text-2xl font-semibold mb-6">Community Reviews</h2>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {isLoading ? (
-          // Show skeleton cards while loading
-          Array(6).fill(0).map((_, i) => <SkeletonReviewCard key={i} />)
-        ) : data && data.length > 0 ? (
-          // Show review cards
-          data.map((item) => (
-            <PublicReviewCard 
-              key={`${item.whiskey.id}-${item.review.id}`}
-              whiskey={item.whiskey}
-              review={item.review}
-              user={item.user}
-              likes={item.likes || 0}
-              comments={item.comments || 0}
-              userHasLiked={item.userHasLiked}
+      {isLoading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Array(limit).fill(0).map((_, i) => (
+            <Card key={i} className="h-96">
+              <CardHeader className="pb-0">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                    <div>
+                      <Skeleton className="h-4 w-24 mb-1" />
+                      <Skeleton className="h-3 w-16" />
+                    </div>
+                  </div>
+                  <Skeleton className="h-6 w-20 rounded-full" />
+                </div>
+                <Skeleton className="h-6 w-4/5 mb-1 mt-2" />
+                <Skeleton className="h-4 w-2/3" />
+              </CardHeader>
+              <CardContent className="pt-4">
+                <div className="flex justify-between items-start mb-4">
+                  <Skeleton className="h-8 w-10" />
+                </div>
+                <Skeleton className="h-4 w-full mb-2" />
+                <Skeleton className="h-4 w-full mb-2" />
+                <Skeleton className="h-4 w-4/5 mb-2" />
+                <Skeleton className="h-4 w-3/4" />
+              </CardContent>
+              <CardFooter className="border-t pt-4">
+                <div className="flex justify-between w-full">
+                  <Skeleton className="h-8 w-20" />
+                  <Skeleton className="h-8 w-20" />
+                </div>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      ) : reviews.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {reviews.map((review, index) => (
+            <ReviewCard
+              key={`${review.whiskey.id}-${review.review.id}`}
+              whiskey={review.whiskey}
+              review={review.review}
+              user={review.user}
+              likes={review.likes}
+              comments={review.comments}
+              userHasLiked={review.userHasLiked}
             />
-          ))
-        ) : (
-          // No reviews found
-          <div className="col-span-full p-6 bg-gray-50 rounded-lg text-center">
-            <p className="text-muted-foreground">No public reviews available.</p>
-            {user && (
-              <p className="mt-2 text-sm">
-                Share your own reviews to be the first to contribute!
-              </p>
-            )}
-          </div>
-        )}
-      </div>
-      
-      {data && data.length >= pageSize && (
-        <div className="mt-8 flex justify-center">
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-              disabled={page === 1}
-            >
-              Previous
-            </Button>
-            <span className="text-sm text-muted-foreground">Page {page}</span>
-            <Button 
-              variant="outline" 
-              onClick={() => setPage(p => p + 1)}
-              disabled={data.length < pageSize}
-            >
-              Next
-            </Button>
-          </div>
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center p-12 text-center bg-muted/20 rounded-lg">
+          <h3 className="text-xl font-medium mb-2">No public reviews yet</h3>
+          <p className="text-muted-foreground mb-6">
+            Be the first to share your whiskey review with the community!
+          </p>
         </div>
       )}
     </div>

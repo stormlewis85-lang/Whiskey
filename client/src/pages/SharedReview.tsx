@@ -14,6 +14,9 @@ import { WhiskeyCategory } from '@/components/ui/whiskey-category';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'wouter';
+import ReviewLikes from '@/components/ReviewLikes';
+import ReviewComments from '@/components/ReviewComments';
+import { useAuth } from '@/hooks/use-auth';
 
 interface SharedReviewData {
   whiskey: {
@@ -100,6 +103,8 @@ const SharedReview = () => {
     return <div dangerouslySetInnerHTML={{ __html: formattedText }} />;
   };
 
+  const { user: currentUser } = useAuth();
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <Card className="mb-8">
@@ -137,15 +142,28 @@ const SharedReview = () => {
               {formatReviewText(review.text)}
             </div>
           </div>
-        </CardContent>
-        <CardFooter className="flex justify-between">
-          <div className="text-sm text-muted-foreground">
-            Reviewed on {new Date(review.date).toLocaleDateString()}
+          
+          {/* Review Actions */}
+          <div className="mt-8 pt-4 border-t flex items-center justify-between">
+            <ReviewLikes whiskey={whiskey} review={review} />
+            
+            <div className="text-sm text-muted-foreground">
+              Reviewed on {new Date(review.date).toLocaleDateString()}
+            </div>
           </div>
+        </CardContent>
+        <CardFooter className="flex justify-between border-t pt-4">
           <Button asChild variant="outline">
             <Link to="/">Back to Collection</Link>
           </Button>
         </CardFooter>
+      </Card>
+      
+      {/* Comments Section */}
+      <Card className="mb-8">
+        <CardContent className="pt-6">
+          <ReviewComments whiskey={whiskey} review={review} />
+        </CardContent>
       </Card>
     </div>
   );

@@ -6,33 +6,74 @@ interface WhiskeyCategoryProps {
   className?: string;
 }
 
-// A map of whiskey types to corresponding colors
-const typeColors: Record<string, {bg: string; text: string}> = {
-  'Bourbon': {bg: 'bg-amber-100', text: 'text-amber-800'},
-  'Rye': {bg: 'bg-green-100', text: 'text-green-800'},
-  'Scotch': {bg: 'bg-blue-100', text: 'text-blue-800'},
-  'Irish': {bg: 'bg-emerald-100', text: 'text-emerald-800'},
-  'Japanese': {bg: 'bg-red-100', text: 'text-red-800'},
-  'Canadian': {bg: 'bg-indigo-100', text: 'text-indigo-800'},
-  'Blended': {bg: 'bg-purple-100', text: 'text-purple-800'},
-  'Single Malt': {bg: 'bg-blue-100', text: 'text-blue-800'},
-  'Other': {bg: 'bg-gray-100', text: 'text-gray-800'},
-};
+export const WhiskeyCategory = ({ type, className = '' }: WhiskeyCategoryProps) => {
+  // Define color variants based on whiskey type
+  const getCategoryColor = (category: string | null): React.ReactNode => {
+    if (!category) return null;
+    
+    const categoryLower = category.toLowerCase();
+    
+    // Map of category to styling
+    const categoryStyles: Record<string, { variant: "default" | "secondary" | "destructive" | "outline", className: string }> = {
+      bourbon: { 
+        variant: "default", 
+        className: "bg-amber-600 hover:bg-amber-700 text-white" 
+      },
+      scotch: { 
+        variant: "default", 
+        className: "bg-orange-700 hover:bg-orange-800 text-white" 
+      },
+      rye: { 
+        variant: "default", 
+        className: "bg-red-600 hover:bg-red-700 text-white" 
+      },
+      irish: { 
+        variant: "default", 
+        className: "bg-green-600 hover:bg-green-700 text-white" 
+      },
+      japanese: { 
+        variant: "default", 
+        className: "bg-indigo-600 hover:bg-indigo-700 text-white" 
+      },
+      canadian: { 
+        variant: "default", 
+        className: "bg-blue-600 hover:bg-blue-700 text-white" 
+      },
+      blended: { 
+        variant: "default", 
+        className: "bg-purple-600 hover:bg-purple-700 text-white" 
+      },
+      single_malt: { 
+        variant: "secondary", 
+        className: "bg-amber-800 hover:bg-amber-900 text-white" 
+      },
+      tennessee: { 
+        variant: "default", 
+        className: "bg-yellow-600 hover:bg-yellow-700 text-white" 
+      }
+    };
+    
+    // Find the closest match
+    const matchedCategory = Object.keys(categoryStyles).find(key => 
+      categoryLower.includes(key) || key.includes(categoryLower)
+    );
+    
+    if (matchedCategory) {
+      const { variant, className: variantClass } = categoryStyles[matchedCategory];
+      return (
+        <Badge variant={variant} className={`${variantClass} ${className}`}>
+          {category}
+        </Badge>
+      );
+    }
+    
+    // Default styling for unrecognized types
+    return (
+      <Badge variant="outline" className={className}>
+        {category}
+      </Badge>
+    );
+  };
 
-export function WhiskeyCategory({ type, className = '' }: WhiskeyCategoryProps) {
-  if (!type) return null;
-  
-  // Find the matching type or default to 'Other'
-  const colors = Object.keys(typeColors).includes(type) 
-    ? typeColors[type] 
-    : typeColors['Other'];
-  
-  return (
-    <Badge 
-      className={`${colors.bg} ${colors.text} border-none hover:${colors.bg} ${className}`} 
-      variant="outline"
-    >
-      {type}
-    </Badge>
-  );
-}
+  return getCategoryColor(type);
+};
