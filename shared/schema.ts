@@ -162,12 +162,38 @@ export const excelImportSchema = z.object({
 // Add relations after tables are defined
 export const usersRelations = relations(users, ({ many }) => ({
   whiskeys: many(whiskeys),
+  reviewComments: many(reviewComments),
+  reviewLikes: many(reviewLikes),
 }));
 
-export const whiskeysRelations = relations(whiskeys, ({ one }) => ({
+export const whiskeysRelations = relations(whiskeys, ({ one, many }) => ({
   user: one(users, {
     fields: [whiskeys.userId],
     references: [users.id],
+  }),
+  comments: many(reviewComments),
+  likes: many(reviewLikes),
+}));
+
+export const reviewCommentsRelations = relations(reviewComments, ({ one }) => ({
+  user: one(users, {
+    fields: [reviewComments.userId],
+    references: [users.id],
+  }),
+  whiskey: one(whiskeys, {
+    fields: [reviewComments.whiskeyId],
+    references: [whiskeys.id],
+  }),
+}));
+
+export const reviewLikesRelations = relations(reviewLikes, ({ one }) => ({
+  user: one(users, {
+    fields: [reviewLikes.userId],
+    references: [users.id],
+  }),
+  whiskey: one(whiskeys, {
+    fields: [reviewLikes.whiskeyId],
+    references: [whiskeys.id],
   }),
 }));
 
@@ -184,6 +210,18 @@ export const updateUserSchema = createInsertSchema(users)
   .omit({ id: true, password: true, createdAt: true, updatedAt: true })
   .partial();
 
+// Comment schemas
+export const insertCommentSchema = createInsertSchema(reviewComments)
+  .omit({ id: true, createdAt: true, updatedAt: true });
+
+export const updateCommentSchema = createInsertSchema(reviewComments)
+  .omit({ id: true, userId: true, whiskeyId: true, reviewId: true, createdAt: true, updatedAt: true })
+  .partial();
+
+// Like schema
+export const insertLikeSchema = createInsertSchema(reviewLikes)
+  .omit({ id: true, createdAt: true });
+
 // Export all types
 export type InsertWhiskey = z.infer<typeof insertWhiskeySchema>;
 export type UpdateWhiskey = z.infer<typeof updateWhiskeySchema>;
@@ -194,3 +232,10 @@ export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type LoginUser = z.infer<typeof loginUserSchema>;
 export type UpdateUser = z.infer<typeof updateUserSchema>;
+
+export type ReviewComment = typeof reviewComments.$inferSelect;
+export type InsertReviewComment = z.infer<typeof insertCommentSchema>;
+export type UpdateReviewComment = z.infer<typeof updateCommentSchema>;
+
+export type ReviewLike = typeof reviewLikes.$inferSelect;
+export type InsertReviewLike = z.infer<typeof insertLikeSchema>;

@@ -1,10 +1,12 @@
 import { nanoid } from "nanoid";
 import { 
   Whiskey, InsertWhiskey, UpdateWhiskey, ReviewNote, 
-  whiskeys, users, User, InsertUser, UpdateUser
+  whiskeys, users, User, InsertUser, UpdateUser,
+  reviewComments, reviewLikes, InsertReviewComment, 
+  UpdateReviewComment, ReviewComment, ReviewLike, InsertReviewLike
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, or, asc, desc } from "drizzle-orm";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 
@@ -41,6 +43,17 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   updateUser(id: number, userData: UpdateUser): Promise<User | undefined>;
   validateUserCredentials(username: string, password: string): Promise<User | undefined>;
+  
+  // Social features
+  getSharedReview(shareId: string): Promise<{ whiskey: Whiskey; review: ReviewNote } | undefined>;
+  toggleReviewPublic(whiskeyId: number, reviewId: string, isPublic: boolean, userId: number): Promise<Whiskey | undefined>;
+  getPublicReviews(limit?: number, offset?: number): Promise<Array<{ whiskey: Whiskey; review: ReviewNote; user: User }>>;
+  addReviewComment(whiskeyId: number, reviewId: string, comment: InsertReviewComment): Promise<ReviewComment>;
+  updateReviewComment(commentId: number, comment: UpdateReviewComment, userId: number): Promise<ReviewComment | undefined>;
+  deleteReviewComment(commentId: number, userId: number): Promise<boolean>;
+  getReviewComments(whiskeyId: number, reviewId: string): Promise<ReviewComment[]>;
+  toggleReviewLike(whiskeyId: number, reviewId: string, userId: number): Promise<{ liked: boolean; count: number }>;
+  getReviewLikes(whiskeyId: number, reviewId: string): Promise<ReviewLike[]>;
 }
 
 // This is kept for reference but not used anymore
@@ -240,6 +253,205 @@ export class DatabaseStorage implements IStorage {
     
     const isValid = await comparePasswords(password, user.password);
     return isValid ? user : undefined;
+  }
+  
+  // Social features implementation
+  async getSharedReview(shareId: string): Promise<{ whiskey: Whiskey; review: ReviewNote } | undefined> {
+    // Find all whiskeys and check for a review with this shareId
+    const allWhiskeys = await db.select().from(whiskeys);
+    
+    for (const whiskey of allWhiskeys) {
+      if (!Array.isArray(whiskey.notes)) continue;
+      
+      const review = whiskey.notes.find(note => 
+        note.shareId === shareId && note.isPublic === true
+      );
+      
+      if (review) {
+        return { whiskey, review };
+      }
+    }
+    
+    return undefined;
+  }
+  
+  async toggleReviewPublic(whiskeyId: number, reviewId: string, isPublic: boolean, userId: number): Promise<Whiskey | undefined> {
+    // Get the whiskey and ensure it belongs to the user
+    const whiskey = await this.getWhiskey(whiskeyId, userId);
+    if (!whiskey || !Array.isArray(whiskey.notes)) return undefined;
+    
+    // Find the review index
+    const reviewIndex = whiskey.notes.findIndex(note => note.id === reviewId);
+    if (reviewIndex === -1) return undefined;
+    
+    // Create a new notes array with the updated review
+    const notes = [...whiskey.notes];
+    notes[reviewIndex] = {
+      ...notes[reviewIndex],
+      isPublic,
+      // Only generate shareId if making review public and it doesn't already have one
+      shareId: isPublic && !notes[reviewIndex].shareId ? nanoid() : notes[reviewIndex].shareId
+    };
+    
+    // Update the whiskey with the updated notes
+    const [updatedWhiskey] = await db
+      .update(whiskeys)
+      .set({ notes })
+      .where(and(
+        eq(whiskeys.id, whiskeyId),
+        eq(whiskeys.userId, userId)
+      ))
+      .returning();
+    
+    return updatedWhiskey;
+  }
+  
+  async getPublicReviews(limit: number = 20, offset: number = 0): Promise<Array<{ whiskey: Whiskey; review: ReviewNote; user: User }>> {
+    // Get all whiskeys with their users
+    const whiskeysWithUsers = await db
+      .select()
+      .from(whiskeys)
+      .innerJoin(users, eq(whiskeys.userId, users.id));
+    
+    // Collect all public reviews
+    const publicReviews: Array<{ whiskey: Whiskey; review: ReviewNote; user: User }> = [];
+    
+    for (const { whiskeys: whiskey, users: user } of whiskeysWithUsers) {
+      if (!Array.isArray(whiskey.notes)) continue;
+      
+      const publicNotesInThisWhiskey = whiskey.notes
+        .filter(note => note.isPublic === true)
+        .map(review => ({
+          whiskey,
+          review,
+          user
+        }));
+      
+      publicReviews.push(...publicNotesInThisWhiskey);
+    }
+    
+    // Sort by newest first and apply pagination
+    return publicReviews
+      .sort((a, b) => new Date(b.review.date).getTime() - new Date(a.review.date).getTime())
+      .slice(offset, offset + limit);
+  }
+  
+  async addReviewComment(whiskeyId: number, reviewId: string, comment: InsertReviewComment): Promise<ReviewComment> {
+    const [newComment] = await db
+      .insert(reviewComments)
+      .values({
+        ...comment,
+        whiskeyId,
+        reviewId
+      })
+      .returning();
+    
+    return newComment;
+  }
+  
+  async updateReviewComment(commentId: number, comment: UpdateReviewComment, userId: number): Promise<ReviewComment | undefined> {
+    // Get the comment and ensure it belongs to the user
+    const [existingComment] = await db
+      .select()
+      .from(reviewComments)
+      .where(and(
+        eq(reviewComments.id, commentId),
+        eq(reviewComments.userId, userId)
+      ));
+    
+    if (!existingComment) return undefined;
+    
+    const [updatedComment] = await db
+      .update(reviewComments)
+      .set({
+        ...comment,
+        updatedAt: new Date()
+      })
+      .where(eq(reviewComments.id, commentId))
+      .returning();
+    
+    return updatedComment;
+  }
+  
+  async deleteReviewComment(commentId: number, userId: number): Promise<boolean> {
+    const result = await db
+      .delete(reviewComments)
+      .where(and(
+        eq(reviewComments.id, commentId),
+        eq(reviewComments.userId, userId)
+      ))
+      .returning({ deleted: reviewComments.id });
+    
+    return result.length > 0;
+  }
+  
+  async getReviewComments(whiskeyId: number, reviewId: string): Promise<ReviewComment[]> {
+    const comments = await db
+      .select()
+      .from(reviewComments)
+      .where(and(
+        eq(reviewComments.whiskeyId, whiskeyId),
+        eq(reviewComments.reviewId, reviewId)
+      ))
+      .orderBy(asc(reviewComments.createdAt));
+    
+    return comments;
+  }
+  
+  async toggleReviewLike(whiskeyId: number, reviewId: string, userId: number): Promise<{ liked: boolean; count: number }> {
+    // Check if the like already exists
+    const [existingLike] = await db
+      .select()
+      .from(reviewLikes)
+      .where(and(
+        eq(reviewLikes.whiskeyId, whiskeyId),
+        eq(reviewLikes.reviewId, reviewId),
+        eq(reviewLikes.userId, userId)
+      ));
+    
+    if (existingLike) {
+      // Unlike: Delete the like
+      await db
+        .delete(reviewLikes)
+        .where(eq(reviewLikes.id, existingLike.id));
+      
+      // Count total likes
+      const count = await this.getReviewLikeCount(whiskeyId, reviewId);
+      
+      return { liked: false, count };
+    } else {
+      // Like: Add a new like
+      await db
+        .insert(reviewLikes)
+        .values({
+          whiskeyId,
+          reviewId,
+          userId
+        });
+      
+      // Count total likes
+      const count = await this.getReviewLikeCount(whiskeyId, reviewId);
+      
+      return { liked: true, count };
+    }
+  }
+  
+  async getReviewLikes(whiskeyId: number, reviewId: string): Promise<ReviewLike[]> {
+    const likes = await db
+      .select()
+      .from(reviewLikes)
+      .where(and(
+        eq(reviewLikes.whiskeyId, whiskeyId),
+        eq(reviewLikes.reviewId, reviewId)
+      ));
+    
+    return likes;
+  }
+  
+  // Helper method to count likes for a review
+  private async getReviewLikeCount(whiskeyId: number, reviewId: string): Promise<number> {
+    const likes = await this.getReviewLikes(whiskeyId, reviewId);
+    return likes.length;
   }
   
   // Whiskey management methods - updated to filter by userId

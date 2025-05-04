@@ -8,7 +8,9 @@ import {
   insertWhiskeySchema, 
   updateWhiskeySchema, 
   reviewNoteSchema,
-  excelImportSchema
+  excelImportSchema,
+  insertCommentSchema,
+  updateCommentSchema
 } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -313,6 +315,324 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Serve uploaded images
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
   console.log("Serving uploads from:", path.join(process.cwd(), 'uploads'));
+
+  // Social Features: Review Sharing API Routes
+
+  // Toggle a review's public status (user must be authenticated)
+  app.post("/api/whiskeys/:id/reviews/:reviewId/share", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const whiskeyId = parseInt(req.params.id);
+      const reviewId = req.params.reviewId;
+      const isPublic = req.body.isPublic === true;
+      
+      if (isNaN(whiskeyId)) {
+        return res.status(400).json({ message: "Invalid whiskey ID format" });
+      }
+      
+      const updatedWhiskey = await storage.toggleReviewPublic(
+        whiskeyId, 
+        reviewId, 
+        isPublic, 
+        req.session.userId
+      );
+      
+      if (!updatedWhiskey) {
+        return res.status(404).json({ message: "Whiskey or review not found or not owned by you" });
+      }
+      
+      // Find the updated review
+      const updatedReview = updatedWhiskey.notes.find(note => note.id === reviewId);
+      
+      res.json({
+        success: true,
+        isPublic,
+        shareId: updatedReview?.shareId,
+        shareUrl: updatedReview?.shareId ? `/shared/${updatedReview.shareId}` : null
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update sharing status", error: String(error) });
+    }
+  });
+
+  // Get a shared review by its shareId (public, no auth required)
+  app.get("/api/shared/:shareId", async (req: Request, res: Response) => {
+    try {
+      const shareId = req.params.shareId;
+      const result = await storage.getSharedReview(shareId);
+      
+      if (!result) {
+        return res.status(404).json({ message: "Shared review not found or not public" });
+      }
+      
+      const { whiskey, review } = result;
+      
+      // Get the user info for this whiskey
+      const user = await storage.getUser(whiskey.userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Return only necessary user information (no sensitive data)
+      const userInfo = {
+        id: user.id,
+        displayName: user.displayName || user.username,
+        profileImage: user.profileImage
+      };
+      
+      // Sanitize the whiskey object to hide sensitive information
+      const sanitizedWhiskey = {
+        id: whiskey.id,
+        name: whiskey.name,
+        distillery: whiskey.distillery,
+        type: whiskey.type,
+        age: whiskey.age,
+        abv: whiskey.abv,
+        region: whiskey.region,
+        rating: whiskey.rating,
+        image: whiskey.image,
+        bottleType: whiskey.bottleType,
+        mashBill: whiskey.mashBill,
+        caskStrength: whiskey.caskStrength,
+        finished: whiskey.finished,
+        finishType: whiskey.finishType
+      };
+      
+      res.json({
+        whiskey: sanitizedWhiskey,
+        review,
+        user: userInfo
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch shared review", error: String(error) });
+    }
+  });
+
+  // Get all public reviews (paginated, no auth required)
+  app.get("/api/reviews/public", async (req: Request, res: Response) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 20;
+      const offset = parseInt(req.query.offset as string) || 0;
+      
+      const publicReviews = await storage.getPublicReviews(limit, offset);
+      
+      // Sanitize the response to remove sensitive information
+      const sanitizedReviews = publicReviews.map(({ whiskey, review, user }) => ({
+        whiskey: {
+          id: whiskey.id,
+          name: whiskey.name,
+          distillery: whiskey.distillery,
+          type: whiskey.type,
+          age: whiskey.age,
+          abv: whiskey.abv,
+          region: whiskey.region,
+          rating: whiskey.rating,
+          image: whiskey.image,
+          bottleType: whiskey.bottleType,
+          mashBill: whiskey.mashBill,
+          caskStrength: whiskey.caskStrength,
+          finished: whiskey.finished,
+          finishType: whiskey.finishType
+        },
+        review,
+        user: {
+          id: user.id,
+          displayName: user.displayName || user.username,
+          profileImage: user.profileImage
+        }
+      }));
+      
+      res.json(sanitizedReviews);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch public reviews", error: String(error) });
+    }
+  });
+
+  // Add a comment to a review (user must be authenticated)
+  app.post("/api/whiskeys/:id/reviews/:reviewId/comments", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const whiskeyId = parseInt(req.params.id);
+      const reviewId = req.params.reviewId;
+      
+      if (isNaN(whiskeyId)) {
+        return res.status(400).json({ message: "Invalid whiskey ID format" });
+      }
+      
+      // Validate comment data
+      const validatedComment = insertCommentSchema.parse({
+        ...req.body,
+        userId: req.session.userId,
+        whiskeyId,
+        reviewId
+      });
+      
+      // Add the comment
+      const newComment = await storage.addReviewComment(whiskeyId, reviewId, validatedComment);
+      
+      // Get the user info for this comment
+      const user = await storage.getUser(req.session.userId);
+      
+      // Return the comment with the user info
+      res.status(201).json({
+        comment: newComment,
+        user: {
+          id: user.id,
+          displayName: user.displayName || user.username,
+          profileImage: user.profileImage
+        }
+      });
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        return res.status(400).json({ message: "Validation error", error: validationError.message });
+      }
+      res.status(500).json({ message: "Failed to add comment", error: String(error) });
+    }
+  });
+
+  // Update a comment (user must be authenticated and own the comment)
+  app.put("/api/comments/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const commentId = parseInt(req.params.id);
+      
+      if (isNaN(commentId)) {
+        return res.status(400).json({ message: "Invalid comment ID format" });
+      }
+      
+      // Validate comment data
+      const validatedComment = updateCommentSchema.parse(req.body);
+      
+      // Update the comment
+      const updatedComment = await storage.updateReviewComment(
+        commentId, 
+        validatedComment, 
+        req.session.userId
+      );
+      
+      if (!updatedComment) {
+        return res.status(404).json({ message: "Comment not found or not owned by you" });
+      }
+      
+      res.json(updatedComment);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        return res.status(400).json({ message: "Validation error", error: validationError.message });
+      }
+      res.status(500).json({ message: "Failed to update comment", error: String(error) });
+    }
+  });
+
+  // Delete a comment (user must be authenticated and own the comment)
+  app.delete("/api/comments/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const commentId = parseInt(req.params.id);
+      
+      if (isNaN(commentId)) {
+        return res.status(400).json({ message: "Invalid comment ID format" });
+      }
+      
+      // Delete the comment
+      const success = await storage.deleteReviewComment(commentId, req.session.userId);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Comment not found or not owned by you" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete comment", error: String(error) });
+    }
+  });
+
+  // Get all comments for a review
+  app.get("/api/whiskeys/:id/reviews/:reviewId/comments", async (req: Request, res: Response) => {
+    try {
+      const whiskeyId = parseInt(req.params.id);
+      const reviewId = req.params.reviewId;
+      
+      if (isNaN(whiskeyId)) {
+        return res.status(400).json({ message: "Invalid whiskey ID format" });
+      }
+      
+      // Get all comments for the review
+      const comments = await storage.getReviewComments(whiskeyId, reviewId);
+      
+      // Get user info for each comment
+      const userIds = [...new Set(comments.map(comment => comment.userId))];
+      const userPromises = userIds.map(userId => storage.getUser(userId));
+      const users = await Promise.all(userPromises);
+      
+      // Map users to an object for easy lookup
+      const userMap = users.reduce((map, user) => {
+        if (user) {
+          map[user.id] = {
+            id: user.id,
+            displayName: user.displayName || user.username,
+            profileImage: user.profileImage
+          };
+        }
+        return map;
+      }, {} as Record<number, any>);
+      
+      // Combine comments with user info
+      const commentsWithUsers = comments.map(comment => ({
+        comment,
+        user: userMap[comment.userId]
+      }));
+      
+      res.json(commentsWithUsers);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch comments", error: String(error) });
+    }
+  });
+
+  // Toggle a like on a review (user must be authenticated)
+  app.post("/api/whiskeys/:id/reviews/:reviewId/like", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const whiskeyId = parseInt(req.params.id);
+      const reviewId = req.params.reviewId;
+      
+      if (isNaN(whiskeyId)) {
+        return res.status(400).json({ message: "Invalid whiskey ID format" });
+      }
+      
+      // Toggle the like
+      const result = await storage.toggleReviewLike(whiskeyId, reviewId, req.session.userId);
+      
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to toggle like", error: String(error) });
+    }
+  });
+
+  // Get likes for a review
+  app.get("/api/whiskeys/:id/reviews/:reviewId/likes", async (req: Request, res: Response) => {
+    try {
+      const whiskeyId = parseInt(req.params.id);
+      const reviewId = req.params.reviewId;
+      
+      if (isNaN(whiskeyId)) {
+        return res.status(400).json({ message: "Invalid whiskey ID format" });
+      }
+      
+      // Get all likes for the review
+      const likes = await storage.getReviewLikes(whiskeyId, reviewId);
+      
+      // Check if the current user has liked the review
+      let userLiked = false;
+      if (req.session && req.session.userId) {
+        userLiked = likes.some(like => like.userId === req.session.userId);
+      }
+      
+      res.json({
+        count: likes.length,
+        userLiked
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch likes", error: String(error) });
+    }
+  });
   
   // Import Excel file (user must be authenticated)
   app.post("/api/import", isAuthenticated, excelUpload.single("file"), async (req: Request, res: Response) => {
