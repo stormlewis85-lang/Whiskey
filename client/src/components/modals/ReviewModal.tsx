@@ -18,7 +18,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useSwipeable } from "react-swipeable";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Share2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { 
   COLOR_OPTIONS, 
   VISCOSITY_OPTIONS, 
@@ -212,7 +213,9 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
       valueBuyAgain: "",
       valueOccasion: "",
       valueScore: undefined,
-      valueNotes: ""
+      valueNotes: "",
+      isPublic: false,
+      shareId: undefined
     });
   };
   
@@ -258,7 +261,10 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
       valueBuyAgain: "",
       valueOccasion: "",
       valueScore: undefined,
-      valueNotes: ""
+      valueNotes: "",
+      // Social features
+      isPublic: false,
+      shareId: undefined
     },
   });
   
