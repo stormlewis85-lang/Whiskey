@@ -1587,6 +1587,38 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
       case ReviewPage.Summary:
         return (
           <>
+            {/* Sharing Options */}
+            <div className="mb-6 bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Share2 className="h-5 w-5 text-blue-600" />
+                  <h3 className="font-medium text-blue-800">Share This Review</h3>
+                </div>
+                <FormField
+                  control={form.control}
+                  name="isPublic"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center space-x-2 space-y-0">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-sm text-gray-600">Make public</FormLabel>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <p className="text-sm text-blue-600 mt-2">
+                {form.watch("isPublic") 
+                  ? "This review will be shared with other users. They will be able to like and comment on it." 
+                  : "This review is private. Only you can see it."}
+              </p>
+            </div>
+            
             {/* Review Summary */}
             <div className="mb-6 bg-secondary/20 p-4 rounded-lg">
               <h3 className="font-medium text-lg mb-2">Review Summary</h3>
