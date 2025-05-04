@@ -2,6 +2,7 @@ import { pgTable, text, serial, integer, real, timestamp, jsonb, uuid, boolean, 
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { v4 as uuidv4 } from 'uuid';
 
 // User Schema
 export const users = pgTable("users", {
@@ -49,9 +50,34 @@ export const whiskeys = pgTable("whiskeys", {
   userId: integer("user_id").references(() => users.id, { onDelete: 'cascade' }),
 });
 
+// Review Comments schema
+export const reviewComments = pgTable("review_comments", {
+  id: serial("id").primaryKey(),
+  whiskeyId: integer("whiskey_id").notNull().references(() => whiskeys.id, { onDelete: 'cascade' }),
+  reviewId: text("review_id").notNull(), // References the review's ID in the notes array
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  text: text("text").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Review Likes schema
+export const reviewLikes = pgTable("review_likes", {
+  id: serial("id").primaryKey(),
+  whiskeyId: integer("whiskey_id").notNull().references(() => whiskeys.id, { onDelete: 'cascade' }),
+  reviewId: text("review_id").notNull(), // References the review's ID in the notes array
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => {
+  return {
+    // Ensure a user can only like a review once
+    userReviewUnique: unique("user_review_unique").on(table.userId, table.reviewId)
+  };
+});
+
 // Review Note Schema - used within the notes field
 export const reviewNoteSchema = z.object({
-  id: z.string().optional(),
+  id: z.string().optional().default(() => uuidv4()),
   rating: z.number().min(0).max(5),
   date: z.string(),
   text: z.string(),
@@ -97,6 +123,9 @@ export const reviewNoteSchema = z.object({
   taste: z.string().optional(),
   finish: z.string().optional(),
   value: z.string().optional(),
+  // Social sharing options
+  isPublic: z.boolean().default(false),
+  shareId: z.string().optional().default(() => uuidv4()), // Unique ID for sharing the review
 });
 
 export type ReviewNote = z.infer<typeof reviewNoteSchema>;
