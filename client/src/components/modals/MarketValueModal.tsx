@@ -121,15 +121,34 @@ export default function MarketValueModal({
   const formatMarketData = (values: MarketValue[]) => {
     if (!values || values.length === 0) return [];
     
-    return values.map(value => ({
-      date: format(new Date(value.date), 'MMM dd, yyyy'),
-      retailPrice: value.retailPrice || 0,
-      secondaryValue: value.secondaryValue || 0,
-      auctionValue: value.auctionValue || 0,
-    })).sort((a, b) => {
-      const dateA = new Date(a.date);
-      const dateB = new Date(b.date);
-      return isNaN(dateA.getTime()) ? 1 : isNaN(dateB.getTime()) ? -1 : dateA.getTime() - dateB.getTime();
+    return values.map(value => {
+      let formattedDate = "Invalid date";
+      try {
+        const dateObj = new Date(value.date);
+        if (!isNaN(dateObj.getTime())) {
+          formattedDate = format(dateObj, 'MMM dd, yyyy');
+        }
+      } catch (error) {
+        console.error("Error formatting date:", error);
+      }
+      
+      return {
+        date: formattedDate,
+        retailPrice: value.retailPrice || 0,
+        secondaryValue: value.secondaryValue || 0,
+        auctionValue: value.auctionValue || 0,
+      };
+    }).sort((a, b) => {
+      try {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+        if (isNaN(dateA.getTime()) && isNaN(dateB.getTime())) return 0;
+        if (isNaN(dateA.getTime())) return 1;
+        if (isNaN(dateB.getTime())) return -1;
+        return dateA.getTime() - dateB.getTime();
+      } catch (error) {
+        return 0;
+      }
     });
   };
   

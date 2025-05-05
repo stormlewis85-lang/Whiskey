@@ -122,13 +122,32 @@ export default function PriceTrackingModal({
   const formatPriceData = (prices: PriceTrack[]) => {
     if (!prices) return [];
     
-    return prices.map(price => ({
-      date: format(new Date(price.date), 'MMM dd, yyyy'),
-      price: price.price,
-    })).sort((a, b) => {
-      const dateA = new Date(a.date);
-      const dateB = new Date(b.date);
-      return isNaN(dateA.getTime()) ? 1 : isNaN(dateB.getTime()) ? -1 : dateA.getTime() - dateB.getTime();
+    return prices.map(price => {
+      let formattedDate = "Invalid date";
+      try {
+        const dateObj = new Date(price.date);
+        if (!isNaN(dateObj.getTime())) {
+          formattedDate = format(dateObj, 'MMM dd, yyyy');
+        }
+      } catch (error) {
+        console.error("Error formatting date:", error);
+      }
+      
+      return {
+        date: formattedDate,
+        price: price.price,
+      };
+    }).sort((a, b) => {
+      try {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+        if (isNaN(dateA.getTime()) && isNaN(dateB.getTime())) return 0;
+        if (isNaN(dateA.getTime())) return 1;
+        if (isNaN(dateB.getTime())) return -1;
+        return dateA.getTime() - dateB.getTime();
+      } catch (error) {
+        return 0;
+      }
     });
   };
   
