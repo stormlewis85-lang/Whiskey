@@ -323,34 +323,33 @@ export class DatabaseStorage implements IStorage {
   
   // Whiskey CRUD operations
   async getWhiskeys(userId?: number): Promise<Whiskey[]> {
-    // If userId is provided, return only whiskeys for that user
-    if (userId) {
-      return db
-        .select()
-        .from(whiskeys)
-        .where(eq(whiskeys.userId, userId))
-        .orderBy(asc(whiskeys.name));
-    }
+    // Build the base query
+    const query = db.select().from(whiskeys);
     
-    // Otherwise, return all whiskeys (for non-authenticated views)
-    return db
-      .select()
-      .from(whiskeys)
-      .orderBy(asc(whiskeys.name));
-  }
-  
-  async getWhiskey(id: number, userId?: number): Promise<Whiskey | undefined> {
-    const query = db
-      .select()
-      .from(whiskeys)
-      .where(eq(whiskeys.id, id));
-    
-    // If userId is provided, only return the whiskey if it belongs to that user
+    // If userId is provided, filter by user
     if (userId !== undefined) {
       query.where(eq(whiskeys.userId, userId));
     }
     
-    const [whiskey] = await query;
+    // Execute the query with ordering
+    return query.orderBy(asc(whiskeys.name));
+  }
+  
+  async getWhiskey(id: number, userId?: number): Promise<Whiskey | undefined> {
+    // Build the query conditions
+    const conditions = [eq(whiskeys.id, id)];
+    
+    // If userId is provided, only return the whiskey if it belongs to that user
+    if (userId !== undefined) {
+      conditions.push(eq(whiskeys.userId, userId));
+    }
+    
+    // Execute the query with the combined conditions
+    const [whiskey] = await db
+      .select()
+      .from(whiskeys)
+      .where(and(...conditions));
+    
     return whiskey || undefined;
   }
   
