@@ -2,8 +2,10 @@ import { nanoid } from "nanoid";
 import { 
   Whiskey, InsertWhiskey, UpdateWhiskey, ReviewNote, 
   whiskeys, users, User, InsertUser, UpdateUser,
-  reviewComments, reviewLikes, InsertReviewComment, 
-  UpdateReviewComment, ReviewComment, ReviewLike, InsertReviewLike
+  reviewComments, reviewLikes, priceTracks, marketValues,
+  InsertReviewComment, UpdateReviewComment, ReviewComment, 
+  ReviewLike, InsertReviewLike, PriceTrack, InsertPriceTrack,
+  UpdatePriceTrack, MarketValue, InsertMarketValue, UpdateMarketValue
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, asc, desc } from "drizzle-orm";
@@ -54,146 +56,18 @@ export interface IStorage {
   getReviewComments(whiskeyId: number, reviewId: string): Promise<ReviewComment[]>;
   toggleReviewLike(whiskeyId: number, reviewId: string, userId: number): Promise<{ liked: boolean; count: number }>;
   getReviewLikes(whiskeyId: number, reviewId: string): Promise<ReviewLike[]>;
-}
-
-// This is kept for reference but not used anymore
-export class MemStorage implements IStorage {
-  private whiskeys: Map<number, Whiskey>;
-  private currentId: number;
-
-  constructor() {
-    this.whiskeys = new Map();
-    this.currentId = 1;
-  }
-
-  async getWhiskeys(): Promise<Whiskey[]> {
-    return Array.from(this.whiskeys.values());
-  }
-
-  async getWhiskey(id: number): Promise<Whiskey | undefined> {
-    return this.whiskeys.get(id);
-  }
-
-  async createWhiskey(insertWhiskey: InsertWhiskey): Promise<Whiskey> {
-    const id = this.currentId++;
-    const now = new Date();
-    
-    const whiskey: Whiskey = {
-      ...insertWhiskey,
-      id,
-      dateAdded: now,
-      lastReviewed: insertWhiskey.lastReviewed || null,
-      rating: insertWhiskey.rating || 0,
-      notes: insertWhiskey.notes || []
-    };
-    
-    this.whiskeys.set(id, whiskey);
-    return whiskey;
-  }
-
-  async updateWhiskey(id: number, updateData: UpdateWhiskey): Promise<Whiskey | undefined> {
-    const whiskey = this.whiskeys.get(id);
-    if (!whiskey) return undefined;
-
-    const updatedWhiskey: Whiskey = {
-      ...whiskey,
-      ...updateData,
-    };
-
-    this.whiskeys.set(id, updatedWhiskey);
-    return updatedWhiskey;
-  }
-
-  async deleteWhiskey(id: number): Promise<boolean> {
-    return this.whiskeys.delete(id);
-  }
-
-  async addReview(id: number, review: ReviewNote): Promise<Whiskey | undefined> {
-    const whiskey = this.whiskeys.get(id);
-    if (!whiskey) return undefined;
-
-    // Ensure the review has an ID
-    const reviewWithId: ReviewNote = {
-      ...review,
-      id: review.id || nanoid()
-    };
-
-    // Add the review to the notes array
-    const notes = Array.isArray(whiskey.notes) ? [...whiskey.notes, reviewWithId] : [reviewWithId];
-    
-    // Calculate the new average rating
-    const totalRating = notes.reduce((sum, note) => sum + note.rating, 0);
-    const avgRating = notes.length > 0 ? totalRating / notes.length : 0;
-    
-    // Update the whiskey
-    const updatedWhiskey: Whiskey = {
-      ...whiskey,
-      notes,
-      rating: parseFloat(avgRating.toFixed(1)),
-      lastReviewed: new Date()
-    };
-
-    this.whiskeys.set(id, updatedWhiskey);
-    return updatedWhiskey;
-  }
-
-  async updateReview(whiskeyId: number, reviewId: string, updatedReview: ReviewNote): Promise<Whiskey | undefined> {
-    const whiskey = this.whiskeys.get(whiskeyId);
-    if (!whiskey || !Array.isArray(whiskey.notes)) return undefined;
-
-    // Find the review index
-    const reviewIndex = whiskey.notes.findIndex(note => note.id === reviewId);
-    if (reviewIndex === -1) return undefined;
-
-    // Create a new notes array with the updated review
-    const notes = [...whiskey.notes];
-    notes[reviewIndex] = {
-      ...updatedReview,
-      id: reviewId // Ensure we keep the same ID
-    };
-
-    // Calculate the new average rating
-    const totalRating = notes.reduce((sum, note) => sum + note.rating, 0);
-    const avgRating = notes.length > 0 ? totalRating / notes.length : 0;
-    
-    // Update the whiskey
-    const updatedWhiskey: Whiskey = {
-      ...whiskey,
-      notes,
-      rating: parseFloat(avgRating.toFixed(1)),
-      lastReviewed: new Date()
-    };
-
-    this.whiskeys.set(whiskeyId, updatedWhiskey);
-    return updatedWhiskey;
-  }
-
-  async deleteReview(whiskeyId: number, reviewId: string): Promise<Whiskey | undefined> {
-    const whiskey = this.whiskeys.get(whiskeyId);
-    if (!whiskey || !Array.isArray(whiskey.notes)) return undefined;
-
-    // Filter out the review to delete
-    const notes = whiskey.notes.filter(note => note.id !== reviewId);
-    
-    // If no reviews were deleted, return undefined
-    if (notes.length === whiskey.notes.length) return undefined;
-    
-    // Calculate the new average rating
-    const totalRating = notes.reduce((sum, note) => sum + note.rating, 0);
-    const avgRating = notes.length > 0 ? totalRating / notes.length : 0;
-    
-    // Update the whiskey
-    const updatedWhiskey: Whiskey = {
-      ...whiskey,
-      notes,
-      rating: parseFloat(avgRating.toFixed(1)),
-      // Only update lastReviewed if there are still reviews
-      lastReviewed: notes.length > 0 ? whiskey.lastReviewed : null
-    };
-
-    this.whiskeys.set(whiskeyId, updatedWhiskey);
-    return updatedWhiskey;
-  }
+  
+  // Price tracking 
+  getWhiskeyPriceHistory(whiskeyId: number, userId?: number): Promise<PriceTrack[]>;
+  addPriceTrack(priceTrack: InsertPriceTrack): Promise<PriceTrack>;
+  updatePriceTrack(priceId: number, updateData: UpdatePriceTrack, userId: number): Promise<PriceTrack | undefined>;
+  deletePriceTrack(priceId: number, userId: number): Promise<boolean>;
+  
+  // Market value
+  getWhiskeyMarketValues(whiskeyId: number, userId?: number): Promise<MarketValue[]>;
+  addMarketValue(marketValue: InsertMarketValue): Promise<MarketValue>;
+  updateMarketValue(valueId: number, updateData: UpdateMarketValue, userId: number): Promise<MarketValue | undefined>;
+  deleteMarketValue(valueId: number, userId: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -336,13 +210,16 @@ export class DatabaseStorage implements IStorage {
       .slice(offset, offset + limit);
   }
   
+  // CRUD operations for review comments
   async addReviewComment(whiskeyId: number, reviewId: string, comment: InsertReviewComment): Promise<ReviewComment> {
     const [newComment] = await db
       .insert(reviewComments)
       .values({
         ...comment,
         whiskeyId,
-        reviewId
+        reviewId,
+        createdAt: new Date(),
+        updatedAt: new Date()
       })
       .returning();
     
@@ -350,27 +227,19 @@ export class DatabaseStorage implements IStorage {
   }
   
   async updateReviewComment(commentId: number, comment: UpdateReviewComment, userId: number): Promise<ReviewComment | undefined> {
-    // Get the comment and ensure it belongs to the user
-    const [existingComment] = await db
-      .select()
-      .from(reviewComments)
-      .where(and(
-        eq(reviewComments.id, commentId),
-        eq(reviewComments.userId, userId)
-      ));
-    
-    if (!existingComment) return undefined;
-    
     const [updatedComment] = await db
       .update(reviewComments)
       .set({
         ...comment,
         updatedAt: new Date()
       })
-      .where(eq(reviewComments.id, commentId))
+      .where(and(
+        eq(reviewComments.id, commentId),
+        eq(reviewComments.userId, userId)
+      ))
       .returning();
     
-    return updatedComment;
+    return updatedComment || undefined;
   }
   
   async deleteReviewComment(commentId: number, userId: number): Promise<boolean> {
@@ -398,8 +267,9 @@ export class DatabaseStorage implements IStorage {
     return comments;
   }
   
+  // Like functionality
   async toggleReviewLike(whiskeyId: number, reviewId: string, userId: number): Promise<{ liked: boolean; count: number }> {
-    // Check if the like already exists
+    // Check if user already liked this review
     const [existingLike] = await db
       .select()
       .from(reviewLikes)
@@ -409,31 +279,29 @@ export class DatabaseStorage implements IStorage {
         eq(reviewLikes.userId, userId)
       ));
     
+    // If like exists, remove it
     if (existingLike) {
-      // Unlike: Delete the like
       await db
         .delete(reviewLikes)
         .where(eq(reviewLikes.id, existingLike.id));
       
-      // Count total likes
+      // Return updated count
       const count = await this.getReviewLikeCount(whiskeyId, reviewId);
-      
       return { liked: false, count };
-    } else {
-      // Like: Add a new like
-      await db
-        .insert(reviewLikes)
-        .values({
-          whiskeyId,
-          reviewId,
-          userId
-        });
-      
-      // Count total likes
-      const count = await this.getReviewLikeCount(whiskeyId, reviewId);
-      
-      return { liked: true, count };
     }
+    
+    // Otherwise, add a new like
+    await db
+      .insert(reviewLikes)
+      .values({
+        whiskeyId,
+        reviewId,
+        userId
+      });
+    
+    // Return updated count
+    const count = await this.getReviewLikeCount(whiskeyId, reviewId);
+    return { liked: true, count };
   }
   
   async getReviewLikes(whiskeyId: number, reviewId: string): Promise<ReviewLike[]> {
@@ -448,90 +316,92 @@ export class DatabaseStorage implements IStorage {
     return likes;
   }
   
-  // Helper method to count likes for a review
   private async getReviewLikeCount(whiskeyId: number, reviewId: string): Promise<number> {
     const likes = await this.getReviewLikes(whiskeyId, reviewId);
     return likes.length;
   }
   
-  // Whiskey management methods - updated to filter by userId
+  // Whiskey CRUD operations
   async getWhiskeys(userId?: number): Promise<Whiskey[]> {
+    // If userId is provided, return only whiskeys for that user
     if (userId) {
-      return await db
+      return db
         .select()
         .from(whiskeys)
-        .where(eq(whiskeys.userId, userId));
-    }
-    return await db.select().from(whiskeys);
-  }
-
-  async getWhiskey(id: number, userId?: number): Promise<Whiskey | undefined> {
-    if (userId) {
-      const [whiskey] = await db
-        .select()
-        .from(whiskeys)
-        .where(and(
-          eq(whiskeys.id, id),
-          eq(whiskeys.userId, userId)
-        ));
-      return whiskey || undefined;
+        .where(eq(whiskeys.userId, userId))
+        .orderBy(asc(whiskeys.name));
     }
     
-    const [whiskey] = await db
+    // Otherwise, return all whiskeys (for non-authenticated views)
+    return db
+      .select()
+      .from(whiskeys)
+      .orderBy(asc(whiskeys.name));
+  }
+  
+  async getWhiskey(id: number, userId?: number): Promise<Whiskey | undefined> {
+    const query = db
       .select()
       .from(whiskeys)
       .where(eq(whiskeys.id, id));
     
-    return whiskey || undefined;
-  }
-
-  async createWhiskey(insertWhiskey: InsertWhiskey): Promise<Whiskey> {
-    const [whiskey] = await db
-      .insert(whiskeys)
-      .values({
-        ...insertWhiskey,
-        notes: insertWhiskey.notes || [],
-        rating: insertWhiskey.rating || 0
-      })
-      .returning();
-    return whiskey;
-  }
-
-  async updateWhiskey(id: number, updateData: UpdateWhiskey, userId?: number): Promise<Whiskey | undefined> {
-    // Check if whiskey exists and belongs to the user
-    let existingWhiskey;
-    if (userId) {
-      existingWhiskey = await this.getWhiskey(id, userId);
-    } else {
-      existingWhiskey = await this.getWhiskey(id);
+    // If userId is provided, only return the whiskey if it belongs to that user
+    if (userId !== undefined) {
+      query.where(eq(whiskeys.userId, userId));
     }
     
-    if (!existingWhiskey) return undefined;
-
-    const [updatedWhiskey] = await db
-      .update(whiskeys)
-      .set(updateData)
-      .where(userId ? 
-        and(eq(whiskeys.id, id), eq(whiskeys.userId, userId)) : 
-        eq(whiskeys.id, id)
-      )
+    const [whiskey] = await query;
+    return whiskey || undefined;
+  }
+  
+  async createWhiskey(whiskey: InsertWhiskey): Promise<Whiskey> {
+    const [newWhiskey] = await db
+      .insert(whiskeys)
+      .values({
+        ...whiskey,
+        dateAdded: new Date(),
+      })
       .returning();
     
-    return updatedWhiskey;
+    return newWhiskey;
   }
-
-  async deleteWhiskey(id: number, userId?: number): Promise<boolean> {
-    const result = await db
-      .delete(whiskeys)
-      .where(userId ? 
-        and(eq(whiskeys.id, id), eq(whiskeys.userId, userId)) : 
-        eq(whiskeys.id, id)
-      )
-      .returning({ deleted: whiskeys.id });
+  
+  async updateWhiskey(id: number, whiskey: UpdateWhiskey, userId?: number): Promise<Whiskey | undefined> {
+    // Build the WHERE clause based on whether userId is provided
+    const whereClause = userId !== undefined
+      ? and(eq(whiskeys.id, id), eq(whiskeys.userId, userId))
+      : eq(whiskeys.id, id);
     
-    return result.length > 0;
+    // Execute the update
+    const [updatedWhiskey] = await db
+      .update(whiskeys)
+      .set(whiskey)
+      .where(whereClause)
+      .returning();
+    
+    return updatedWhiskey || undefined;
   }
-
+  
+  async deleteWhiskey(id: number, userId?: number): Promise<boolean> {
+    try {
+      // Build the WHERE clause based on whether userId is provided
+      const whereClause = userId !== undefined
+        ? and(eq(whiskeys.id, id), eq(whiskeys.userId, userId))
+        : eq(whiskeys.id, id);
+      
+      // Execute the delete
+      const result = await db
+        .delete(whiskeys)
+        .where(whereClause)
+        .returning({ deleted: whiskeys.id });
+      
+      return result.length > 0;
+    } catch (error) {
+      console.error("Error deleting whiskey:", error);
+      return false;
+    }
+  }
+  
   async addReview(id: number, review: ReviewNote, userId?: number): Promise<Whiskey | undefined> {
     // If userId is provided, make sure the whiskey belongs to the user
     const whiskey = userId ? 
@@ -539,21 +409,25 @@ export class DatabaseStorage implements IStorage {
       await this.getWhiskey(id);
       
     if (!whiskey) return undefined;
-
+    
     // Ensure the review has an ID
     const reviewWithId: ReviewNote = {
       ...review,
       id: review.id || nanoid()
     };
-
-    // Add the review to the notes array - handle the case where notes might be null
+    
+    // Add the review to the notes array
     const notes = Array.isArray(whiskey.notes) ? [...whiskey.notes, reviewWithId] : [reviewWithId];
     
     // Calculate the new average rating
     const totalRating = notes.reduce((sum, note) => sum + note.rating, 0);
     const avgRating = notes.length > 0 ? totalRating / notes.length : 0;
     
-    // Update the whiskey with the new notes and rating
+    // Update the whiskey with the new rating and last reviewed date
+    const whereClause = userId ? 
+      and(eq(whiskeys.id, id), eq(whiskeys.userId, userId)) : 
+      eq(whiskeys.id, id);
+    
     const [updatedWhiskey] = await db
       .update(whiskeys)
       .set({
@@ -561,15 +435,12 @@ export class DatabaseStorage implements IStorage {
         rating: parseFloat(avgRating.toFixed(1)),
         lastReviewed: new Date()
       })
-      .where(userId ? 
-        and(eq(whiskeys.id, id), eq(whiskeys.userId, userId)) : 
-        eq(whiskeys.id, id)
-      )
+      .where(whereClause)
       .returning();
     
     return updatedWhiskey;
   }
-
+  
   async updateReview(whiskeyId: number, reviewId: string, updatedReview: ReviewNote, userId?: number): Promise<Whiskey | undefined> {
     // If userId is provided, make sure the whiskey belongs to the user
     const whiskey = userId ? 
@@ -577,23 +448,27 @@ export class DatabaseStorage implements IStorage {
       await this.getWhiskey(whiskeyId);
       
     if (!whiskey || !Array.isArray(whiskey.notes)) return undefined;
-
+    
     // Find the review index
     const reviewIndex = whiskey.notes.findIndex(note => note.id === reviewId);
     if (reviewIndex === -1) return undefined;
-
+    
     // Create a new notes array with the updated review
     const notes = [...whiskey.notes];
     notes[reviewIndex] = {
       ...updatedReview,
       id: reviewId // Ensure we keep the same ID
     };
-
+    
     // Calculate the new average rating
     const totalRating = notes.reduce((sum, note) => sum + note.rating, 0);
     const avgRating = notes.length > 0 ? totalRating / notes.length : 0;
     
-    // Update the whiskey with the updated notes and new rating
+    // Update the whiskey
+    const whereClause = userId ? 
+      and(eq(whiskeys.id, whiskeyId), eq(whiskeys.userId, userId)) : 
+      eq(whiskeys.id, whiskeyId);
+    
     const [updatedWhiskey] = await db
       .update(whiskeys)
       .set({
@@ -601,15 +476,12 @@ export class DatabaseStorage implements IStorage {
         rating: parseFloat(avgRating.toFixed(1)),
         lastReviewed: new Date()
       })
-      .where(userId ? 
-        and(eq(whiskeys.id, whiskeyId), eq(whiskeys.userId, userId)) : 
-        eq(whiskeys.id, whiskeyId)
-      )
+      .where(whereClause)
       .returning();
     
     return updatedWhiskey;
   }
-
+  
   async deleteReview(whiskeyId: number, reviewId: string, userId?: number): Promise<Whiskey | undefined> {
     // If userId is provided, make sure the whiskey belongs to the user
     const whiskey = userId ? 
@@ -628,7 +500,11 @@ export class DatabaseStorage implements IStorage {
     const totalRating = notes.reduce((sum, note) => sum + note.rating, 0);
     const avgRating = notes.length > 0 ? totalRating / notes.length : 0;
     
-    // Update the whiskey with the new notes array and updated rating
+    // Update the whiskey
+    const whereClause = userId ? 
+      and(eq(whiskeys.id, whiskeyId), eq(whiskeys.userId, userId)) : 
+      eq(whiskeys.id, whiskeyId);
+    
     const [updatedWhiskey] = await db
       .update(whiskeys)
       .set({
@@ -637,13 +513,152 @@ export class DatabaseStorage implements IStorage {
         // Only update lastReviewed if there are still reviews
         lastReviewed: notes.length > 0 ? whiskey.lastReviewed : null
       })
-      .where(userId ? 
-        and(eq(whiskeys.id, whiskeyId), eq(whiskeys.userId, userId)) : 
-        eq(whiskeys.id, whiskeyId)
-      )
+      .where(whereClause)
       .returning();
     
     return updatedWhiskey;
+  }
+
+  // Price tracking methods
+  async getWhiskeyPriceHistory(whiskeyId: number, userId?: number): Promise<PriceTrack[]> {
+    const query = db
+      .select()
+      .from(priceTracks)
+      .where(eq(priceTracks.whiskeyId, whiskeyId))
+      .orderBy(desc(priceTracks.date));
+    
+    // Filter by user if userId is provided
+    if (userId) {
+      query.where(eq(priceTracks.userId, userId));
+    }
+    
+    // Execute the query
+    const priceHistory = await query;
+    return priceHistory;
+  }
+  
+  async addPriceTrack(priceTrack: InsertPriceTrack): Promise<PriceTrack> {
+    // Check if whiskey exists and belongs to the user
+    const whiskey = await this.getWhiskey(priceTrack.whiskeyId, priceTrack.userId);
+    if (!whiskey) {
+      throw new Error("Whiskey not found or not owned by you");
+    }
+    
+    // Insert the price track
+    const [newPriceTrack] = await db
+      .insert(priceTracks)
+      .values(priceTrack)
+      .returning();
+    
+    return newPriceTrack;
+  }
+  
+  async updatePriceTrack(priceId: number, updateData: UpdatePriceTrack, userId: number): Promise<PriceTrack | undefined> {
+    // Check if price track exists and belongs to the user
+    const [existingPriceTrack] = await db
+      .select()
+      .from(priceTracks)
+      .where(and(
+        eq(priceTracks.id, priceId),
+        eq(priceTracks.userId, userId)
+      ));
+    
+    if (!existingPriceTrack) {
+      return undefined;
+    }
+    
+    // Update the price track
+    const [updatedPriceTrack] = await db
+      .update(priceTracks)
+      .set(updateData)
+      .where(eq(priceTracks.id, priceId))
+      .returning();
+    
+    return updatedPriceTrack;
+  }
+  
+  async deletePriceTrack(priceId: number, userId: number): Promise<boolean> {
+    // Delete the price track that belongs to the user
+    const result = await db
+      .delete(priceTracks)
+      .where(and(
+        eq(priceTracks.id, priceId),
+        eq(priceTracks.userId, userId)
+      ))
+      .returning();
+    
+    return result.length > 0;
+  }
+  
+  // Market value methods
+  async getWhiskeyMarketValues(whiskeyId: number, userId?: number): Promise<MarketValue[]> {
+    const query = db
+      .select()
+      .from(marketValues)
+      .where(eq(marketValues.whiskeyId, whiskeyId))
+      .orderBy(desc(marketValues.date));
+    
+    // Filter by user if userId is provided
+    if (userId) {
+      query.where(eq(marketValues.userId, userId));
+    }
+    
+    // Execute the query
+    const marketValueHistory = await query;
+    return marketValueHistory;
+  }
+  
+  async addMarketValue(marketValue: InsertMarketValue): Promise<MarketValue> {
+    // Check if whiskey exists and belongs to the user
+    const whiskey = await this.getWhiskey(marketValue.whiskeyId, marketValue.userId);
+    if (!whiskey) {
+      throw new Error("Whiskey not found or not owned by you");
+    }
+    
+    // Insert the market value
+    const [newMarketValue] = await db
+      .insert(marketValues)
+      .values(marketValue)
+      .returning();
+    
+    return newMarketValue;
+  }
+  
+  async updateMarketValue(valueId: number, updateData: UpdateMarketValue, userId: number): Promise<MarketValue | undefined> {
+    // Check if market value exists and belongs to the user
+    const [existingMarketValue] = await db
+      .select()
+      .from(marketValues)
+      .where(and(
+        eq(marketValues.id, valueId),
+        eq(marketValues.userId, userId)
+      ));
+    
+    if (!existingMarketValue) {
+      return undefined;
+    }
+    
+    // Update the market value
+    const [updatedMarketValue] = await db
+      .update(marketValues)
+      .set(updateData)
+      .where(eq(marketValues.id, valueId))
+      .returning();
+    
+    return updatedMarketValue;
+  }
+  
+  async deleteMarketValue(valueId: number, userId: number): Promise<boolean> {
+    // Delete the market value that belongs to the user
+    const result = await db
+      .delete(marketValues)
+      .where(and(
+        eq(marketValues.id, valueId),
+        eq(marketValues.userId, userId)
+      ))
+      .returning();
+    
+    return result.length > 0;
   }
 }
 
