@@ -70,6 +70,14 @@ const Home = () => {
   const openImportModal = () => setIsImportModalOpen(true);
   const openAddWhiskeyModal = () => setIsAddWhiskeyModalOpen(true);
   const openExportModal = () => setIsExportModalOpen(true);
+  const openBarcodeScanner = () => setIsBarcodeScannerOpen(true);
+  
+  const handleCodeScanned = (code: string) => {
+    // When barcode is scanned, set it as search query
+    setSearchQuery(code);
+    // You could also implement API lookup of whiskey by barcode
+    console.log("Barcode scanned:", code);
+  };
   
   const openReviewModal = (whiskey: Whiskey) => {
     setCurrentWhiskey(whiskey);
@@ -100,6 +108,13 @@ const Home = () => {
             {user?.displayName || user?.username}'s Whiskey Vault
           </h1>
           <div className="flex items-center space-x-2">
+            <Button
+              onClick={openBarcodeScanner}
+              variant="ghost"
+              className="text-amber-100 hover:text-white hover:bg-amber-700/30"
+            >
+              <Scan className="h-5 w-5" />
+            </Button>
             <Button
               onClick={openAddWhiskeyModal}
               variant="secondary"
@@ -190,6 +205,12 @@ const Home = () => {
       <ExportModal
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}
+      />
+      
+      <BarcodeScanner
+        open={isBarcodeScannerOpen}
+        onOpenChange={setIsBarcodeScannerOpen}
+        onCodeScanned={handleCodeScanned}
       />
       
       {currentWhiskey && (

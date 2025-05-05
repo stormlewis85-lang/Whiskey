@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, real, timestamp, jsonb, uuid, boolean, unique } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, real, timestamp, jsonb, uuid, boolean, unique, date } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -73,6 +73,34 @@ export const reviewLikes = pgTable("review_likes", {
     // Ensure a user can only like a review once
     userReviewUnique: unique("user_review_unique").on(table.userId, table.reviewId)
   };
+});
+
+// Price Tracking schema
+export const priceTracks = pgTable("price_tracks", {
+  id: serial("id").primaryKey(),
+  whiskeyId: integer("whiskey_id").notNull().references(() => whiskeys.id, { onDelete: 'cascade' }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  price: real("price").notNull(),
+  store: text("store"),
+  location: text("location"),
+  date: date("date").notNull().defaultNow(),
+  url: text("url"), // URL to online store listing
+  isAvailable: boolean("is_available").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Market Value Estimates schema
+export const marketValues = pgTable("market_values", {
+  id: serial("id").primaryKey(),
+  whiskeyId: integer("whiskey_id").notNull().references(() => whiskeys.id, { onDelete: 'cascade' }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  retailPrice: real("retail_price"), // MSRP or regular retail price
+  secondaryValue: real("secondary_value"), // Value on secondary market
+  auctionValue: real("auction_value"), // Value at auctions
+  source: text("source"), // Source of the valuation (website, auction house, etc.)
+  date: date("date").notNull().defaultNow(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // Review Note Schema - used within the notes field
@@ -164,6 +192,8 @@ export const usersRelations = relations(users, ({ many }) => ({
   whiskeys: many(whiskeys),
   reviewComments: many(reviewComments),
   reviewLikes: many(reviewLikes),
+  priceTracks: many(priceTracks),
+  marketValues: many(marketValues),
 }));
 
 export const whiskeysRelations = relations(whiskeys, ({ one, many }) => ({
@@ -173,6 +203,8 @@ export const whiskeysRelations = relations(whiskeys, ({ one, many }) => ({
   }),
   comments: many(reviewComments),
   likes: many(reviewLikes),
+  priceHistory: many(priceTracks),
+  marketValuations: many(marketValues),
 }));
 
 export const reviewCommentsRelations = relations(reviewComments, ({ one }) => ({
@@ -222,6 +254,46 @@ export const updateCommentSchema = createInsertSchema(reviewComments)
 export const insertLikeSchema = createInsertSchema(reviewLikes)
   .omit({ id: true, createdAt: true });
 
+// Price Track schemas
+export const insertPriceTrackSchema = createInsertSchema(priceTracks)
+  .omit({ id: true, createdAt: true });
+
+export const updatePriceTrackSchema = createInsertSchema(priceTracks)
+  .omit({ id: true, userId: true, whiskeyId: true, createdAt: true })
+  .partial();
+
+// Market Value schemas
+export const insertMarketValueSchema = createInsertSchema(marketValues)
+  .omit({ id: true, createdAt: true });
+
+export const updateMarketValueSchema = createInsertSchema(marketValues)
+  .omit({ id: true, userId: true, whiskeyId: true, createdAt: true })
+  .partial();
+
+// Price Track relations
+export const priceTracksRelations = relations(priceTracks, ({ one }) => ({
+  user: one(users, {
+    fields: [priceTracks.userId],
+    references: [users.id],
+  }),
+  whiskey: one(whiskeys, {
+    fields: [priceTracks.whiskeyId],
+    references: [whiskeys.id],
+  }),
+}));
+
+// Market Value relations
+export const marketValuesRelations = relations(marketValues, ({ one }) => ({
+  user: one(users, {
+    fields: [marketValues.userId],
+    references: [users.id],
+  }),
+  whiskey: one(whiskeys, {
+    fields: [marketValues.whiskeyId],
+    references: [whiskeys.id],
+  }),
+}));
+
 // Export all types
 export type InsertWhiskey = z.infer<typeof insertWhiskeySchema>;
 export type UpdateWhiskey = z.infer<typeof updateWhiskeySchema>;
@@ -239,3 +311,11 @@ export type UpdateReviewComment = z.infer<typeof updateCommentSchema>;
 
 export type ReviewLike = typeof reviewLikes.$inferSelect;
 export type InsertReviewLike = z.infer<typeof insertLikeSchema>;
+
+export type PriceTrack = typeof priceTracks.$inferSelect;
+export type InsertPriceTrack = z.infer<typeof insertPriceTrackSchema>;
+export type UpdatePriceTrack = z.infer<typeof updatePriceTrackSchema>;
+
+export type MarketValue = typeof marketValues.$inferSelect;
+export type InsertMarketValue = z.infer<typeof insertMarketValueSchema>;
+export type UpdateMarketValue = z.infer<typeof updateMarketValueSchema>;
