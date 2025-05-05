@@ -10,7 +10,11 @@ import {
   reviewNoteSchema,
   excelImportSchema,
   insertCommentSchema,
-  updateCommentSchema
+  updateCommentSchema,
+  insertPriceTrackSchema,
+  updatePriceTrackSchema,
+  insertMarketValueSchema,
+  updateMarketValueSchema
 } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -700,6 +704,218 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       res.status(500).json({ message: "Failed to import data", error: String(error) });
+    }
+  });
+
+  // Price Tracking API Routes
+  
+  // Get price history for a whiskey
+  app.get("/api/whiskeys/:id/prices", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const whiskeyId = parseInt(req.params.id);
+      
+      if (isNaN(whiskeyId)) {
+        return res.status(400).json({ message: "Invalid whiskey ID format" });
+      }
+      
+      const priceHistory = await storage.getWhiskeyPriceHistory(whiskeyId, req.session.userId);
+      
+      if (!priceHistory) {
+        return res.status(404).json({ message: "Whiskey not found or not owned by you" });
+      }
+      
+      res.json(priceHistory);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch price history", error: String(error) });
+    }
+  });
+  
+  // Add a price entry for a whiskey
+  app.post("/api/whiskeys/:id/prices", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const whiskeyId = parseInt(req.params.id);
+      
+      if (isNaN(whiskeyId)) {
+        return res.status(400).json({ message: "Invalid whiskey ID format" });
+      }
+      
+      // Validate price data
+      const priceData = insertPriceTrackSchema.parse({
+        ...req.body,
+        whiskeyId,
+        userId: req.session.userId,
+      });
+      
+      const newPriceEntry = await storage.addPriceTrack(priceData);
+      
+      if (!newPriceEntry) {
+        return res.status(404).json({ message: "Whiskey not found or not owned by you" });
+      }
+      
+      res.status(201).json(newPriceEntry);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        return res.status(400).json({ message: "Validation error", error: validationError.message });
+      }
+      res.status(500).json({ message: "Failed to add price entry", error: String(error) });
+    }
+  });
+  
+  // Update a price entry
+  app.put("/api/whiskeys/:id/prices/:priceId", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const whiskeyId = parseInt(req.params.id);
+      const priceId = parseInt(req.params.priceId);
+      
+      if (isNaN(whiskeyId) || isNaN(priceId)) {
+        return res.status(400).json({ message: "Invalid ID format" });
+      }
+      
+      // Validate update data
+      const updateData = updatePriceTrackSchema.parse(req.body);
+      
+      const updatedPrice = await storage.updatePriceTrack(priceId, updateData, req.session.userId);
+      
+      if (!updatedPrice) {
+        return res.status(404).json({ message: "Price entry not found or not owned by you" });
+      }
+      
+      res.json(updatedPrice);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        return res.status(400).json({ message: "Validation error", error: validationError.message });
+      }
+      res.status(500).json({ message: "Failed to update price entry", error: String(error) });
+    }
+  });
+  
+  // Delete a price entry
+  app.delete("/api/whiskeys/:id/prices/:priceId", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const whiskeyId = parseInt(req.params.id);
+      const priceId = parseInt(req.params.priceId);
+      
+      if (isNaN(whiskeyId) || isNaN(priceId)) {
+        return res.status(400).json({ message: "Invalid ID format" });
+      }
+      
+      const success = await storage.deletePriceTrack(priceId, req.session.userId);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Price entry not found or not owned by you" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete price entry", error: String(error) });
+    }
+  });
+  
+  // Market Value API Routes
+  
+  // Get market value history for a whiskey
+  app.get("/api/whiskeys/:id/market-values", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const whiskeyId = parseInt(req.params.id);
+      
+      if (isNaN(whiskeyId)) {
+        return res.status(400).json({ message: "Invalid whiskey ID format" });
+      }
+      
+      const marketValues = await storage.getWhiskeyMarketValues(whiskeyId, req.session.userId);
+      
+      if (!marketValues) {
+        return res.status(404).json({ message: "Whiskey not found or not owned by you" });
+      }
+      
+      res.json(marketValues);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch market values", error: String(error) });
+    }
+  });
+  
+  // Add a market value entry for a whiskey
+  app.post("/api/whiskeys/:id/market-values", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const whiskeyId = parseInt(req.params.id);
+      
+      if (isNaN(whiskeyId)) {
+        return res.status(400).json({ message: "Invalid whiskey ID format" });
+      }
+      
+      // Validate market value data
+      const marketValueData = insertMarketValueSchema.parse({
+        ...req.body,
+        whiskeyId,
+        userId: req.session.userId,
+      });
+      
+      const newMarketValue = await storage.addMarketValue(marketValueData);
+      
+      if (!newMarketValue) {
+        return res.status(404).json({ message: "Whiskey not found or not owned by you" });
+      }
+      
+      res.status(201).json(newMarketValue);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        return res.status(400).json({ message: "Validation error", error: validationError.message });
+      }
+      res.status(500).json({ message: "Failed to add market value", error: String(error) });
+    }
+  });
+  
+  // Update a market value entry
+  app.put("/api/whiskeys/:id/market-values/:valueId", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const whiskeyId = parseInt(req.params.id);
+      const valueId = parseInt(req.params.valueId);
+      
+      if (isNaN(whiskeyId) || isNaN(valueId)) {
+        return res.status(400).json({ message: "Invalid ID format" });
+      }
+      
+      // Validate update data
+      const updateData = updateMarketValueSchema.parse(req.body);
+      
+      const updatedValue = await storage.updateMarketValue(valueId, updateData, req.session.userId);
+      
+      if (!updatedValue) {
+        return res.status(404).json({ message: "Market value entry not found or not owned by you" });
+      }
+      
+      res.json(updatedValue);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        return res.status(400).json({ message: "Validation error", error: validationError.message });
+      }
+      res.status(500).json({ message: "Failed to update market value", error: String(error) });
+    }
+  });
+  
+  // Delete a market value entry
+  app.delete("/api/whiskeys/:id/market-values/:valueId", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const whiskeyId = parseInt(req.params.id);
+      const valueId = parseInt(req.params.valueId);
+      
+      if (isNaN(whiskeyId) || isNaN(valueId)) {
+        return res.status(400).json({ message: "Invalid ID format" });
+      }
+      
+      const success = await storage.deleteMarketValue(valueId, req.session.userId);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Market value entry not found or not owned by you" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete market value", error: String(error) });
     }
   });
 
