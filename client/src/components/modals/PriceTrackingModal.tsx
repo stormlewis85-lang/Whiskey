@@ -355,7 +355,15 @@ export default function PriceTrackingModal({
                   })
                   .map((price) => (
                     <div key={price.id} className="grid grid-cols-5 p-2 text-sm hover:bg-slate-50">
-                      <div>{format(new Date(price.date), 'MMM dd, yyyy')}</div>
+                      <div>
+                        {(() => {
+                          try {
+                            return format(new Date(price.date), 'MMM dd, yyyy');
+                          } catch (error) {
+                            return 'Invalid date';
+                          }
+                        })()}
+                      </div>
                       <div>${price.price.toFixed(2)}</div>
                       <div>{price.store || '-'}</div>
                       <div>{price.location || '-'}</div>

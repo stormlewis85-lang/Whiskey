@@ -137,9 +137,11 @@ export default function MarketValueModal({
     if (!marketValues || marketValues.length === 0) return null;
     
     // Find the most recent entry
-    const sortedValues = [...marketValues].sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
+    const sortedValues = [...marketValues].sort((a, b) => {
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
+      return isNaN(dateB.getTime()) ? -1 : isNaN(dateA.getTime()) ? 1 : dateB.getTime() - dateA.getTime();
+    });
     
     return sortedValues[0];
   };
@@ -179,7 +181,13 @@ export default function MarketValueModal({
                 </div>
               </div>
               <p className="text-xs text-right mt-2 text-slate-500">
-                Last updated: {format(new Date(latestEstimate.date), 'MMM dd, yyyy')}
+                Last updated: {(() => {
+                  try {
+                    return format(new Date(latestEstimate.date), 'MMM dd, yyyy');
+                  } catch (error) {
+                    return 'Unknown date';
+                  }
+                })()}
               </p>
             </div>
           ) : (
@@ -399,10 +407,22 @@ export default function MarketValueModal({
                 <Separator />
                 
                 {[...marketValues]
-                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                  .sort((a, b) => {
+                    const dateA = new Date(a.date);
+                    const dateB = new Date(b.date);
+                    return isNaN(dateB.getTime()) ? -1 : isNaN(dateA.getTime()) ? 1 : dateB.getTime() - dateA.getTime();
+                  })
                   .map((value) => (
                     <div key={value.id} className="grid grid-cols-6 p-2 text-sm hover:bg-slate-50">
-                      <div>{format(new Date(value.date), 'MMM dd, yyyy')}</div>
+                      <div>
+                        {(() => {
+                          try {
+                            return format(new Date(value.date), 'MMM dd, yyyy');
+                          } catch (error) {
+                            return 'Invalid date';
+                          }
+                        })()}
+                      </div>
                       <div>${value.retailPrice?.toFixed(2) || '-'}</div>
                       <div>${value.secondaryValue?.toFixed(2) || '-'}</div>
                       <div>${value.auctionValue?.toFixed(2) || '-'}</div>
