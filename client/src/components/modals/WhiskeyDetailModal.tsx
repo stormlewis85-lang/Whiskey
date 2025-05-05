@@ -3,7 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@
 import { Button } from "@/components/ui/button";
 import { 
   ImageIcon, Pencil as PencilIcon, Star, Upload, Edit, Trash2, 
-  BookOpen, PenIcon, XIcon, AlertTriangle, Loader2 
+  BookOpen, PenIcon, XIcon, AlertTriangle, Loader2, 
+  DollarSign, TrendingUp, BarChart2
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +13,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import EditReviewModal from "./EditReviewModal";
+import PriceTrackingModal from "./PriceTrackingModal";
+import MarketValueModal from "./MarketValueModal";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 interface WhiskeyDetailModalProps {
@@ -26,6 +29,8 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit }: Whis
   const [isUploading, setIsUploading] = useState(false);
   const [selectedReview, setSelectedReview] = useState<ReviewNote | null>(null);
   const [isEditReviewModalOpen, setIsEditReviewModalOpen] = useState(false);
+  const [isPriceTrackingModalOpen, setIsPriceTrackingModalOpen] = useState(false);
+  const [isMarketValueModalOpen, setIsMarketValueModalOpen] = useState(false);
   const imageUploadRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -360,6 +365,37 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit }: Whis
                       )}
                     </>
                   )}
+                </div>
+                
+                {/* Collection Management Tools */}
+                <div className="mt-6">
+                  <h3 className="font-medium text-lg mb-3">Collection Management</h3>
+                  <div className="flex flex-col space-y-2">
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start"
+                      onClick={() => setIsPriceTrackingModalOpen(true)}
+                    >
+                      <DollarSign className="h-4 w-4 mr-2" />
+                      Track Price History
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start"
+                      onClick={() => setIsMarketValueModalOpen(true)}
+                    >
+                      <TrendingUp className="h-4 w-4 mr-2" />
+                      Estimate Market Value
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start"
+                      disabled={true} // For future inventory management
+                    >
+                      <BarChart2 className="h-4 w-4 mr-2" />
+                      Inventory Management
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
