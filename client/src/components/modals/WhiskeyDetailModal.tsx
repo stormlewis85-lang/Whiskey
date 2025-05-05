@@ -641,6 +641,20 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit }: Whis
           review={selectedReview}
         />
       )}
+      
+      {/* Price Tracking Modal */}
+      <PriceTrackingModal
+        isOpen={isPriceTrackingModalOpen}
+        onClose={() => setIsPriceTrackingModalOpen(false)}
+        whiskey={whiskey}
+      />
+      
+      {/* Market Value Modal */}
+      <MarketValueModal
+        isOpen={isMarketValueModalOpen}
+        onClose={() => setIsMarketValueModalOpen(false)}
+        whiskey={whiskey}
+      />
     </>
   );
 };

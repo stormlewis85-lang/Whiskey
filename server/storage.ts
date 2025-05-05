@@ -521,19 +521,21 @@ export class DatabaseStorage implements IStorage {
 
   // Price tracking methods
   async getWhiskeyPriceHistory(whiskeyId: number, userId?: number): Promise<PriceTrack[]> {
-    const query = db
-      .select()
-      .from(priceTracks)
-      .where(eq(priceTracks.whiskeyId, whiskeyId))
-      .orderBy(desc(priceTracks.date));
+    // Build the query conditions
+    const conditions = [eq(priceTracks.whiskeyId, whiskeyId)];
     
     // Filter by user if userId is provided
-    if (userId) {
-      query.where(eq(priceTracks.userId, userId));
+    if (userId !== undefined) {
+      conditions.push(eq(priceTracks.userId, userId));
     }
     
-    // Execute the query
-    const priceHistory = await query;
+    // Execute the query with the combined conditions
+    const priceHistory = await db
+      .select()
+      .from(priceTracks)
+      .where(and(...conditions))
+      .orderBy(desc(priceTracks.date));
+    
     return priceHistory;
   }
   
@@ -592,19 +594,21 @@ export class DatabaseStorage implements IStorage {
   
   // Market value methods
   async getWhiskeyMarketValues(whiskeyId: number, userId?: number): Promise<MarketValue[]> {
-    const query = db
-      .select()
-      .from(marketValues)
-      .where(eq(marketValues.whiskeyId, whiskeyId))
-      .orderBy(desc(marketValues.date));
+    // Build the query conditions
+    const conditions = [eq(marketValues.whiskeyId, whiskeyId)];
     
     // Filter by user if userId is provided
-    if (userId) {
-      query.where(eq(marketValues.userId, userId));
+    if (userId !== undefined) {
+      conditions.push(eq(marketValues.userId, userId));
     }
     
-    // Execute the query
-    const marketValueHistory = await query;
+    // Execute the query with the combined conditions
+    const marketValueHistory = await db
+      .select()
+      .from(marketValues)
+      .where(and(...conditions))
+      .orderBy(desc(marketValues.date));
+    
     return marketValueHistory;
   }
   
