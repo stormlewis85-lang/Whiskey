@@ -125,7 +125,11 @@ export default function PriceTrackingModal({
     return prices.map(price => ({
       date: format(new Date(price.date), 'MMM dd, yyyy'),
       price: price.price,
-    })).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    })).sort((a, b) => {
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
+      return isNaN(dateA.getTime()) ? 1 : isNaN(dateB.getTime()) ? -1 : dateA.getTime() - dateB.getTime();
+    });
   };
   
   return (
@@ -344,7 +348,11 @@ export default function PriceTrackingModal({
                 <Separator />
                 
                 {[...priceHistory]
-                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                  .sort((a, b) => {
+                    const dateA = new Date(a.date);
+                    const dateB = new Date(b.date);
+                    return isNaN(dateB.getTime()) ? -1 : isNaN(dateA.getTime()) ? 1 : dateB.getTime() - dateA.getTime();
+                  })
                   .map((price) => (
                     <div key={price.id} className="grid grid-cols-5 p-2 text-sm hover:bg-slate-50">
                       <div>{format(new Date(price.date), 'MMM dd, yyyy')}</div>

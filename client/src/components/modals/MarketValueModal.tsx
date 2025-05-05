@@ -126,7 +126,11 @@ export default function MarketValueModal({
       retailPrice: value.retailPrice || 0,
       secondaryValue: value.secondaryValue || 0,
       auctionValue: value.auctionValue || 0,
-    })).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    })).sort((a, b) => {
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
+      return isNaN(dateA.getTime()) ? 1 : isNaN(dateB.getTime()) ? -1 : dateA.getTime() - dateB.getTime();
+    });
   };
   
   const getLatestEstimate = () => {
