@@ -12,8 +12,9 @@ import EditWhiskeyModal from "@/components/modals/EditWhiskeyModal";
 import ReviewModal from "@/components/modals/ReviewModal";
 import WhiskeyDetailModal from "@/components/modals/WhiskeyDetailModal";
 import ExportModal from "@/components/modals/ExportModal";
+import { BarcodeScanner } from "@/components/BarcodeScanner";
 import { Button } from "@/components/ui/button";
-import { PlusIcon, UploadIcon, DownloadIcon } from "lucide-react";
+import { PlusIcon, UploadIcon, DownloadIcon, Scan } from "lucide-react";
 import useWhiskeyCollection from "@/lib/hooks/useWhiskeyCollection";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -27,6 +28,7 @@ const Home = () => {
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [isBarcodeScannerOpen, setIsBarcodeScannerOpen] = useState(false);
   const [currentWhiskey, setCurrentWhiskey] = useState<Whiskey | null>(null);
   
   // Filters state
