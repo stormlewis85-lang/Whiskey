@@ -320,6 +320,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
   console.log("Serving uploads from:", path.join(process.cwd(), 'uploads'));
 
+  // Get a specific review by whiskey ID and review ID
+  app.get("/api/whiskeys/:id/reviews/:reviewId", async (req: Request, res: Response) => {
+    try {
+      const whiskeyId = parseInt(req.params.id);
+      const reviewId = req.params.reviewId;
+      
+      if (isNaN(whiskeyId)) {
+        return res.status(400).json({ message: "Invalid whiskey ID format" });
+      }
+      
+      // Get the whiskey with user filtering if authenticated
+      let whiskey;
+      if (req.session && req.session.userId) {
+        whiskey = await storage.getWhiskey(whiskeyId, req.session.userId);
+      } else {
+        whiskey = await storage.getWhiskey(whiskeyId);
+      }
+      
+      if (!whiskey) {
+        return res.status(404).json({ message: "Whiskey not found" });
+      }
+      
+      // Find the review
+      if (!whiskey.notes || !Array.isArray(whiskey.notes)) {
+        return res.status(404).json({ message: "No reviews found for this whiskey" });
+      }
+      
+      // Log for debugging
+      console.log("Looking for review:", reviewId, "in whiskey notes:", whiskey.notes.map(n => n.id));
+      
+      // Find the review with string comparison for safety
+      const review = whiskey.notes.find(note => String(note.id) === String(reviewId));
+      
+      if (!review) {
+        return res.status(404).json({ 
+          message: "Review not found", 
+          reviewId,
+          availableReviews: whiskey.notes.map(n => ({ id: n.id, date: n.date }))
+        });
+      }
+      
+      res.json({ whiskey, review });
+    } catch (error) {
+      res.status(500).json({ 
+        message: "Error retrieving review", 
+        error: String(error) 
+      });
+    }
+  });
+
   // Social Features: Review Sharing API Routes
 
   // Toggle a review's public status (user must be authenticated)

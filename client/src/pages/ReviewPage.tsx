@@ -7,69 +7,44 @@ import { Header } from '@/components/Header';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
+interface ReviewData {
+  whiskey: Whiskey;
+  review: ReviewNote;
+}
+
 export default function ReviewPage() {
   const [, setLocation] = useLocation();
   const params = useParams<{ id: string, reviewId: string }>();
   const whiskeyId = parseInt(params.id);
   const reviewId = params.reviewId;
   
-  const { data: whiskey, isLoading: isWhiskeyLoading, isError: isWhiskeyError } = useQuery<Whiskey>({
-    queryKey: ['/api/whiskeys', whiskeyId],
-    enabled: !isNaN(whiskeyId),
+  // Use the dedicated endpoint to get both whiskey and review at once
+  const { 
+    data: reviewData,
+    isLoading, 
+    isError,
+    error
+  } = useQuery<ReviewData>({
+    queryKey: ['/api/whiskeys', whiskeyId, 'reviews', reviewId],
+    enabled: !isNaN(whiskeyId) && !!reviewId
   });
   
-  // For debugging - VERY DETAILED LOGGING
-  console.log("==== REVIEW DEBUGGING ====");
-  console.log("ReviewPage - reviewId from URL:", reviewId);
-  console.log("ReviewPage - reviewId from URL type:", typeof reviewId);
-  console.log("ReviewPage - full whiskey object:", whiskey);
-  
-  if (whiskey && whiskey.notes) {
-    if (Array.isArray(whiskey.notes)) {
-      console.log("ReviewPage - Whiskey has notes array of length:", whiskey.notes.length);
-      whiskey.notes.forEach((note: ReviewNote, index) => {
-        console.log(`Note #${index}:`, {
-          id: note.id,
-          idType: typeof note.id,
-          stringCompare: String(note.id) === String(reviewId),
-          directCompare: note.id === reviewId
-        });
-      });
-    } else {
-      console.log("ReviewPage - Whiskey.notes is not an array:", typeof whiskey.notes);
-    }
-  } else {
-    console.log("ReviewPage - No notes found on whiskey object");
-  }
-  
-  // Try multiple matching strategies
-  const reviewByDirect = whiskey && Array.isArray(whiskey.notes) 
-    ? whiskey.notes.find((note: ReviewNote) => note.id === reviewId)
-    : undefined;
-    
-  const reviewByString = whiskey && Array.isArray(whiskey.notes) 
-    ? whiskey.notes.find((note: ReviewNote) => String(note.id) === String(reviewId))
-    : undefined;
-    
-  const reviewByIncludes = whiskey && Array.isArray(whiskey.notes) 
-    ? whiskey.notes.find((note: ReviewNote) => note.id && reviewId && note.id.includes(reviewId))
-    : undefined;
-    
-  console.log("Review found by direct comparison:", !!reviewByDirect);
-  console.log("Review found by string comparison:", !!reviewByString);
-  console.log("Review found by includes:", !!reviewByIncludes);
-  
-  // Use the first successful strategy
-  const review = reviewByDirect || reviewByString || reviewByIncludes;
-  console.log("Final review object:", review);
-  console.log("==== END DEBUGGING ====");
+  // For debugging only
+  console.log("ReviewPage - Loading review data:", {
+    whiskeyId,
+    reviewId,
+    isLoading,
+    isError,
+    error,
+    reviewData
+  });
   
   // Go back to the previous page
   const handleBack = () => {
     setLocation('/');
   };
   
-  if (isWhiskeyLoading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
@@ -80,14 +55,23 @@ export default function ReviewPage() {
     );
   }
   
-  if (isWhiskeyError || !whiskey) {
+  if (isError || !reviewData) {
+    console.error("Error loading review data:", error);
+    
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
         <div className="container mx-auto py-8">
           <div className="bg-white rounded-lg shadow p-6 text-center">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Whiskey Not Found</h2>
-            <p className="text-gray-600 mb-6">The whiskey you're looking for doesn't exist or has been removed.</p>
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Review Not Found</h2>
+            <p className="text-gray-600 mb-6">
+              The review you're looking for doesn't exist or has been removed.
+            </p>
+            <div className="mb-4 text-left p-4 bg-gray-50 rounded text-sm font-mono">
+              <p>Whiskey ID: {whiskeyId}</p>
+              <p>Review ID: {reviewId}</p>
+              <p>Error: {error instanceof Error ? error.message : "Unknown error"}</p>
+            </div>
             <Button onClick={handleBack}>Go Back</Button>
           </div>
         </div>
@@ -95,20 +79,7 @@ export default function ReviewPage() {
     );
   }
   
-  if (!review) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="container mx-auto py-8">
-          <div className="bg-white rounded-lg shadow p-6 text-center">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Review Not Found</h2>
-            <p className="text-gray-600 mb-6">The review you're looking for doesn't exist or has been removed.</p>
-            <Button onClick={handleBack}>Go Back</Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const { whiskey, review } = reviewData;
   
   return (
     <div className="min-h-screen bg-gray-50">
