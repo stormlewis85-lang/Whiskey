@@ -380,14 +380,6 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit }: Whis
                     <Button 
                       variant="outline" 
                       className="w-full justify-start"
-                      onClick={() => setIsMarketValueModalOpen(true)}
-                    >
-                      <TrendingUp className="h-4 w-4 mr-2" />
-                      Estimate Market Value
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      className="w-full justify-start"
                       disabled={true} // For future inventory management
                     >
                       <BarChart2 className="h-4 w-4 mr-2" />
@@ -644,13 +636,6 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit }: Whis
       <PriceTrackingModal
         isOpen={isPriceTrackingModalOpen}
         onClose={() => setIsPriceTrackingModalOpen(false)}
-        whiskey={whiskey}
-      />
-      
-      {/* Market Value Modal */}
-      <MarketValueModal
-        isOpen={isMarketValueModalOpen}
-        onClose={() => setIsMarketValueModalOpen(false)}
         whiskey={whiskey}
       />
     </>
