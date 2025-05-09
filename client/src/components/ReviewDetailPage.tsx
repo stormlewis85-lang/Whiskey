@@ -58,38 +58,59 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
     );
   };
 
-  const calculateTotalScore = () => {
-    // Calculate total score based on the weighted scores
-    let total = 0;
-    let count = 0;
+  const calculateScores = () => {
+    // Calculate scores based on the weighted scoring system:
+    // Nose: 1.5x, Mouth Feel: 2.0x, Taste: 3.0x, Finish: 2.5x, Value: 1.0x
+    let weightedTotal = 0;
+    let scoresPresent = false;
     
-    // Using the same weights as in the Excel format
-    if (review.noseScore) { 
-      total += review.noseScore * 1; 
-      count++; 
-    }
-    if (review.mouthfeelScore) { 
-      total += review.mouthfeelScore * 1; 
-      count++; 
-    }
-    if (review.tasteScore) { 
-      total += review.tasteScore * 1; 
-      count++; 
-    }
-    if (review.finishScore) { 
-      total += review.finishScore * 1; 
-      count++; 
-    }
-    if (review.valueScore) { 
-      total += review.valueScore * 1; 
-      count++; 
+    // Apply weights to each score
+    if (review.noseScore) {
+      weightedTotal += review.noseScore * 1.5;
+      scoresPresent = true;
     }
     
-    // If no scores are present, return the overall rating
-    if (count === 0) return review.rating * 20; // Convert 5-scale to 100-scale
+    if (review.mouthfeelScore) {
+      weightedTotal += review.mouthfeelScore * 2.0;
+      scoresPresent = true;
+    }
     
-    // Calculate the average and scale to 100
-    return Math.round((total / count) * 20);
+    if (review.tasteScore) {
+      weightedTotal += review.tasteScore * 3.0;
+      scoresPresent = true;
+    }
+    
+    if (review.finishScore) {
+      weightedTotal += review.finishScore * 2.5;
+      scoresPresent = true;
+    }
+    
+    if (review.valueScore) {
+      weightedTotal += review.valueScore * 1.0;
+      scoresPresent = true;
+    }
+    
+    // If no detailed scores are present, return scores based on overall rating
+    if (!scoresPresent) {
+      const baseScore = review.rating * 10; // Convert 5-scale to 50-scale
+      return {
+        weightedTotal: baseScore,
+        fiveStarScore: review.rating,
+        finalScore: baseScore * 2
+      };
+    }
+    
+    // Calculate the 5-star score (weighted total divided by 10)
+    const fiveStarScore = weightedTotal / 10;
+    
+    // Calculate the final score (weighted total multiplied by 2)
+    const finalScore = weightedTotal * 2;
+    
+    return {
+      weightedTotal,
+      fiveStarScore,
+      finalScore
+    };
   };
 
   const renderScoreRow = (label: string, score?: number) => {
@@ -177,8 +198,13 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
         {/* Middle column - Score */}
         <div className="md:col-span-1 flex flex-col items-center justify-start">
           <div className="text-center">
-            <div className="border-4 border-gray-300 rounded-lg p-6 w-32 h-32 flex items-center justify-center">
-              <span className="text-7xl font-bold">{calculateTotalScore()}</span>
+            <div className="border-4 border-gray-300 rounded-lg p-6 w-32 h-32 flex flex-col items-center justify-center">
+              <span className="text-7xl font-bold">{Math.round(calculateScores().finalScore)}</span>
+              <span className="text-xs mt-1 text-gray-500">Final Score</span>
+            </div>
+            <div className="mt-3 text-md">
+              <div className="text-gray-700 font-semibold">5★ Score: {calculateScores().fiveStarScore.toFixed(1)}</div>
+              <div className="text-gray-500 text-sm">Weighted: {Math.round(calculateScores().weightedTotal)}</div>
             </div>
           </div>
           
@@ -226,7 +252,10 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
               <div className="grid grid-cols-1 md:grid-cols-8">
                 <div className="md:col-span-1 bg-gray-700 text-white p-4 flex flex-col items-center justify-center">
                   <div className="text-lg font-bold">Nose</div>
-                  <div className="text-3xl font-bold mt-2">{review.noseScore || '-'}</div>
+                  <div className="text-3xl font-bold mt-1">{review.noseScore || '-'}</div>
+                  {review.noseScore && (
+                    <div className="text-xs mt-1">×1.5 = {(review.noseScore * 1.5).toFixed(1)}</div>
+                  )}
                 </div>
                 <div className="md:col-span-2 bg-gray-100 p-4">
                   <h3 className="font-semibold mb-2">Profiles</h3>
@@ -246,7 +275,10 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
               <div className="grid grid-cols-1 md:grid-cols-8">
                 <div className="md:col-span-1 bg-gray-700 text-white p-4 flex flex-col items-center justify-center">
                   <div className="text-lg font-bold">Mouth Feel</div>
-                  <div className="text-3xl font-bold mt-2">{review.mouthfeelScore || '-'}</div>
+                  <div className="text-3xl font-bold mt-1">{review.mouthfeelScore || '-'}</div>
+                  {review.mouthfeelScore && (
+                    <div className="text-xs mt-1">×2.0 = {(review.mouthfeelScore * 2.0).toFixed(1)}</div>
+                  )}
                 </div>
                 <div className="md:col-span-2 bg-gray-100 p-4">
                   <h3 className="font-semibold mb-2">Characteristics</h3>
@@ -275,7 +307,10 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
               <div className="grid grid-cols-1 md:grid-cols-8">
                 <div className="md:col-span-1 bg-gray-700 text-white p-4 flex flex-col items-center justify-center">
                   <div className="text-lg font-bold">Taste</div>
-                  <div className="text-3xl font-bold mt-2">{review.tasteScore || '-'}</div>
+                  <div className="text-3xl font-bold mt-1">{review.tasteScore || '-'}</div>
+                  {review.tasteScore && (
+                    <div className="text-xs mt-1">×3.0 = {(review.tasteScore * 3.0).toFixed(1)}</div>
+                  )}
                 </div>
                 <div className="md:col-span-2 bg-gray-100 p-4">
                   <h3 className="font-semibold mb-2">Profiles</h3>
@@ -294,7 +329,10 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
               <div className="grid grid-cols-1 md:grid-cols-8">
                 <div className="md:col-span-1 bg-gray-700 text-white p-4 flex flex-col items-center justify-center">
                   <div className="text-lg font-bold">Finish</div>
-                  <div className="text-3xl font-bold mt-2">{review.finishScore || '-'}</div>
+                  <div className="text-3xl font-bold mt-1">{review.finishScore || '-'}</div>
+                  {review.finishScore && (
+                    <div className="text-xs mt-1">×2.5 = {(review.finishScore * 2.5).toFixed(1)}</div>
+                  )}
                 </div>
                 <div className="md:col-span-2 bg-gray-100 p-4">
                   <h3 className="font-semibold mb-2">Profiles</h3>
@@ -314,7 +352,10 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
               <div className="grid grid-cols-1 md:grid-cols-8">
                 <div className="md:col-span-1 bg-gray-700 text-white p-4 flex flex-col items-center justify-center">
                   <div className="text-lg font-bold">Value</div>
-                  <div className="text-3xl font-bold mt-2">{review.valueScore || '-'}</div>
+                  <div className="text-3xl font-bold mt-1">{review.valueScore || '-'}</div>
+                  {review.valueScore && (
+                    <div className="text-xs mt-1">×1.0 = {(review.valueScore * 1.0).toFixed(1)}</div>
+                  )}
                 </div>
                 <div className="md:col-span-2 bg-gray-100 p-4">
                   <h3 className="font-semibold mb-2">Assessment</h3>

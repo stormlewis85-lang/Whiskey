@@ -430,7 +430,7 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit }: Whis
                             className="h-7 w-7 text-blue-600 hover:text-blue-700 hover:bg-blue-50" 
                             onClick={() => {
                               onClose();
-                              navigate(`/reviews/${whiskey.id}/${note.id}`);
+                              navigate(`/whiskey/${whiskey.id}/review/${note.id}`);
                             }}
                           >
                             <Eye className="h-3 w-3" />
