@@ -125,64 +125,27 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
   const renderScoreRow = (label: string, score?: number) => {
     if (!score) return null;
     
-    // Get weight multiplier based on category
-    let weight = 1.0;
-    let maxPossible = 5.0;
-    
-    switch(label) {
-      case 'Nose':
-        weight = 1.5;
-        maxPossible = 7.5;
-        break;
-      case 'Texture': // Mouthfeel
-        weight = 2.0;
-        maxPossible = 10.0;
-        break;
-      case 'Taste':
-        weight = 3.0;
-        maxPossible = 15.0;
-        break;
-      case 'Finish':
-        weight = 2.5;
-        maxPossible = 12.5;
-        break;
-      case 'Value':
-        weight = 1.0;
-        maxPossible = 5.0;
-        break;
-      case 'Overall':
-        // No weight multiplier for overall score
-        return (
-          <tr>
-            <td className="px-4 py-2 font-medium">{label}</td>
-            <td className="px-4 py-2">
-              <StarRating rating={score} maxRating={5} />
-            </td>
-          </tr>
-        );
-    }
-    
-    // Calculate weighted score
-    const weightedScore = score * weight;
-    
     return (
       <tr>
         <td className="px-4 py-2 font-medium">{label}</td>
         <td className="px-4 py-2">
-          <div className="flex items-center space-x-2">
-            <StarRating rating={score} maxRating={5} />
-            <span className="text-xs text-gray-500">
-              ({score.toFixed(1)} × {weight.toFixed(1)} = {weightedScore.toFixed(1)})
-            </span>
-          </div>
+          <StarRating rating={score} maxRating={5} />
         </td>
       </tr>
     );
   };
 
+  const capitalizeFirstLetter = (text: string) => {
+    return text.split('-').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
+  };
+
   const formatAromasList = (aromas: string[] | undefined) => {
     if (!aromas || aromas.length === 0) return '-';
-    return aromas.join(', ');
+    return aromas.map(aroma => 
+      aroma.split(',').map(part => capitalizeFirstLetter(part.trim())).join(', ')
+    ).join(', ');
   };
 
   const formatNotes = (notes: string | undefined) => {
@@ -307,9 +270,6 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
                 <div className="md:col-span-1 bg-gray-700 text-white p-4 flex flex-col items-center justify-center">
                   <div className="text-lg font-bold">Nose</div>
                   <div className="text-3xl font-bold mt-1">{review.noseScore || '-'}</div>
-                  {review.noseScore && (
-                    <div className="text-xs mt-1">×1.5 = {(review.noseScore * 1.5).toFixed(1)}</div>
-                  )}
                 </div>
                 <div className="md:col-span-2 bg-gray-100 p-4">
                   <h3 className="font-semibold mb-2">Profiles</h3>
@@ -330,21 +290,18 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
                 <div className="md:col-span-1 bg-gray-700 text-white p-4 flex flex-col items-center justify-center">
                   <div className="text-lg font-bold">Mouth Feel</div>
                   <div className="text-3xl font-bold mt-1">{review.mouthfeelScore || '-'}</div>
-                  {review.mouthfeelScore && (
-                    <div className="text-xs mt-1">×2.0 = {(review.mouthfeelScore * 2.0).toFixed(1)}</div>
-                  )}
                 </div>
                 <div className="md:col-span-2 bg-gray-100 p-4">
                   <h3 className="font-semibold mb-2">Characteristics</h3>
                   <div className="space-y-1">
                     <div className="bg-gray-200 px-2 py-1">
-                      <p><span className="font-medium">Alcohol:</span> {review.mouthfeelAlcohol || '-'}</p>
+                      <p><span className="font-medium">Alcohol:</span> {review.mouthfeelAlcohol ? capitalizeFirstLetter(review.mouthfeelAlcohol) : '-'}</p>
                     </div>
                     <div className="bg-gray-200 px-2 py-1">
-                      <p><span className="font-medium">Viscosity:</span> {review.mouthfeelViscosity || '-'}</p>
+                      <p><span className="font-medium">Viscosity:</span> {review.mouthfeelViscosity ? capitalizeFirstLetter(review.mouthfeelViscosity) : '-'}</p>
                     </div>
                     <div className="bg-gray-200 px-2 py-1">
-                      <p><span className="font-medium">Feel:</span> {review.mouthfeelPleasantness || '-'}</p>
+                      <p><span className="font-medium">Feel:</span> {review.mouthfeelPleasantness ? capitalizeFirstLetter(review.mouthfeelPleasantness) : '-'}</p>
                     </div>
                   </div>
                 </div>
@@ -362,9 +319,6 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
                 <div className="md:col-span-1 bg-gray-700 text-white p-4 flex flex-col items-center justify-center">
                   <div className="text-lg font-bold">Taste</div>
                   <div className="text-3xl font-bold mt-1">{review.tasteScore || '-'}</div>
-                  {review.tasteScore && (
-                    <div className="text-xs mt-1">×3.0 = {(review.tasteScore * 3.0).toFixed(1)}</div>
-                  )}
                 </div>
                 <div className="md:col-span-2 bg-gray-100 p-4">
                   <h3 className="font-semibold mb-2">Profiles</h3>
@@ -384,9 +338,6 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
                 <div className="md:col-span-1 bg-gray-700 text-white p-4 flex flex-col items-center justify-center">
                   <div className="text-lg font-bold">Finish</div>
                   <div className="text-3xl font-bold mt-1">{review.finishScore || '-'}</div>
-                  {review.finishScore && (
-                    <div className="text-xs mt-1">×2.5 = {(review.finishScore * 2.5).toFixed(1)}</div>
-                  )}
                 </div>
                 <div className="md:col-span-2 bg-gray-100 p-4">
                   <h3 className="font-semibold mb-2">Profiles</h3>
@@ -407,9 +358,6 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
                 <div className="md:col-span-1 bg-gray-700 text-white p-4 flex flex-col items-center justify-center">
                   <div className="text-lg font-bold">Value</div>
                   <div className="text-3xl font-bold mt-1">{review.valueScore || '-'}</div>
-                  {review.valueScore && (
-                    <div className="text-xs mt-1">×1.0 = {(review.valueScore * 1.0).toFixed(1)}</div>
-                  )}
                 </div>
                 <div className="md:col-span-2 bg-gray-100 p-4">
                   <h3 className="font-semibold mb-2">Assessment</h3>
