@@ -615,7 +615,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
             </div>
             
             <div>
-              <h3 className="section-header">Viscosity</h3>
+              <h3 className="font-medium mb-2">Viscosity</h3>
               <FormField
                 control={form.control}
                 name="visualViscosity"
@@ -644,7 +644,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
             </div>
             
             <div>
-              <h3 className="section-header">Clarity</h3>
+              <h3 className="font-medium mb-2">Clarity</h3>
               <FormField
                 control={form.control}
                 name="visualClarity"
@@ -698,7 +698,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
         return (
           <div className="space-y-6">
             <div>
-              <h3 className="section-header">Aromas</h3>
+              <h3 className="font-medium mb-2">Aromas</h3>
               <p className="text-sm text-gray-500 mb-2">Select all aromas that you detect (select multiple as needed)</p>
               
               <div className="space-y-4">
@@ -810,7 +810,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
             </div>
             
             <div>
-              <h3 className="section-header">Nose Score (1-5)</h3>
+              <h3 className="font-medium mb-2">Nose Score (1-5)</h3>
               <FormField
                 control={form.control}
                 name="noseScore"
@@ -861,7 +861,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
           <div className="space-y-6">
             {/* Alcohol Feel */}
             <div>
-              <h3 className="section-header">Alcohol Feel</h3>
+              <h3 className="font-medium mb-2">Alcohol Feel</h3>
               <FormField
                 control={form.control}
                 name="mouthfeelAlcohol"
@@ -891,7 +891,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
             
             {/* Mouthfeel Viscosity */}
             <div>
-              <h3 className="section-header">Viscosity</h3>
+              <h3 className="font-medium mb-2">Viscosity</h3>
               <FormField
                 control={form.control}
                 name="mouthfeelViscosity"
@@ -921,7 +921,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
             
             {/* Pleasantness */}
             <div>
-              <h3 className="section-header">Pleasantness</h3>
+              <h3 className="font-medium mb-2">Pleasantness</h3>
               <FormField
                 control={form.control}
                 name="mouthfeelPleasantness"
@@ -951,7 +951,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
             
             {/* Score */}
             <div>
-              <h3 className="section-header">Mouthfeel Score (1-5)</h3>
+              <h3 className="font-medium mb-2">Mouthfeel Score (1-5)</h3>
               <FormField
                 control={form.control}
                 name="mouthfeelScore"
@@ -1002,7 +1002,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
         return (
           <div className="space-y-6">
             <div>
-              <h3 className="section-header">Flavors</h3>
+              <h3 className="font-medium mb-2">Flavors</h3>
               <p className="text-sm text-gray-500 mb-2">Select all flavors that you detect (select multiple as needed)</p>
               
               <div className="space-y-4">
@@ -1115,7 +1115,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
             
             {/* Correlation with Nose */}
             <div>
-              <h3 className="section-header">Correlation with Nose</h3>
+              <h3 className="font-medium mb-2">Correlation with Nose</h3>
               <div className="flex items-center space-x-4">
                 <div className="text-sm">
                   {selectedNoseAromas.length > 0 ? (
@@ -1170,7 +1170,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
             
             {/* Score */}
             <div>
-              <h3 className="section-header">Taste Score (1-5)</h3>
+              <h3 className="font-medium mb-2">Taste Score (1-5)</h3>
               <FormField
                 control={form.control}
                 name="tasteScore"
@@ -1221,7 +1221,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
         return (
           <div className="space-y-6">
             <div>
-              <h3 className="section-header">Finish Flavors</h3>
+              <h3 className="font-medium mb-2">Finish Flavors</h3>
               <p className="text-sm text-gray-500 mb-2">Select all flavors that linger in the finish</p>
               
               <div className="space-y-4">
@@ -1334,7 +1334,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
             
             {/* Correlation with Taste */}
             <div>
-              <h3 className="section-header">Correlation with Taste</h3>
+              <h3 className="font-medium mb-2">Correlation with Taste</h3>
               <div className="flex items-center space-x-4">
                 <div className="text-sm">
                   {selectedTasteFlavors.length > 0 ? (
@@ -1389,7 +1389,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
             
             {/* Finish Length */}
             <div>
-              <h3 className="section-header">Finish Length</h3>
+              <h3 className="font-medium mb-2">Finish Length</h3>
               <FormField
                 control={form.control}
                 name="finishLength"
@@ -1419,7 +1419,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
             
             {/* Finish Pleasantness */}
             <div>
-              <h3 className="section-header">Finish Pleasantness</h3>
+              <h3 className="font-medium mb-2">Finish Pleasantness</h3>
               <FormField
                 control={form.control}
                 name="finishPleasantness"
@@ -1449,7 +1449,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
             
             {/* Score */}
             <div>
-              <h3 className="section-header">Finish Score (1-5)</h3>
+              <h3 className="font-medium mb-2">Finish Score (1-5)</h3>
               <FormField
                 control={form.control}
                 name="finishScore"
@@ -1513,7 +1513,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
             
             {/* Availability */}
             <div>
-              <h3 className="section-header">Availability</h3>
+              <h3 className="font-medium mb-2">Availability</h3>
               <FormField
                 control={form.control}
                 name="valueAvailability"
@@ -1543,7 +1543,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
             
             {/* Buy Again */}
             <div>
-              <h3 className="section-header">Would You Buy Again?</h3>
+              <h3 className="font-medium mb-2">Would You Buy Again?</h3>
               <FormField
                 control={form.control}
                 name="valueBuyAgain"
@@ -1573,7 +1573,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
             
             {/* Occasion */}
             <div>
-              <h3 className="section-header">Occasion</h3>
+              <h3 className="font-medium mb-2">Occasion</h3>
               <FormField
                 control={form.control}
                 name="valueOccasion"
@@ -1603,7 +1603,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
             
             {/* Score */}
             <div>
-              <h3 className="section-header">Value Score (1-5)</h3>
+              <h3 className="font-medium mb-2">Value Score (1-5)</h3>
               <FormField
                 control={form.control}
                 name="valueScore"
