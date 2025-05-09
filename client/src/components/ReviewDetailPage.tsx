@@ -205,7 +205,7 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
               </TableRow>
               <TableRow>
                 <TableCell className="font-medium bg-gray-200">Color</TableCell>
-                <TableCell>{review.visualColor || '-'}</TableCell>
+                <TableCell>{review.visualColor ? capitalizeFirstLetter(review.visualColor) : '-'}</TableCell>
               </TableRow>
               {renderMashBill()}
             </TableBody>
@@ -342,7 +342,7 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
                 <div className="md:col-span-2 bg-gray-100 p-4">
                   <h3 className="font-semibold mb-2">Profiles</h3>
                   <p>{formatAromasList(review.finishFlavors)}</p>
-                  <p className="mt-2"><span className="font-medium">Length:</span> {review.finishLength || '-'}</p>
+                  <p className="mt-2"><span className="font-medium">Length:</span> {review.finishLength ? capitalizeFirstLetter(review.finishLength) : '-'}</p>
                 </div>
                 <div className="md:col-span-5 p-4">
                   <p>{formatNotes(review.finishNotes)}</p>
@@ -363,13 +363,13 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
                   <h3 className="font-semibold mb-2">Assessment</h3>
                   <div className="space-y-1">
                     <div className="bg-gray-200 px-2 py-1">
-                      <p><span className="font-medium">Availability:</span> {review.valueAvailability || '-'}</p>
+                      <p><span className="font-medium">Availability:</span> {review.valueAvailability ? capitalizeFirstLetter(review.valueAvailability) : '-'}</p>
                     </div>
                     <div className="bg-gray-200 px-2 py-1">
-                      <p><span className="font-medium">Buy Again:</span> {review.valueBuyAgain || '-'}</p>
+                      <p><span className="font-medium">Buy Again:</span> {review.valueBuyAgain ? capitalizeFirstLetter(review.valueBuyAgain) : '-'}</p>
                     </div>
                     <div className="bg-gray-200 px-2 py-1">
-                      <p><span className="font-medium">Occasion:</span> {review.valueOccasion || '-'}</p>
+                      <p><span className="font-medium">Occasion:</span> {review.valueOccasion ? capitalizeFirstLetter(review.valueOccasion) : '-'}</p>
                     </div>
                   </div>
                 </div>
