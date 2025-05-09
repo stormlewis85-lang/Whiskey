@@ -571,7 +571,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
         return (
           <div className="space-y-6">
             <div>
-              <h3 className="font-medium mb-2">Color</h3>
+              <h3 className="font-medium mb-2 text-[#7d5936]">Color</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                 {COLOR_OPTIONS.map((color) => (
                   <FormField
@@ -2163,32 +2163,34 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md dialog-content" ref={dialogContentRef}>
-        <DialogHeader>
-          <DialogTitle className="text-lg font-bold text-gray-900">
-            Review Whiskey - {pageData[currentPage].title}
-          </DialogTitle>
-        </DialogHeader>
-        
-        <div className="text-center mb-4">
-          <h4 className="font-bold text-xl text-[#7d5936]">{whiskey.name}</h4>
-          <p className="text-[#986A44]">{whiskey.distillery}</p>
-        </div>
-        
-        {/* Progress bar */}
-        <div className="mb-4">
-          <Progress value={progressPercentage} className="h-2 bg-[#e8d9bd]" />
-          <p className="text-xs text-right mt-1 text-[#986A44]">
-            Step {currentPage + 1} of {pageData.length}
-          </p>
-        </div>
-        
-        {isMobile && (
-          <div className="mt-0 mb-2 text-xs text-center text-amber-700 flex items-center justify-center">
-            <ChevronLeft className="h-3 w-3 mr-1" />
-            <span>Swipe to navigate</span>
-            <ChevronRight className="h-3 w-3 ml-1" />
+        <div className="sticky top-0 bg-white z-10 pb-2">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-gray-900">
+              Review Whiskey - {pageData[currentPage].title}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="text-center mb-4">
+            <h4 className="font-bold text-xl text-[#7d5936]">{whiskey.name}</h4>
+            <p className="text-[#986A44]">{whiskey.distillery}</p>
           </div>
-        )}
+          
+          {/* Progress bar */}
+          <div className="mb-4">
+            <Progress value={progressPercentage} className="h-2 bg-[#e8d9bd]" />
+            <p className="text-xs text-right mt-1 text-[#986A44]">
+              Step {currentPage + 1} of {pageData.length}
+            </p>
+          </div>
+          
+          {isMobile && (
+            <div className="mt-0 mb-2 text-xs text-center text-amber-700 flex items-center justify-center">
+              <ChevronLeft className="h-3 w-3 mr-1" />
+              <span>Swipe to navigate</span>
+              <ChevronRight className="h-3 w-3 ml-1" />
+            </div>
+          )}
+        </div>
         
         <Form {...form}>
           <form 
