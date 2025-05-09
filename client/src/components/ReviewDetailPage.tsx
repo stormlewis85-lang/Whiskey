@@ -260,14 +260,14 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
       
       {/* Review Details */}
       <div className="p-4">
-        <h2 className="text-xl font-bold mb-4">Tasting Notes</h2>
+        <h2 className="text-2xl font-bold mb-4 text-gray-900">Tasting Notes</h2>
         
         <div className="space-y-4">
           {/* Nose */}
           <Card>
             <CardContent className="p-0">
               <div className="grid grid-cols-1 md:grid-cols-8">
-                <div className="md:col-span-1 bg-gray-700 text-white p-4 flex flex-col items-center justify-center">
+                <div className="md:col-span-1 bg-gray-800 text-white p-4 flex flex-col items-center justify-center">
                   <div className="text-lg font-bold">Nose</div>
                   <div className="text-3xl font-bold mt-1">{review.noseScore || '-'}</div>
                 </div>
@@ -287,7 +287,7 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
           <Card>
             <CardContent className="p-0">
               <div className="grid grid-cols-1 md:grid-cols-8">
-                <div className="md:col-span-1 bg-gray-700 text-white p-4 flex flex-col items-center justify-center">
+                <div className="md:col-span-1 bg-gray-800 text-white p-4 flex flex-col items-center justify-center">
                   <div className="text-lg font-bold">Mouth Feel</div>
                   <div className="text-3xl font-bold mt-1">{review.mouthfeelScore || '-'}</div>
                 </div>
@@ -316,7 +316,7 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
           <Card>
             <CardContent className="p-0">
               <div className="grid grid-cols-1 md:grid-cols-8">
-                <div className="md:col-span-1 bg-gray-700 text-white p-4 flex flex-col items-center justify-center">
+                <div className="md:col-span-1 bg-gray-800 text-white p-4 flex flex-col items-center justify-center">
                   <div className="text-lg font-bold">Taste</div>
                   <div className="text-3xl font-bold mt-1">{review.tasteScore || '-'}</div>
                 </div>
@@ -335,7 +335,7 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
           <Card>
             <CardContent className="p-0">
               <div className="grid grid-cols-1 md:grid-cols-8">
-                <div className="md:col-span-1 bg-gray-700 text-white p-4 flex flex-col items-center justify-center">
+                <div className="md:col-span-1 bg-gray-800 text-white p-4 flex flex-col items-center justify-center">
                   <div className="text-lg font-bold">Finish</div>
                   <div className="text-3xl font-bold mt-1">{review.finishScore || '-'}</div>
                 </div>
@@ -355,7 +355,7 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
           <Card>
             <CardContent className="p-0">
               <div className="grid grid-cols-1 md:grid-cols-8">
-                <div className="md:col-span-1 bg-gray-700 text-white p-4 flex flex-col items-center justify-center">
+                <div className="md:col-span-1 bg-gray-800 text-white p-4 flex flex-col items-center justify-center">
                   <div className="text-lg font-bold">Value</div>
                   <div className="text-3xl font-bold mt-1">{review.valueScore || '-'}</div>
                 </div>

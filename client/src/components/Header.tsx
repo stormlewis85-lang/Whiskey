@@ -83,8 +83,8 @@ export function Header() {
         <div className="flex items-center space-x-3">
           {/* Logo */}
           <h1 className="text-xl font-bold">
-            <span className="bg-gradient-to-r from-amber-700 to-amber-500 bg-clip-text text-transparent">
-              Whiskey Collection
+            <span className="bg-gradient-to-r from-amber-900 to-amber-600 bg-clip-text text-transparent">
+              WhiskeyPedia
             </span>
           </h1>
         </div>
