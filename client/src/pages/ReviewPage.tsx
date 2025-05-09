@@ -20,8 +20,14 @@ export default function ReviewPage() {
   
   // Find the specific review from the whiskey object
   const review = whiskey && Array.isArray(whiskey.notes) 
-    ? whiskey.notes.find((note: ReviewNote) => note.id === reviewId)
+    ? whiskey.notes.find((note: ReviewNote) => note.id === reviewId || note.id.toString() === reviewId)
     : undefined;
+  
+  // For debugging
+  console.log("ReviewPage - reviewId from URL:", reviewId, "type:", typeof reviewId);
+  if (whiskey && Array.isArray(whiskey.notes)) {
+    console.log("ReviewPage - whiskey notes:", whiskey.notes.map((note: ReviewNote) => ({id: note.id, type: typeof note.id})));
+  }
   
   // Go back to the previous page
   const handleBack = () => {

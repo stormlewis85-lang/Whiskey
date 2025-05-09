@@ -38,13 +38,23 @@ const EditReviewModal = ({ isOpen, onClose, whiskey, review }: EditReviewModalPr
       
       // Find the updated review
       if (data && Array.isArray(data.notes)) {
-        const updatedReview = data.notes.find(note => note.id === review.id);
+        const updatedReview = data.notes.find(note => 
+          note.id === review.id || 
+          (typeof note.id === 'string' && note.id === review.id.toString()) ||
+          (typeof review.id === 'string' && note.id.toString() === review.id)
+        );
         if (updatedReview) {
           // Close modal
           onClose();
           
+          // Console log for debugging
+          console.log("Navigating to edit review page with whiskey ID:", whiskey.id, "and review ID:", updatedReview.id, "type:", typeof updatedReview.id);
+          
+          // Make sure the review ID is properly converted for URL purposes
+          const reviewIdForUrl = updatedReview.id.toString();
+          
           // Navigate to review page
-          window.location.href = `/whiskey/${whiskey.id}/review/${updatedReview.id}`;
+          window.location.href = `/whiskey/${whiskey.id}/review/${reviewIdForUrl}`;
           return;
         }
       }

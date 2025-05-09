@@ -388,11 +388,17 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
         // Get the last (most recently added) review
         const newReview = data.notes[data.notes.length - 1];
         
+        // Add console log for debugging
+        console.log("New review created:", newReview.id, "type:", typeof newReview.id);
+        
         // Close the modal
         onClose();
         
+        // Make sure the review ID is properly converted for URL purposes
+        const reviewIdForUrl = newReview.id.toString();
+        
         // Navigate to the review detail page
-        window.location.href = `/whiskey/${data.id}/review/${newReview.id}`;
+        window.location.href = `/whiskey/${data.id}/review/${reviewIdForUrl}`;
       } else {
         // Fallback if review not found in response
         form.reset();
