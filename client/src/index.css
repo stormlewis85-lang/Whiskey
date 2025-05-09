@@ -233,6 +233,11 @@
   overflow-y: visible;
 }
 
+/* Section header styling */
+.section-header {
+  @apply font-medium mb-2 text-[#7d5936];
+}
+
 /* Swipe animations */
 @keyframes slide-left {
   0% {

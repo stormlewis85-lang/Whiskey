@@ -459,20 +459,26 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
   // Scroll to top of dialog content
   const scrollToTop = () => {
     if (dialogContentRef.current) {
-      // First try scrolling the dialog content itself
+      // Reset all possible scroll positions
       dialogContentRef.current.scrollTop = 0;
       
-      // Also try to scroll the scrollable-content element if it exists
-      const scrollableContent = dialogContentRef.current.querySelector('.scrollable-content');
-      if (scrollableContent) {
-        scrollableContent.scrollTop = 0;
+      // Get the form element which is now scrollable
+      const formElement = dialogContentRef.current.querySelector('form');
+      if (formElement) {
+        formElement.scrollTop = 0;
       }
       
-      // Additionally, try scrolling the content element by ID
+      // Also try to find the content by ID
       const contentElement = document.getElementById('review-content');
       if (contentElement) {
         contentElement.scrollTop = 0;
       }
+      
+      // Additionally force scroll to top after a short delay
+      setTimeout(() => {
+        if (formElement) formElement.scrollTop = 0;
+        if (dialogContentRef.current) dialogContentRef.current.scrollTop = 0;
+      }, 50);
     }
   };
 
@@ -571,7 +577,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
         return (
           <div className="space-y-6">
             <div>
-              <h3 className="font-medium mb-2 text-[#7d5936]">Color</h3>
+              <h3 className="section-header">Color</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                 {COLOR_OPTIONS.map((color) => (
                   <FormField
@@ -2162,7 +2168,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md dialog-content" ref={dialogContentRef}>
+      <DialogContent className="sm:max-w-md dialog-content overflow-hidden" ref={dialogContentRef}>
         <div className="sticky top-0 bg-white z-10 pb-2">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-gray-900">
@@ -2201,7 +2207,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
               // This happens in the Submit button's onClick handler instead
               return false;
             }} 
-            className="space-y-4 scrollable-content"
+            className="space-y-4 overflow-y-auto max-h-[60vh]"
           >
             <div 
               id="review-content"
