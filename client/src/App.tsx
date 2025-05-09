@@ -10,6 +10,7 @@ import Dashboard from "@/pages/Dashboard";
 import AuthPage from "@/pages/auth-page";
 import SharedReview from "@/pages/SharedReview";
 import Community from "@/pages/Community";
+import ReviewPage from "@/pages/ReviewPage";
 import { Toaster } from "@/components/ui/toaster";
 
 function Router() {
@@ -17,6 +18,7 @@ function Router() {
     <Switch>
       <ProtectedRoute path="/" component={Home} />
       <ProtectedRoute path="/dashboard" component={Dashboard} />
+      <ProtectedRoute path="/whiskey/:id/review/:reviewId" component={ReviewPage} />
       <Route path="/auth" component={AuthPage} />
       <Route path="/shared/:shareId" component={SharedReview} />
       <Route path="/community" component={Community} />
