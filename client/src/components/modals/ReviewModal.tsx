@@ -404,12 +404,31 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
     const finishScore = Number(form.getValues('finishScore')) || 0;
     const valueScore = Number(form.getValues('valueScore')) || 0;
     
+    // Calculate individual weighted scores
+    const noseWeighted = noseScore * 1.5;
+    const mouthfeelWeighted = mouthfeelScore * 2.0;
+    const tasteWeighted = tasteScore * 3.0;
+    const finishWeighted = finishScore * 2.5;
+    const valueWeighted = valueScore * 1.0;
+    
+    // Calculate total weighted score
+    const weightedTotal = noseWeighted + mouthfeelWeighted + tasteWeighted + finishWeighted + valueWeighted;
+    
+    // Calculate 5-star score (weighted total / 10)
+    const fiveStarScore = weightedTotal / 10;
+    
+    // Calculate final score (weighted total * 2)
+    const finalScore = weightedTotal * 2;
+    
     return {
-      nose: parseFloat((noseScore * 1.5 + noseAdjustment).toFixed(1)),
-      mouthfeel: parseFloat((mouthfeelScore * 2.0 + mouthfeelAdjustment).toFixed(1)),
-      taste: parseFloat((tasteScore * 3.0 + tasteAdjustment).toFixed(1)),
-      finish: parseFloat((finishScore * 2.5 + finishAdjustment).toFixed(1)),
-      value: parseFloat((valueScore * 1.5 + valueAdjustment).toFixed(1))
+      nose: parseFloat(noseWeighted.toFixed(1)),
+      mouthfeel: parseFloat(mouthfeelWeighted.toFixed(1)),
+      taste: parseFloat(tasteWeighted.toFixed(1)),
+      finish: parseFloat(finishWeighted.toFixed(1)),
+      value: parseFloat(valueWeighted.toFixed(1)),
+      weightedTotal: parseFloat(weightedTotal.toFixed(1)),
+      fiveStarScore: parseFloat(fiveStarScore.toFixed(1)),
+      finalScore: Math.round(finalScore)
     };
   };
   
@@ -435,9 +454,8 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
       if (currentPage === ReviewPage.Summary) {
         // Calculate the weighted scores and set the initial rating
         const scores = calculateWeightedScores();
-        const totalScore = scores.nose + scores.mouthfeel + scores.taste + scores.finish + scores.value;
-        const calculatedRating = parseFloat((totalScore / 10.5).toFixed(1));
-        setRating(calculatedRating);
+        // Use the 5-star score for the initial rating
+        setRating(scores.fiveStarScore);
       }
       
       // Go to the next page
@@ -467,29 +485,37 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
       // Calculate the final weighted scores with adjustments
       const scores = calculateWeightedScores();
       
-      // Calculate final overall rating (sum of all weighted category scores divided by 10.5, which is the sum of all multipliers)
-      // Nose=1.5, Mouthfeel=2.0, Taste=3.0, Finish=2.5, Value=1.5 (total 10.5)
-      const totalScore = scores.nose + scores.mouthfeel + scores.taste + scores.finish + scores.value;
-      const finalRating = parseFloat((totalScore / 10.5).toFixed(1));
+      // Use the scores calculated by the calculateWeightedScores function
+      const weightedTotal = scores.weightedTotal;
+      const fiveStarScore = scores.fiveStarScore;
+      const finalScore = scores.finalScore;
       
-      // Set the overall rating
-      data.rating = finalRating;
+      // Set the overall rating (now using 5-star score for rating)
+      data.rating = fiveStarScore;
       
       // Add the final adjustment notes to the review
       if (finalNotes) {
         data.text = data.text ? `${data.text}\n\nFINAL NOTES: ${finalNotes}` : `FINAL NOTES: ${finalNotes}`;
       }
       
+      // Get base scores
+      const noseScore = Number(form.getValues('noseScore')) || 0;
+      const mouthfeelScore = Number(form.getValues('mouthfeelScore')) || 0;
+      const tasteScore = Number(form.getValues('tasteScore')) || 0;
+      const finishScore = Number(form.getValues('finishScore')) || 0;
+      const valueScore = Number(form.getValues('valueScore')) || 0;
+      
       // Add weighted scores to the review text
       const weightedScoresText = [
-        `WEIGHTED SCORES (with adjustments):`,
-        `- Nose: ${scores.nose}/7.5 (base score × 1.5${noseAdjustment !== 0 ? ` ${noseAdjustment > 0 ? '+' : ''}${noseAdjustment}` : ''})`,
-        `- Mouth Feel: ${scores.mouthfeel}/10 (base score × 2.0${mouthfeelAdjustment !== 0 ? ` ${mouthfeelAdjustment > 0 ? '+' : ''}${mouthfeelAdjustment}` : ''})`,
-        `- Taste: ${scores.taste}/15 (base score × 3.0${tasteAdjustment !== 0 ? ` ${tasteAdjustment > 0 ? '+' : ''}${tasteAdjustment}` : ''})`,
-        `- Finish: ${scores.finish}/12.5 (base score × 2.5${finishAdjustment !== 0 ? ` ${finishAdjustment > 0 ? '+' : ''}${finishAdjustment}` : ''})`,
-        `- Value: ${scores.value}/7.5 (base score × 1.5${valueAdjustment !== 0 ? ` ${valueAdjustment > 0 ? '+' : ''}${valueAdjustment}` : ''})`,
-        `- Total: ${totalScore}/52.5`,
-        `- Final Rating: ${finalRating}/5`
+        `WEIGHTED SCORES:`,
+        `- Nose: ${noseScore} × 1.5 = ${scores.nose}/7.5`,
+        `- Mouth Feel: ${mouthfeelScore} × 2.0 = ${scores.mouthfeel}/10`,
+        `- Taste: ${tasteScore} × 3.0 = ${scores.taste}/15`,
+        `- Finish: ${finishScore} × 2.5 = ${scores.finish}/12.5`,
+        `- Value: ${valueScore} × 1.0 = ${scores.value}/5`,
+        `- Weighted Total: ${weightedTotal}/50`,
+        `- 5-Star Score: ${fiveStarScore}/5 (Weighted Total ÷ 10)`,
+        `- Final Score: ${finalScore}/100 (Weighted Total × 2)`
       ].join('\n');
       
       // Append the weighted scores to the review text
@@ -1996,8 +2022,8 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                 {/* Value Score */}
                 <div>
                   <div className="flex justify-between items-center mb-1">
-                    <span className="font-medium text-[#794E2F]">Value (×1.5)</span>
-                    <span className="text-[#986A44] font-medium">{weightedScores.value.toFixed(1)}/7.5</span>
+                    <span className="font-medium text-[#794E2F]">Value (×1.0)</span>
+                    <span className="text-[#986A44] font-medium">{weightedScores.value.toFixed(1)}/5.0</span>
                   </div>
                   <div className="flex items-center">
                     <button 
@@ -2010,7 +2036,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                     <div className="flex-1 h-2 mx-1 bg-[#E8D9BD] relative">
                       <div 
                         className="absolute h-full bg-[#986A44]" 
-                        style={{ width: `${(weightedScores.value / 7.5) * 100}%` }}
+                        style={{ width: `${(weightedScores.value / 5.0) * 100}%` }}
                       ></div>
                     </div>
                     <button 
