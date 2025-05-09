@@ -429,8 +429,14 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit }: Whis
                             size="icon" 
                             className="h-7 w-7 text-blue-600 hover:text-blue-700 hover:bg-blue-50" 
                             onClick={() => {
+                              // Log for debugging
+                              console.log("Navigating to review with ID:", note.id, "type:", typeof note.id);
+                              
+                              // Make sure to convert review ID to string for URL
+                              const reviewIdForUrl = note.id.toString();
+                              
                               onClose();
-                              navigate(`/whiskey/${whiskey.id}/review/${note.id}`);
+                              navigate(`/whiskey/${whiskey.id}/review/${reviewIdForUrl}`);
                             }}
                           >
                             <Eye className="h-3 w-3" />
