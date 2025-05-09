@@ -376,15 +376,29 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
       );
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/whiskeys"] });
       toast({
         title: "Review Added",
         description: "Your detailed tasting notes have been saved.",
       });
-      form.reset();
-      setCurrentPage(ReviewPage.Visual);
-      onClose();
+      
+      // Find the newly added review from the returned updated whiskey
+      if (data && Array.isArray(data.notes) && data.notes.length > 0) {
+        // Get the last (most recently added) review
+        const newReview = data.notes[data.notes.length - 1];
+        
+        // Close the modal
+        onClose();
+        
+        // Navigate to the review detail page
+        window.location.href = `/review/${data.id}/${newReview.id}`;
+      } else {
+        // Fallback if review not found in response
+        form.reset();
+        setCurrentPage(ReviewPage.Visual);
+        onClose();
+      }
     },
     onError: (error) => {
       toast({

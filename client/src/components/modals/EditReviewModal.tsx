@@ -27,14 +27,29 @@ const EditReviewModal = ({ isOpen, onClose, whiskey, review }: EditReviewModalPr
         `/api/whiskeys/${whiskey.id}/reviews/${review.id}`,
         data
       );
-      return response;
+      return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({
         title: "Review updated",
         description: "Your tasting notes have been updated successfully.",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/whiskeys'] });
+      
+      // Find the updated review
+      if (data && Array.isArray(data.notes)) {
+        const updatedReview = data.notes.find(note => note.id === review.id);
+        if (updatedReview) {
+          // Close modal
+          onClose();
+          
+          // Navigate to review page
+          window.location.href = `/review/${whiskey.id}/${updatedReview.id}`;
+          return;
+        }
+      }
+      
+      // Fallback if review not found in response
       onClose();
     },
     onError: (error) => {
