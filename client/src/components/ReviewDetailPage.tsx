@@ -168,7 +168,23 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
 
   const formatNotes = (notes: string | undefined) => {
     if (!notes) return '-';
-    return notes;
+    
+    // Split by new lines and handle paragraphs
+    const paragraphs = notes.split(/\n\s*\n|\r\n\s*\r\n/); // Split on empty lines
+    
+    if (paragraphs.length <= 1) {
+      return notes; // Return as-is if no paragraphs detected
+    }
+    
+    return (
+      <div className="space-y-2">
+        {paragraphs.map((paragraph, index) => (
+          <p key={index} className="text-gray-800">
+            {paragraph.trim()}
+          </p>
+        ))}
+      </div>
+    );
   };
 
   return (
@@ -349,6 +365,7 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
                   <p>{formatAromasList(review.tasteFlavors)}</p>
                 </div>
                 <div className="md:col-span-5 p-4">
+                  <h3 className={sectionTitleClass}>Description</h3>
                   <p>{formatNotes(review.tasteNotes)}</p>
                 </div>
               </div>
@@ -371,6 +388,7 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
                   </div>
                 </div>
                 <div className="md:col-span-5 p-4">
+                  <h3 className={sectionTitleClass}>Description</h3>
                   <p>{formatNotes(review.finishNotes)}</p>
                 </div>
               </div>
@@ -400,6 +418,7 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
                   </div>
                 </div>
                 <div className="md:col-span-5 p-4">
+                  <h3 className={sectionTitleClass}>Description</h3>
                   <p>{formatNotes(review.valueNotes)}</p>
                 </div>
               </div>
