@@ -204,34 +204,33 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit }: Whis
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden">
           <DialogHeader>
-            <DialogTitle className="text-xl md:text-2xl font-semibold pb-2 relative flex items-center">
-              <div className="flex-1 pr-10">
-                {whiskey.name}
-                {whiskey.distillery && (
-                  <span className="text-gray-500 font-normal ml-2">by {whiskey.distillery}</span>
-                )}
-              </div>
-              <div className="absolute right-0 top-0">
-                <div className="flex items-center space-x-2">
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-                    onClick={deleteWhiskey}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                  <Button variant="outline" size="icon" onClick={() => onEdit(whiskey)}>
-                    <PencilIcon className="h-4 w-4" />
-                  </Button>
-                  <DialogClose asChild>
-                    <Button variant="outline" size="icon">
-                      <XIcon className="h-4 w-4" />
-                    </Button>
-                  </DialogClose>
-                </div>
-              </div>
+            <DialogTitle className="text-xl md:text-2xl font-bold text-gray-900 pb-2">
+              {whiskey.name}
+              {whiskey.distillery && (
+                <span className="text-gray-500 font-normal text-lg ml-2">by {whiskey.distillery}</span>
+              )}
             </DialogTitle>
+            <div className="flex items-center space-x-2 mb-4">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                onClick={deleteWhiskey}
+              >
+                <Trash2 className="h-4 w-4 mr-1" />
+                Delete
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => onEdit(whiskey)}>
+                <PencilIcon className="h-4 w-4 mr-1" />
+                Edit
+              </Button>
+              <div className="flex-grow"></div>
+              <DialogClose asChild>
+                <Button variant="ghost" size="icon">
+                  <XIcon className="h-4 w-4" />
+                </Button>
+              </DialogClose>
+            </div>
           </DialogHeader>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto pr-2" style={{maxHeight: "calc(90vh - 80px)"}}>

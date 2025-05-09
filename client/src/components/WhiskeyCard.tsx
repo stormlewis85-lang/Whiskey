@@ -56,7 +56,7 @@ const WhiskeyCard = ({ whiskey, onViewDetails, onReview, onEdit }: WhiskeyCardPr
         
         {/* Right side: Whiskey details */}
         <CardContent className="p-4 md:w-2/3 flex flex-col">
-          <h3 className="font-medium text-lg truncate text-slate-800">{whiskey.name}</h3>
+          <h3 className="font-bold text-lg truncate text-gray-900">{whiskey.name}</h3>
           <div className="flex justify-between items-center mt-1">
             <p className="text-amber-700 text-sm truncate">{whiskey.distillery || 'Unknown Distillery'}</p>
             <p className="text-amber-800 font-medium">

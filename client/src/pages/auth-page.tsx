@@ -68,7 +68,7 @@ export default function AuthPage() {
           <CardHeader>
             <CardTitle className="text-2xl font-bold text-center">
               <span className="bg-gradient-to-r from-amber-700 to-amber-500 bg-clip-text text-transparent">
-                Whiskey Collection
+                WhiskeyPedia
               </span>
             </CardTitle>
             <CardDescription className="text-center">
@@ -217,7 +217,7 @@ export default function AuthPage() {
       {/* Hero section */}
       <div className="flex-1 bg-gradient-to-br from-amber-900 to-amber-700 text-white p-10 flex flex-col justify-center">
         <div className="max-w-md mx-auto">
-          <h1 className="text-4xl font-bold mb-6">Manage Your Whiskey Collection</h1>
+          <h1 className="text-4xl font-bold mb-6">Welcome to WhiskeyPedia</h1>
           <p className="text-lg mb-6">
             Track, rate, and discover new whiskeys with our comprehensive collection management system.
           </p>

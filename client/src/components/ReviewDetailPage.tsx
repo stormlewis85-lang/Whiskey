@@ -425,15 +425,7 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
             </CardContent>
           </Card>
           
-          {/* Overall Notes */}
-          {review.text && (
-            <Card>
-              <CardContent className="p-4">
-                <h3 className="font-bold text-lg mb-2 text-gray-900">Overall Notes</h3>
-                <p className="whitespace-pre-line">{review.text}</p>
-              </CardContent>
-            </Card>
-          )}
+
         </div>
       </div>
       
