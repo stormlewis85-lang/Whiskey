@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { 
   ImageIcon, Pencil as PencilIcon, Star, Upload, Edit, Trash2, 
   BookOpen, PenIcon, XIcon, AlertTriangle, Loader2, 
-  DollarSign, BarChart2
+  DollarSign, BarChart2, Eye
 } from "lucide-react";
+import { useLocation } from 'wouter';
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Whiskey, ReviewNote } from "@shared/schema";
@@ -32,6 +33,7 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit }: Whis
   const imageUploadRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, navigate] = useLocation();
   
   // Format dates
   const formatDate = (date: Date): string => {
@@ -422,6 +424,17 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit }: Whis
                           )}
                         </div>
                         <div className="flex space-x-1">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-7 w-7 text-blue-600 hover:text-blue-700 hover:bg-blue-50" 
+                            onClick={() => {
+                              onClose();
+                              navigate(`/reviews/${whiskey.id}/${note.id}`);
+                            }}
+                          >
+                            <Eye className="h-3 w-3" />
+                          </Button>
                           <Button 
                             variant="ghost" 
                             size="icon" 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useParams, useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { Whiskey, ReviewNote } from '@shared/schema';
@@ -19,7 +19,9 @@ export default function ReviewPage() {
   });
   
   // Find the specific review from the whiskey object
-  const review = whiskey?.notes?.find(note => note.id === reviewId);
+  const review = whiskey && Array.isArray(whiskey.notes) 
+    ? whiskey.notes.find((note: ReviewNote) => note.id === reviewId)
+    : undefined;
   
   // Go back to the previous page
   const handleBack = () => {

@@ -34,10 +34,14 @@ export const whiskeys = pgTable("whiskeys", {
   age: integer("age"),
   price: real("price"),
   abv: real("abv"),
+  proof: real("proof"), // Proof (ABV * 2)
   region: text("region"),
   rating: real("rating").default(0),
   dateAdded: timestamp("date_added").defaultNow(),
   lastReviewed: timestamp("last_reviewed"),
+  releaseDate: date("release_date"), // Release date
+  msrp: real("msrp"), // Manufacturer's Suggested Retail Price
+  pricePaid: real("price_paid"), // Actual price paid
   image: text("image"),
   notes: jsonb("notes").default([]),
   // Additional bourbon/whiskey categorization fields

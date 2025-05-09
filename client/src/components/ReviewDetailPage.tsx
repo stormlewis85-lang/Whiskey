@@ -12,9 +12,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { StarRating } from './StarRating';
-import { Badge } from './ui/badge';
-import { Separator } from './ui/separator';
+import { StarRating } from '@/components/StarRating';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 
 interface ReviewDetailPageProps {
   whiskey: Whiskey;
