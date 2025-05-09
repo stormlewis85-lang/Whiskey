@@ -392,7 +392,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
         onClose();
         
         // Navigate to the review detail page
-        window.location.href = `/review/${data.id}/${newReview.id}`;
+        window.location.href = `/whiskey/${data.id}/review/${newReview.id}`;
       } else {
         // Fallback if review not found in response
         form.reset();

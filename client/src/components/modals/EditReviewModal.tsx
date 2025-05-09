@@ -44,7 +44,7 @@ const EditReviewModal = ({ isOpen, onClose, whiskey, review }: EditReviewModalPr
           onClose();
           
           // Navigate to review page
-          window.location.href = `/review/${whiskey.id}/${updatedReview.id}`;
+          window.location.href = `/whiskey/${whiskey.id}/review/${updatedReview.id}`;
           return;
         }
       }
