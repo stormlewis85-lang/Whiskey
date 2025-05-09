@@ -502,8 +502,8 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
     if (currentPage > ReviewPage.Visual) {
       setCurrentPage(prevPage => (prevPage - 1) as ReviewPage);
       
-      // Scroll to top after state update
-      setTimeout(scrollToTop, 50);
+      // Scroll to top after state update with a longer delay to ensure the DOM has updated
+      setTimeout(scrollToTop, 100);
     }
   };
   
@@ -2201,7 +2201,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
           >
             <div 
               className={`${swipeDirection ? (swipeDirection === 'left' ? 'animate-slide-left' : 'animate-slide-right') : ''}`}
-              ref={contentRef}
+              ref={el => { if (el) contentRef.current = el; }}
               {...(isMobile ? swipeHandlers : {})}
             >
               {renderPageContent()}
