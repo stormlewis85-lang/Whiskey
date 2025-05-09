@@ -129,9 +129,10 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
     if (!score) return null;
     
     return (
-      <tr>
-        <td className="px-4 py-2 font-medium">{label}</td>
-        <td className="px-4 py-2">
+      <tr className="border-b border-gray-100">
+        <td className="px-4 py-2 font-medium text-gray-800">{label}</td>
+        <td className="px-4 py-2 flex items-center">
+          <span className="mr-2 font-semibold text-gray-900">{score}</span>
           <StarRating rating={score} maxRating={5} />
         </td>
       </tr>
@@ -159,55 +160,57 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
   return (
     <div className="bg-white rounded-lg shadow-lg max-w-5xl mx-auto">
       {/* Header with whiskey name and overall score */}
-      <div className="bg-gray-800 text-white p-4 rounded-t-lg">
+      <div className="bg-gray-800 text-white p-6 rounded-t-lg">
         <h1 className="text-3xl font-bold text-center">{whiskey.name}</h1>
+        {whiskey.distillery && <p className="text-center text-gray-300 mt-1">{whiskey.distillery}</p>}
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
         {/* Left column - Whiskey Details */}
         <div className="md:col-span-1">
+          <h3 className="text-lg font-semibold mb-2 text-gray-900 border-b border-gray-300 pb-2">Whiskey Details</h3>
           <Table>
             <TableBody>
               <TableRow>
-                <TableCell className="font-medium bg-gray-200">Category</TableCell>
+                <TableCell className="font-medium bg-gray-200 text-gray-900">Category</TableCell>
                 <TableCell>{whiskey.type || '-'}</TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium bg-gray-200">Company</TableCell>
+                <TableCell className="font-medium bg-gray-200 text-gray-900">Company</TableCell>
                 <TableCell>{whiskey.distillery || '-'}</TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium bg-gray-200">Distillery</TableCell>
+                <TableCell className="font-medium bg-gray-200 text-gray-900">Distillery</TableCell>
                 <TableCell>{whiskey.distillery || '-'}</TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium bg-gray-200">Release Date</TableCell>
+                <TableCell className="font-medium bg-gray-200 text-gray-900">Release Date</TableCell>
                 <TableCell>{whiskey.releaseDate ? new Date(whiskey.releaseDate).toLocaleDateString() : '-'}</TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium bg-gray-200">Proof</TableCell>
+                <TableCell className="font-medium bg-gray-200 text-gray-900">Proof</TableCell>
                 <TableCell>{whiskey.proof || (whiskey.abv ? Math.round(whiskey.abv * 2) : '-')}</TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium bg-gray-200">Age</TableCell>
+                <TableCell className="font-medium bg-gray-200 text-gray-900">Age</TableCell>
                 <TableCell>{whiskey.age ? `${whiskey.age} years` : '-'}</TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium bg-gray-200">MSRP</TableCell>
+                <TableCell className="font-medium bg-gray-200 text-gray-900">MSRP</TableCell>
                 <TableCell>
                   {whiskey.msrp ? `$${whiskey.msrp.toFixed(2)}` : 
                    whiskey.price ? `$${whiskey.price.toFixed(2)}` : '-'}
                 </TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium bg-gray-200">Paid</TableCell>
+                <TableCell className="font-medium bg-gray-200 text-gray-900">Paid</TableCell>
                 <TableCell>
                   {whiskey.pricePaid ? `$${whiskey.pricePaid.toFixed(2)}` : 
                    whiskey.price ? `$${whiskey.price.toFixed(2)}` : '-'}
                 </TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium bg-gray-200">Color</TableCell>
+                <TableCell className="font-medium bg-gray-200 text-gray-900">Color</TableCell>
                 <TableCell>{review.visualColor ? capitalizeFirstLetter(review.visualColor) : '-'}</TableCell>
               </TableRow>
               {renderMashBill()}
@@ -218,18 +221,18 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
         {/* Middle column - Score */}
         <div className="md:col-span-1 flex flex-col items-center justify-start">
           <div className="text-center">
-            <div className="border-4 border-gray-300 rounded-lg p-6 w-32 h-32 flex flex-col items-center justify-center">
-              <span className="text-7xl font-bold">{Math.round(calculateScores().finalScore)}</span>
-              <span className="text-xs mt-1 text-gray-500">Final Score</span>
+            <div className="border-4 border-gray-800 rounded-lg p-6 w-32 h-32 flex flex-col items-center justify-center bg-gray-50">
+              <span className="text-7xl font-bold text-gray-900">{Math.round(calculateScores().finalScore)}</span>
+              <span className="text-xs mt-1 text-gray-700 font-medium">Final Score</span>
             </div>
             <div className="mt-3 text-md">
-              <div className="text-gray-700 font-semibold">5★ Score: {calculateScores().fiveStarScore.toFixed(1)}</div>
-              <div className="text-gray-500 text-sm">Weighted: {Math.round(calculateScores().weightedTotal)}</div>
+              <div className="text-gray-900 font-semibold">5★ Score: <span className="text-lg">{calculateScores().fiveStarScore.toFixed(1)}</span></div>
+              <div className="text-gray-600 text-sm">Weighted Total: {Math.round(calculateScores().weightedTotal)}</div>
             </div>
           </div>
           
           <div className="mt-4 w-full">
-            <h3 className="text-lg font-semibold text-center mb-2">Scores</h3>
+            <h3 className="text-lg font-semibold text-center mb-2 text-gray-900 border-b border-gray-300 pb-2">Component Scores</h3>
             <table className="w-full">
               <tbody>
                 {renderScoreRow('Nose', review.noseScore)}
@@ -263,7 +266,7 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
       
       {/* Review Details */}
       <div className="p-4">
-        <h2 className="text-2xl font-bold mb-4 text-gray-900">Tasting Notes</h2>
+        <h2 className="text-2xl font-bold mb-4 text-gray-900 border-b-2 border-gray-800 pb-2">Tasting Notes</h2>
         
         <div className="space-y-4">
           {/* Nose */}
