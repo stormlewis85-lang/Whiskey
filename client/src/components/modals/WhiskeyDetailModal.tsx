@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { 
   ImageIcon, Pencil as PencilIcon, Star, Upload, Edit, Trash2, 
   BookOpen, PenIcon, XIcon, AlertTriangle, Loader2, 
-  DollarSign, TrendingUp, BarChart2
+  DollarSign, BarChart2
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +14,6 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import EditReviewModal from "./EditReviewModal";
 import PriceTrackingModal from "./PriceTrackingModal";
-import MarketValueModal from "./MarketValueModal";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 interface WhiskeyDetailModalProps {
@@ -30,7 +29,6 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit }: Whis
   const [selectedReview, setSelectedReview] = useState<ReviewNote | null>(null);
   const [isEditReviewModalOpen, setIsEditReviewModalOpen] = useState(false);
   const [isPriceTrackingModalOpen, setIsPriceTrackingModalOpen] = useState(false);
-  const [isMarketValueModalOpen, setIsMarketValueModalOpen] = useState(false);
   const imageUploadRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();

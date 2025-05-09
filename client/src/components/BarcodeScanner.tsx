@@ -25,7 +25,14 @@ export function BarcodeScanner({ onCodeScanned, open, onOpenChange }: BarcodeSca
 
     const checkPermissions = async () => {
       try {
-        // Check if we already have permission
+        // Request camera permission explicitly
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        
+        // If we got here, permission was granted
+        // We can close this stream as we'll reopen with the scanner
+        stream.getTracks().forEach(track => track.stop());
+        
+        // Now get the list of cameras
         const devices = await navigator.mediaDevices.enumerateDevices();
         const videoDevices = devices.filter(device => device.kind === 'videoinput');
         setCameras(videoDevices as InputDeviceInfo[]);
@@ -33,6 +40,11 @@ export function BarcodeScanner({ onCodeScanned, open, onOpenChange }: BarcodeSca
         if (videoDevices.length > 0) {
           setSelectedCamera(videoDevices[0].deviceId);
           setPermission(true);
+          
+          // Auto-start scanner after getting permission
+          setTimeout(() => {
+            startScanner();
+          }, 500);
         } else {
           setPermission(false);
           toast({
