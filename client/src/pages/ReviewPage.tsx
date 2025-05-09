@@ -30,7 +30,7 @@ export default function ReviewPage() {
     isError,
     error
   } = useQuery<ReviewData>({
-    queryKey: ['/api/whiskeys', whiskeyId, 'reviews', reviewId],
+    queryKey: [`/api/whiskeys/${whiskeyId}/reviews/${reviewId}`],
     enabled: !isNaN(whiskeyId) && !!reviewId,
     retry: 1,
   });
@@ -38,7 +38,7 @@ export default function ReviewPage() {
   // Log our query and results
   console.log("Query info:", {
     endpoint: `/api/whiskeys/${whiskeyId}/reviews/${reviewId}`,
-    queryKey: ['/api/whiskeys', whiskeyId, 'reviews', reviewId],
+    queryKey: [`/api/whiskeys/${whiskeyId}/reviews/${reviewId}`],
     isEnabled: !isNaN(whiskeyId) && !!reviewId,
     isLoading,
     isError
@@ -104,7 +104,7 @@ export default function ReviewPage() {
               <p>Whiskey ID: {whiskeyId}</p>
               <p>Review ID: {reviewId}</p>
               <p>Error: {error instanceof Error ? error.message : "Unknown error"}</p>
-              <p>Query Key: {JSON.stringify(['/api/whiskeys', whiskeyId, 'reviews', reviewId])}</p>
+              <p>Query Key: {JSON.stringify([`/api/whiskeys/${whiskeyId}/reviews/${reviewId}`])}</p>
             </div>
             <Button onClick={handleBack}>Go Back</Button>
           </div>
