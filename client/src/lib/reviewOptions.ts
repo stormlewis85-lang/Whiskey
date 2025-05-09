@@ -137,6 +137,7 @@ export const AVAILABILITY_OPTIONS = [
   { value: 'some-places', label: 'Some Places' },
   { value: 'rare', label: 'Rare' },
   { value: 'seasonal', label: 'Seasonal' },
+  { value: 'limited-release', label: 'Limited Release' },
   { value: 'unicorn', label: 'Unicorn' }
 ];
 
