@@ -16,6 +16,9 @@ import { StarRating } from '@/components/StarRating';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 
+// Define a CSS class for section titles
+const sectionTitleClass = "font-semibold mb-2 text-gray-900";
+
 interface ReviewDetailPageProps {
   whiskey?: Whiskey;
   review?: ReviewNote;
@@ -272,11 +275,11 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
                   <div className="text-3xl font-bold mt-1">{review.noseScore || '-'}</div>
                 </div>
                 <div className="md:col-span-2 bg-gray-100 p-4">
-                  <h3 className="font-semibold mb-2">Profiles</h3>
+                  <h3 className={sectionTitleClass}>Profiles</h3>
                   <p>{formatAromasList(review.noseAromas)}</p>
                 </div>
                 <div className="md:col-span-5 p-4">
-                  <h3 className="font-semibold mb-2">Description</h3>
+                  <h3 className={sectionTitleClass}>Description</h3>
                   <p>{formatNotes(review.noseNotes)}</p>
                 </div>
               </div>
@@ -292,7 +295,7 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
                   <div className="text-3xl font-bold mt-1">{review.mouthfeelScore || '-'}</div>
                 </div>
                 <div className="md:col-span-2 bg-gray-100 p-4">
-                  <h3 className="font-semibold mb-2">Characteristics</h3>
+                  <h3 className={sectionTitleClass}>Characteristics</h3>
                   <div className="space-y-1">
                     <div className="bg-gray-200 px-2 py-1">
                       <p><span className="font-medium">Alcohol:</span> {review.mouthfeelAlcohol ? capitalizeFirstLetter(review.mouthfeelAlcohol) : '-'}</p>
@@ -321,7 +324,7 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
                   <div className="text-3xl font-bold mt-1">{review.tasteScore || '-'}</div>
                 </div>
                 <div className="md:col-span-2 bg-gray-100 p-4">
-                  <h3 className="font-semibold mb-2">Profiles</h3>
+                  <h3 className={sectionTitleClass}>Profiles</h3>
                   <p>{formatAromasList(review.tasteFlavors)}</p>
                 </div>
                 <div className="md:col-span-5 p-4">
@@ -340,7 +343,7 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
                   <div className="text-3xl font-bold mt-1">{review.finishScore || '-'}</div>
                 </div>
                 <div className="md:col-span-2 bg-gray-100 p-4">
-                  <h3 className="font-semibold mb-2">Profiles</h3>
+                  <h3 className={sectionTitleClass}>Profiles</h3>
                   <p>{formatAromasList(review.finishFlavors)}</p>
                   <p className="mt-2"><span className="font-medium">Length:</span> {review.finishLength ? capitalizeFirstLetter(review.finishLength) : '-'}</p>
                 </div>
@@ -360,7 +363,7 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
                   <div className="text-3xl font-bold mt-1">{review.valueScore || '-'}</div>
                 </div>
                 <div className="md:col-span-2 bg-gray-100 p-4">
-                  <h3 className="font-semibold mb-2">Assessment</h3>
+                  <h3 className={sectionTitleClass}>Assessment</h3>
                   <div className="space-y-1">
                     <div className="bg-gray-200 px-2 py-1">
                       <p><span className="font-medium">Availability:</span> {review.valueAvailability ? capitalizeFirstLetter(review.valueAvailability) : '-'}</p>
@@ -384,7 +387,7 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
           {review.text && (
             <Card>
               <CardContent className="p-4">
-                <h3 className="font-bold text-lg mb-2">Overall Notes</h3>
+                <h3 className="font-bold text-lg mb-2 text-gray-900">Overall Notes</h3>
                 <p className="whitespace-pre-line">{review.text}</p>
               </CardContent>
             </Card>
