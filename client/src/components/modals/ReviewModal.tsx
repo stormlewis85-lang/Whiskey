@@ -458,7 +458,19 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
   // Scroll to top of dialog content
   const scrollToTop = () => {
     if (dialogContentRef.current) {
+      // First try scrolling the dialog content itself
       dialogContentRef.current.scrollTop = 0;
+      
+      // Also try to scroll the scrollable-content element if it exists
+      const scrollableContent = dialogContentRef.current.querySelector('.scrollable-content');
+      if (scrollableContent) {
+        scrollableContent.scrollTop = 0;
+      }
+      
+      // Additionally, try scrolling the content element
+      if (contentRef.current) {
+        contentRef.current.scrollTop = 0;
+      }
     }
   };
 
@@ -481,8 +493,8 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
       // Go to the next page
       setCurrentPage(prevPage => (prevPage + 1) as ReviewPage);
       
-      // Scroll to top after state update
-      setTimeout(scrollToTop, 50);
+      // Scroll to top after state update with a longer delay to ensure the DOM has updated
+      setTimeout(scrollToTop, 100);
     }
   };
 
