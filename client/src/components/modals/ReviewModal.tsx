@@ -1667,7 +1667,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
             
             {/* Review Summary */}
             <div className="mb-6 bg-secondary/20 p-4 rounded-lg">
-              <h3 className="font-medium text-lg mb-2">Review Summary</h3>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Review Summary</h3>
               
               <div className="space-y-3 text-sm">
                 {/* Visual Summary */}
@@ -1790,7 +1790,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
             {/* Calculated Rating Display */}
             <div className="mb-4 bg-amber-50 p-3 rounded-lg border border-amber-200">
               <div className="text-center">
-                <h3 className="font-medium text-amber-800">Calculated Rating</h3>
+                <h3 className="font-bold text-gray-900">Calculated Rating</h3>
                 <div className="text-3xl font-bold text-amber-700 my-2">{rating.toFixed(1)}/5</div>
                 <p className="text-sm text-gray-600">Based on your weighted category scores:</p>
                 <div className="text-sm text-gray-600 mt-1">
@@ -1896,7 +1896,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
         return (
           <div className="space-y-6">
             <div className="bg-[#F5EFE0] p-4 rounded-lg border border-[#D9C4A3]">
-              <h3 className="text-lg font-serif font-semibold text-[#593D25] mb-4">Weighted Category Scores</h3>
+              <h3 className="text-lg font-bold text-gray-900 mb-4">Weighted Category Scores</h3>
               
               <div className="space-y-4">
                 {/* Nose Score */}
@@ -2094,33 +2094,34 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-medium text-[#593D25] text-md">Final Score (100-point scale)</span>
                     <span className="text-[#794E2F] font-bold text-lg">
-                      {calculateWeightedScores().finalScore}/100
+                      {Math.round(weightedScores.weightedTotal * 2)}/100
                     </span>
                   </div>
                   <div className="w-full h-3 bg-[#E8D9BD] rounded-full relative">
                     <div 
                       className="absolute h-full bg-[#986A44] rounded-full" 
-                      style={{ width: `${(calculateWeightedScores().finalScore / 100) * 100}%` }}
+                      style={{ width: `${(Math.round(weightedScores.weightedTotal * 2) / 100) * 100}%` }}
                     ></div>
                   </div>
                   
                   <div className="text-sm text-[#986A44] mt-2">
-                    Weighted Total: {calculateWeightedScores().weightedTotal.toFixed(1)}/50 points
+                    Weighted Total: {weightedScores.weightedTotal.toFixed(1)}/50 points
                   </div>
                 </div>
               </div>
             </div>
             
             {/* Additional notes for final adjustment */}
-            <div className="mt-6">
-              <label className="block text-sm font-medium text-[#593D25] mb-2">
+            <div className="mt-6 bg-white p-4 rounded-lg border border-gray-300">
+              <label className="block text-base font-bold text-gray-900 mb-2">
                 Additional Notes
               </label>
+              <p className="text-sm text-gray-600 mb-2">Add any final thoughts or comments about this whiskey.</p>
               <textarea
                 value={finalNotes}
                 onChange={(e) => setFinalNotes(e.target.value)}
-                placeholder="Any final thoughts or comments about this whiskey..."
-                className="w-full p-3 border border-[#D9C4A3] rounded-md bg-white text-[#593D25] min-h-[100px]"
+                placeholder="Notes on bottle rarity, special occasions, personal preferences, etc..."
+                className="w-full p-3 border border-gray-300 rounded-md bg-white text-gray-800 min-h-[100px] focus:ring-1 focus:ring-amber-500 focus:border-amber-500"
               />
             </div>
           </div>
