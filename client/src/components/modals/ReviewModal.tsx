@@ -103,7 +103,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
   const [rating, setRating] = useState(0);
   const isMobile = useIsMobile();
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
+  // Content element referenced by id="review-content" to avoid ref issues
   
   // State for selected aromas and flavors
   const [selectedNoseAromas, setSelectedNoseAromas] = useState<string[]>([]);
@@ -141,18 +141,19 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
   
   // Handle animation end
   useEffect(() => {
-    if (swipeDirection && contentRef.current) {
-      const handleAnimationEnd = () => {
-        setSwipeDirection(null);
-      };
-      
-      contentRef.current.addEventListener('animationend', handleAnimationEnd);
-      
-      return () => {
-        if (contentRef.current) {
-          contentRef.current.removeEventListener('animationend', handleAnimationEnd);
-        }
-      };
+    if (swipeDirection) {
+      const contentElement = document.getElementById('review-content');
+      if (contentElement) {
+        const handleAnimationEnd = () => {
+          setSwipeDirection(null);
+        };
+        
+        contentElement.addEventListener('animationend', handleAnimationEnd);
+        
+        return () => {
+          contentElement.removeEventListener('animationend', handleAnimationEnd);
+        };
+      }
     }
   }, [swipeDirection]);
 
@@ -467,9 +468,10 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
         scrollableContent.scrollTop = 0;
       }
       
-      // Additionally, try scrolling the content element
-      if (contentRef.current) {
-        contentRef.current.scrollTop = 0;
+      // Additionally, try scrolling the content element by ID
+      const contentElement = document.getElementById('review-content');
+      if (contentElement) {
+        contentElement.scrollTop = 0;
       }
     }
   };
@@ -2200,8 +2202,8 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
             className="space-y-4 scrollable-content"
           >
             <div 
+              id="review-content"
               className={`${swipeDirection ? (swipeDirection === 'left' ? 'animate-slide-left' : 'animate-slide-right') : ''}`}
-              ref={el => { if (el) contentRef.current = el; }}
               {...(isMobile ? swipeHandlers : {})}
             >
               {renderPageContent()}
