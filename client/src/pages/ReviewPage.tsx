@@ -18,16 +18,22 @@ export default function ReviewPage() {
     enabled: !isNaN(whiskeyId),
   });
   
-  // Find the specific review from the whiskey object
-  const review = whiskey && Array.isArray(whiskey.notes) 
-    ? whiskey.notes.find((note: ReviewNote) => note.id === reviewId || note.id.toString() === reviewId)
-    : undefined;
-  
   // For debugging
   console.log("ReviewPage - reviewId from URL:", reviewId, "type:", typeof reviewId);
+  
   if (whiskey && Array.isArray(whiskey.notes)) {
-    console.log("ReviewPage - whiskey notes:", whiskey.notes.map((note: ReviewNote) => ({id: note.id, type: typeof note.id})));
+    console.log("ReviewPage - whiskey notes:", whiskey.notes.map((note: ReviewNote) => ({
+      id: note.id, 
+      type: typeof note.id,
+      matches: note.id === reviewId
+    })));
   }
+  
+  // Find the specific review from the whiskey object
+  // The review ID from URL is always a string, so we need to compare with string equality
+  const review = whiskey && Array.isArray(whiskey.notes) 
+    ? whiskey.notes.find((note: ReviewNote) => String(note.id) === String(reviewId))
+    : undefined;
   
   // Go back to the previous page
   const handleBack = () => {
