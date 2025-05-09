@@ -46,7 +46,7 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
     
     return (
       <TableRow>
-        <TableCell className="font-medium bg-gray-200">Mashbill</TableCell>
+        <TableCell className="font-medium bg-gray-200 text-gray-900">Mashbill</TableCell>
         <TableCell colSpan={2}>
           <Table>
             <TableBody>
@@ -58,8 +58,8 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
                 
                 return (
                   <TableRow key={index}>
-                    <TableCell className="py-1 border">{grain}</TableCell>
-                    <TableCell className="py-1 text-right border">{percentage}</TableCell>
+                    <TableCell className="py-1 border font-medium">{grain}</TableCell>
+                    <TableCell className="py-1 text-right border font-semibold text-gray-900">{percentage}</TableCell>
                   </TableRow>
                 );
               })}
@@ -147,9 +147,23 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
 
   const formatAromasList = (aromas: string[] | undefined) => {
     if (!aromas || aromas.length === 0) return '-';
-    return aromas.map(aroma => 
+    
+    const formattedAromas = aromas.map(aroma => 
       aroma.split(',').map(part => capitalizeFirstLetter(part.trim())).join(', ')
-    ).join(', ');
+    );
+    
+    return (
+      <div className="flex flex-wrap gap-1 mt-1">
+        {formattedAromas.map((aroma, index) => (
+          <span 
+            key={index} 
+            className="bg-gray-200 text-gray-800 px-2 py-1 rounded-md text-sm font-medium"
+          >
+            {aroma}
+          </span>
+        ))}
+      </div>
+    );
   };
 
   const formatNotes = (notes: string | undefined) => {
@@ -247,18 +261,21 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
         </div>
         
         {/* Right column - Image */}
-        <div className="md:col-span-1 flex justify-center">
-          {whiskey.image ? (
-            <img 
-              src={whiskey.image} 
-              alt={whiskey.name} 
-              className="max-h-64 object-contain"
-            />
-          ) : (
-            <div className="bg-gray-100 h-64 w-full flex items-center justify-center text-gray-400">
-              No Image Available
-            </div>
-          )}
+        <div className="md:col-span-1 flex flex-col">
+          <h3 className="text-lg font-semibold mb-2 text-gray-900 border-b border-gray-300 pb-2">Bottle Image</h3>
+          <div className="flex justify-center flex-1">
+            {whiskey.image ? (
+              <img 
+                src={whiskey.image} 
+                alt={whiskey.name} 
+                className="max-h-56 object-contain"
+              />
+            ) : (
+              <div className="bg-gray-100 h-56 w-full flex items-center justify-center text-gray-400 rounded-md">
+                No Image Available
+              </div>
+            )}
+          </div>
         </div>
       </div>
       
@@ -300,18 +317,19 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
                 <div className="md:col-span-2 bg-gray-100 p-4">
                   <h3 className={sectionTitleClass}>Characteristics</h3>
                   <div className="space-y-1">
-                    <div className="bg-gray-200 px-2 py-1">
-                      <p><span className="font-medium">Alcohol:</span> {review.mouthfeelAlcohol ? capitalizeFirstLetter(review.mouthfeelAlcohol) : '-'}</p>
+                    <div className="bg-gray-200 px-3 py-2 rounded-md mb-1">
+                      <p><span className="font-medium text-gray-900">Alcohol:</span> {review.mouthfeelAlcohol ? capitalizeFirstLetter(review.mouthfeelAlcohol) : '-'}</p>
                     </div>
-                    <div className="bg-gray-200 px-2 py-1">
-                      <p><span className="font-medium">Viscosity:</span> {review.mouthfeelViscosity ? capitalizeFirstLetter(review.mouthfeelViscosity) : '-'}</p>
+                    <div className="bg-gray-200 px-3 py-2 rounded-md mb-1">
+                      <p><span className="font-medium text-gray-900">Viscosity:</span> {review.mouthfeelViscosity ? capitalizeFirstLetter(review.mouthfeelViscosity) : '-'}</p>
                     </div>
-                    <div className="bg-gray-200 px-2 py-1">
-                      <p><span className="font-medium">Feel:</span> {review.mouthfeelPleasantness ? capitalizeFirstLetter(review.mouthfeelPleasantness) : '-'}</p>
+                    <div className="bg-gray-200 px-3 py-2 rounded-md mb-1">
+                      <p><span className="font-medium text-gray-900">Feel:</span> {review.mouthfeelPleasantness ? capitalizeFirstLetter(review.mouthfeelPleasantness) : '-'}</p>
                     </div>
                   </div>
                 </div>
                 <div className="md:col-span-5 p-4">
+                  <h3 className={sectionTitleClass}>Description</h3>
                   <p>{formatNotes(review.mouthfeelNotes)}</p>
                 </div>
               </div>
@@ -348,7 +366,9 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
                 <div className="md:col-span-2 bg-gray-100 p-4">
                   <h3 className={sectionTitleClass}>Profiles</h3>
                   <p>{formatAromasList(review.finishFlavors)}</p>
-                  <p className="mt-2"><span className="font-medium">Length:</span> {review.finishLength ? capitalizeFirstLetter(review.finishLength) : '-'}</p>
+                  <div className="bg-gray-200 px-3 py-2 rounded-md mt-2">
+                    <p><span className="font-medium text-gray-900">Length:</span> {review.finishLength ? capitalizeFirstLetter(review.finishLength) : '-'}</p>
+                  </div>
                 </div>
                 <div className="md:col-span-5 p-4">
                   <p>{formatNotes(review.finishNotes)}</p>
@@ -368,14 +388,14 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
                 <div className="md:col-span-2 bg-gray-100 p-4">
                   <h3 className={sectionTitleClass}>Assessment</h3>
                   <div className="space-y-1">
-                    <div className="bg-gray-200 px-2 py-1">
-                      <p><span className="font-medium">Availability:</span> {review.valueAvailability ? capitalizeFirstLetter(review.valueAvailability) : '-'}</p>
+                    <div className="bg-gray-200 px-3 py-2 rounded-md mb-1">
+                      <p><span className="font-medium text-gray-900">Availability:</span> {review.valueAvailability ? capitalizeFirstLetter(review.valueAvailability) : '-'}</p>
                     </div>
-                    <div className="bg-gray-200 px-2 py-1">
-                      <p><span className="font-medium">Buy Again:</span> {review.valueBuyAgain ? capitalizeFirstLetter(review.valueBuyAgain) : '-'}</p>
+                    <div className="bg-gray-200 px-3 py-2 rounded-md mb-1">
+                      <p><span className="font-medium text-gray-900">Buy Again:</span> {review.valueBuyAgain ? capitalizeFirstLetter(review.valueBuyAgain) : '-'}</p>
                     </div>
-                    <div className="bg-gray-200 px-2 py-1">
-                      <p><span className="font-medium">Occasion:</span> {review.valueOccasion ? capitalizeFirstLetter(review.valueOccasion) : '-'}</p>
+                    <div className="bg-gray-200 px-3 py-2 rounded-md mb-1">
+                      <p><span className="font-medium text-gray-900">Occasion:</span> {review.valueOccasion ? capitalizeFirstLetter(review.valueOccasion) : '-'}</p>
                     </div>
                   </div>
                 </div>
