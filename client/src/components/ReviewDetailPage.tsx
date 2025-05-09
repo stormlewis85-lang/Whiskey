@@ -116,11 +116,56 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
   const renderScoreRow = (label: string, score?: number) => {
     if (!score) return null;
     
+    // Get weight multiplier based on category
+    let weight = 1.0;
+    let maxPossible = 5.0;
+    
+    switch(label) {
+      case 'Nose':
+        weight = 1.5;
+        maxPossible = 7.5;
+        break;
+      case 'Texture': // Mouthfeel
+        weight = 2.0;
+        maxPossible = 10.0;
+        break;
+      case 'Taste':
+        weight = 3.0;
+        maxPossible = 15.0;
+        break;
+      case 'Finish':
+        weight = 2.5;
+        maxPossible = 12.5;
+        break;
+      case 'Value':
+        weight = 1.0;
+        maxPossible = 5.0;
+        break;
+      case 'Overall':
+        // No weight multiplier for overall score
+        return (
+          <tr>
+            <td className="px-4 py-2 font-medium">{label}</td>
+            <td className="px-4 py-2">
+              <StarRating rating={score} maxRating={5} />
+            </td>
+          </tr>
+        );
+    }
+    
+    // Calculate weighted score
+    const weightedScore = score * weight;
+    
     return (
       <tr>
         <td className="px-4 py-2 font-medium">{label}</td>
         <td className="px-4 py-2">
-          <StarRating rating={score} maxRating={5} />
+          <div className="flex items-center space-x-2">
+            <StarRating rating={score} maxRating={5} />
+            <span className="text-xs text-gray-500">
+              ({score.toFixed(1)} × {weight.toFixed(1)} = {weightedScore.toFixed(1)})
+            </span>
+          </div>
         </td>
       </tr>
     );
