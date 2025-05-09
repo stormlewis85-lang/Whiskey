@@ -17,7 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 
 // Define a CSS class for section titles
-const sectionTitleClass = "font-semibold mb-2 text-gray-900";
+const sectionTitleClass = "font-bold mb-2 text-gray-900";
 
 interface ReviewDetailPageProps {
   whiskey?: Whiskey;
@@ -198,7 +198,7 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
         {/* Left column - Whiskey Details */}
         <div className="md:col-span-1">
-          <h3 className="text-lg font-semibold mb-2 text-gray-900 border-b border-gray-300 pb-2">Whiskey Details</h3>
+          <h3 className="text-lg font-bold mb-2 text-gray-900 border-b border-gray-300 pb-2">Whiskey Details</h3>
           <Table>
             <TableBody>
               <TableRow>
@@ -262,7 +262,7 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
           </div>
           
           <div className="mt-4 w-full">
-            <h3 className="text-lg font-semibold text-center mb-2 text-gray-900 border-b border-gray-300 pb-2">Component Scores</h3>
+            <h3 className="text-lg font-bold text-center mb-2 text-gray-900 border-b border-gray-300 pb-2">Component Scores</h3>
             <table className="w-full">
               <tbody>
                 {renderScoreRow('Nose', review.noseScore)}
@@ -278,7 +278,7 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
         
         {/* Right column - Image */}
         <div className="md:col-span-1 flex flex-col">
-          <h3 className="text-lg font-semibold mb-2 text-gray-900 border-b border-gray-300 pb-2">Bottle Image</h3>
+          <h3 className="text-lg font-bold mb-2 text-gray-900 border-b border-gray-300 pb-2">Bottle Image</h3>
           <div className="flex justify-center flex-1">
             {whiskey.image ? (
               <img 
