@@ -17,11 +17,20 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 
 interface ReviewDetailPageProps {
-  whiskey: Whiskey;
-  review: ReviewNote;
+  whiskey?: Whiskey;
+  review?: ReviewNote;
 }
 
 export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
+  // Ensure both whiskey and review are defined before rendering
+  if (!whiskey || !review) {
+    return (
+      <div className="bg-white rounded-lg shadow p-6 text-center">
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">Missing Data</h2>
+        <p className="text-gray-600 mb-6">Cannot display review details due to missing data.</p>
+      </div>
+    );
+  }
   const renderMashBill = () => {
     if (whiskey.type !== 'Bourbon' || !whiskey.mashBill) return null;
     
