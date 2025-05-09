@@ -18,22 +18,51 @@ export default function ReviewPage() {
     enabled: !isNaN(whiskeyId),
   });
   
-  // For debugging
-  console.log("ReviewPage - reviewId from URL:", reviewId, "type:", typeof reviewId);
+  // For debugging - VERY DETAILED LOGGING
+  console.log("==== REVIEW DEBUGGING ====");
+  console.log("ReviewPage - reviewId from URL:", reviewId);
+  console.log("ReviewPage - reviewId from URL type:", typeof reviewId);
+  console.log("ReviewPage - full whiskey object:", whiskey);
   
-  if (whiskey && Array.isArray(whiskey.notes)) {
-    console.log("ReviewPage - whiskey notes:", whiskey.notes.map((note: ReviewNote) => ({
-      id: note.id, 
-      type: typeof note.id,
-      matches: note.id === reviewId
-    })));
+  if (whiskey && whiskey.notes) {
+    if (Array.isArray(whiskey.notes)) {
+      console.log("ReviewPage - Whiskey has notes array of length:", whiskey.notes.length);
+      whiskey.notes.forEach((note: ReviewNote, index) => {
+        console.log(`Note #${index}:`, {
+          id: note.id,
+          idType: typeof note.id,
+          stringCompare: String(note.id) === String(reviewId),
+          directCompare: note.id === reviewId
+        });
+      });
+    } else {
+      console.log("ReviewPage - Whiskey.notes is not an array:", typeof whiskey.notes);
+    }
+  } else {
+    console.log("ReviewPage - No notes found on whiskey object");
   }
   
-  // Find the specific review from the whiskey object
-  // The review ID from URL is always a string, so we need to compare with string equality
-  const review = whiskey && Array.isArray(whiskey.notes) 
+  // Try multiple matching strategies
+  const reviewByDirect = whiskey && Array.isArray(whiskey.notes) 
+    ? whiskey.notes.find((note: ReviewNote) => note.id === reviewId)
+    : undefined;
+    
+  const reviewByString = whiskey && Array.isArray(whiskey.notes) 
     ? whiskey.notes.find((note: ReviewNote) => String(note.id) === String(reviewId))
     : undefined;
+    
+  const reviewByIncludes = whiskey && Array.isArray(whiskey.notes) 
+    ? whiskey.notes.find((note: ReviewNote) => note.id && reviewId && note.id.includes(reviewId))
+    : undefined;
+    
+  console.log("Review found by direct comparison:", !!reviewByDirect);
+  console.log("Review found by string comparison:", !!reviewByString);
+  console.log("Review found by includes:", !!reviewByIncludes);
+  
+  // Use the first successful strategy
+  const review = reviewByDirect || reviewByString || reviewByIncludes;
+  console.log("Final review object:", review);
+  console.log("==== END DEBUGGING ====");
   
   // Go back to the previous page
   const handleBack = () => {
