@@ -1578,7 +1578,8 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                     <FormControl>
                       <RadioGroup 
                         onValueChange={field.onChange} 
-                        value={field.value}
+                        defaultValue=""
+                        value={field.value || ""}
                         className="flex flex-col space-y-1"
                       >
                         <div className="grid grid-cols-1 gap-2">
@@ -1608,7 +1609,8 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                     <FormControl>
                       <RadioGroup 
                         onValueChange={field.onChange} 
-                        value={field.value}
+                        defaultValue=""
+                        value={field.value || ""}
                         className="flex flex-col space-y-1"
                       >
                         <div className="grid grid-cols-1 gap-2">
@@ -1638,7 +1640,8 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                     <FormControl>
                       <RadioGroup 
                         onValueChange={(value) => field.onChange(parseInt(value))} 
-                        value={field.value?.toString()}
+                        defaultValue=""
+                        value={field.value?.toString() || ""}
                         className="flex justify-between"
                       >
                         {SCORE_OPTIONS.map((score) => (
@@ -2284,6 +2287,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
       resetReview();
       
       // Additional explicit reset for Value fields to ensure they are properly cleared
+      // We need to set these to empty strings rather than undefined for radio groups
       form.setValue('valueAvailability', '');
       form.setValue('valueBuyAgain', '');
       form.setValue('valueOccasion', '');
