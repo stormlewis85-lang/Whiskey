@@ -2276,36 +2276,22 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                 
                 {/* Final Scores */}
                 <div className="border-t border-[#D9C4A3] pt-3 mt-4">
-                  {/* 5-Star Score */}
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="font-medium text-[#593D25] text-lg">5-Star Score</span>
+                  {/* 5-Star Score with Star Images */}
+                  <div className="flex justify-between items-center mb-4">
+                    <span className="font-medium text-[#593D25] text-lg">Final Rating</span>
+                  </div>
+                  <div className="flex justify-center items-center mb-4">
+                    <StarRating 
+                      rating={calculateWeightedScores().fiveStarScore} 
+                      maxRating={5}
+                      size="lg"
+                    />
+                  </div>
+                  
+                  <div className="text-center">
                     <span className="text-[#794E2F] font-bold text-xl">
                       {calculateWeightedScores().fiveStarScore.toFixed(1)}/5
                     </span>
-                  </div>
-                  <div className="w-full h-3 mb-3 bg-[#E8D9BD] rounded-full relative">
-                    <div 
-                      className="absolute h-full bg-[#986A44] rounded-full" 
-                      style={{ width: `${(calculateWeightedScores().fiveStarScore / 5) * 100}%` }}
-                    ></div>
-                  </div>
-                  
-                  {/* Final Score (100-point scale) */}
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="font-medium text-[#593D25] text-md">Final Score (100-point scale)</span>
-                    <span className="text-[#794E2F] font-bold text-lg">
-                      {Math.round(weightedScores.weightedTotal * 2)}/100
-                    </span>
-                  </div>
-                  <div className="w-full h-3 bg-[#E8D9BD] rounded-full relative">
-                    <div 
-                      className="absolute h-full bg-[#986A44] rounded-full" 
-                      style={{ width: `${(Math.round(weightedScores.weightedTotal * 2) / 100) * 100}%` }}
-                    ></div>
-                  </div>
-                  
-                  <div className="text-sm text-[#986A44] mt-2">
-                    Weighted Total: {weightedScores.weightedTotal.toFixed(1)}/50 points
                   </div>
                 </div>
               </div>
