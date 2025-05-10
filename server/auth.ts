@@ -135,24 +135,38 @@ export function setupAuth(app: express.Express) {
       // Establish session
       req.session.userId = newUser.id;
       
-      // Save session explicitly
-      req.session.save((err) => {
-        if (err) {
-          console.error("Session save error during registration:", err);
-          return res.status(500).json({ message: "Session creation failed" });
-        }
+      // Generate auth token
+      try {
+        const token = await storage.generateAuthToken(newUser.id);
         
-        console.log(`Registration successful: user ${newUser.username} (ID: ${newUser.id})`);
-        console.log("Session data:", {
-          id: req.sessionID,
-          cookie: req.session.cookie,
-          userId: req.session.userId
+        // Save session explicitly
+        req.session.save((err) => {
+          if (err) {
+            console.error("Session save error during registration:", err);
+            return res.status(500).json({ message: "Session creation failed" });
+          }
+          
+          console.log(`Registration successful: user ${newUser.username} (ID: ${newUser.id})`);
+          console.log("Session data:", {
+            id: req.sessionID,
+            cookie: req.session.cookie,
+            userId: req.session.userId
+          });
+          
+          // Return user without password but with token
+          const { password, ...userWithoutPassword } = newUser;
+          res.status(201).json({
+            ...userWithoutPassword,
+            token: token
+          });
         });
+      } catch (tokenError) {
+        console.error("Token generation error:", tokenError);
         
-        // Return user without password
+        // Return user without password, fallback to session-only auth
         const { password, ...userWithoutPassword } = newUser;
         res.status(201).json(userWithoutPassword);
-      });
+      }
     } catch (error) {
       console.error("Registration error:", error);
       if (error instanceof ZodError) {
@@ -183,24 +197,38 @@ export function setupAuth(app: express.Express) {
       // Establish session
       req.session.userId = user.id;
       
-      // Save session explicitly
-      req.session.save((err) => {
-        if (err) {
-          console.error("Session save error:", err);
-          return res.status(500).json({ message: "Session creation failed" });
-        }
+      // Generate auth token
+      try {
+        const token = await storage.generateAuthToken(user.id);
         
-        console.log(`Login successful: user ${user.username} (ID: ${user.id})`);
-        console.log("Session data:", {
-          id: req.sessionID,
-          cookie: req.session.cookie,
-          userId: req.session.userId
+        // Save session explicitly
+        req.session.save((err) => {
+          if (err) {
+            console.error("Session save error:", err);
+            return res.status(500).json({ message: "Session creation failed" });
+          }
+          
+          console.log(`Login successful: user ${user.username} (ID: ${user.id})`);
+          console.log("Session data:", {
+            id: req.sessionID,
+            cookie: req.session.cookie,
+            userId: req.session.userId
+          });
+          
+          // Return user without password but with token
+          const { password, ...userWithoutPassword } = user;
+          res.json({
+            ...userWithoutPassword,
+            token: token
+          });
         });
+      } catch (tokenError) {
+        console.error("Token generation error:", tokenError);
         
-        // Return user without password
+        // Return user without password, fallback to session-only auth
         const { password, ...userWithoutPassword } = user;
         res.json(userWithoutPassword);
-      });
+      }
     } catch (error) {
       console.error("Login error:", error);
       if (error instanceof ZodError) {

@@ -131,6 +131,38 @@ export class DatabaseStorage implements IStorage {
     return isValid ? user : undefined;
   }
   
+  async getUserByToken(token: string): Promise<User | undefined> {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.authToken, token));
+      
+    return user || undefined;
+  }
+  
+  async generateAuthToken(userId: number): Promise<string> {
+    // Generate a random token
+    const token = Array(30)
+      .fill(0)
+      .map(() => Math.random().toString(36).charAt(2))
+      .join('');
+      
+    // Set token expiry to 30 days from now
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getDate() + 30);
+    
+    // Save token to user record
+    await db
+      .update(users)
+      .set({ 
+        authToken: token,
+        tokenExpiry: expiryDate 
+      })
+      .where(eq(users.id, userId));
+      
+    return token;
+  }
+  
   // Social features implementation
   async getSharedReview(shareId: string): Promise<{ whiskey: Whiskey; review: ReviewNote } | undefined> {
     // Find all whiskeys and check for a review with this shareId
