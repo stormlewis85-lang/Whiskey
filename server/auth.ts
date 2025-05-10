@@ -71,24 +71,43 @@ export function setupAuth(app: express.Express) {
   // User Registration
   app.post("/api/register", async (req: Request, res: Response) => {
     try {
+      console.log("Registration attempt:", req.body.username);
       const userData = insertUserSchema.parse(req.body);
       
       // Check if username already exists
       const existingUser = await storage.getUserByUsername(userData.username);
       if (existingUser) {
+        console.log(`Registration failed: username already exists: ${userData.username}`);
         return res.status(400).json({ message: "Username already exists" });
       }
       
       // Create user
       const newUser = await storage.createUser(userData);
+      console.log(`User created: ${newUser.username} (ID: ${newUser.id})`);
       
       // Establish session
       req.session.userId = newUser.id;
       
-      // Return user without password
-      const { password, ...userWithoutPassword } = newUser;
-      res.status(201).json(userWithoutPassword);
+      // Save session explicitly
+      req.session.save((err) => {
+        if (err) {
+          console.error("Session save error during registration:", err);
+          return res.status(500).json({ message: "Session creation failed" });
+        }
+        
+        console.log(`Registration successful: user ${newUser.username} (ID: ${newUser.id})`);
+        console.log("Session data:", {
+          id: req.sessionID,
+          cookie: req.session.cookie,
+          userId: req.session.userId
+        });
+        
+        // Return user without password
+        const { password, ...userWithoutPassword } = newUser;
+        res.status(201).json(userWithoutPassword);
+      });
     } catch (error) {
+      console.error("Registration error:", error);
       if (error instanceof ZodError) {
         const validationError = fromZodError(error);
         return res.status(400).json({ message: "Validation error", error: validationError.message });
@@ -100,6 +119,7 @@ export function setupAuth(app: express.Express) {
   // User Login
   app.post("/api/login", async (req: Request, res: Response) => {
     try {
+      console.log("Login attempt:", req.body.username);
       const credentials = loginUserSchema.parse(req.body);
       
       // Validate credentials
@@ -109,16 +129,33 @@ export function setupAuth(app: express.Express) {
       );
       
       if (!user) {
+        console.log(`Login failed: invalid credentials for ${credentials.username}`);
         return res.status(401).json({ message: "Invalid username or password" });
       }
       
       // Establish session
       req.session.userId = user.id;
       
-      // Return user without password
-      const { password, ...userWithoutPassword } = user;
-      res.json(userWithoutPassword);
+      // Save session explicitly
+      req.session.save((err) => {
+        if (err) {
+          console.error("Session save error:", err);
+          return res.status(500).json({ message: "Session creation failed" });
+        }
+        
+        console.log(`Login successful: user ${user.username} (ID: ${user.id})`);
+        console.log("Session data:", {
+          id: req.sessionID,
+          cookie: req.session.cookie,
+          userId: req.session.userId
+        });
+        
+        // Return user without password
+        const { password, ...userWithoutPassword } = user;
+        res.json(userWithoutPassword);
+      });
     } catch (error) {
+      console.error("Login error:", error);
       if (error instanceof ZodError) {
         const validationError = fromZodError(error);
         return res.status(400).json({ message: "Validation error", error: validationError.message });
@@ -129,10 +166,20 @@ export function setupAuth(app: express.Express) {
 
   // User Logout
   app.post("/api/logout", (req: Request, res: Response) => {
+    const sessionInfo = {
+      id: req.sessionID,
+      userId: req.session.userId,
+      isActive: !!req.session.userId
+    };
+    
+    console.log(`Logout attempt: Session info:`, sessionInfo);
+    
     req.session.destroy(err => {
       if (err) {
+        console.error("Logout error:", err);
         return res.status(500).json({ message: "Logout failed", error: String(err) });
       }
+      console.log("Logout successful");
       res.status(200).json({ message: "Logged out successfully" });
     });
   });
@@ -140,21 +187,36 @@ export function setupAuth(app: express.Express) {
   // Get Current User
   app.get("/api/user", async (req: Request, res: Response) => {
     try {
+      console.log("Session check:", {
+        id: req.sessionID,
+        userId: req.session.userId,
+        cookie: req.session.cookie
+      });
+      
       if (!req.session.userId) {
+        console.log("No userId in session, not authenticated");
         return res.status(401).json({ message: "Not authenticated" });
       }
       
       const user = await storage.getUser(req.session.userId);
       if (!user) {
+        console.log(`User not found for session ID ${req.sessionID}, userId ${req.session.userId}`);
         // Clear invalid session
-        req.session.destroy(() => {});
+        req.session.destroy((err) => {
+          if (err) {
+            console.error("Error destroying invalid session:", err);
+          }
+        });
         return res.status(401).json({ message: "User not found" });
       }
+      
+      console.log(`User found: ${user.username} (ID: ${user.id})`);
       
       // Return user without password
       const { password, ...userWithoutPassword } = user;
       res.json(userWithoutPassword);
     } catch (error) {
+      console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to get user", error: String(error) });
     }
   });
