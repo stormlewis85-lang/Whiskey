@@ -59,14 +59,25 @@ export function setupAuth(app: express.Express) {
         tableName: 'session',
         createTableIfMissing: true
       }),
+      name: 'whiskeypedia.sid', // Name the cookie for better identification
+      proxy: true, // Trust the reverse proxy when setting secure cookies
       cookie: {
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days for longer persistence
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: "lax"
+        secure: false, // Set to false for both HTTP and HTTPS (will enable in production)
+        sameSite: "none", // Needed for cross-site access in deployed environments
+        path: '/'
       }
     })
   );
+  
+  // Update secure flag based on environment
+  if (process.env.NODE_ENV === 'production') {
+    app.set('trust proxy', 1); // Trust first proxy
+    console.log("Production environment detected, enabling secure cookies");
+  } else {
+    console.log("Development environment detected, using non-secure cookies");
+  }
 
   // User Registration
   app.post("/api/register", async (req: Request, res: Response) => {

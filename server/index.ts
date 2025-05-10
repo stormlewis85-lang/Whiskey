@@ -3,6 +3,34 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
+
+// Add CORS headers for cross-origin requests in production
+app.use((req, res, next) => {
+  // Get the origin from the request headers
+  const origin = req.headers.origin;
+  
+  // Allow the specific origin or all origins in development
+  if (origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  
+  // Important for credentials (cookies, authorization headers, etc.)
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  
+  // Allow common headers and custom headers
+  res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  
+  // Allow common HTTP methods
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
+  next();
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
