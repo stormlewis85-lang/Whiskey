@@ -158,6 +158,13 @@ export const reviewNoteSchema = z.object({
   // Social sharing options
   isPublic: z.boolean().default(false),
   shareId: z.string().optional().default(() => uuidv4()), // Unique ID for sharing the review
+  // Flavor profile ratings (0-5 scale)
+  flavorProfileFruits: z.number().min(0).max(5).optional(),
+  flavorProfileSpices: z.number().min(0).max(5).optional(),
+  flavorProfileSmoke: z.number().min(0).max(5).optional(),
+  flavorProfileCereals: z.number().min(0).max(5).optional(),
+  flavorProfileGrassy: z.number().min(0).max(5).optional(),
+  flavorProfileFloral: z.number().min(0).max(5).optional()
 });
 
 export type ReviewNote = z.infer<typeof reviewNoteSchema>;

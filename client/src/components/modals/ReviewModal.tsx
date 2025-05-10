@@ -20,6 +20,8 @@ import { useSwipeable } from "react-swipeable";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Share2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import { StarRating } from "@/components/StarRating";
+import RadarChart from "@/components/RadarChart";
 import { 
   COLOR_OPTIONS, 
   VISCOSITY_OPTIONS, 
@@ -263,6 +265,13 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
       valueOccasion: "",
       valueScore: undefined,
       valueNotes: "",
+      // Flavor profile ratings
+      flavorProfileFruits: 0,
+      flavorProfileSpices: 0,
+      flavorProfileSmoke: 0,
+      flavorProfileCereals: 0,
+      flavorProfileGrassy: 0,
+      flavorProfileFloral: 0,
       // Social features
       isPublic: false,
       shareId: undefined
@@ -1845,34 +1854,178 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
             
             {/* Final Details */}
             <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="flavor"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Dominant Flavor Profile</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select Profile" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Sweet">Sweet</SelectItem>
-                        <SelectItem value="Spicy">Spicy</SelectItem>
-                        <SelectItem value="Smoky">Smoky</SelectItem>
-                        <SelectItem value="Fruity">Fruity</SelectItem>
-                        <SelectItem value="Floral">Floral</SelectItem>
-                        <SelectItem value="Woody">Woody</SelectItem>
-                        <SelectItem value="Complex">Complex</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="mb-4">
+                <h3 className="section-header">Flavor Profile</h3>
+                <p className="text-sm text-muted-foreground mb-3">Rate each flavor characteristic from 0 to 5</p>
+                
+                {/* Fruits */}
+                <div className="mb-2">
+                  <FormField
+                    control={form.control}
+                    name="flavorProfileFruits"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex items-center justify-between mb-1">
+                          <FormLabel className="text-[#7d5936]">Fruits</FormLabel>
+                          <span className="text-sm">{field.value || 0}/5</span>
+                        </div>
+                        <FormControl>
+                          <input
+                            type="range"
+                            min="0"
+                            max="5"
+                            step="1"
+                            value={field.value || 0}
+                            onChange={field.onChange}
+                            className="w-full"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                {/* Spices */}
+                <div className="mb-2">
+                  <FormField
+                    control={form.control}
+                    name="flavorProfileSpices"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex items-center justify-between mb-1">
+                          <FormLabel className="text-[#7d5936]">Spices</FormLabel>
+                          <span className="text-sm">{field.value || 0}/5</span>
+                        </div>
+                        <FormControl>
+                          <input
+                            type="range"
+                            min="0"
+                            max="5"
+                            step="1"
+                            value={field.value || 0}
+                            onChange={field.onChange}
+                            className="w-full"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                {/* Smoke */}
+                <div className="mb-2">
+                  <FormField
+                    control={form.control}
+                    name="flavorProfileSmoke"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex items-center justify-between mb-1">
+                          <FormLabel className="text-[#7d5936]">Smoke</FormLabel>
+                          <span className="text-sm">{field.value || 0}/5</span>
+                        </div>
+                        <FormControl>
+                          <input
+                            type="range"
+                            min="0"
+                            max="5"
+                            step="1"
+                            value={field.value || 0}
+                            onChange={field.onChange}
+                            className="w-full"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                {/* Cereals */}
+                <div className="mb-2">
+                  <FormField
+                    control={form.control}
+                    name="flavorProfileCereals"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex items-center justify-between mb-1">
+                          <FormLabel className="text-[#7d5936]">Cereals</FormLabel>
+                          <span className="text-sm">{field.value || 0}/5</span>
+                        </div>
+                        <FormControl>
+                          <input
+                            type="range"
+                            min="0"
+                            max="5"
+                            step="1"
+                            value={field.value || 0}
+                            onChange={field.onChange}
+                            className="w-full"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                {/* Grassy */}
+                <div className="mb-2">
+                  <FormField
+                    control={form.control}
+                    name="flavorProfileGrassy"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex items-center justify-between mb-1">
+                          <FormLabel className="text-[#7d5936]">Grassy</FormLabel>
+                          <span className="text-sm">{field.value || 0}/5</span>
+                        </div>
+                        <FormControl>
+                          <input
+                            type="range"
+                            min="0"
+                            max="5"
+                            step="1"
+                            value={field.value || 0}
+                            onChange={field.onChange}
+                            className="w-full"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                {/* Floral */}
+                <div className="mb-2">
+                  <FormField
+                    control={form.control}
+                    name="flavorProfileFloral"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex items-center justify-between mb-1">
+                          <FormLabel className="text-[#7d5936]">Floral</FormLabel>
+                          <span className="text-sm">{field.value || 0}/5</span>
+                        </div>
+                        <FormControl>
+                          <input
+                            type="range"
+                            min="0"
+                            max="5"
+                            step="1"
+                            value={field.value || 0}
+                            onChange={field.onChange}
+                            className="w-full"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
               
               <FormField
                 control={form.control}
@@ -1913,10 +2066,38 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                           weightedScores.value;
         const finalRating = parseFloat((totalScore / 10.5).toFixed(1));
         
+        // Get flavor profile values from form
+        const flavorProfile = {
+          fruits: form.getValues('flavorProfileFruits') || 0,
+          spices: form.getValues('flavorProfileSpices') || 0, 
+          smoke: form.getValues('flavorProfileSmoke') || 0,
+          cereals: form.getValues('flavorProfileCereals') || 0,
+          grassy: form.getValues('flavorProfileGrassy') || 0,
+          floral: form.getValues('flavorProfileFloral') || 0
+        };
+        
         return (
           <div className="space-y-6">
+            <div className="text-center mb-4">
+              <h3 className="text-lg font-bold text-[#7d5936] mb-2">Final Score</h3>
+              <div className="flex justify-center items-center">
+                <StarRating rating={finalRating} size="lg" />
+                <span className="ml-2 text-2xl font-bold text-[#986A44]">{finalRating.toFixed(1)}</span>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                Based on weighted category scores (out of 5)
+              </p>
+            </div>
+            
             <div className="bg-[#F5EFE0] p-4 rounded-lg border border-[#D9C4A3]">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Weighted Category Scores</h3>
+              <h3 className="text-lg font-bold text-[#7d5936] mb-4">Flavor Profile</h3>
+              <div className="mb-4">
+                <RadarChart flavorProfile={flavorProfile} size={250} className="mb-2" />
+              </div>
+            </div>
+            
+            <div className="bg-[#F5EFE0] p-4 rounded-lg border border-[#D9C4A3]">
+              <h3 className="text-lg font-bold text-[#7d5936] mb-4">Weighted Category Scores</h3>
               
               <div className="space-y-4">
                 {/* Nose Score */}
