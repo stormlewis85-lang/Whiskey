@@ -1713,122 +1713,82 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
             
             {/* Review Summary */}
             <div className="mb-6 bg-secondary/20 p-4 rounded-lg">
-              <h3 className="text-lg font-bold text-gray-900 mb-2">Review Summary</h3>
+              <h3 className="text-lg font-bold text-gray-900 mb-4">Review Summary</h3>
               
-              <div className="space-y-3 text-sm">
-                {/* Visual Summary */}
-                <div>
-                  <h4 className="font-medium">Visual:</h4>
-                  <p>
-                    {form.getValues('visualColor') && 
-                      `Color: ${COLOR_OPTIONS.find(c => c.value === form.getValues('visualColor'))?.label || form.getValues('visualColor')}`}
-                    {form.getValues('visualViscosity') && 
-                      `, Viscosity: ${VISCOSITY_OPTIONS.find(v => v.value === form.getValues('visualViscosity'))?.label || form.getValues('visualViscosity')}`}
-                    {form.getValues('visualClarity') && 
-                      `, Clarity: ${CLARITY_OPTIONS.find(c => c.value === form.getValues('visualClarity'))?.label || form.getValues('visualClarity')}`}
-                  </p>
+              <div className="grid gap-4">
+                {/* Nose */}
+                <div className="border-b pb-3 border-[#D9C4A3] last:border-0">
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="font-medium text-[#7d5936]">Nose:</h4>
+                    <span className="text-[#794E2F] font-bold">{form.getValues('noseScore')}/5</span>
+                  </div>
+                  <div className="flex justify-end">
+                    <StarRating 
+                      rating={Number(form.getValues('noseScore')) || 0} 
+                      maxRating={5}
+                      size="md"
+                    />
+                  </div>
                 </div>
                 
-                {/* Nose Summary */}
-                <div>
-                  <h4 className="font-medium">Nose:</h4>
-                  <p>
-                    {selectedNoseAromas.length > 0 && 
-                      `Detected: ${selectedNoseAromas.map(aroma => {
-                        const category = Object.keys(AROMA_FLAVOR_OPTIONS).find(cat => 
-                          AROMA_FLAVOR_OPTIONS[cat as keyof typeof AROMA_FLAVOR_OPTIONS]
-                            .some(a => a.value === aroma)
-                        );
-                        
-                        if (category) {
-                          const aromaObj = AROMA_FLAVOR_OPTIONS[category as keyof typeof AROMA_FLAVOR_OPTIONS]
-                            .find(a => a.value === aroma);
-                          return aromaObj?.label;
-                        }
-                        return aroma;
-                      }).join(', ')}`}
-                    {form.getValues('noseScore') && 
-                      `, Score: ${form.getValues('noseScore')}/5`}
-                  </p>
+                {/* Mouthfeel */}
+                <div className="border-b pb-3 border-[#D9C4A3] last:border-0">
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="font-medium text-[#7d5936]">Mouthfeel:</h4>
+                    <span className="text-[#794E2F] font-bold">{form.getValues('mouthfeelScore')}/5</span>
+                  </div>
+                  <div className="flex justify-end">
+                    <StarRating 
+                      rating={Number(form.getValues('mouthfeelScore')) || 0} 
+                      maxRating={5}
+                      size="md"
+                    />
+                  </div>
                 </div>
                 
-                {/* Mouthfeel Summary */}
-                <div>
-                  <h4 className="font-medium">Mouthfeel:</h4>
-                  <p>
-                    {form.getValues('mouthfeelAlcohol') && 
-                      `Alcohol: ${ALCOHOL_FEEL_OPTIONS.find(a => a.value === form.getValues('mouthfeelAlcohol'))?.label || form.getValues('mouthfeelAlcohol')}`}
-                    {form.getValues('mouthfeelViscosity') && 
-                      `, Viscosity: ${MOUTHFEEL_VISCOSITY_OPTIONS.find(v => v.value === form.getValues('mouthfeelViscosity'))?.label || form.getValues('mouthfeelViscosity')}`}
-                    {form.getValues('mouthfeelPleasantness') && 
-                      `, Pleasantness: ${PLEASANTNESS_OPTIONS.find(p => p.value === form.getValues('mouthfeelPleasantness'))?.label || form.getValues('mouthfeelPleasantness')}`}
-                    {form.getValues('mouthfeelScore') && 
-                      `, Score: ${form.getValues('mouthfeelScore')}/5`}
-                  </p>
+                {/* Taste */}
+                <div className="border-b pb-3 border-[#D9C4A3] last:border-0">
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="font-medium text-[#7d5936]">Taste:</h4>
+                    <span className="text-[#794E2F] font-bold">{form.getValues('tasteScore')}/5</span>
+                  </div>
+                  <div className="flex justify-end">
+                    <StarRating 
+                      rating={Number(form.getValues('tasteScore')) || 0} 
+                      maxRating={5}
+                      size="md"
+                    />
+                  </div>
                 </div>
                 
-                {/* Taste Summary */}
-                <div>
-                  <h4 className="font-medium">Taste:</h4>
-                  <p>
-                    {selectedTasteFlavors.length > 0 && 
-                      `Detected: ${selectedTasteFlavors.map(flavor => {
-                        const category = Object.keys(AROMA_FLAVOR_OPTIONS).find(cat => 
-                          AROMA_FLAVOR_OPTIONS[cat as keyof typeof AROMA_FLAVOR_OPTIONS]
-                            .some(f => f.value === flavor)
-                        );
-                        
-                        if (category) {
-                          const flavorObj = AROMA_FLAVOR_OPTIONS[category as keyof typeof AROMA_FLAVOR_OPTIONS]
-                            .find(f => f.value === flavor);
-                          return flavorObj?.label;
-                        }
-                        return flavor;
-                      }).join(', ')}`}
-                    {form.getValues('tasteCorrelation') !== undefined && 
-                      `, Matches Nose: ${form.getValues('tasteCorrelation') ? 'Yes' : 'No'}`}
-                    {form.getValues('tasteScore') && 
-                      `, Score: ${form.getValues('tasteScore')}/5`}
-                  </p>
+                {/* Finish */}
+                <div className="border-b pb-3 border-[#D9C4A3] last:border-0">
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="font-medium text-[#7d5936]">Finish:</h4>
+                    <span className="text-[#794E2F] font-bold">{form.getValues('finishScore')}/5</span>
+                  </div>
+                  <div className="flex justify-end">
+                    <StarRating 
+                      rating={Number(form.getValues('finishScore')) || 0} 
+                      maxRating={5}
+                      size="md"
+                    />
+                  </div>
                 </div>
                 
-                {/* Finish Summary */}
-                <div>
-                  <h4 className="font-medium">Finish:</h4>
-                  <p>
-                    {selectedFinishFlavors.length > 0 && 
-                      `Detected: ${selectedFinishFlavors.map(flavor => {
-                        const category = Object.keys(AROMA_FLAVOR_OPTIONS).find(cat => 
-                          AROMA_FLAVOR_OPTIONS[cat as keyof typeof AROMA_FLAVOR_OPTIONS]
-                            .some(f => f.value === flavor)
-                        );
-                        
-                        if (category) {
-                          const flavorObj = AROMA_FLAVOR_OPTIONS[category as keyof typeof AROMA_FLAVOR_OPTIONS]
-                            .find(f => f.value === flavor);
-                          return flavorObj?.label;
-                        }
-                        return flavor;
-                      }).join(', ')}`}
-                    {form.getValues('finishLength') && 
-                      `, Length: ${FINISH_LENGTH_OPTIONS.find(l => l.value === form.getValues('finishLength'))?.label || form.getValues('finishLength')}`}
-                    {form.getValues('finishScore') && 
-                      `, Score: ${form.getValues('finishScore')}/5`}
-                  </p>
-                </div>
-                
-                {/* Value Summary */}
-                <div>
-                  <h4 className="font-medium">Value:</h4>
-                  <p>
-                    Price: ${whiskey.price ? whiskey.price.toFixed(2) : 'N/A'} (${whiskey.price ? (whiskey.price / 14).toFixed(2) : 'N/A'} per pour)
-                    {form.getValues('valueAvailability') && 
-                      `, Availability: ${AVAILABILITY_OPTIONS.find(a => a.value === form.getValues('valueAvailability'))?.label || form.getValues('valueAvailability')}`}
-                    {form.getValues('valueBuyAgain') && 
-                      `, Buy Again: ${BUY_AGAIN_OPTIONS.find(b => b.value === form.getValues('valueBuyAgain'))?.label || form.getValues('valueBuyAgain')}`}
-                    {form.getValues('valueScore') && 
-                      `, Score: ${form.getValues('valueScore')}/5`}
-                  </p>
+                {/* Value */}
+                <div className="border-b pb-3 border-[#D9C4A3] last:border-0">
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="font-medium text-[#7d5936]">Value:</h4>
+                    <span className="text-[#794E2F] font-bold">{form.getValues('valueScore')}/5</span>
+                  </div>
+                  <div className="flex justify-end">
+                    <StarRating 
+                      rating={Number(form.getValues('valueScore')) || 0} 
+                      maxRating={5}
+                      size="md"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -2096,7 +2056,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
             </div>
             
             <div className="bg-[#F5EFE0] p-4 rounded-lg border border-[#D9C4A3]">
-              <h3 className="text-lg font-bold text-[#7d5936] mb-4">Weighted Category Scores</h3>
+              <h3 className="text-lg font-bold text-[#7d5936] mb-4">Adjustments</h3>
               
               <div className="space-y-4">
                 {/* Nose Score */}
@@ -2341,7 +2301,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md dialog-content overflow-hidden" ref={dialogContentRef}>
+      <DialogContent className="sm:max-w-md dialog-content overflow-hidden max-h-[90vh] flex flex-col" ref={dialogContentRef}>
         <div className="sticky top-0 bg-white z-10 pb-2">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-gray-900">
@@ -2380,7 +2340,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
               // This happens in the Submit button's onClick handler instead
               return false;
             }} 
-            className="space-y-4 overflow-y-auto max-h-[60vh]"
+            className="space-y-4 flex-1 overflow-y-auto"
           >
             <div 
               id="review-content"
