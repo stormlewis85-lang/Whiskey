@@ -546,7 +546,8 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
   const prevPage = handlePrevious;
 
   const onSubmit = (data: ReviewNote) => {
-    // Only process form submission if we're on the final page
+    console.log("Form submission triggered, current page:", currentPage, "FinalScores page:", ReviewPage.FinalScores);
+    
     if (currentPage === ReviewPage.FinalScores) {
       // Calculate the final weighted scores with adjustments
       const scores = calculateWeightedScores();
@@ -587,7 +588,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
       // Append the weighted scores to the review text
       data.text = data.text ? `${data.text}\n\n${weightedScoresText}` : weightedScoresText;
       
-      // Submit the review only when on final page
+      // Submit the review
       addReviewMutation.mutate(data);
     } else {
       // If we're not on the final page, prevent form submission and go to next page instead
