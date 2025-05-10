@@ -600,6 +600,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
     data.text = data.text ? `${data.text}\n\n${weightedScoresText}` : weightedScoresText;
     
     // Submit the review
+    console.log("About to submit review data:", data);
     addReviewMutation.mutate(data);
   };
 
@@ -2341,13 +2342,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
         
         <Form {...form}>
           <form 
-            // Disable the normal form submission behavior entirely
-            onSubmit={(e) => {
-              e.preventDefault();
-              // Only call form.handleSubmit manually when the submit button is clicked
-              // This happens in the Submit button's onClick handler instead
-              return false;
-            }} 
+            onSubmit={form.handleSubmit(onSubmit)}
             className="space-y-4 flex-1 overflow-y-auto"
           >
             <div 
@@ -2394,14 +2389,9 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                   </Button>
                 ) : (
                   <Button
-                    type="button"
+                    type="submit"
                     className="barrel-button"
                     disabled={addReviewMutation.isPending}
-                    onClick={() => {
-                      console.log("Submit button clicked, current page:", currentPage, "FinalScores page:", ReviewPage.FinalScores);
-                      // Submit the form unconditionally when on the final page
-                      form.handleSubmit(onSubmit)();
-                    }}
                   >
                     {addReviewMutation.isPending ? "Submitting..." : "Submit Review"}
                   </Button>
