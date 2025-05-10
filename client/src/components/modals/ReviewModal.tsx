@@ -1578,7 +1578,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                     <FormControl>
                       <RadioGroup 
                         onValueChange={field.onChange} 
-                        value={field.value || ""}
+                        value={field.value}
                         className="flex flex-col space-y-1"
                       >
                         <div className="grid grid-cols-1 gap-2">
@@ -1608,7 +1608,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                     <FormControl>
                       <RadioGroup 
                         onValueChange={field.onChange} 
-                        value={field.value || ""}
+                        value={field.value}
                         className="flex flex-col space-y-1"
                       >
                         <div className="grid grid-cols-1 gap-2">
@@ -2063,7 +2063,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                 <div>
                   <div className="flex justify-between items-center mb-1">
                     <span className="font-medium text-[#794E2F]">Nose (×1.5)</span>
-                    <span className="text-[#986A44] font-medium">{weightedScores.nose.toFixed(1)}/7.5</span>
+                    <span className="text-[#986A44] font-medium">{(weightedScores.nose * 2).toFixed(1)} pts</span>
                   </div>
                   <div className="flex items-center">
                     <button 
@@ -2098,7 +2098,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                 <div>
                   <div className="flex justify-between items-center mb-1">
                     <span className="font-medium text-[#794E2F]">Mouthfeel (×2.0)</span>
-                    <span className="text-[#986A44] font-medium">{weightedScores.mouthfeel.toFixed(1)}/10</span>
+                    <span className="text-[#986A44] font-medium">{(weightedScores.mouthfeel * 2).toFixed(1)} pts</span>
                   </div>
                   <div className="flex items-center">
                     <button 
@@ -2133,7 +2133,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                 <div>
                   <div className="flex justify-between items-center mb-1">
                     <span className="font-medium text-[#794E2F]">Taste (×3.0)</span>
-                    <span className="text-[#986A44] font-medium">{weightedScores.taste.toFixed(1)}/15</span>
+                    <span className="text-[#986A44] font-medium">{(weightedScores.taste * 2).toFixed(1)} pts</span>
                   </div>
                   <div className="flex items-center">
                     <button 
@@ -2168,7 +2168,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                 <div>
                   <div className="flex justify-between items-center mb-1">
                     <span className="font-medium text-[#794E2F]">Finish (×2.5)</span>
-                    <span className="text-[#986A44] font-medium">{weightedScores.finish.toFixed(1)}/12.5</span>
+                    <span className="text-[#986A44] font-medium">{(weightedScores.finish * 2).toFixed(1)} pts</span>
                   </div>
                   <div className="flex items-center">
                     <button 
@@ -2203,7 +2203,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                 <div>
                   <div className="flex justify-between items-center mb-1">
                     <span className="font-medium text-[#794E2F]">Value (×1.0)</span>
-                    <span className="text-[#986A44] font-medium">{weightedScores.value.toFixed(1)}/5.0</span>
+                    <span className="text-[#986A44] font-medium">{(weightedScores.value * 2).toFixed(1)} pts</span>
                   </div>
                   <div className="flex items-center">
                     <button 
