@@ -262,34 +262,50 @@ export function setupAuth(app: express.Express) {
   // Get Current User
   app.get("/api/user", async (req: Request, res: Response) => {
     try {
-      console.log("Session check:", {
-        id: req.sessionID,
-        userId: req.session.userId,
-        cookie: req.session.cookie
-      });
+      console.log("User authentication check");
       
-      if (!req.session.userId) {
-        console.log("No userId in session, not authenticated");
-        return res.status(401).json({ message: "Not authenticated" });
+      // First try session-based auth
+      if (req.session.userId) {
+        const sessionUser = await storage.getUser(req.session.userId);
+        if (sessionUser) {
+          console.log(`Session auth: user ${sessionUser.username} (ID: ${sessionUser.id})`);
+          
+          // Return user without password
+          const { password, ...userWithoutPassword } = sessionUser;
+          return res.json(userWithoutPassword);
+        } else {
+          console.log(`User not found for session userId ${req.session.userId}`);
+          // Clear invalid session
+          req.session.destroy((err) => {
+            if (err) {
+              console.error("Error destroying invalid session:", err);
+            }
+          });
+          // Continue to try token auth
+        }
       }
       
-      const user = await storage.getUser(req.session.userId);
-      if (!user) {
-        console.log(`User not found for session ID ${req.sessionID}, userId ${req.session.userId}`);
-        // Clear invalid session
-        req.session.destroy((err) => {
-          if (err) {
-            console.error("Error destroying invalid session:", err);
-          }
-        });
-        return res.status(401).json({ message: "User not found" });
+      // Then try token-based auth
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+        
+        const tokenUser = await storage.getUserByToken(token);
+        if (tokenUser) {
+          console.log(`Token auth: user ${tokenUser.username} (ID: ${tokenUser.id})`);
+          
+          // Set session for future requests
+          req.session.userId = tokenUser.id;
+          
+          // Return user without password
+          const { password, ...userWithoutPassword } = tokenUser;
+          return res.json(userWithoutPassword);
+        }
       }
       
-      console.log(`User found: ${user.username} (ID: ${user.id})`);
-      
-      // Return user without password
-      const { password, ...userWithoutPassword } = user;
-      res.json(userWithoutPassword);
+      // Neither session nor token authentication worked
+      console.log("No valid session or token found, not authenticated");
+      return res.status(401).json({ message: "Not authenticated" });
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to get user", error: String(error) });

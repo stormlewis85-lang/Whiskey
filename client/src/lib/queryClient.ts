@@ -15,14 +15,35 @@ export async function apiRequest(
 ): Promise<Response> {
   const isFormData = data instanceof FormData;
   
+  // Get auth token if available
+  const authToken = localStorage.getItem("whiskeypedia_auth_token");
+  let token = null;
+  
+  if (authToken) {
+    try {
+      const authData = JSON.parse(authToken);
+      token = authData.token;
+    } catch (e) {
+      console.error("Error parsing auth token:", e);
+    }
+  }
+  
+  // Build headers with auth token if available
+  const headers: Record<string, string> = {
+    ...(data && !isFormData ? { "Content-Type": "application/json" } : {}),
+    'Cache-Control': 'no-cache',
+    'Pragma': 'no-cache'
+  };
+  
+  // Add Authorization header if we have a token
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
   // Enhanced request options with credentials always included
   const requestOptions = {
     method,
-    headers: {
-      ...(data && !isFormData ? { "Content-Type": "application/json" } : {}),
-      'Cache-Control': 'no-cache',
-      'Pragma': 'no-cache'
-    },
+    headers,
     body: data && !isFormData ? JSON.stringify(data) : data,
     credentials: 'include' as RequestCredentials,
     ...options,
@@ -31,7 +52,8 @@ export async function apiRequest(
   // Console log for debugging
   console.log(`Making ${method} request to ${url}`, { 
     withData: !!data,
-    withOptions: !!options
+    withOptions: !!options,
+    withToken: !!token
   });
   
   const res = await fetch(url, requestOptions);
@@ -58,12 +80,33 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
+    // Get auth token if available
+    const authToken = localStorage.getItem("whiskeypedia_auth_token");
+    let token = null;
+    
+    if (authToken) {
+      try {
+        const authData = JSON.parse(authToken);
+        token = authData.token;
+      } catch (e) {
+        console.error("Error parsing auth token:", e);
+      }
+    }
+    
+    // Build headers with auth token if available
+    const headers: Record<string, string> = {
+      'Cache-Control': 'no-cache',
+      'Pragma': 'no-cache'
+    };
+    
+    // Add Authorization header if we have a token
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
     const res = await fetch(queryKey[0] as string, {
       credentials: "include",
-      headers: {
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache'
-      }
+      headers
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {

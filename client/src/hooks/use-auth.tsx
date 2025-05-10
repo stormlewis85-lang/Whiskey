@@ -139,6 +139,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await apiRequest("POST", "/api/logout");
     },
     onSuccess: () => {
+      // Clear the auth token from local storage
+      clearAuthToken();
+      
       queryClient.setQueryData(["/api/user"], null);
       // Also invalidate whiskeys to refresh the collection
       queryClient.invalidateQueries({ queryKey: ["/api/whiskeys"] });
