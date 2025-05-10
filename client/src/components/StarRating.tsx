@@ -6,13 +6,17 @@ interface StarRatingProps {
   maxRating?: number;
   size?: 'sm' | 'md' | 'lg';
   showEmpty?: boolean;
+  interactive?: boolean;
+  onChange?: (rating: number) => void;
 }
 
 export function StarRating({ 
   rating, 
   maxRating = 5, 
   size = 'md',
-  showEmpty = true 
+  showEmpty = true,
+  interactive = false,
+  onChange
 }: StarRatingProps) {
   // Calculate the size of the stars based on the size prop
   const getStarSize = () => {
@@ -23,35 +27,69 @@ export function StarRating({
     }
   };
 
+  // Handle click event for interactive stars
+  const handleClick = (clickedRating: number) => {
+    if (interactive && onChange) {
+      onChange(clickedRating);
+    }
+  };
+
   // Create an array of stars based on the rating and maxRating
   const renderStars = () => {
     const stars = [];
     const starSize = getStarSize();
+    const interactiveClass = interactive ? 'cursor-pointer' : '';
 
     for (let i = 1; i <= maxRating; i++) {
-      if (i <= rating) {
+      // Determine if this star should be full, half, or empty
+      const isFullStar = i <= Math.floor(rating);
+      const isHalfStar = !isFullStar && i - 0.5 <= rating;
+      
+      if (isFullStar) {
         // Full star
         stars.push(
-          <Star 
+          <div 
             key={i} 
-            className={`${starSize} text-amber-400 fill-amber-400`} 
-          />
+            className={`relative ${interactiveClass}`}
+            onClick={() => handleClick(i)}
+          >
+            <Star 
+              className={`${starSize} text-amber-400 fill-amber-400`} 
+            />
+          </div>
         );
-      } else if (i - 0.5 <= rating) {
-        // Half star (not implemented in this simple version)
+      } else if (isHalfStar) {
+        // Half star - implemented with a clipping div
         stars.push(
-          <Star 
+          <div 
             key={i} 
-            className={`${starSize} text-amber-400`} 
-          />
+            className={`relative ${interactiveClass}`}
+            onClick={() => handleClick(i)}
+          >
+            {/* Empty star as background */}
+            <Star 
+              className={`${starSize} text-gray-300 absolute`} 
+            />
+            {/* Half-filled star using overflow and position */}
+            <div className="absolute top-0 left-0 w-1/2 overflow-hidden">
+              <Star 
+                className={`${starSize} text-amber-400 fill-amber-400`} 
+              />
+            </div>
+          </div>
         );
       } else if (showEmpty) {
         // Empty star
         stars.push(
-          <Star 
+          <div 
             key={i} 
-            className={`${starSize} text-gray-300`} 
-          />
+            className={`relative ${interactiveClass}`}
+            onClick={() => handleClick(i)}
+          >
+            <Star 
+              className={`${starSize} text-gray-300`} 
+            />
+          </div>
         );
       }
     }
