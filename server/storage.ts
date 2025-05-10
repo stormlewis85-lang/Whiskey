@@ -43,8 +43,10 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByToken(token: string): Promise<User | undefined>;
   updateUser(id: number, userData: UpdateUser): Promise<User | undefined>;
   validateUserCredentials(username: string, password: string): Promise<User | undefined>;
+  generateAuthToken(userId: number): Promise<string>;
   
   // Social features
   getSharedReview(shareId: string): Promise<{ whiskey: Whiskey; review: ReviewNote } | undefined>;

@@ -18,30 +18,66 @@ declare module "express-session" {
 // Create PostgreSQL session store for persistence across deployments
 const PgStore = connectPgSimple(session);
 
-// Enhanced authentication middleware with user validation
+// Enhanced authentication middleware with token validation
 export async function isAuthenticated(req: Request, res: Response, next: NextFunction) {
-  if (!req.session.userId) {
-    return res.status(401).json({ message: "Not authenticated" });
+  // First try session authentication
+  if (req.session.userId) {
+    try {
+      // Verify the user actually exists in the database
+      const user = await storage.getUser(req.session.userId);
+      
+      if (user) {
+        // User is authenticated and exists via session
+        console.log(`User authenticated via session: ${user.username} (ID: ${user.id})`);
+        return next();
+      } else {
+        // If user doesn't exist but session has userId, clear the invalid session
+        req.session.destroy((err) => {
+          if (err) {
+            console.error("Error destroying invalid session:", err);
+          }
+        });
+        console.log("Session user not found, trying token auth as fallback");
+        // Fall through to token auth
+      }
+    } catch (error) {
+      console.error("Session authentication error:", error);
+      // Fall through to token auth
+    }
   }
   
+  // Try token-based authentication as a fallback
   try {
-    // Verify the user actually exists in the database
-    const user = await storage.getUser(req.session.userId);
-    
-    if (!user) {
-      // If user doesn't exist but session has userId, clear the invalid session
-      req.session.destroy((err) => {
-        if (err) {
-          console.error("Error destroying invalid session:", err);
-        }
-      });
-      return res.status(401).json({ message: "User not found" });
+    // Get the auth token from the Authorization header
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ message: "Not authenticated - No token provided" });
     }
     
-    // User is authenticated and exists
+    const token = authHeader.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ message: "Not authenticated - Invalid token format" });
+    }
+    
+    // Validate the token
+    const user = await storage.getUserByToken(token);
+    
+    if (!user) {
+      return res.status(401).json({ message: "Not authenticated - Invalid token" });
+    }
+    
+    if (user.tokenExpiry && new Date(user.tokenExpiry) < new Date()) {
+      return res.status(401).json({ message: "Not authenticated - Token expired" });
+    }
+    
+    // Add user id to request for later use
+    req.session.userId = user.id;
+    
+    // User is authenticated via token
+    console.log(`User authenticated via token: ${user.username} (ID: ${user.id})`);
     next();
   } catch (error) {
-    console.error("Authentication error:", error);
+    console.error("Token authentication error:", error);
     res.status(500).json({ message: "Authentication verification failed", error: String(error) });
   }
 }

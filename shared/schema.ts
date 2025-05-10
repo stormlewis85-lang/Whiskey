@@ -14,6 +14,8 @@ export const users = pgTable("users", {
   firstName: text("first_name"),
   lastName: text("last_name"),
   profileImage: text("profile_image"),
+  authToken: text("auth_token"),  // Add token field for token-based auth
+  tokenExpiry: timestamp("token_expiry"),  // When the token expires
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => {
