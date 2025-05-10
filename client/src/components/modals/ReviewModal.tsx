@@ -173,9 +173,13 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
     setValueAdjustment(0);
     setFinalNotes('');
     
-    // Force clear the Value Score explicitly
+    // Force clear Value-related fields explicitly
     setTimeout(() => {
       form.setValue('valueScore', undefined);
+      form.setValue('valueAvailability', "");
+      form.setValue('valueBuyAgain', "");
+      form.setValue('valueOccasion', "");
+      form.setValue('valueNotes', "");
     }, 0);
     
     form.reset({
@@ -548,53 +552,55 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
   const onSubmit = (data: ReviewNote) => {
     console.log("Form submission triggered, current page:", currentPage, "FinalScores page:", ReviewPage.FinalScores);
     
-    if (currentPage === ReviewPage.FinalScores) {
-      // Calculate the final weighted scores with adjustments
-      const scores = calculateWeightedScores();
-      
-      // Use the scores calculated by the calculateWeightedScores function
-      const weightedTotal = scores.weightedTotal;
-      const fiveStarScore = scores.fiveStarScore;
-      const finalScore = scores.finalScore;
-      
-      // Set the overall rating (now using 5-star score for rating)
-      data.rating = fiveStarScore;
-      
-      // Add the final adjustment notes to the review
-      if (finalNotes) {
-        data.text = data.text ? `${data.text}\n\nFINAL NOTES: ${finalNotes}` : `FINAL NOTES: ${finalNotes}`;
-      }
-      
-      // Get base scores
-      const noseScore = Number(form.getValues('noseScore')) || 0;
-      const mouthfeelScore = Number(form.getValues('mouthfeelScore')) || 0;
-      const tasteScore = Number(form.getValues('tasteScore')) || 0;
-      const finishScore = Number(form.getValues('finishScore')) || 0;
-      const valueScore = Number(form.getValues('valueScore')) || 0;
-      
-      // Add weighted scores to the review text
-      const weightedScoresText = [
-        `WEIGHTED SCORES:`,
-        `- Nose: ${noseScore} × 1.5 = ${scores.nose}/7.5`,
-        `- Mouth Feel: ${mouthfeelScore} × 2.0 = ${scores.mouthfeel}/10`,
-        `- Taste: ${tasteScore} × 3.0 = ${scores.taste}/15`,
-        `- Finish: ${finishScore} × 2.5 = ${scores.finish}/12.5`,
-        `- Value: ${valueScore} × 1.0 = ${scores.value}/5`,
-        `- Weighted Total: ${weightedTotal}/50`,
-        `- 5-Star Score: ${fiveStarScore}/5 (Weighted Total ÷ 10)`,
-        `- Final Score: ${finalScore}/100 (Weighted Total × 2)`
-      ].join('\n');
-      
-      // Append the weighted scores to the review text
-      data.text = data.text ? `${data.text}\n\n${weightedScoresText}` : weightedScoresText;
-      
-      // Submit the review
-      addReviewMutation.mutate(data);
-    } else {
-      // If we're not on the final page, prevent form submission and go to next page instead
+    // If we're not on the final page, prevent form submission and go to next page instead
+    if (currentPage !== ReviewPage.FinalScores) {
       nextPage();
+      // Returning false prevents the default form submission behavior
       return false;
     }
+    
+    // We are on the final page, proceed with form submission
+    // Calculate the final weighted scores with adjustments
+    const scores = calculateWeightedScores();
+    
+    // Use the scores calculated by the calculateWeightedScores function
+    const weightedTotal = scores.weightedTotal;
+    const fiveStarScore = scores.fiveStarScore;
+    const finalScore = scores.finalScore;
+    
+    // Set the overall rating (now using 5-star score for rating)
+    data.rating = fiveStarScore;
+    
+    // Add the final adjustment notes to the review
+    if (finalNotes) {
+      data.text = data.text ? `${data.text}\n\nFINAL NOTES: ${finalNotes}` : `FINAL NOTES: ${finalNotes}`;
+    }
+    
+    // Get base scores
+    const noseScore = Number(form.getValues('noseScore')) || 0;
+    const mouthfeelScore = Number(form.getValues('mouthfeelScore')) || 0;
+    const tasteScore = Number(form.getValues('tasteScore')) || 0;
+    const finishScore = Number(form.getValues('finishScore')) || 0;
+    const valueScore = Number(form.getValues('valueScore')) || 0;
+    
+    // Add weighted scores to the review text
+    const weightedScoresText = [
+      `WEIGHTED SCORES:`,
+      `- Nose: ${noseScore} × 1.5 = ${scores.nose}/7.5`,
+      `- Mouth Feel: ${mouthfeelScore} × 2.0 = ${scores.mouthfeel}/10`,
+      `- Taste: ${tasteScore} × 3.0 = ${scores.taste}/15`,
+      `- Finish: ${finishScore} × 2.5 = ${scores.finish}/12.5`,
+      `- Value: ${valueScore} × 1.0 = ${scores.value}/5`,
+      `- Weighted Total: ${weightedTotal}/50`,
+      `- 5-Star Score: ${fiveStarScore}/5 (Weighted Total ÷ 10)`,
+      `- Final Score: ${finalScore}/100 (Weighted Total × 2)`
+    ].join('\n');
+    
+    // Append the weighted scores to the review text
+    data.text = data.text ? `${data.text}\n\n${weightedScoresText}` : weightedScoresText;
+    
+    // Submit the review
+    addReviewMutation.mutate(data);
   };
 
   // Render content based on current page
@@ -1579,7 +1585,6 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                     <FormControl>
                       <RadioGroup 
                         onValueChange={field.onChange} 
-                        defaultValue=""
                         value={field.value || ""}
                         className="flex flex-col space-y-1"
                       >
@@ -1610,7 +1615,6 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                     <FormControl>
                       <RadioGroup 
                         onValueChange={field.onChange} 
-                        defaultValue=""
                         value={field.value || ""}
                         className="flex flex-col space-y-1"
                       >
@@ -1641,7 +1645,6 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                     <FormControl>
                       <RadioGroup 
                         onValueChange={(value) => field.onChange(parseInt(value))} 
-                        defaultValue=""
                         value={field.value?.toString() || ""}
                         className="flex justify-between"
                       >
