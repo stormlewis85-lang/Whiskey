@@ -241,6 +241,13 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
       text: "",
       flavor: "",
       id: nanoid(),
+      // Initialize flavor profile values as numbers
+      flavorProfileFruitFloral: 0,
+      flavorProfileSweet: 0,
+      flavorProfileSpice: 0,
+      flavorProfileHerbal: 0,
+      flavorProfileGrain: 0,
+      flavorProfileOak: 0,
       // Legacy fields
       visual: "",
       nose: "",
@@ -579,6 +586,15 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
     const fiveStarScore = scores.fiveStarScore;
     const finalScore = scores.finalScore;
     
+    // Ensure flavor profile values are numbers, not strings
+    // Convert all flavor profile fields to numbers
+    formData.flavorProfileFruitFloral = Number(formData.flavorProfileFruitFloral || 0);
+    formData.flavorProfileSweet = Number(formData.flavorProfileSweet || 0);
+    formData.flavorProfileSpice = Number(formData.flavorProfileSpice || 0);
+    formData.flavorProfileHerbal = Number(formData.flavorProfileHerbal || 0);
+    formData.flavorProfileGrain = Number(formData.flavorProfileGrain || 0);
+    formData.flavorProfileOak = Number(formData.flavorProfileOak || 0);
+    
     // Set the overall rating (now using 5-star score for rating)
     formData.rating = fiveStarScore;
     
@@ -612,6 +628,16 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
     
     // Submit the review directly
     console.log("About to submit review data:", formData);
+    
+    // Extra logging for flavor profile values
+    console.log("Flavor profile values (should all be numbers):");
+    console.log("- fruitFloral:", typeof formData.flavorProfileFruitFloral, formData.flavorProfileFruitFloral);
+    console.log("- sweet:", typeof formData.flavorProfileSweet, formData.flavorProfileSweet);
+    console.log("- spice:", typeof formData.flavorProfileSpice, formData.flavorProfileSpice);
+    console.log("- herbal:", typeof formData.flavorProfileHerbal, formData.flavorProfileHerbal);
+    console.log("- grain:", typeof formData.flavorProfileGrain, formData.flavorProfileGrain);
+    console.log("- oak:", typeof formData.flavorProfileOak, formData.flavorProfileOak);
+    
     addReviewMutation.mutate(formData);
   };
 
