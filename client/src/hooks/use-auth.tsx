@@ -56,6 +56,14 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   
+  // Check for existing token in localStorage on initialization
+  useEffect(() => {
+    const authToken = getAuthToken();
+    if (authToken) {
+      console.log("Found auth token in local storage, will use it for authentication");
+    }
+  }, []);
+  
   const {
     data: user,
     error,
