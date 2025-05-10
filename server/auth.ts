@@ -28,19 +28,19 @@ export function isAuthenticated(req: Request, res: Response, next: NextFunction)
 
 // Setup authentication and session
 export function setupAuth(app: express.Express) {
-  // Configure session middleware
+  // Configure session middleware with improved settings
   app.use(
     session({
       secret: process.env.SESSION_SECRET || nanoid(32),
-      resave: false,
+      resave: true,
       saveUninitialized: false,
       store: new MemoryStore({
         checkPeriod: 86400000 // Prune expired entries every 24h
       }),
       cookie: {
-        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure: false, // For development/testing
         sameSite: "lax"
       }
     })

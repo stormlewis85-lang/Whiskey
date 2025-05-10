@@ -163,20 +163,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/whiskeys/:id", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
+      const userId = req.session.userId;
+      
+      console.log(`Delete whiskey request - ID: ${id}, User ID: ${userId}`);
       
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid ID format" });
       }
       
       // Pass userId to ensure user only deletes their own whiskeys
-      const success = await storage.deleteWhiskey(id, req.session.userId);
+      const success = await storage.deleteWhiskey(id, userId);
       
       if (!success) {
+        console.log(`Whiskey not found or not owned by user: ${userId}`);
         return res.status(404).json({ message: "Whiskey not found or not owned by you" });
       }
       
+      console.log(`Successfully deleted whiskey: ${id}`);
       res.status(204).send();
     } catch (error) {
+      console.error("Error deleting whiskey:", error);
       res.status(500).json({ message: "Failed to delete whiskey", error: String(error) });
     }
   });

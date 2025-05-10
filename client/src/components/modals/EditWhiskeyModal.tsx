@@ -76,11 +76,25 @@ const EditWhiskeyModal = ({ isOpen, onClose, whiskey }: EditWhiskeyModalProps) =
 
   const deleteWhiskeyMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest(
-        "DELETE",
-        `/api/whiskeys/${whiskey.id}`
-      );
-      return response;
+      try {
+        console.log("Attempting to delete whiskey:", whiskey.id);
+        const response = await apiRequest(
+          "DELETE",
+          `/api/whiskeys/${whiskey.id}`,
+          undefined,
+          {
+            credentials: 'include',
+            headers: {
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache'
+            }
+          }
+        );
+        return response;
+      } catch (error) {
+        console.error("Delete whiskey error:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       toast({
@@ -92,11 +106,25 @@ const EditWhiskeyModal = ({ isOpen, onClose, whiskey }: EditWhiskeyModalProps) =
       onClose();
     },
     onError: (error) => {
+      console.error("Delete whiskey mutation error:", error);
+      
+      let errorMessage = "Failed to delete whiskey";
+      
+      // Check for authentication errors
+      if (error.message && error.message.includes("401")) {
+        errorMessage = "Your session has expired. Please log in again to continue.";
+        // Attempt to refresh the session
+        queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      } else {
+        errorMessage = `${errorMessage}: ${error.message || String(error)}`;
+      }
+      
       toast({
         title: "Error",
-        description: `Failed to delete whiskey: ${error}`,
+        description: errorMessage,
         variant: "destructive",
       });
+      
       setIsDeleteDialogOpen(false);
     },
   });
