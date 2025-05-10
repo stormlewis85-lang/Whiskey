@@ -218,12 +218,12 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
       valueScore: undefined,
       valueNotes: "",
       // Reset flavor profile ratings
-      flavorProfileFruits: 0,
-      flavorProfileSpices: 0,
-      flavorProfileSmoke: 0,
-      flavorProfileCereals: 0,
-      flavorProfileGrassy: 0,
-      flavorProfileFloral: 0,
+      flavorProfileFruitFloral: 0,
+      flavorProfileSweet: 0,
+      flavorProfileSpice: 0,
+      flavorProfileHerbal: 0,
+      flavorProfileGrain: 0,
+      flavorProfileOak: 0,
       isPublic: false,
       shareId: undefined
     });
@@ -273,12 +273,12 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
       valueScore: undefined,
       valueNotes: "",
       // Flavor profile ratings
-      flavorProfileFruits: 0,
-      flavorProfileSpices: 0,
-      flavorProfileSmoke: 0,
-      flavorProfileCereals: 0,
-      flavorProfileGrassy: 0,
-      flavorProfileFloral: 0,
+      flavorProfileFruitFloral: 0,
+      flavorProfileSweet: 0,
+      flavorProfileSpice: 0,
+      flavorProfileHerbal: 0,
+      flavorProfileGrain: 0,
+      flavorProfileOak: 0,
       // Social features
       isPublic: false,
       shareId: undefined
@@ -365,12 +365,12 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
       ].join('\n');
       
       const flavorProfileSection = [
-        `FRUITS: ${data.flavorProfileFruits}/5`,
-        `SPICES: ${data.flavorProfileSpices}/5`, 
-        `SMOKE: ${data.flavorProfileSmoke}/5`,
-        `CEREALS: ${data.flavorProfileCereals}/5`,
-        `GRASSY: ${data.flavorProfileGrassy}/5`,
-        `FLORAL: ${data.flavorProfileFloral}/5`
+        `FRUIT/FLORAL: ${data.flavorProfileFruitFloral}/5`,
+        `SWEET: ${data.flavorProfileSweet}/5`, 
+        `SPICE: ${data.flavorProfileSpice}/5`,
+        `HERBAL: ${data.flavorProfileHerbal}/5`,
+        `GRAIN: ${data.flavorProfileGrain}/5`,
+        `OAK: ${data.flavorProfileOak}/5`
       ].join('\n');
       
       const summary = [

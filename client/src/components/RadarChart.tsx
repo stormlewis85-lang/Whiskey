@@ -1,12 +1,12 @@
 import React, { useEffect, useRef } from 'react';
 
 interface FlavorProfile {
-  fruits: number;
-  spices: number;
-  smoke: number;
-  cereals: number;
-  grassy: number;
-  floral: number;
+  fruitFloral: number;
+  sweet: number;
+  spice: number;
+  herbal: number;
+  grain: number;
+  oak: number;
 }
 
 interface RadarChartProps {
@@ -39,7 +39,7 @@ export function RadarChart({ flavorProfile, size = 200, className = "" }: RadarC
     const radius = (canvasSize / 2) * 0.8; // 80% of half canvas size
     
     // Convert flavor profile to array for easier processing
-    const categories = ['fruits', 'spices', 'smoke', 'cereals', 'grassy', 'floral'];
+    const categories = ['fruitFloral', 'sweet', 'spice', 'herbal', 'grain', 'oak'];
     const values = categories.map(cat => flavorProfile[cat as keyof FlavorProfile] || 0);
     
     // Calculate the angle for each category (in radians)
@@ -87,8 +87,31 @@ export function RadarChart({ flavorProfile, size = 200, className = "" }: RadarC
       const labelX = centerX + labelDistance * Math.cos(angle);
       const labelY = centerY + labelDistance * Math.sin(angle);
       
-      // Capitalize first letter of each category
-      const label = categories[i].charAt(0).toUpperCase() + categories[i].slice(1);
+      // Format the label for display
+      let label;
+      switch(categories[i]) {
+        case 'fruitFloral':
+          label = 'Fruit/Floral';
+          break;
+        case 'sweet':
+          label = 'Sweet';
+          break;
+        case 'spice':
+          label = 'Spice';
+          break;
+        case 'herbal':
+          label = 'Herbal';
+          break;
+        case 'grain':
+          label = 'Grain';
+          break;
+        case 'oak':
+          label = 'Oak';
+          break;
+        default:
+          // Capitalize first letter
+          label = categories[i].charAt(0).toUpperCase() + categories[i].slice(1);
+      }
       ctx.fillText(label, labelX, labelY);
     }
     
