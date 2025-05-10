@@ -2085,11 +2085,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
               <h3 className="text-lg font-bold text-[#7d5936] mb-2">Final Score</h3>
               <div className="flex justify-center items-center">
                 <StarRating rating={finalRating} size="lg" />
-                <span className="ml-2 text-2xl font-bold text-[#986A44]">{finalRating.toFixed(1)}</span>
               </div>
-              <p className="text-sm text-muted-foreground mt-1">
-                Based on weighted category scores (out of 5)
-              </p>
             </div>
             
             <div className="bg-[#F5EFE0] p-4 rounded-lg border border-[#D9C4A3]">
