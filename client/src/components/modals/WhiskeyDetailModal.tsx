@@ -248,7 +248,7 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit }: Whis
                 variant="outline" 
                 size="sm" 
                 className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-                onClick={deleteWhiskey}
+                onClick={confirmDeleteWhiskey}
               >
                 <Trash2 className="h-4 w-4 mr-1" />
                 Delete
@@ -490,7 +490,7 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit }: Whis
                             variant="ghost" 
                             size="icon" 
                             className="h-7 w-7 text-red-600 hover:text-red-700 hover:bg-red-50" 
-                            onClick={() => handleDeleteReview(note.id!)}
+                            onClick={() => handleDeleteReviewWithConfirm(note.id!)}
                           >
                             <Trash2 className="h-3 w-3" />
                           </Button>
@@ -694,6 +694,43 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit }: Whis
         onClose={() => setIsPriceTrackingModalOpen(false)}
         whiskey={whiskey}
       />
+      
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {isDeletingWhiskey 
+                ? `This will permanently delete "${whiskey.name}" from your collection. This action cannot be undone.`
+                : `This will permanently delete this review. This action cannot be undone.`
+              }
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setReviewToDelete(null);
+              setIsDeletingWhiskey(false);
+            }}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 text-white hover:bg-red-700"
+              onClick={() => {
+                if (isDeletingWhiskey) {
+                  executeDeleteWhiskey();
+                } else if (reviewToDelete) {
+                  executeDeleteReview();
+                }
+                // Reset states after operation
+                setIsDeletingWhiskey(false);
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
