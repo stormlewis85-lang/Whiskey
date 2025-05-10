@@ -2394,10 +2394,9 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                     className="barrel-button"
                     disabled={addReviewMutation.isPending}
                     onClick={() => {
-                      if (currentPage === ReviewPage.FinalScores) {
-                        // Only call the submission manually when explicitly clicked
-                        form.handleSubmit(onSubmit)();
-                      }
+                      console.log("Submit button clicked, current page:", currentPage, "FinalScores page:", ReviewPage.FinalScores);
+                      // Submit the form unconditionally when on the final page
+                      form.handleSubmit(onSubmit)();
                     }}
                   >
                     {addReviewMutation.isPending ? "Submitting..." : "Submit Review"}
