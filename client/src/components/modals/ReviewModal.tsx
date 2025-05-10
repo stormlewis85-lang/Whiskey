@@ -549,17 +549,28 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
   const nextPage = handleNext;
   const prevPage = handlePrevious;
 
+  // Simplified onSubmit for intermediate pages - just moves to the next page
   const onSubmit = (data: ReviewNote) => {
-    console.log("Form submission triggered, current page:", currentPage, "FinalScores page:", ReviewPage.FinalScores);
+    console.log("Form submission triggered, current page:", currentPage);
     
-    // If we're not on the final page, prevent form submission and go to next page instead
+    // If we're not on the final page, just go to the next page
     if (currentPage !== ReviewPage.FinalScores) {
       nextPage();
-      // Returning false prevents the default form submission behavior
-      return false;
+      return;
     }
     
-    // We are on the final page, proceed with form submission
+    // This should never be directly called for the final page 
+    // as we're using the direct submit function below
+    console.log("onSubmit called on final page - this shouldn't happen");
+  };
+  
+  // Direct submit function - called directly by the submit button
+  const submitReview = () => {
+    console.log("Direct submit function called");
+    
+    // Gather all form data
+    const formData = form.getValues();
+    
     // Calculate the final weighted scores with adjustments
     const scores = calculateWeightedScores();
     
@@ -569,11 +580,11 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
     const finalScore = scores.finalScore;
     
     // Set the overall rating (now using 5-star score for rating)
-    data.rating = fiveStarScore;
+    formData.rating = fiveStarScore;
     
     // Add the final adjustment notes to the review
     if (finalNotes) {
-      data.text = data.text ? `${data.text}\n\nFINAL NOTES: ${finalNotes}` : `FINAL NOTES: ${finalNotes}`;
+      formData.text = formData.text ? `${formData.text}\n\nFINAL NOTES: ${finalNotes}` : `FINAL NOTES: ${finalNotes}`;
     }
     
     // Get base scores
@@ -597,11 +608,11 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
     ].join('\n');
     
     // Append the weighted scores to the review text
-    data.text = data.text ? `${data.text}\n\n${weightedScoresText}` : weightedScoresText;
+    formData.text = formData.text ? `${formData.text}\n\n${weightedScoresText}` : weightedScoresText;
     
-    // Submit the review
-    console.log("About to submit review data:", data);
-    addReviewMutation.mutate(data);
+    // Submit the review directly
+    console.log("About to submit review data:", formData);
+    addReviewMutation.mutate(formData);
   };
 
   // Render content based on current page
@@ -2342,7 +2353,9 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
         
         <Form {...form}>
           <form 
-            onSubmit={form.handleSubmit(onSubmit)}
+            // Use the form.handleSubmit for regular page navigation
+            // But not for the final submission - that's handled by the submit button
+            onSubmit={form.handleSubmit(onSubmit)} 
             className="space-y-4 flex-1 overflow-y-auto"
           >
             <div 
@@ -2389,9 +2402,10 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                   </Button>
                 ) : (
                   <Button
-                    type="submit"
+                    type="button"
                     className="barrel-button"
                     disabled={addReviewMutation.isPending}
+                    onClick={submitReview}
                   >
                     {addReviewMutation.isPending ? "Submitting..." : "Submit Review"}
                   </Button>
