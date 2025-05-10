@@ -217,6 +217,13 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
       valueOccasion: "",
       valueScore: undefined,
       valueNotes: "",
+      // Reset flavor profile ratings
+      flavorProfileFruits: 0,
+      flavorProfileSpices: 0,
+      flavorProfileSmoke: 0,
+      flavorProfileCereals: 0,
+      flavorProfileGrassy: 0,
+      flavorProfileFloral: 0,
       isPublic: false,
       shareId: undefined
     });
@@ -357,6 +364,15 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
         `NOTES: ${data.valueNotes || 'None'}`
       ].join('\n');
       
+      const flavorProfileSection = [
+        `FRUITS: ${data.flavorProfileFruits}/5`,
+        `SPICES: ${data.flavorProfileSpices}/5`, 
+        `SMOKE: ${data.flavorProfileSmoke}/5`,
+        `CEREALS: ${data.flavorProfileCereals}/5`,
+        `GRASSY: ${data.flavorProfileGrassy}/5`,
+        `FLORAL: ${data.flavorProfileFloral}/5`
+      ].join('\n');
+      
       const summary = [
         `## VISUAL ##\n${visualSection}`,
         `## NOSE ##\n${noseSection}`,
@@ -364,6 +380,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
         `## TASTE ##\n${tasteSection}`,
         `## FINISH ##\n${finishSection}`,
         `## VALUE ##\n${valueSection}`,
+        `## FLAVOR PROFILE ##\n${flavorProfileSection}`,
         `## OVERALL ##\n${data.text}`,
         `OVERALL RATING: ${data.rating}/5`
       ].join('\n\n');
