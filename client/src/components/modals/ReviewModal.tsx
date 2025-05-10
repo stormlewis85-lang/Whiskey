@@ -389,12 +389,12 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
       ].join('\n');
       
       const flavorProfileSection = [
-        `FRUIT/FLORAL: ${data.flavorProfileFruitFloral}/5`,
-        `SWEET: ${data.flavorProfileSweet}/5`, 
-        `SPICE: ${data.flavorProfileSpice}/5`,
-        `HERBAL: ${data.flavorProfileHerbal}/5`,
-        `GRAIN: ${data.flavorProfileGrain}/5`,
-        `OAK: ${data.flavorProfileOak}/5`
+        `FRUIT/FLORAL: ${reviewData.flavorProfileFruitFloral}/5`,
+        `SWEET: ${reviewData.flavorProfileSweet}/5`, 
+        `SPICE: ${reviewData.flavorProfileSpice}/5`,
+        `HERBAL: ${reviewData.flavorProfileHerbal}/5`,
+        `GRAIN: ${reviewData.flavorProfileGrain}/5`,
+        `OAK: ${reviewData.flavorProfileOak}/5`
       ].join('\n');
       
       const summary = [
@@ -405,26 +405,43 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
         `## FINISH ##\n${finishSection}`,
         `## VALUE ##\n${valueSection}`,
         `## FLAVOR PROFILE ##\n${flavorProfileSection}`,
-        `## OVERALL ##\n${data.text}`,
-        `OVERALL RATING: ${data.rating}/5`
+        `## OVERALL ##\n${reviewData.text}`,
+        `OVERALL RATING: ${reviewData.rating}/5`
       ].join('\n\n');
       
       // Update the main text field with our comprehensive notes
-      data.text = summary;
+      reviewData.text = summary;
       
       // Include legacy fields for backward compatibility
-      data.visual = `Color: ${data.visualColor}, Viscosity: ${data.visualViscosity}, Clarity: ${data.visualClarity}`;
-      data.nose = `Aromas: ${data.noseAromas?.join(', ')} - ${data.noseNotes}`;
-      data.mouthfeel = `Alcohol: ${data.mouthfeelAlcohol}, Viscosity: ${data.mouthfeelViscosity}, Pleasantness: ${data.mouthfeelPleasantness}`;
-      data.taste = `Flavors: ${data.tasteFlavors?.join(', ')} - ${data.tasteNotes}`;
-      data.finish = `Length: ${data.finishLength}, Pleasantness: ${data.finishPleasantness} - ${data.finishNotes}`;
-      data.value = `Availability: ${data.valueAvailability}, Buy Again: ${data.valueBuyAgain}, Occasion: ${data.valueOccasion}`;
+      reviewData.visual = `Color: ${reviewData.visualColor}, Viscosity: ${reviewData.visualViscosity}, Clarity: ${reviewData.visualClarity}`;
+      reviewData.nose = `Aromas: ${reviewData.noseAromas?.join(', ')} - ${reviewData.noseNotes}`;
+      reviewData.mouthfeel = `Alcohol: ${reviewData.mouthfeelAlcohol}, Viscosity: ${reviewData.mouthfeelViscosity}, Pleasantness: ${reviewData.mouthfeelPleasantness}`;
+      reviewData.taste = `Flavors: ${reviewData.tasteFlavors?.join(', ')} - ${reviewData.tasteNotes}`;
+      reviewData.finish = `Length: ${reviewData.finishLength}, Pleasantness: ${reviewData.finishPleasantness} - ${reviewData.finishNotes}`;
+      reviewData.value = `Availability: ${reviewData.valueAvailability}, Buy Again: ${reviewData.valueBuyAgain}, Occasion: ${reviewData.valueOccasion}`;
+      
+      // Add one final console log before submitting
+      console.log("Final review data with fixed flavor profile:", {
+        flavorProfileFruitFloral: reviewData.flavorProfileFruitFloral,
+        flavorProfileSweet: reviewData.flavorProfileSweet,
+        flavorProfileSpice: reviewData.flavorProfileSpice,
+        flavorProfileHerbal: reviewData.flavorProfileHerbal,
+        flavorProfileGrain: reviewData.flavorProfileGrain,
+        flavorProfileOak: reviewData.flavorProfileOak
+      });
       
       const response = await apiRequest(
         "POST",
         `/api/whiskeys/${whiskey.id}/reviews`,
-        data
+        reviewData
       );
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Error submitting review:", errorData);
+        throw new Error(`Failed to submit review: ${errorData.message || 'Unknown error'}`);
+      }
+      
       return response.json();
     },
     onSuccess: (data) => {
@@ -607,6 +624,16 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
     formData.flavorProfileHerbal = Number(formData.flavorProfileHerbal || 0);
     formData.flavorProfileGrain = Number(formData.flavorProfileGrain || 0);
     formData.flavorProfileOak = Number(formData.flavorProfileOak || 0);
+    
+    // Debug log the flavor profile values
+    console.log("Direct submit - flavor profile values:", {
+      fruitFloral: formData.flavorProfileFruitFloral, 
+      sweet: formData.flavorProfileSweet,
+      spice: formData.flavorProfileSpice,
+      herbal: formData.flavorProfileHerbal,
+      grain: formData.flavorProfileGrain,
+      oak: formData.flavorProfileOak
+    });
     
     // Set the overall rating (now using 5-star score for rating)
     formData.rating = fiveStarScore;
