@@ -1,5 +1,15 @@
 import { useMemo, useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { 
   ImageIcon, Pencil as PencilIcon, Star, Upload, Edit, Trash2, 
@@ -121,13 +131,14 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit }: Whis
     setIsEditReviewModalOpen(true);
   };
   
-  const handleDeleteReview = async (reviewId: string) => {
-    if (!confirmRemoval()) return;
+  // Execute the actual review deletion
+  const executeDeleteReview = async () => {
+    if (!reviewToDelete) return;
     
     try {
       const response = await apiRequest(
         "DELETE", 
-        `/api/whiskeys/${whiskey.id}/reviews/${reviewId}`
+        `/api/whiskeys/${whiskey.id}/reviews/${reviewToDelete}`
       );
       
       if (response.ok) {
@@ -142,6 +153,10 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit }: Whis
           );
         });
         
+        // Close the dialog and clear the state
+        setIsDeleteDialogOpen(false);
+        setReviewToDelete(null);
+        
         toast({
           title: "Review deleted",
           description: "The review has been deleted successfully.",
@@ -150,23 +165,38 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit }: Whis
         throw new Error("Failed to delete review");
       }
     } catch (error) {
+      console.error("Error deleting review:", error);
       toast({
         title: "Deletion failed",
         description: error instanceof Error ? error.message : "An unknown error occurred",
         variant: "destructive",
       });
+      setIsDeleteDialogOpen(false);
+      setReviewToDelete(null);
     }
   };
   
-  const confirmRemoval = (type = 'review') => {
-    return window.confirm(`Are you sure you want to delete this ${type}? This action cannot be undone.`);
+  // Deletion confirmation states
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [reviewToDelete, setReviewToDelete] = useState<string | null>(null);
+  const [isDeletingWhiskey, setIsDeletingWhiskey] = useState(false);
+  
+  // Delete review with proper confirmation dialog
+  const handleDeleteReviewWithConfirm = (reviewId: string) => {
+    setReviewToDelete(reviewId);
+    setIsDeleteDialogOpen(true);
   };
   
-  // Delete the entire whiskey
-  const deleteWhiskey = async () => {
-    if (!confirmRemoval('whiskey')) return;
-    
+  // Confirm deleting a whiskey
+  const confirmDeleteWhiskey = () => {
+    setIsDeletingWhiskey(true);
+    setIsDeleteDialogOpen(true);
+  };
+  
+  // Execute whiskey deletion
+  const executeDeleteWhiskey = async () => {
     try {
+      console.log("Deleting whiskey:", whiskey.id);
       const response = await apiRequest(
         "DELETE", 
         `/api/whiskeys/${whiskey.id}`
@@ -185,17 +215,20 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit }: Whis
           description: "The whiskey has been deleted successfully.",
         });
         
-        // Close the modal
+        // Close the dialogs
+        setIsDeleteDialogOpen(false);
         onClose();
       } else {
         throw new Error("Failed to delete whiskey");
       }
     } catch (error) {
+      console.error("Error deleting whiskey:", error);
       toast({
         title: "Deletion failed",
         description: error instanceof Error ? error.message : "An unknown error occurred",
         variant: "destructive",
       });
+      setIsDeleteDialogOpen(false);
     }
   };
   
