@@ -1833,21 +1833,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
               </div>
             </div>
             
-            {/* Calculated Rating Display */}
-            <div className="mb-4 bg-amber-50 p-3 rounded-lg border border-amber-200">
-              <div className="text-center">
-                <h3 className="font-bold text-gray-900">Calculated Rating</h3>
-                <div className="text-3xl font-bold text-amber-700 my-2">{rating.toFixed(1)}/5</div>
-                <p className="text-sm text-gray-600">Based on your weighted category scores:</p>
-                <div className="text-sm text-gray-600 mt-1">
-                  Nose: {form.getValues('noseScore') || 0}/5 × 1.5, 
-                  Mouth Feel: {form.getValues('mouthfeelScore') || 0}/5 × 2.0, 
-                  Taste: {form.getValues('tasteScore') || 0}/5 × 3.0, 
-                  Finish: {form.getValues('finishScore') || 0}/5 × 2.5, 
-                  Value: {form.getValues('valueScore') || 0}/5 × 1.5
-                </div>
-              </div>
-            </div>
+
             
             {/* Overall Impression */}
             <FormField
@@ -1875,15 +1861,15 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                 <h3 className="section-header">Flavor Profile</h3>
                 <p className="text-sm text-muted-foreground mb-3">Rate each flavor characteristic from 0 to 5</p>
                 
-                {/* Fruits */}
+                {/* Fruit/Floral */}
                 <div className="mb-2">
                   <FormField
                     control={form.control}
-                    name="flavorProfileFruits"
+                    name="flavorProfileFruitFloral"
                     render={({ field }) => (
                       <FormItem>
                         <div className="flex items-center justify-between mb-1">
-                          <FormLabel className="text-[#7d5936]">Fruits</FormLabel>
+                          <FormLabel className="text-[#7d5936]">Fruit/Floral</FormLabel>
                           <span className="text-sm">{field.value || 0}/5</span>
                         </div>
                         <FormControl>
@@ -1891,7 +1877,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                             type="range"
                             min="0"
                             max="5"
-                            step="1"
+                            step="0.5"
                             value={field.value || 0}
                             onChange={field.onChange}
                             className="w-full"
@@ -1903,15 +1889,15 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                   />
                 </div>
                 
-                {/* Spices */}
+                {/* Sweet */}
                 <div className="mb-2">
                   <FormField
                     control={form.control}
-                    name="flavorProfileSpices"
+                    name="flavorProfileSweet"
                     render={({ field }) => (
                       <FormItem>
                         <div className="flex items-center justify-between mb-1">
-                          <FormLabel className="text-[#7d5936]">Spices</FormLabel>
+                          <FormLabel className="text-[#7d5936]">Sweet</FormLabel>
                           <span className="text-sm">{field.value || 0}/5</span>
                         </div>
                         <FormControl>
@@ -1919,7 +1905,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                             type="range"
                             min="0"
                             max="5"
-                            step="1"
+                            step="0.5"
                             value={field.value || 0}
                             onChange={field.onChange}
                             className="w-full"
@@ -1931,15 +1917,15 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                   />
                 </div>
                 
-                {/* Smoke */}
+                {/* Spice */}
                 <div className="mb-2">
                   <FormField
                     control={form.control}
-                    name="flavorProfileSmoke"
+                    name="flavorProfileSpice"
                     render={({ field }) => (
                       <FormItem>
                         <div className="flex items-center justify-between mb-1">
-                          <FormLabel className="text-[#7d5936]">Smoke</FormLabel>
+                          <FormLabel className="text-[#7d5936]">Spice</FormLabel>
                           <span className="text-sm">{field.value || 0}/5</span>
                         </div>
                         <FormControl>
@@ -1947,7 +1933,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                             type="range"
                             min="0"
                             max="5"
-                            step="1"
+                            step="0.5"
                             value={field.value || 0}
                             onChange={field.onChange}
                             className="w-full"
@@ -1959,15 +1945,15 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                   />
                 </div>
                 
-                {/* Cereals */}
+                {/* Herbal */}
                 <div className="mb-2">
                   <FormField
                     control={form.control}
-                    name="flavorProfileCereals"
+                    name="flavorProfileHerbal"
                     render={({ field }) => (
                       <FormItem>
                         <div className="flex items-center justify-between mb-1">
-                          <FormLabel className="text-[#7d5936]">Cereals</FormLabel>
+                          <FormLabel className="text-[#7d5936]">Herbal</FormLabel>
                           <span className="text-sm">{field.value || 0}/5</span>
                         </div>
                         <FormControl>
@@ -1975,7 +1961,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                             type="range"
                             min="0"
                             max="5"
-                            step="1"
+                            step="0.5"
                             value={field.value || 0}
                             onChange={field.onChange}
                             className="w-full"
@@ -1987,15 +1973,15 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                   />
                 </div>
                 
-                {/* Grassy */}
+                {/* Grain */}
                 <div className="mb-2">
                   <FormField
                     control={form.control}
-                    name="flavorProfileGrassy"
+                    name="flavorProfileGrain"
                     render={({ field }) => (
                       <FormItem>
                         <div className="flex items-center justify-between mb-1">
-                          <FormLabel className="text-[#7d5936]">Grassy</FormLabel>
+                          <FormLabel className="text-[#7d5936]">Grain</FormLabel>
                           <span className="text-sm">{field.value || 0}/5</span>
                         </div>
                         <FormControl>
@@ -2003,7 +1989,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                             type="range"
                             min="0"
                             max="5"
-                            step="1"
+                            step="0.5"
                             value={field.value || 0}
                             onChange={field.onChange}
                             className="w-full"
@@ -2015,15 +2001,15 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                   />
                 </div>
                 
-                {/* Floral */}
+                {/* Oak */}
                 <div className="mb-2">
                   <FormField
                     control={form.control}
-                    name="flavorProfileFloral"
+                    name="flavorProfileOak"
                     render={({ field }) => (
                       <FormItem>
                         <div className="flex items-center justify-between mb-1">
-                          <FormLabel className="text-[#7d5936]">Floral</FormLabel>
+                          <FormLabel className="text-[#7d5936]">Oak</FormLabel>
                           <span className="text-sm">{field.value || 0}/5</span>
                         </div>
                         <FormControl>
@@ -2031,7 +2017,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                             type="range"
                             min="0"
                             max="5"
-                            step="1"
+                            step="0.5"
                             value={field.value || 0}
                             onChange={field.onChange}
                             className="w-full"
@@ -2085,12 +2071,12 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
         
         // Get flavor profile values from form
         const flavorProfile = {
-          fruits: form.getValues('flavorProfileFruits') || 0,
-          spices: form.getValues('flavorProfileSpices') || 0, 
-          smoke: form.getValues('flavorProfileSmoke') || 0,
-          cereals: form.getValues('flavorProfileCereals') || 0,
-          grassy: form.getValues('flavorProfileGrassy') || 0,
-          floral: form.getValues('flavorProfileFloral') || 0
+          fruitFloral: form.getValues('flavorProfileFruitFloral') || 0,
+          sweet: form.getValues('flavorProfileSweet') || 0, 
+          spice: form.getValues('flavorProfileSpice') || 0,
+          herbal: form.getValues('flavorProfileHerbal') || 0,
+          grain: form.getValues('flavorProfileGrain') || 0,
+          oak: form.getValues('flavorProfileOak') || 0
         };
         
         return (
