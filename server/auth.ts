@@ -5,7 +5,8 @@ import { fromZodError } from "zod-validation-error";
 import { ZodError } from "zod";
 import session from "express-session";
 import { nanoid } from "nanoid";
-import memorystore from "memorystore";
+import connectPgSimple from "connect-pg-simple";
+import { pool } from "./db";
 
 // Fix TypeScript declaration for SessionData
 declare module "express-session" {
@@ -14,33 +15,54 @@ declare module "express-session" {
   }
 }
 
-// Create memory store
-const MemoryStore = memorystore(session);
+// Create PostgreSQL session store for persistence across deployments
+const PgStore = connectPgSimple(session);
 
-// Authentication middleware
-export function isAuthenticated(req: Request, res: Response, next: NextFunction) {
-  if (req.session.userId) {
+// Enhanced authentication middleware with user validation
+export async function isAuthenticated(req: Request, res: Response, next: NextFunction) {
+  if (!req.session.userId) {
+    return res.status(401).json({ message: "Not authenticated" });
+  }
+  
+  try {
+    // Verify the user actually exists in the database
+    const user = await storage.getUser(req.session.userId);
+    
+    if (!user) {
+      // If user doesn't exist but session has userId, clear the invalid session
+      req.session.destroy((err) => {
+        if (err) {
+          console.error("Error destroying invalid session:", err);
+        }
+      });
+      return res.status(401).json({ message: "User not found" });
+    }
+    
+    // User is authenticated and exists
     next();
-  } else {
-    res.status(401).json({ message: "Unauthorized" });
+  } catch (error) {
+    console.error("Authentication error:", error);
+    res.status(500).json({ message: "Authentication verification failed", error: String(error) });
   }
 }
 
 // Setup authentication and session
 export function setupAuth(app: express.Express) {
-  // Configure session middleware with improved settings
+  // Configure session middleware with PostgreSQL for persistence
   app.use(
     session({
       secret: process.env.SESSION_SECRET || nanoid(32),
-      resave: true,
+      resave: false,
       saveUninitialized: false,
-      store: new MemoryStore({
-        checkPeriod: 86400000 // Prune expired entries every 24h
+      store: new PgStore({
+        pool: pool,
+        tableName: 'session',
+        createTableIfMissing: true
       }),
       cookie: {
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days for longer persistence
         httpOnly: true,
-        secure: false, // For development/testing
+        secure: process.env.NODE_ENV === 'production',
         sameSite: "lax"
       }
     })

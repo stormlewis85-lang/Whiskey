@@ -30,25 +30,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     data: user,
     error,
     isLoading,
+    refetch
   } = useQuery<User | null, Error>({
     queryKey: ["/api/user"],
     queryFn: getQueryFn({ on401: "returnNull" }),
+    // Refresh every minute when the window is visible
+    refetchInterval: 60000, 
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchOnReconnect: true,
+    retry: 3,
+    staleTime: 30000,
   });
 
   const loginMutation = useMutation<User, Error, LoginUser>({
     mutationFn: async (credentials: LoginUser) => {
-      const res = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(credentials),
-        credentials: "include"
-      });
-      
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(errorText || "Login failed");
-      }
-      
+      const res = await apiRequest("POST", "/api/login", credentials);
       return await res.json();
     },
     onSuccess: (user: User) => {
@@ -69,18 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const registerMutation = useMutation<User, Error, InsertUser>({
     mutationFn: async (userData: InsertUser) => {
-      const res = await fetch("/api/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(userData),
-        credentials: "include"
-      });
-      
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(errorText || "Registration failed");
-      }
-      
+      const res = await apiRequest("POST", "/api/register", userData);
       return await res.json();
     },
     onSuccess: (user: User) => {
@@ -101,15 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutMutation = useMutation<void, Error, void>({
     mutationFn: async () => {
-      const res = await fetch("/api/logout", {
-        method: "POST",
-        credentials: "include"
-      });
-      
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(errorText || "Logout failed");
-      }
+      await apiRequest("POST", "/api/logout");
     },
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
