@@ -241,13 +241,6 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
       text: "",
       flavor: "",
       id: nanoid(),
-      // Initialize flavor profile values as numbers
-      flavorProfileFruitFloral: 0,
-      flavorProfileSweet: 0,
-      flavorProfileSpice: 0,
-      flavorProfileHerbal: 0,
-      flavorProfileGrain: 0,
-      flavorProfileOak: 0,
       // Legacy fields
       visual: "",
       nose: "",
@@ -327,52 +320,72 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
 
   const addReviewMutation = useMutation({
     mutationFn: async (data: ReviewNote) => {
+      // Ensure flavor profile values are numbers, not strings
+      const reviewData = {
+        ...data,
+        flavorProfileFruitFloral: Number(data.flavorProfileFruitFloral || 0),
+        flavorProfileSweet: Number(data.flavorProfileSweet || 0),
+        flavorProfileSpice: Number(data.flavorProfileSpice || 0),
+        flavorProfileHerbal: Number(data.flavorProfileHerbal || 0),
+        flavorProfileGrain: Number(data.flavorProfileGrain || 0),
+        flavorProfileOak: Number(data.flavorProfileOak || 0)
+      };
+      
+      console.log("Flavor profile data before submission:", {
+        fruitFloral: reviewData.flavorProfileFruitFloral, 
+        sweet: reviewData.flavorProfileSweet,
+        spice: reviewData.flavorProfileSpice,
+        herbal: reviewData.flavorProfileHerbal,
+        grain: reviewData.flavorProfileGrain,
+        oak: reviewData.flavorProfileOak
+      });
+      
       // Generate a comprehensive summary from all the detailed review sections
       const visualSection = [
-        `COLOR: ${data.visualColor || 'Not specified'}`,
-        `VISCOSITY: ${data.visualViscosity || 'Not specified'}`,
-        `CLARITY: ${data.visualClarity || 'Not specified'}`,
-        `NOTES: ${data.visualNotes || 'None'}`
+        `COLOR: ${reviewData.visualColor || 'Not specified'}`,
+        `VISCOSITY: ${reviewData.visualViscosity || 'Not specified'}`,
+        `CLARITY: ${reviewData.visualClarity || 'Not specified'}`,
+        `NOTES: ${reviewData.visualNotes || 'None'}`
       ].join('\n');
       
       const noseSection = [
-        `AROMAS: ${data.noseAromas?.join(', ') || 'None selected'}`,
-        `SCORE: ${data.noseScore}/5`,
-        `NOTES: ${data.noseNotes || 'None'}`
+        `AROMAS: ${reviewData.noseAromas?.join(', ') || 'None selected'}`,
+        `SCORE: ${reviewData.noseScore}/5`,
+        `NOTES: ${reviewData.noseNotes || 'None'}`
       ].join('\n');
       
       const mouthfeelSection = [
-        `ALCOHOL: ${data.mouthfeelAlcohol || 'Not specified'}`,
-        `VISCOSITY: ${data.mouthfeelViscosity || 'Not specified'}`,
-        `PLEASANTNESS: ${data.mouthfeelPleasantness || 'Not specified'}`,
-        `SCORE: ${data.mouthfeelScore}/5`,
-        `NOTES: ${data.mouthfeelNotes || 'None'}`
+        `ALCOHOL: ${reviewData.mouthfeelAlcohol || 'Not specified'}`,
+        `VISCOSITY: ${reviewData.mouthfeelViscosity || 'Not specified'}`,
+        `PLEASANTNESS: ${reviewData.mouthfeelPleasantness || 'Not specified'}`,
+        `SCORE: ${reviewData.mouthfeelScore}/5`,
+        `NOTES: ${reviewData.mouthfeelNotes || 'None'}`
       ].join('\n');
       
       const tasteSection = [
-        `FLAVORS: ${data.tasteFlavors?.join(', ') || 'None selected'}`,
-        `MATCHES NOSE: ${data.tasteCorrelation ? 'Yes' : 'No'}`,
-        `SCORE: ${data.tasteScore}/5`,
-        `NOTES: ${data.tasteNotes || 'None'}`
+        `FLAVORS: ${reviewData.tasteFlavors?.join(', ') || 'None selected'}`,
+        `MATCHES NOSE: ${reviewData.tasteCorrelation ? 'Yes' : 'No'}`,
+        `SCORE: ${reviewData.tasteScore}/5`,
+        `NOTES: ${reviewData.tasteNotes || 'None'}`
       ].join('\n');
       
       const finishSection = [
-        `FLAVORS: ${data.finishFlavors?.join(', ') || 'None selected'}`,
-        `MATCHES TASTE: ${data.finishCorrelation ? 'Yes' : 'No'}`,
-        `LENGTH: ${data.finishLength || 'Not specified'}`,
-        `PLEASANTNESS: ${data.finishPleasantness || 'Not specified'}`,
-        `SCORE: ${data.finishScore}/5`,
-        `NOTES: ${data.finishNotes || 'None'}`
+        `FLAVORS: ${reviewData.finishFlavors?.join(', ') || 'None selected'}`,
+        `MATCHES TASTE: ${reviewData.finishCorrelation ? 'Yes' : 'No'}`,
+        `LENGTH: ${reviewData.finishLength || 'Not specified'}`,
+        `PLEASANTNESS: ${reviewData.finishPleasantness || 'Not specified'}`,
+        `SCORE: ${reviewData.finishScore}/5`,
+        `NOTES: ${reviewData.finishNotes || 'None'}`
       ].join('\n');
       
       const valueSection = [
         `PRICE: $${whiskey.price}`,
         `PRICE PER POUR: $${(whiskey.price ? (whiskey.price / 14).toFixed(2) : 'N/A')}`,
-        `AVAILABILITY: ${data.valueAvailability || 'Not specified'}`,
-        `BUY AGAIN: ${data.valueBuyAgain || 'Not specified'}`,
-        `OCCASION: ${data.valueOccasion || 'Not specified'}`,
-        `SCORE: ${data.valueScore}/5`,
-        `NOTES: ${data.valueNotes || 'None'}`
+        `AVAILABILITY: ${reviewData.valueAvailability || 'Not specified'}`,
+        `BUY AGAIN: ${reviewData.valueBuyAgain || 'Not specified'}`,
+        `OCCASION: ${reviewData.valueOccasion || 'Not specified'}`,
+        `SCORE: ${reviewData.valueScore}/5`,
+        `NOTES: ${reviewData.valueNotes || 'None'}`
       ].join('\n');
       
       const flavorProfileSection = [
