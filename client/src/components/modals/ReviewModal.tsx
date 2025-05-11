@@ -1683,9 +1683,9 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                       <RadioGroup 
                         onValueChange={(value) => {
                           console.log("Buy Again selected:", value);
-                          field.onChange(value);
+                          form.setValue('valueBuyAgain', value);
                         }} 
-                        value={field.value || ""}
+                        value={form.getValues('valueBuyAgain') || ""}
                         className="flex flex-col space-y-1"
                       >
                         <div className="grid grid-cols-1 gap-2 w-full">
@@ -1724,9 +1724,9 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                       <RadioGroup 
                         onValueChange={(value) => {
                           console.log("Occasion selected:", value);
-                          field.onChange(value);
+                          form.setValue('valueOccasion', value);
                         }} 
-                        value={field.value || ""}
+                        value={form.getValues('valueOccasion') || ""}
                         className="flex flex-col space-y-1"
                       >
                         <div className="grid grid-cols-1 gap-2 w-full">
@@ -1765,9 +1765,9 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                       <RadioGroup 
                         onValueChange={(value) => {
                           console.log("Value Score changed to:", value);
-                          field.onChange(parseInt(value));
+                          form.setValue('valueScore', parseInt(value));
                         }} 
-                        value={field.value?.toString() || ""}
+                        value={form.getValues('valueScore')?.toString() || ""}
                         className="flex justify-between"
                       >
                         {SCORE_OPTIONS.map((score) => (
