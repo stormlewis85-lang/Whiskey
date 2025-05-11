@@ -1,6 +1,8 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import path from "path";
+import fs from "fs";
 
 const app = express();
 
@@ -33,6 +35,17 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Ensure uploads directory exists
+const uploadDir = path.join(process.cwd(), "uploads");
+console.log("Serving uploads from:", uploadDir);
+if (!fs.existsSync(uploadDir)) {
+  console.log("Creating uploads directory...");
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Serve uploads directory for image access
+app.use('/uploads', express.static(uploadDir));
 
 app.use((req, res, next) => {
   const start = Date.now();

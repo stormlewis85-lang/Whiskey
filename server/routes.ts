@@ -22,10 +22,20 @@ import path from "path";
 import fs from "fs";
 import { setupAuth, isAuthenticated } from "./auth";
 
-// Ensure upload directory exists
+// Ensure upload directory exists - use a consistent path that works in all environments
 const uploadDir = path.join(process.cwd(), "uploads");
+console.log("Serving uploads from:", uploadDir);
 if (!fs.existsSync(uploadDir)) {
+  console.log("Creating uploads directory:", uploadDir);
   fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Make sure directory is writable
+try {
+  fs.accessSync(uploadDir, fs.constants.W_OK);
+  console.log("Uploads directory is writable");
+} catch (err) {
+  console.error("Error: Uploads directory is not writable:", err);
 }
 
 // Setup multer for Excel file uploads (in memory)
@@ -265,8 +275,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Upload bottle image (user must be authenticated)
   app.post("/api/whiskeys/:id/image", isAuthenticated, imageUpload.single("image"), async (req: Request, res: Response) => {
     console.log("Image upload request received for whiskey ID:", req.params.id);
-    console.log("Request files:", req.file || "No file");
+    console.log("Request files:", req.file ? `File: ${req.file.filename}, size: ${req.file.size}` : "No file");
     console.log("Request body:", req.body);
+    console.log("User from session:", req.session.userId);
+    console.log("Auth header:", req.headers.authorization ? "Present" : "Not present");
     
     try {
       const id = parseInt(req.params.id);
@@ -283,20 +295,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log("File uploaded successfully:", req.file.filename);
       
-      // Get the path to the uploaded image
+      // Get the path to the uploaded image (must start with / for correct URL path)
       const imagePath = `/uploads/${req.file.filename}`;
       console.log("Image path:", imagePath);
       
-      // Update the whiskey with the new image path - with user ID check
-      const updatedWhiskey = await storage.updateWhiskey(id, { image: imagePath }, req.session.userId);
+      // Get userId from session or token
+      const userId = req.session.userId;
+      if (!userId) {
+        console.log("No userId in session, cannot update whiskey");
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      // Get whiskey first to check if it exists and is owned by the user
+      const whiskey = await storage.getWhiskey(id);
+      
+      if (!whiskey) {
+        console.log("Whiskey not found, deleting uploaded file");
+        try {
+          fs.unlinkSync(path.join(uploadDir, req.file.filename));
+        } catch (unlinkErr) {
+          console.error("Error deleting file after whiskey not found:", unlinkErr);
+        }
+        return res.status(404).json({ message: "Whiskey not found" });
+      }
+      
+      if (whiskey.userId !== userId) {
+        console.log(`Whiskey owned by user ${whiskey.userId}, not by current user ${userId}`);
+        try {
+          fs.unlinkSync(path.join(uploadDir, req.file.filename));
+        } catch (unlinkErr) {
+          console.error("Error deleting file after ownership check:", unlinkErr);
+        }
+        return res.status(403).json({ message: "You don't own this whiskey" });
+      }
+      
+      // Update the whiskey with the new image path
+      const updatedWhiskey = await storage.updateWhiskey(id, { image: imagePath }, userId);
       console.log("Whiskey updated with image path:", updatedWhiskey ? "success" : "failed");
       
       if (!updatedWhiskey) {
-        console.log("Whiskey not found or not owned by user, deleting uploaded file");
-        // If whiskey not found, delete the uploaded file to avoid orphaned files
-        fs.unlinkSync(path.join(process.cwd(), "uploads", req.file.filename));
-        return res.status(404).json({ message: "Whiskey not found or not owned by you" });
+        console.log("Failed to update whiskey with image path, deleting uploaded file");
+        try {
+          fs.unlinkSync(path.join(uploadDir, req.file.filename));
+        } catch (unlinkErr) {
+          console.error("Error deleting file after update failure:", unlinkErr);
+        }
+        return res.status(500).json({ message: "Failed to update whiskey with image" });
       }
+      
+      // Ensure the image is properly served
+      console.log("Full image file path:", path.join(uploadDir, req.file.filename));
+      console.log("File exists:", fs.existsSync(path.join(uploadDir, req.file.filename)));
       
       console.log("Image upload successful, returning response");
       res.json({ 
@@ -311,7 +360,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.file) {
         try {
           console.log("Deleting uploaded file due to error");
-          fs.unlinkSync(path.join(process.cwd(), 'uploads', req.file.filename));
+          fs.unlinkSync(path.join(uploadDir, req.file.filename));
         } catch (err) {
           console.error("Error deleting file:", err);
           // Ignore errors when cleaning up files
