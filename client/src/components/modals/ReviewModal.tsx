@@ -1666,11 +1666,19 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                         value={field.value || ""}
                         className="flex flex-col space-y-1"
                       >
-                        <div className="grid grid-cols-1 gap-2">
+                        <div className="grid grid-cols-1 gap-2 w-full">
                           {BUY_AGAIN_OPTIONS.map((option) => (
                             <div key={option.value} className="flex items-center space-x-2">
-                              <RadioGroupItem value={option.value} id={`buy-again-${option.value}`} />
-                              <Label htmlFor={`buy-again-${option.value}`}>{option.label}</Label>
+                              <RadioGroupItem 
+                                value={option.value} 
+                                id={`buy-again-${option.value}`} 
+                              />
+                              <Label 
+                                htmlFor={`buy-again-${option.value}`} 
+                                className="w-full cursor-pointer"
+                              >
+                                {option.label}
+                              </Label>
                             </div>
                           ))}
                         </div>
@@ -1865,7 +1873,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                 <div className="border-b pb-3 border-[#D9C4A3] last:border-0">
                   <div className="flex justify-between items-center mb-2">
                     <h4 className="font-medium text-[#7d5936]">Value:</h4>
-                    <span className="text-[#794E2F] font-bold">{form.getValues('valueScore')}/5</span>
+                    <span className="text-[#794E2F] font-bold">{form.getValues('valueScore') || 0}/5</span>
                   </div>
                   <div className="flex justify-end">
                     <StarRating 
@@ -2367,14 +2375,6 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
     if (isOpen) {
       // Always reset the review completely when opening the dialog
       resetReview();
-      
-      // Additional explicit reset for Value fields to ensure they are properly cleared
-      // We need to set these to empty strings rather than undefined for radio groups
-      form.setValue('valueAvailability', '');
-      form.setValue('valueBuyAgain', '');
-      form.setValue('valueOccasion', '');
-      form.setValue('valueScore', undefined);
-      form.setValue('valueNotes', '');
       
       // Force reset scroll position with a delay to ensure the modal is fully rendered
       setTimeout(() => {
