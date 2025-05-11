@@ -118,6 +118,9 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
   const [tasteAdjustment, setTasteAdjustment] = useState(0);
   const [finishAdjustment, setFinishAdjustment] = useState(0);
   const [valueAdjustment, setValueAdjustment] = useState(0);
+  
+  // Special state for value score to prevent mirroring
+  const [valueScoreState, setValueScoreState] = useState<number | undefined>(undefined);
   const [finalNotes, setFinalNotes] = useState('');
   
   // Handle swipe gestures
@@ -1694,6 +1697,11 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                               <RadioGroupItem 
                                 value={option.value} 
                                 id={`buy-again-${option.value}`} 
+                                checked={form.getValues('valueBuyAgain') === option.value}
+                                onClick={() => {
+                                  console.log("Select Buy Again:", option.value);
+                                  form.setValue('valueBuyAgain', option.value, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
+                                }}
                               />
                               <Label 
                                 htmlFor={`buy-again-${option.value}`} 
@@ -1735,6 +1743,11 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                               <RadioGroupItem 
                                 value={option.value} 
                                 id={`occasion-${option.value}`} 
+                                checked={form.getValues('valueOccasion') === option.value}
+                                onClick={() => {
+                                  console.log("Select Occasion:", option.value);
+                                  form.setValue('valueOccasion', option.value, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
+                                }}
                               />
                               <Label 
                                 htmlFor={`occasion-${option.value}`} 
@@ -1765,16 +1778,22 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                       <RadioGroup 
                         onValueChange={(value) => {
                           console.log("Value Score changed to:", value);
-                          form.setValue('valueScore', parseInt(value));
+                          form.setValue('valueScore', parseInt(value), { shouldDirty: true, shouldTouch: true, shouldValidate: true });
                         }} 
-                        value={form.getValues('valueScore')?.toString() || ""}
+                        value={valueScoreState?.toString() || ""}
                         className="flex justify-between"
                       >
                         {SCORE_OPTIONS.map((score) => (
                           <div key={score.value} className="flex flex-col items-center">
                             <RadioGroupItem 
                               value={score.value.toString()} 
-                              id={`value-score-${score.value}`} 
+                              id={`value-score-${score.value}`}
+                              checked={valueScoreState === score.value}
+                              onClick={() => {
+                                console.log("Direct click on Value Score:", score.value);
+                                setValueScoreState(score.value);
+                                form.setValue('valueScore', score.value, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
+                              }}
                             />
                             <Label 
                               htmlFor={`value-score-${score.value}`} 
