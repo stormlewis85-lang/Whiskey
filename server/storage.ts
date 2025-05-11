@@ -8,7 +8,7 @@ import {
   UpdatePriceTrack, MarketValue, InsertMarketValue, UpdateMarketValue
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, or, asc, desc } from "drizzle-orm";
+import { eq, and, or, asc, desc, isNull } from "drizzle-orm";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 
@@ -362,7 +362,19 @@ export class DatabaseStorage implements IStorage {
     
     // If userId is provided, filter by user
     if (userId !== undefined) {
-      query.where(eq(whiskeys.userId, userId));
+      if (userId === 1) {
+        // For Admin (userId 1), show both their own whiskeys and legacy whiskeys with no userId
+        query.where(
+          or(
+            eq(whiskeys.userId, userId),
+            // Include whiskeys with null userId (legacy data) only for Admin
+            isNull(whiskeys.userId)
+          )
+        );
+      } else {
+        // For other users, show only their own whiskeys
+        query.where(eq(whiskeys.userId, userId));
+      }
     }
     
     // Execute the query with ordering
@@ -375,7 +387,18 @@ export class DatabaseStorage implements IStorage {
     
     // If userId is provided, only return the whiskey if it belongs to that user
     if (userId !== undefined) {
-      conditions.push(eq(whiskeys.userId, userId));
+      if (userId === 1) {
+        // For Admin (userId 1), allow access to their own whiskeys and legacy whiskeys with no userId
+        conditions.push(
+          or(
+            eq(whiskeys.userId, userId),
+            eq(whiskeys.userId, null)
+          )
+        );
+      } else {
+        // For other users, only allow access to their own whiskeys
+        conditions.push(eq(whiskeys.userId, userId));
+      }
     }
     
     // Execute the query with the combined conditions
