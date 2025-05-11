@@ -492,6 +492,14 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
     const finishScore = Number(form.getValues('finishScore')) || 0;
     const valueScore = Number(form.getValues('valueScore')) || 0;
     
+    console.log("Calculating weighted scores with raw values:", {
+      noseScore,
+      mouthfeelScore,
+      tasteScore,
+      finishScore,
+      valueScore
+    });
+    
     // Calculate individual weighted scores
     const noseWeighted = noseScore * 1.5;
     const mouthfeelWeighted = mouthfeelScore * 2.0;
@@ -508,7 +516,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
     // Calculate final score (weighted total * 2)
     const finalScore = weightedTotal * 2;
     
-    return {
+    const result = {
       nose: parseFloat(noseWeighted.toFixed(1)),
       mouthfeel: parseFloat(mouthfeelWeighted.toFixed(1)),
       taste: parseFloat(tasteWeighted.toFixed(1)),
@@ -518,6 +526,9 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
       fiveStarScore: parseFloat(fiveStarScore.toFixed(1)),
       finalScore: Math.round(finalScore)
     };
+    
+    console.log("Weighted score calculation result:", result);
+    return result;
   };
   
   // Reference to dialog content div for scrolling
@@ -1764,19 +1775,35 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                   <FormItem>
                     <FormControl>
                       <RadioGroup 
-                        onValueChange={(value) => field.onChange(parseInt(value))} 
+                        onValueChange={(value) => {
+                          console.log("Value Score changed to:", value);
+                          field.onChange(parseInt(value));
+                        }} 
                         value={field.value?.toString() || ""}
                         className="flex justify-between"
                       >
                         {SCORE_OPTIONS.map((score) => (
-                          <div key={score.value} className="flex flex-col items-center">
+                          <div key={score.value} 
+                            className={`flex flex-col items-center`}
+                          >
+                            <div 
+                              className={`w-10 h-10 rounded-full flex items-center justify-center mb-1 cursor-pointer transition-colors ${
+                                field.value === score.value 
+                                  ? "bg-amber-500 text-white" 
+                                  : "bg-gray-100 hover:bg-gray-200"
+                              }`}
+                              onClick={() => field.onChange(score.value)}
+                            >
+                              {score.value}
+                            </div>
                             <RadioGroupItem 
                               value={score.value.toString()} 
-                              id={`value-score-${score.value}`} 
+                              id={`value-score-${score.value}`}
+                              className="sr-only" 
                             />
                             <Label 
                               htmlFor={`value-score-${score.value}`} 
-                              className="text-xs mt-1 cursor-pointer"
+                              className="text-xs cursor-pointer"
                             >
                               {score.value}
                             </Label>
@@ -2165,10 +2192,10 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
         );
       case ReviewPage.FinalScores:
         const weightedScores = calculateWeightedScores();
-        const totalScore = weightedScores.nose + weightedScores.mouthfeel + 
-                          weightedScores.taste + weightedScores.finish + 
-                          weightedScores.value;
-        const finalRating = parseFloat((totalScore / 10.5).toFixed(1));
+        console.log("Final Scores - Weighted scores:", weightedScores);
+        
+        // Use the pre-calculated fiveStarScore instead of recalculating
+        const finalRating = weightedScores.fiveStarScore;
         
         // Get flavor profile values from form
         const flavorProfile = {
