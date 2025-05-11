@@ -1670,13 +1670,22 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                   <FormItem>
                     <FormControl>
                       <RadioGroup 
-                        onValueChange={field.onChange} 
+                        onValueChange={(value) => {
+                          console.log("Buy Again selected:", value);
+                          field.onChange(value);
+                        }} 
                         value={field.value || ""}
                         className="flex flex-col space-y-1"
                       >
                         <div className="grid grid-cols-1 gap-2 w-full">
                           {BUY_AGAIN_OPTIONS.map((option) => (
-                            <div key={option.value} className="flex items-center space-x-2">
+                            <div key={option.value} 
+                              className={`flex items-center space-x-2 p-2 border rounded-md ${
+                                field.value === option.value 
+                                  ? "bg-amber-50 border-amber-300" 
+                                  : "border-gray-200"
+                              }`}
+                            >
                               <RadioGroupItem 
                                 value={option.value} 
                                 id={`buy-again-${option.value}`} 
@@ -1708,13 +1717,22 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                   <FormItem>
                     <FormControl>
                       <RadioGroup 
-                        onValueChange={field.onChange} 
+                        onValueChange={(value) => {
+                          console.log("Occasion selected:", value);
+                          field.onChange(value);
+                        }} 
                         value={field.value || ""}
                         className="flex flex-col space-y-1"
                       >
                         <div className="grid grid-cols-1 gap-2 w-full">
                           {OCCASION_OPTIONS.map((option) => (
-                            <div key={option.value} className="flex items-center space-x-2">
+                            <div key={option.value} 
+                              className={`flex items-center space-x-2 p-2 border rounded-md ${
+                                field.value === option.value 
+                                  ? "bg-amber-50 border-amber-300" 
+                                  : "border-gray-200"
+                              }`}
+                            >
                               <RadioGroupItem 
                                 value={option.value} 
                                 id={`occasion-${option.value}`} 
