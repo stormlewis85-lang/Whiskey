@@ -1690,13 +1690,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                       >
                         <div className="grid grid-cols-1 gap-2 w-full">
                           {BUY_AGAIN_OPTIONS.map((option) => (
-                            <div key={option.value} 
-                              className={`flex items-center space-x-2 p-2 border rounded-md ${
-                                field.value === option.value 
-                                  ? "bg-amber-50 border-amber-300" 
-                                  : "border-gray-200"
-                              }`}
-                            >
+                            <div key={option.value} className="flex items-center space-x-2">
                               <RadioGroupItem 
                                 value={option.value} 
                                 id={`buy-again-${option.value}`} 
@@ -1737,13 +1731,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                       >
                         <div className="grid grid-cols-1 gap-2 w-full">
                           {OCCASION_OPTIONS.map((option) => (
-                            <div key={option.value} 
-                              className={`flex items-center space-x-2 p-2 border rounded-md ${
-                                field.value === option.value 
-                                  ? "bg-amber-50 border-amber-300" 
-                                  : "border-gray-200"
-                              }`}
-                            >
+                            <div key={option.value} className="flex items-center space-x-2">
                               <RadioGroupItem 
                                 value={option.value} 
                                 id={`occasion-${option.value}`} 
@@ -1783,23 +1771,10 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                         className="flex justify-between"
                       >
                         {SCORE_OPTIONS.map((score) => (
-                          <div key={score.value} 
-                            className={`flex flex-col items-center`}
-                          >
-                            <div 
-                              className={`w-10 h-10 rounded-full flex items-center justify-center mb-1 cursor-pointer transition-colors ${
-                                field.value === score.value 
-                                  ? "bg-amber-500 text-white" 
-                                  : "bg-gray-100 hover:bg-gray-200"
-                              }`}
-                              onClick={() => field.onChange(score.value)}
-                            >
-                              {score.value}
-                            </div>
+                          <div key={score.value} className="flex flex-col items-center">
                             <RadioGroupItem 
                               value={score.value.toString()} 
-                              id={`value-score-${score.value}`}
-                              className="sr-only" 
+                              id={`value-score-${score.value}`} 
                             />
                             <Label 
                               htmlFor={`value-score-${score.value}`} 
