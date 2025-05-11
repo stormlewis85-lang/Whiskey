@@ -82,14 +82,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // If user is authenticated, get only their whiskeys
       if (req.session && req.session.userId) {
-        const whiskeys = await storage.getWhiskeys(req.session.userId);
+        const userId = req.session.userId;
+        console.log(`Getting whiskeys for authenticated user ID: ${userId}`);
+        
+        const whiskeys = await storage.getWhiskeys(userId);
+        
+        console.log(`Retrieved ${whiskeys.length} whiskey(s) for user ID: ${userId}`);
+        if (whiskeys.length > 0) {
+          console.log('Sample whiskey data:', {
+            id: whiskeys[0].id,
+            name: whiskeys[0].name,
+            userId: whiskeys[0].userId
+          });
+        }
+        
         return res.json(whiskeys);
       }
       
       // If no user, return all whiskeys (public or demo view)
+      console.log('Getting whiskeys for unauthenticated user (public view)');
       const whiskeys = await storage.getWhiskeys();
+      console.log(`Retrieved ${whiskeys.length} whiskey(s) for public view`);
       res.json(whiskeys);
     } catch (error) {
+      console.error("Error retrieving whiskeys:", error);
       res.status(500).json({ message: "Failed to retrieve whiskeys", error: String(error) });
     }
   });
@@ -125,13 +141,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/whiskeys", isAuthenticated, async (req: Request, res: Response) => {
     try {
       // Ensure the whiskey is associated with the current user
+      const userId = req.session.userId;
+      console.log(`Creating new whiskey for user ID: ${userId}`);
+      
       const whiskey = {
         ...req.body,
-        userId: req.session.userId
+        userId: userId
       };
+      
+      console.log("New whiskey data:", { 
+        name: whiskey.name, 
+        distillery: whiskey.distillery,
+        userId: whiskey.userId
+      });
       
       const validatedData = insertWhiskeySchema.parse(whiskey);
       const newWhiskey = await storage.createWhiskey(validatedData);
+      console.log(`Successfully created whiskey ID ${newWhiskey.id} for user ${userId}`);
       res.status(201).json(newWhiskey);
     } catch (error) {
       if (error instanceof ZodError) {
