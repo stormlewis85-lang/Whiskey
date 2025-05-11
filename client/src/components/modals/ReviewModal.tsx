@@ -1639,8 +1639,16 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                           {AVAILABILITY_OPTIONS.map((option) => (
                             <div key={option.value} className="flex items-center space-x-2">
-                              <RadioGroupItem value={option.value} id={`availability-${option.value}`} />
-                              <Label htmlFor={`availability-${option.value}`}>{option.label}</Label>
+                              <RadioGroupItem 
+                                value={option.value} 
+                                id={`availability-${option.value}`} 
+                              />
+                              <Label 
+                                htmlFor={`availability-${option.value}`} 
+                                className="cursor-pointer"
+                              >
+                                {option.label}
+                              </Label>
                             </div>
                           ))}
                         </div>
@@ -1704,11 +1712,19 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                         value={field.value || ""}
                         className="flex flex-col space-y-1"
                       >
-                        <div className="grid grid-cols-1 gap-2">
+                        <div className="grid grid-cols-1 gap-2 w-full">
                           {OCCASION_OPTIONS.map((option) => (
                             <div key={option.value} className="flex items-center space-x-2">
-                              <RadioGroupItem value={option.value} id={`occasion-${option.value}`} />
-                              <Label htmlFor={`occasion-${option.value}`}>{option.label}</Label>
+                              <RadioGroupItem 
+                                value={option.value} 
+                                id={`occasion-${option.value}`} 
+                              />
+                              <Label 
+                                htmlFor={`occasion-${option.value}`} 
+                                className="w-full cursor-pointer"
+                              >
+                                {option.label}
+                              </Label>
                             </div>
                           ))}
                         </div>
@@ -1736,8 +1752,16 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                       >
                         {SCORE_OPTIONS.map((score) => (
                           <div key={score.value} className="flex flex-col items-center">
-                            <RadioGroupItem value={score.value.toString()} id={`value-score-${score.value}`} />
-                            <Label htmlFor={`value-score-${score.value}`} className="text-xs mt-1">{score.value}</Label>
+                            <RadioGroupItem 
+                              value={score.value.toString()} 
+                              id={`value-score-${score.value}`} 
+                            />
+                            <Label 
+                              htmlFor={`value-score-${score.value}`} 
+                              className="text-xs mt-1 cursor-pointer"
+                            >
+                              {score.value}
+                            </Label>
                           </div>
                         ))}
                       </RadioGroup>
@@ -1746,6 +1770,12 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                   </FormItem>
                 )}
               />
+              
+              {/* Helpful label descriptions */}
+              <div className="flex justify-between mt-1 text-xs text-muted-foreground px-2">
+                <div>Poor</div>
+                <div className="ml-auto">Excellent</div>
+              </div>
             </div>
             
             {/* Additional Notes */}
