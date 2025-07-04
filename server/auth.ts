@@ -12,6 +12,7 @@ import { pool } from "./db";
 declare module "express-session" {
   interface SessionData {
     userId?: number;
+    username?: string;
   }
 }
 
@@ -70,7 +71,10 @@ export async function isAuthenticated(req: Request, res: Response, next: NextFun
       return res.status(401).json({ message: "Not authenticated - Token expired" });
     }
     
-    // Add user id to request for later use
+    // Ensure session exists and add user id to request for later use
+    if (!req.session) {
+      req.session = {} as any;
+    }
     req.session.userId = user.id;
     
     // User is authenticated via token

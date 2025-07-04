@@ -199,12 +199,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/whiskeys/:id", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
-      const userId = req.session.userId;
+      const userId = req.session?.userId;
       
       console.log(`Delete whiskey request - ID: ${id}, User ID: ${userId}`);
+      console.log(`Session data:`, { sessionExists: !!req.session, sessionUserId: req.session?.userId });
       
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid ID format" });
+      }
+      
+      if (!userId) {
+        console.log("No userId found in session during delete operation");
+        return res.status(401).json({ message: "Your login expired. Please log in again to continue." });
       }
       
       // In production, bypass the user check for now
