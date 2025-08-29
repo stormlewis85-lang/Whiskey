@@ -51,23 +51,32 @@ export async function isAuthenticated(req: Request, res: Response, next: NextFun
   try {
     // Get the auth token from the Authorization header
     const authHeader = req.headers.authorization;
+    console.log(`Auth header received: ${authHeader ? 'Present' : 'Missing'}`);
+    
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log("No Bearer token in Authorization header");
       return res.status(401).json({ message: "Not authenticated - No token provided" });
     }
     
     const token = authHeader.split(' ')[1];
+    console.log(`Extracted token: ${token ? token.substring(0, 10) + '...' : 'None'}`);
+    
     if (!token) {
       return res.status(401).json({ message: "Not authenticated - Invalid token format" });
     }
     
     // Validate the token
+    console.log(`Looking up user by token...`);
     const user = await storage.getUserByToken(token);
     
     if (!user) {
+      console.log(`No user found for token: ${token.substring(0, 10)}...`);
       return res.status(401).json({ message: "Not authenticated - Invalid token" });
     }
     
+    console.log(`Found user: ${user.username} (ID: ${user.id}), checking expiry...`);
     if (user.tokenExpiry && new Date(user.tokenExpiry) < new Date()) {
+      console.log(`Token expired for user ${user.username}: ${user.tokenExpiry}`);
       return res.status(401).json({ message: "Not authenticated - Token expired" });
     }
     
