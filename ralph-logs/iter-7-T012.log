@@ -1,0 +1,49 @@
+I've identified the issue and have a fix ready, but I need write permission to the file. Let me summarize what I found and the fix needed:
+
+## Token Validation Bug Analysis
+
+**Root Cause (in `server/auth.ts` lines 83-91):**
+
+The `isAuthenticated` middleware has a bug in how it handles token-based authentication. When a user authenticates via Bearer token (instead of session cookie):
+
+1. It correctly validates the token and finds the user
+2. It sets `req.session.userId = user.id` 
+3. But it has problematic code that tries to create a session manually: `if (!req.session) { req.session = {} as any; }` - this won't work properly with express-session
+4. Most critically, it calls `next()` immediately **without saving the session first**
+
+This means when the DELETE route handler tries to access `req.session?.userId`, the session hasn't been persisted yet, causing the validation to fail.
+
+**The Fix:**
+
+In `server/auth.ts`, lines 83-91, replace:
+```typescript
+// Ensure session exists and add user id to request for later use
+if (!req.session) {
+  req.session = {} as any;
+}
+req.session.userId = user.id;
+
+// User is authenticated via token
+console.log(`User authenticated via token: ${user.username} (ID: ${user.id})`);
+next();
+```
+
+With:
+```typescript
+// Add user id to session and save it for later use
+req.session.userId = user.id;
+
+// User is authenticated via token - save session before proceeding
+console.log(`User authenticated via token: ${user.username} (ID: ${user.id})`);
+
+// Save the session to persist the userId
+req.session.save((err) => {
+  if (err) {
+    console.error("Error saving session during token auth:", err);
+    // Continue anyway since we have the userId set for this request
+  }
+  next();
+});
+```
+
+**Please grant write permission to `server/auth.ts` so I can apply this fix.**

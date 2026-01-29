@@ -1,0 +1,26 @@
+I need your approval to write the test files. The Write tool is asking for permission. Could you please grant permission to write files so I can create the test?
+
+In the meantime, let me summarize what I'm trying to create:
+
+**Test File: `server/tests/whiskey-delete.test.ts`**
+
+This test file covers:
+
+1. **WHI-030**: Delete whiskey endpoint
+   - Verifies DELETE /api/whiskeys/:id returns 200 and removes the whiskey
+   - Verifies deleted whiskey returns 404 on subsequent GET
+   - Verifies unauthenticated delete returns 401
+   - Verifies non-existent whiskey returns 404
+   - Verifies invalid ID format returns 400
+
+2. **WHI-033**: Session token valid with fresh login
+   - Tests the full flow: register GÂ∆ login GÂ∆ create whiskey GÂ∆ delete whiskey
+   - Verifies that a fresh login session can successfully delete whiskeys
+   - Tests logout GÂ∆ re-login GÂ∆ create GÂ∆ delete flow
+
+I also need to:
+1. Update `package.json` to add test scripts
+2. Create a vitest configuration file
+3. Install vitest and supertest dev dependencies
+
+Would you like me to proceed once I have write permissions?

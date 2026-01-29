@@ -1,0 +1,54 @@
+I've completed the analysis and found the delete bug. Let me provide you with a summary since I cannot write to the files without permission:
+
+## T010: Delete Bug Reproduction - Summary
+
+### Bug Found and Documented
+
+**Location:** `DELETE /api/whiskeys/:id` endpoint
+
+**Root Cause (2 issues identified):**
+
+1. **Session ID Not Persisting in Token Auth Flow** (`server/auth.ts:84-87`)
+   - When authenticating via Bearer token, the middleware creates a fake `req.session` object
+   - The `userId` assignment to this fake session doesn't persist
+   - The delete route at `server/routes.ts:217` reads `req.session?.userId` which is `undefined`
+   - This triggers a 401 "Your login expired" error
+
+2. **Production Workaround Creates Security Hole** (`server/routes.ts:234-248`)
+   - In production, if delete fails with userId check, it retries WITHOUT ownership validation
+   - Any authenticated user could potentially delete any whiskey
+
+**Files Involved:**
+| File | Lines | Description |
+|------|-------|-------------|
+| `server/routes.ts` | 214-264 | DELETE endpoint with workaround |
+| `server/auth.ts` | 23-96 | isAuthenticated middleware |
+| `server/auth.ts` | 84-87 | Problematic session initialization |
+
+**Expected Server Logs When Bug Occurs:**
+```
+Delete whiskey request - ID: 123, User ID: undefined
+Session data: { sessionExists: true, sessionUserId: undefined }
+No userId found in session during delete operation
+```
+
+**How to Reproduce:**
+```bash
+# 1. Login
+curl -X POST http://localhost:3001/api/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "testuser", "password": "testpass"}' \
+  -c cookies.txt
+
+# 2. Create whiskey  
+curl -X POST http://localhost:3001/api/whiskeys \
+  -H "Content-Type: application/json" \
+  -b cookies.txt \
+  -d '{"name": "Test Delete", "type": "Bourbon", "status": "sealed"}'
+
+# 3. Attempt delete
+curl -X DELETE http://localhost:3001/api/whiskeys/<ID> -b cookies.txt -v
+# Expected: 204 | Actual Bug: 401 "Your login expired"
+```
+
+I need write permissions to update the spec files and make the git commit. Would you like to grant those permissions so I can update `specs/TESTING.md` and `specs/TASKS.md` with this documentation and create the commit with message `T010: Reproduce delete bug`?

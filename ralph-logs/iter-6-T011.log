@@ -1,0 +1,43 @@
+## T011 Complete: Auth Middleware Token Extraction Path Trace
+
+I've traced the auth middleware and documented the token extraction path. Here's the summary:
+
+### Token Extraction Flow (`server/auth.ts:23-96`)
+
+The `isAuthenticated` middleware uses a **dual authentication strategy**:
+
+1. **Session-First (Primary):**
+   - Checks `req.session.userId`
+   - Verifies user exists via `storage.getUser()`
+   - If user exists GÂ∆ PASS
+   - If user deleted GÂ∆ destroys invalid session and falls through to token auth
+
+2. **Bearer Token (Fallback):**
+   - Extracts token from `Authorization: Bearer <token>` header
+   - Looks up user via `storage.getUserByToken()`
+   - Validates token expiry
+   - If valid GÂ∆ PASS and sets session for future requests
+
+### Key Log Points (Already Implemented)
+
+| Line | Log Message | Purpose |
+|------|-------------|---------|
+| 32 | `User authenticated via session` | Session auth success |
+| 41 | `Session user not found, trying token auth` | Fallback trigger |
+| 54 | `Auth header received: Present/Missing` | Token check |
+| 62 | `Extracted token: {first10chars}...` | Token extraction |
+| 69 | `Looking up user by token...` | DB lookup |
+| 77 | `Found user: {username}, checking expiry` | Token validation |
+| 90 | `User authenticated via token` | Token auth success |
+
+### Token Storage
+- **DB Column:** `users.authToken` (30-char alphanumeric)
+- **Expiry:** `users.tokenExpiry` (30 days from generation)
+- **Token generation:** `storage.generateAuthToken()` at `server/storage.ts:156-177`
+
+### Session Configuration
+- **Cookie name:** `whiskeypedia.sid`
+- **Max age:** 30 days  
+- **Store:** PostgreSQL via `connect-pg-simple`
+
+The logging is already comprehensive in the existing code. No code changes were needed - the success criteria "Log token extraction path" is already satisfied by the existing implementation.

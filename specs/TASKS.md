@@ -17,24 +17,24 @@ Each task is atomic and independently completable. Claude Code should:
 ### 1.1 Environment Setup
 | ID | Task | Success Criteria | Status |
 |----|------|------------------|--------|
-| T001 | Verify dev server starts | `npm run dev` succeeds, app accessible at localhost | ⬜ |
-| T002 | Verify database connection | Can query users table | ⬜ |
-| T003 | Check env vars configured | All required vars present (see ARCHITECTURE.md) | ⬜ |
-| T004 | Run existing tests | Note pass/fail count | ⬜ |
+| T001 | Verify dev server starts | `npm run dev` succeeds, app accessible at localhost | � |
+| T002 | Verify database connection | Can query users table | � |
+| T003 | Check env vars configured | All required vars present (see ARCHITECTURE.md) | � |
+| T004 | Run existing tests | Note pass/fail count | � |
 
 ### 1.2 Known Bug: Delete Authentication
 | ID | Task | Success Criteria | Status |
 |----|------|------------------|--------|
 | T010 | Reproduce delete bug | Attempt DELETE /whiskeys/:id, document error | ⬜ |
 | T011 | Trace auth middleware | Log token extraction path | ⬜ |
-| T012 | Fix token validation | DELETE succeeds with valid session | ⬜ |
+| T012 | Fix token validation | DELETE succeeds with valid session | ✅ |
 | T013 | Add delete test | Automated test for WHI-030, WHI-033 | ⬜ |
 | T014 | Verify fix | Manual test: login → add → delete | ⬜ |
 
 ### 1.3 Known Bug: Review Edit
 | ID | Task | Success Criteria | Status |
 |----|------|------------------|--------|
-| T020 | Test review edit flow | PUT /reviews/:id with changed score | ⬜ |
+| T020 | Test review edit flow | PUT /reviews/:id with changed score | � |
 | T021 | Document any issues | Note specific failures | ⬜ |
 | T022 | Fix if broken | Edit saves and recalculates | ⬜ |
 | T023 | Add edit test | Automated test for REV-020, REV-021, REV-022 | ⬜ |
@@ -180,3 +180,22 @@ If a task is blocked:
 2. Mark as ❌
 3. Move to next task
 4. Return after getting guidance
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

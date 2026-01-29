@@ -80,15 +80,20 @@ export async function isAuthenticated(req: Request, res: Response, next: NextFun
       return res.status(401).json({ message: "Not authenticated - Token expired" });
     }
     
-    // Ensure session exists and add user id to request for later use
-    if (!req.session) {
-      req.session = {} as any;
-    }
+    // Add user id to session and save it for later use
     req.session.userId = user.id;
-    
-    // User is authenticated via token
+
+    // User is authenticated via token - save session before proceeding
     console.log(`User authenticated via token: ${user.username} (ID: ${user.id})`);
-    next();
+
+    // Save the session to persist the userId
+    req.session.save((err) => {
+      if (err) {
+        console.error("Error saving session during token auth:", err);
+        // Continue anyway since we have the userId set for this request
+      }
+      next();
+    });
   } catch (error) {
     console.error("Token authentication error:", error);
     res.status(500).json({ message: "Authentication verification failed", error: String(error) });
