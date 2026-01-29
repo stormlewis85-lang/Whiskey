@@ -25,11 +25,11 @@ Each task is atomic and independently completable. Claude Code should:
 ### 1.2 Known Bug: Delete Authentication
 | ID | Task | Success Criteria | Status |
 |----|------|------------------|--------|
-| T010 | Reproduce delete bug | Attempt DELETE /whiskeys/:id, document error | ⬜ |
-| T011 | Trace auth middleware | Log token extraction path | ⬜ |
+| T010 | Reproduce delete bug | Attempt DELETE /whiskeys/:id, document error | ✅ |
+| T011 | Trace auth middleware | Log token extraction path | ✅ |
 | T012 | Fix token validation | DELETE succeeds with valid session | ✅ |
 | T013 | Add delete test | Automated test for WHI-030, WHI-033 | ✅ |
-| T014 | Verify fix | Manual test: login → add → delete | ⬜ |
+| T014 | Verify fix | Manual test: login → add → delete | ✅ |
 
 ### 1.3 Known Bug: Review Edit
 | ID | Task | Success Criteria | Status |
