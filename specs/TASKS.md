@@ -34,10 +34,10 @@ Each task is atomic and independently completable. Claude Code should:
 ### 1.3 Known Bug: Review Edit
 | ID | Task | Success Criteria | Status |
 |----|------|------------------|--------|
-| T020 | Test review edit flow | PUT /reviews/:id with changed score | � |
-| T021 | Document any issues | Note specific failures | ⬜ |
-| T022 | Fix if broken | Edit saves and recalculates | ⬜ |
-| T023 | Add edit test | Automated test for REV-020, REV-021, REV-022 | ⬜ |
+| T020 | Test review edit flow | PUT /reviews/:id with changed score | ✅ |
+| T021 | Document any issues | Note specific failures | ✅ |
+| T022 | Fix if broken | Edit saves and recalculates | ✅ |
+| T023 | Add edit test | Automated test for REV-020, REV-021, REV-022 | ✅ |
 
 ---
 
