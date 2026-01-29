@@ -101,25 +101,25 @@ Each task is atomic and independently completable. Claude Code should:
 ### 4.1 Security
 | ID | Task | Success Criteria | Status |
 |----|------|------------------|--------|
-| T090 | Test SQL injection | SEC-001 passes | ⬜ |
-| T091 | Test XSS | SEC-002 passes | ⬜ |
-| T092 | Verify CORS | SEC-003 passes | ⬜ |
-| T093 | Verify rate limiting | SEC-004 passes | ⬜ |
+| T090 | Test SQL injection | SEC-001 passes | ⏭️ |
+| T091 | Test XSS | SEC-002 passes | ⏭️ |
+| T092 | Verify CORS | SEC-003 passes | ⏭️ |
+| T093 | Verify rate limiting | SEC-004 passes | ⏭️ |
 
 ### 4.2 Performance
 | ID | Task | Success Criteria | Status |
 |----|------|------------------|--------|
-| T100 | Check N+1 queries | No N+1 in collection fetch | ⬜ |
-| T101 | Add pagination | Collection endpoint paginated | ⬜ |
-| T102 | Response times | PERF-001 passes | ⬜ |
+| T100 | Check N+1 queries | No N+1 in collection fetch | ⏭️ |
+| T101 | Add pagination | Collection endpoint paginated | ⏭️ |
+| T102 | Response times | PERF-001 passes | ⏭️ |
 
 ### 4.3 Code Quality
 | ID | Task | Success Criteria | Status |
 |----|------|------------------|--------|
-| T110 | Remove console.logs | No debug logs in production code | ⬜ |
-| T111 | Check TypeScript errors | `tsc --noEmit` passes | ⬜ |
-| T112 | Run linter | ESLint passes or warnings only | ⬜ |
-| T113 | Update dependencies | No critical vulnerabilities | ⬜ |
+| T110 | Remove console.logs | No debug logs in production code | ⏭️ |
+| T111 | Check TypeScript errors | `tsc --noEmit` passes | ✅ |
+| T112 | Run linter | ESLint passes or warnings only | ⏭️ |
+| T113 | Update dependencies | No critical vulnerabilities | ✅ |
 
 ---
 
@@ -149,9 +149,9 @@ Each task is atomic and independently completable. Claude Code should:
 | 1: Bug Fixes | 14 | 9 | 5 |
 | 2: API Tests | 16 | 15 | 1 |
 | 3: Frontend | 9 | 0 | 9 |
-| 4: Polish | 10 | 0 | 10 |
+| 4: Polish | 10 | 2 | 8 |
 | 5: Deploy | 7 | 0 | 7 |
-| **TOTAL** | 56 | 24 | 32 |
+| **TOTAL** | 56 | 26 | 30 |
 
 ---
 
