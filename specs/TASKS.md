@@ -128,17 +128,17 @@ Each task is atomic and independently completable. Claude Code should:
 ### 5.1 Documentation
 | ID | Task | Success Criteria | Status |
 |----|------|------------------|--------|
-| T120 | Update README | Installation + usage instructions | ⬜ |
-| T121 | Document env vars | .env.example complete | ⬜ |
-| T122 | API documentation | All endpoints documented | ⬜ |
+| T120 | Update README | Installation + usage instructions | ⏭️ |
+| T121 | Document env vars | .env.example complete | ✅ |
+| T122 | API documentation | All endpoints documented | ⏭️ |
 
 ### 5.2 Deployment
 | ID | Task | Success Criteria | Status |
 |----|------|------------------|--------|
-| T130 | Verify Replit config | .replit file correct | ⬜ |
-| T131 | Test production build | `npm run build` succeeds | ⬜ |
-| T132 | Verify production mode | NODE_ENV=production works | ⬜ |
-| T133 | Check secrets | All secrets in Replit Secrets | ⬜ |
+| T130 | Verify Replit config | .replit file correct | ✅ |
+| T131 | Test production build | `npm run build` succeeds | ✅ |
+| T132 | Verify production mode | NODE_ENV=production works | ⏭️ |
+| T133 | Check secrets | All secrets in Replit Secrets | ⏭️ |
 
 ---
 
@@ -150,8 +150,8 @@ Each task is atomic and independently completable. Claude Code should:
 | 2: API Tests | 16 | 15 | 1 |
 | 3: Frontend | 9 | 0 | 9 |
 | 4: Polish | 10 | 2 | 8 |
-| 5: Deploy | 7 | 0 | 7 |
-| **TOTAL** | 56 | 26 | 30 |
+| 5: Deploy | 7 | 3 | 4 |
+| **TOTAL** | 56 | 29 | 27 |
 
 ---
 
