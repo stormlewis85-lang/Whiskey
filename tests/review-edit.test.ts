@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, afterAll } from 'vitest';
 
 const BASE_URL = 'http://localhost:5000';
 
@@ -7,7 +7,18 @@ const TEST_USER = {
   password: 'admin123'
 };
 
-let authToken: string | null = null;
+// Helper to get fresh auth token
+async function getAuthToken(): Promise<string> {
+  const loginRes = await fetch(`${BASE_URL}/api/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(TEST_USER),
+  });
+  const data = await loginRes.json();
+  return data.token;
+}
+
+// Shared state for sequential tests
 let testWhiskeyId: number | null = null;
 let testReviewId: string | null = null;
 
@@ -19,23 +30,29 @@ let testReviewId: string | null = null;
  */
 describe('Review Edit API Tests', () => {
 
-  beforeAll(async () => {
-    // Login
-    const loginRes = await fetch(`${BASE_URL}/api/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(TEST_USER),
-    });
+  afterAll(async () => {
+    // Cleanup - delete test whiskey
+    if (testWhiskeyId) {
+      const token = await getAuthToken();
+      await fetch(`${BASE_URL}/api/whiskeys/${testWhiskeyId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+    }
+  });
 
-    const loginData = await loginRes.json();
-    authToken = loginData.token;
+  /**
+   * REV-020: Edit existing review
+   */
+  it('REV-020: should edit an existing review', async () => {
+    const token = await getAuthToken();
 
     // Create a test whiskey
     const createRes = await fetch(`${BASE_URL}/api/whiskeys`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authToken}`,
+        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({
         name: 'Test Whiskey For Review Edit',
@@ -46,16 +63,16 @@ describe('Review Edit API Tests', () => {
       }),
     });
 
+    expect(createRes.status).toBe(201);
     const whiskey = await createRes.json();
     testWhiskeyId = whiskey.id;
-    console.log(`Created test whiskey: ${testWhiskeyId}`);
 
     // Add a review to the whiskey
     const reviewRes = await fetch(`${BASE_URL}/api/whiskeys/${testWhiskeyId}/reviews`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authToken}`,
+        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({
         rating: 3,
@@ -70,43 +87,16 @@ describe('Review Edit API Tests', () => {
       }),
     });
 
-    if (!reviewRes.ok) {
-      const err = await reviewRes.text();
-      throw new Error(`Failed to create review: ${err}`);
-    }
-
+    expect(reviewRes.ok).toBe(true);
     const updatedWhiskey = await reviewRes.json();
-    // Get the review ID from the whiskey's notes array
-    if (updatedWhiskey.notes && updatedWhiskey.notes.length > 0) {
-      testReviewId = updatedWhiskey.notes[0].id;
-      console.log(`Created test review: ${testReviewId}`);
-    } else {
-      throw new Error('No review ID returned');
-    }
-  });
+    testReviewId = updatedWhiskey.notes[0].id;
 
-  afterAll(async () => {
-    // Cleanup - delete test whiskey
-    if (testWhiskeyId && authToken) {
-      await fetch(`${BASE_URL}/api/whiskeys/${testWhiskeyId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${authToken}` },
-      });
-    }
-  });
-
-  /**
-   * REV-020: Edit existing review
-   */
-  it('REV-020: should edit an existing review', async () => {
-    expect(testWhiskeyId).not.toBeNull();
-    expect(testReviewId).not.toBeNull();
-
+    // Edit the review
     const editRes = await fetch(`${BASE_URL}/api/whiskeys/${testWhiskeyId}/reviews/${testReviewId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authToken}`,
+        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({
         id: testReviewId,
@@ -123,10 +113,10 @@ describe('Review Edit API Tests', () => {
     });
 
     expect(editRes.ok).toBe(true);
-    const updatedWhiskey = await editRes.json();
+    const finalWhiskey = await editRes.json();
 
     // Find the updated review
-    const review = updatedWhiskey.notes.find((n: any) => n.id === testReviewId);
+    const review = finalWhiskey.notes.find((n: any) => n.id === testReviewId);
     expect(review).toBeDefined();
     expect(review.text).toBe('Updated review text - this is the edited version');
     expect(review.rating).toBe(4);
@@ -136,12 +126,17 @@ describe('Review Edit API Tests', () => {
    * REV-021: Score recalculates on edit
    */
   it('REV-021: should recalculate score when scores change', async () => {
+    expect(testWhiskeyId).not.toBeNull();
+    expect(testReviewId).not.toBeNull();
+
+    const token = await getAuthToken();
+
     // Edit with different scores
     const editRes = await fetch(`${BASE_URL}/api/whiskeys/${testWhiskeyId}/reviews/${testReviewId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authToken}`,
+        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({
         id: testReviewId,
@@ -170,12 +165,17 @@ describe('Review Edit API Tests', () => {
    * REV-022: Edit preserves other review fields
    */
   it('REV-022: should preserve fields not being edited', async () => {
+    expect(testWhiskeyId).not.toBeNull();
+    expect(testReviewId).not.toBeNull();
+
+    const token = await getAuthToken();
+
     // First set some specific values
     await fetch(`${BASE_URL}/api/whiskeys/${testWhiskeyId}/reviews/${testReviewId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authToken}`,
+        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({
         id: testReviewId,
@@ -198,7 +198,7 @@ describe('Review Edit API Tests', () => {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authToken}`,
+        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({
         id: testReviewId,
@@ -227,14 +227,16 @@ describe('Review Edit API Tests', () => {
   });
 
   /**
-   * Cannot edit another user's review
+   * Cannot edit non-existent review
    */
   it('should not allow editing non-existent review', async () => {
+    const token = await getAuthToken();
+
     const editRes = await fetch(`${BASE_URL}/api/whiskeys/${testWhiskeyId}/reviews/fake-review-id`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authToken}`,
+        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({
         id: 'fake-review-id',

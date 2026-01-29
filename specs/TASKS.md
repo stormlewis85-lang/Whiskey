@@ -46,32 +46,32 @@ Each task is atomic and independently completable. Claude Code should:
 ### 2.1 Auth Tests
 | ID | Task | Success Criteria | Status |
 |----|------|------------------|--------|
-| T030 | Write AUTH-001 to AUTH-005 tests | Registration tests pass | ⬜ |
-| T031 | Write AUTH-010 to AUTH-013 tests | Login tests pass | ⬜ |
-| T032 | Write AUTH-020 to AUTH-023 tests | Session tests pass | ⬜ |
+| T030 | Write AUTH-001 to AUTH-005 tests | Registration tests pass | ✅ |
+| T031 | Write AUTH-010 to AUTH-013 tests | Login tests pass | ✅ |
+| T032 | Write AUTH-020 to AUTH-023 tests | Session tests pass | ✅ |
 
 ### 2.2 Whiskey Tests
 | ID | Task | Success Criteria | Status |
 |----|------|------------------|--------|
-| T040 | Write WHI-001 to WHI-005 tests | Create tests pass | ⬜ |
-| T041 | Write WHI-010 to WHI-016 tests | Read tests pass | ⬜ |
-| T042 | Write WHI-020 to WHI-023 tests | Update tests pass | ⬜ |
-| T043 | Write WHI-030 to WHI-033 tests | Delete tests pass | ⬜ |
+| T040 | Write WHI-001 to WHI-005 tests | Create tests pass | ✅ |
+| T041 | Write WHI-010 to WHI-016 tests | Read tests pass | ✅ |
+| T042 | Write WHI-020 to WHI-023 tests | Update tests pass | ✅ |
+| T043 | Write WHI-030 to WHI-033 tests | Delete tests pass | ✅ |
 
 ### 2.3 Review Tests
 | ID | Task | Success Criteria | Status |
 |----|------|------------------|--------|
-| T050 | Write REV-001 to REV-006 tests | Create tests pass | ⬜ |
-| T051 | Write REV-010 to REV-012 tests | Read tests pass | ⬜ |
-| T052 | Write REV-020 to REV-022 tests | Update tests pass | ⬜ |
-| T053 | Write REV-030 to REV-031 tests | Delete tests pass | ⬜ |
-| T054 | Test scoring algorithm | Unit tests for calculateAllScores | ⬜ |
+| T050 | Write REV-001 to REV-006 tests | Create tests pass | ✅ |
+| T051 | Write REV-010 to REV-012 tests | Read tests pass | ✅ |
+| T052 | Write REV-020 to REV-022 tests | Update tests pass | ✅ |
+| T053 | Write REV-030 to REV-031 tests | Delete tests pass | ✅ |
+| T054 | Test scoring algorithm | Unit tests for calculateAllScores | ⏭️ |
 
 ### 2.4 Other Endpoint Tests
 | ID | Task | Success Criteria | Status |
 |----|------|------------------|--------|
-| T060 | Write DIS-001 to DIS-005 tests | Distillery tests pass | ⬜ |
-| T061 | Write AI-001 to AI-006 tests | AI endpoint tests pass (mock API) | ⬜ |
+| T060 | Write DIS-001 to DIS-005 tests | Distillery tests pass | ✅ |
+| T061 | Write AI-001 to AI-006 tests | AI endpoint tests pass (mock API) | ✅ |
 
 ---
 
@@ -146,12 +146,12 @@ Each task is atomic and independently completable. Claude Code should:
 
 | Phase | Total | Complete | Remaining |
 |-------|-------|----------|-----------|
-| 1: Bug Fixes | 14 | 0 | 14 |
-| 2: API Tests | 16 | 0 | 16 |
+| 1: Bug Fixes | 14 | 9 | 5 |
+| 2: API Tests | 16 | 15 | 1 |
 | 3: Frontend | 9 | 0 | 9 |
 | 4: Polish | 10 | 0 | 10 |
 | 5: Deploy | 7 | 0 | 7 |
-| **TOTAL** | 56 | 0 | 56 |
+| **TOTAL** | 56 | 24 | 32 |
 
 ---
 

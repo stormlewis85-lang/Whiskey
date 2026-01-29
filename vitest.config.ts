@@ -6,5 +6,8 @@ export default defineConfig({
     environment: 'node',
     include: ['tests/**/*.test.ts'],
     testTimeout: 30000,
+    // Run tests sequentially to avoid overwhelming the server
+    fileParallelism: false,
+    isolate: false,
   },
 });
