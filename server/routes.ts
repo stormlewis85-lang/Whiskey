@@ -4,9 +4,9 @@ import { storage } from "./storage";
 import multer from "multer";
 import * as XLSX from "xlsx";
 import { z } from "zod";
-import { 
-  insertWhiskeySchema, 
-  updateWhiskeySchema, 
+import {
+  insertWhiskeySchema,
+  updateWhiskeySchema,
   reviewNoteSchema,
   excelImportSchema,
   insertCommentSchema,
@@ -14,13 +14,28 @@ import {
   insertPriceTrackSchema,
   updatePriceTrackSchema,
   insertMarketValueSchema,
-  updateMarketValueSchema
+  updateMarketValueSchema,
+  insertFlightSchema,
+  updateFlightSchema,
+  updateFlightWhiskeySchema,
+  insertBlindTastingSchema,
+  updateBlindTastingWhiskeySchema,
+  updateProfileSchema
 } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import path from "path";
 import fs from "fs";
 import { setupAuth, isAuthenticated } from "./auth";
+
+// Helper to get userId with type safety (throws if not authenticated)
+function getUserId(req: Request): number {
+  const userId = req.session?.userId;
+  if (userId === undefined) {
+    throw new Error("User not authenticated");
+  }
+  return userId;
+}
 
 // Ensure upload directory exists - use a consistent path that works in all environments
 const uploadDir = path.join(process.cwd(), "uploads");
@@ -122,7 +137,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // If user is authenticated, get only their whiskey
       let whiskey;
       if (req.session && req.session.userId) {
-        whiskey = await storage.getWhiskey(id, req.session.userId);
+        whiskey = await storage.getWhiskey(id, getUserId(req));
       } else {
         whiskey = await storage.getWhiskey(id);
       }
@@ -179,7 +194,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const validatedData = updateWhiskeySchema.parse(req.body);
       // Pass userId to ensure user only updates their own whiskeys
-      const updatedWhiskey = await storage.updateWhiskey(id, validatedData, req.session.userId);
+      const updatedWhiskey = await storage.updateWhiskey(id, validatedData, getUserId(req));
       
       if (!updatedWhiskey) {
         return res.status(404).json({ message: "Whiskey not found or not owned by you" });
@@ -258,7 +273,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const validatedReview = reviewNoteSchema.parse(req.body);
-      const updatedWhiskey = await storage.addReview(id, validatedReview, req.session.userId);
+      const updatedWhiskey = await storage.addReview(id, validatedReview, getUserId(req));
       
       if (!updatedWhiskey) {
         return res.status(404).json({ message: "Whiskey not found or not owned by you" });
@@ -285,7 +300,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const validatedReview = reviewNoteSchema.parse(req.body);
-      const updatedWhiskey = await storage.updateReview(id, reviewId, validatedReview, req.session.userId);
+      const updatedWhiskey = await storage.updateReview(id, reviewId, validatedReview, getUserId(req));
       
       if (!updatedWhiskey) {
         return res.status(404).json({ message: "Whiskey or review not found or not owned by you" });
@@ -311,7 +326,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid whiskey ID format" });
       }
       
-      const updatedWhiskey = await storage.deleteReview(id, reviewId, req.session.userId);
+      const updatedWhiskey = await storage.deleteReview(id, reviewId, getUserId(req));
       
       if (!updatedWhiskey) {
         return res.status(404).json({ message: "Whiskey or review not found or not owned by you" });
@@ -451,7 +466,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get the whiskey with user filtering if authenticated
       let whiskey;
       if (req.session && req.session.userId) {
-        whiskey = await storage.getWhiskey(whiskeyId, req.session.userId);
+        whiskey = await storage.getWhiskey(whiskeyId, getUserId(req));
       } else {
         whiskey = await storage.getWhiskey(whiskeyId);
       }
@@ -502,10 +517,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const updatedWhiskey = await storage.toggleReviewPublic(
-        whiskeyId, 
-        reviewId, 
-        isPublic, 
-        req.session.userId
+        whiskeyId,
+        reviewId,
+        isPublic,
+        getUserId(req)
       );
       
       if (!updatedWhiskey) {
@@ -513,7 +528,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Find the updated review
-      const updatedReview = updatedWhiskey.notes.find(note => note.id === reviewId);
+      const notes = updatedWhiskey.notes as { id: string; shareId?: string }[];
+      const updatedReview = notes.find((note: { id: string }) => note.id === reviewId);
       
       res.json({
         success: true,
@@ -537,10 +553,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const { whiskey, review } = result;
-      
+
       // Get the user info for this whiskey
+      if (!whiskey.userId) {
+        return res.status(404).json({ message: "Whiskey has no owner" });
+      }
       const user = await storage.getUser(whiskey.userId);
-      
+
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -633,25 +652,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validate comment data
       const validatedComment = insertCommentSchema.parse({
         ...req.body,
-        userId: req.session.userId,
+        userId: getUserId(req),
         whiskeyId,
         reviewId
       });
       
       // Add the comment
       const newComment = await storage.addReviewComment(whiskeyId, reviewId, validatedComment);
-      
+
       // Get the user info for this comment
-      const user = await storage.getUser(req.session.userId);
-      
+      const userId = getUserId(req);
+      const user = await storage.getUser(userId);
+
       // Return the comment with the user info
       res.status(201).json({
         comment: newComment,
-        user: {
+        user: user ? {
           id: user.id,
           displayName: user.displayName || user.username,
           profileImage: user.profileImage
-        }
+        } : null
       });
     } catch (error) {
       if (error instanceof ZodError) {
@@ -676,9 +696,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Update the comment
       const updatedComment = await storage.updateReviewComment(
-        commentId, 
-        validatedComment, 
-        req.session.userId
+        commentId,
+        validatedComment,
+        getUserId(req)
       );
       
       if (!updatedComment) {
@@ -705,7 +725,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Delete the comment
-      const success = await storage.deleteReviewComment(commentId, req.session.userId);
+      const success = await storage.deleteReviewComment(commentId, getUserId(req));
       
       if (!success) {
         return res.status(404).json({ message: "Comment not found or not owned by you" });
@@ -731,7 +751,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const comments = await storage.getReviewComments(whiskeyId, reviewId);
       
       // Get user info for each comment
-      const userIds = [...new Set(comments.map(comment => comment.userId))];
+      const userIds = Array.from(new Set(comments.map(comment => comment.userId)));
       const userPromises = userIds.map(userId => storage.getUser(userId));
       const users = await Promise.all(userPromises);
       
@@ -770,7 +790,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Toggle the like
-      const result = await storage.toggleReviewLike(whiskeyId, reviewId, req.session.userId);
+      const result = await storage.toggleReviewLike(whiskeyId, reviewId, getUserId(req));
       
       res.json(result);
     } catch (error) {
@@ -844,7 +864,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             rating: row.Rating || row.rating,
             notes: [],
             // Add the userId to associate with the current user
-            userId: req.session.userId
+            userId: getUserId(req)
           };
 
           const validatedData = excelImportSchema.parse(mapped);
@@ -886,7 +906,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid whiskey ID format" });
       }
       
-      const priceHistory = await storage.getWhiskeyPriceHistory(whiskeyId, req.session.userId);
+      const priceHistory = await storage.getWhiskeyPriceHistory(whiskeyId, getUserId(req));
       
       if (!priceHistory) {
         return res.status(404).json({ message: "Whiskey not found or not owned by you" });
@@ -911,7 +931,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const priceData = insertPriceTrackSchema.parse({
         ...req.body,
         whiskeyId,
-        userId: req.session.userId,
+        userId: getUserId(req),
       });
       
       const newPriceEntry = await storage.addPriceTrack(priceData);
@@ -943,7 +963,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validate update data
       const updateData = updatePriceTrackSchema.parse(req.body);
       
-      const updatedPrice = await storage.updatePriceTrack(priceId, updateData, req.session.userId);
+      const updatedPrice = await storage.updatePriceTrack(priceId, updateData, getUserId(req));
       
       if (!updatedPrice) {
         return res.status(404).json({ message: "Price entry not found or not owned by you" });
@@ -969,7 +989,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid ID format" });
       }
       
-      const success = await storage.deletePriceTrack(priceId, req.session.userId);
+      const success = await storage.deletePriceTrack(priceId, getUserId(req));
       
       if (!success) {
         return res.status(404).json({ message: "Price entry not found or not owned by you" });
@@ -992,7 +1012,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid whiskey ID format" });
       }
       
-      const marketValues = await storage.getWhiskeyMarketValues(whiskeyId, req.session.userId);
+      const marketValues = await storage.getWhiskeyMarketValues(whiskeyId, getUserId(req));
       
       if (!marketValues) {
         return res.status(404).json({ message: "Whiskey not found or not owned by you" });
@@ -1017,7 +1037,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const marketValueData = insertMarketValueSchema.parse({
         ...req.body,
         whiskeyId,
-        userId: req.session.userId,
+        userId: getUserId(req),
       });
       
       const newMarketValue = await storage.addMarketValue(marketValueData);
@@ -1049,7 +1069,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validate update data
       const updateData = updateMarketValueSchema.parse(req.body);
       
-      const updatedValue = await storage.updateMarketValue(valueId, updateData, req.session.userId);
+      const updatedValue = await storage.updateMarketValue(valueId, updateData, getUserId(req));
       
       if (!updatedValue) {
         return res.status(404).json({ message: "Market value entry not found or not owned by you" });
@@ -1070,20 +1090,1079 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const whiskeyId = parseInt(req.params.id);
       const valueId = parseInt(req.params.valueId);
-      
+
       if (isNaN(whiskeyId) || isNaN(valueId)) {
         return res.status(400).json({ message: "Invalid ID format" });
       }
-      
-      const success = await storage.deleteMarketValue(valueId, req.session.userId);
-      
+
+      const success = await storage.deleteMarketValue(valueId, getUserId(req));
+
       if (!success) {
         return res.status(404).json({ message: "Market value entry not found or not owned by you" });
       }
-      
+
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete market value", error: String(error) });
+    }
+  });
+
+  // ==================== FLAVOR ROUTES ====================
+
+  // Get all flavors used by the user's collection
+  app.get("/api/flavors", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const flavors = await storage.getAllUserFlavors(getUserId(req));
+      res.json(flavors);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch flavors", error: String(error) });
+    }
+  });
+
+  // Get whiskeys that have a specific flavor
+  app.get("/api/flavors/:flavor/whiskeys", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const flavor = decodeURIComponent(req.params.flavor);
+      const whiskeys = await storage.getWhiskeysWithFlavor(flavor, getUserId(req));
+      res.json(whiskeys);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch whiskeys by flavor", error: String(error) });
+    }
+  });
+
+  // Get top flavors for a specific whiskey
+  app.get("/api/whiskeys/:id/flavors", async (req: Request, res: Response) => {
+    try {
+      const whiskeyId = parseInt(req.params.id);
+      if (isNaN(whiskeyId)) {
+        return res.status(400).json({ message: "Invalid whiskey ID format" });
+      }
+
+      const whiskey = req.session?.userId
+        ? await storage.getWhiskey(whiskeyId, getUserId(req))
+        : await storage.getWhiskey(whiskeyId);
+
+      if (!whiskey) {
+        return res.status(404).json({ message: "Whiskey not found" });
+      }
+
+      const topFlavors = storage.getTopFlavors(whiskey, 5);
+      const allFlavors = storage.extractFlavorTags(whiskey);
+
+      res.json({ topFlavors, allFlavors });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch whiskey flavors", error: String(error) });
+    }
+  });
+
+  // ==================== RECOMMENDATION ROUTES ====================
+
+  // Get recommendations for the user
+  app.get("/api/recommendations", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 5;
+      const recommendations = await storage.getRecommendations(getUserId(req), limit);
+      res.json(recommendations);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch recommendations", error: String(error) });
+    }
+  });
+
+  // Get similar whiskeys to a specific whiskey
+  app.get("/api/whiskeys/:id/similar", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const whiskeyId = parseInt(req.params.id);
+      if (isNaN(whiskeyId)) {
+        return res.status(400).json({ message: "Invalid whiskey ID format" });
+      }
+
+      const limit = parseInt(req.query.limit as string) || 5;
+      const similar = await storage.getSimilarWhiskeys(whiskeyId, getUserId(req), limit);
+      res.json(similar);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch similar whiskeys", error: String(error) });
+    }
+  });
+
+  // ==================== FLIGHT ROUTES ====================
+
+  // Get all flights for the user
+  app.get("/api/flights", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const flights = await storage.getFlights(getUserId(req));
+      res.json(flights);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch flights", error: String(error) });
+    }
+  });
+
+  // Get a specific flight with its whiskeys
+  app.get("/api/flights/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const flightId = parseInt(req.params.id);
+      if (isNaN(flightId)) {
+        return res.status(400).json({ message: "Invalid flight ID format" });
+      }
+
+      const result = await storage.getFlightWithWhiskeys(flightId, getUserId(req));
+      if (!result) {
+        return res.status(404).json({ message: "Flight not found" });
+      }
+
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch flight", error: String(error) });
+    }
+  });
+
+  // Create a new flight
+  app.post("/api/flights", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const flightData = insertFlightSchema.parse({
+        ...req.body,
+        userId: getUserId(req)
+      });
+
+      const newFlight = await storage.createFlight(flightData);
+      res.status(201).json(newFlight);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        return res.status(400).json({ message: "Validation error", error: validationError.message });
+      }
+      res.status(500).json({ message: "Failed to create flight", error: String(error) });
+    }
+  });
+
+  // Update a flight
+  app.patch("/api/flights/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const flightId = parseInt(req.params.id);
+      if (isNaN(flightId)) {
+        return res.status(400).json({ message: "Invalid flight ID format" });
+      }
+
+      const updateData = updateFlightSchema.parse(req.body);
+      const updated = await storage.updateFlight(flightId, updateData, getUserId(req));
+
+      if (!updated) {
+        return res.status(404).json({ message: "Flight not found" });
+      }
+
+      res.json(updated);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        return res.status(400).json({ message: "Validation error", error: validationError.message });
+      }
+      res.status(500).json({ message: "Failed to update flight", error: String(error) });
+    }
+  });
+
+  // Delete a flight
+  app.delete("/api/flights/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const flightId = parseInt(req.params.id);
+      if (isNaN(flightId)) {
+        return res.status(400).json({ message: "Invalid flight ID format" });
+      }
+
+      const success = await storage.deleteFlight(flightId, getUserId(req));
+      if (!success) {
+        return res.status(404).json({ message: "Flight not found" });
+      }
+
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete flight", error: String(error) });
+    }
+  });
+
+  // Add a whiskey to a flight
+  app.post("/api/flights/:id/whiskeys", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const flightId = parseInt(req.params.id);
+      const whiskeyId = parseInt(req.body.whiskeyId);
+
+      if (isNaN(flightId) || isNaN(whiskeyId)) {
+        return res.status(400).json({ message: "Invalid ID format" });
+      }
+
+      const result = await storage.addWhiskeyToFlight(flightId, whiskeyId, getUserId(req));
+      if (!result) {
+        return res.status(404).json({ message: "Flight not found" });
+      }
+
+      res.status(201).json(result);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to add whiskey to flight", error: String(error) });
+    }
+  });
+
+  // Remove a whiskey from a flight
+  app.delete("/api/flights/:flightId/whiskeys/:flightWhiskeyId", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const flightWhiskeyId = parseInt(req.params.flightWhiskeyId);
+
+      if (isNaN(flightWhiskeyId)) {
+        return res.status(400).json({ message: "Invalid ID format" });
+      }
+
+      const success = await storage.removeWhiskeyFromFlight(flightWhiskeyId, getUserId(req));
+      if (!success) {
+        return res.status(404).json({ message: "Flight whiskey not found" });
+      }
+
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to remove whiskey from flight", error: String(error) });
+    }
+  });
+
+  // Update notes for a whiskey in a flight
+  app.patch("/api/flights/:flightId/whiskeys/:flightWhiskeyId", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const flightWhiskeyId = parseInt(req.params.flightWhiskeyId);
+
+      if (isNaN(flightWhiskeyId)) {
+        return res.status(400).json({ message: "Invalid ID format" });
+      }
+
+      const updateData = updateFlightWhiskeySchema.parse(req.body);
+      const updated = await storage.updateFlightWhiskey(flightWhiskeyId, updateData, getUserId(req));
+
+      if (!updated) {
+        return res.status(404).json({ message: "Flight whiskey not found" });
+      }
+
+      res.json(updated);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        return res.status(400).json({ message: "Validation error", error: validationError.message });
+      }
+      res.status(500).json({ message: "Failed to update flight whiskey", error: String(error) });
+    }
+  });
+
+  // Reorder whiskeys in a flight
+  app.post("/api/flights/:id/reorder", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const flightId = parseInt(req.params.id);
+      const { whiskeyIds } = req.body;
+
+      if (isNaN(flightId) || !Array.isArray(whiskeyIds)) {
+        return res.status(400).json({ message: "Invalid request format" });
+      }
+
+      const success = await storage.reorderFlightWhiskeys(flightId, whiskeyIds, getUserId(req));
+      if (!success) {
+        return res.status(404).json({ message: "Flight not found" });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to reorder flight whiskeys", error: String(error) });
+    }
+  });
+
+  // ==================== BLIND TASTING ROUTES ====================
+
+  // Get all blind tastings for the user
+  app.get("/api/blind-tastings", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const blindTastings = await storage.getBlindTastings(getUserId(req));
+      res.json(blindTastings);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch blind tastings", error: String(error) });
+    }
+  });
+
+  // Get a specific blind tasting with its whiskeys
+  app.get("/api/blind-tastings/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const btId = parseInt(req.params.id);
+      if (isNaN(btId)) {
+        return res.status(400).json({ message: "Invalid blind tasting ID format" });
+      }
+
+      const result = await storage.getBlindTastingWithWhiskeys(btId, getUserId(req));
+      if (!result) {
+        return res.status(404).json({ message: "Blind tasting not found" });
+      }
+
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch blind tasting", error: String(error) });
+    }
+  });
+
+  // Create a new blind tasting
+  app.post("/api/blind-tastings", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const { whiskeyIds, ...rest } = req.body;
+
+      if (!Array.isArray(whiskeyIds) || whiskeyIds.length < 2) {
+        return res.status(400).json({ message: "At least 2 whiskeys are required for a blind tasting" });
+      }
+
+      const blindTastingData = insertBlindTastingSchema.parse({
+        ...rest,
+        userId: getUserId(req)
+      });
+
+      const newBlindTasting = await storage.createBlindTasting(blindTastingData, whiskeyIds);
+      res.status(201).json(newBlindTasting);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        return res.status(400).json({ message: "Validation error", error: validationError.message });
+      }
+      res.status(500).json({ message: "Failed to create blind tasting", error: String(error) });
+    }
+  });
+
+  // Delete a blind tasting
+  app.delete("/api/blind-tastings/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const btId = parseInt(req.params.id);
+      if (isNaN(btId)) {
+        return res.status(400).json({ message: "Invalid blind tasting ID format" });
+      }
+
+      const success = await storage.deleteBlindTasting(btId, getUserId(req));
+      if (!success) {
+        return res.status(404).json({ message: "Blind tasting not found" });
+      }
+
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete blind tasting", error: String(error) });
+    }
+  });
+
+  // Rate a whiskey in a blind tasting
+  app.post("/api/blind-tastings/:btId/whiskeys/:btwId/rate", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const btwId = parseInt(req.params.btwId);
+      if (isNaN(btwId)) {
+        return res.status(400).json({ message: "Invalid ID format" });
+      }
+
+      const { blindRating, blindNotes } = updateBlindTastingWhiskeySchema.parse(req.body);
+
+      if (blindRating === undefined) {
+        return res.status(400).json({ message: "Rating is required" });
+      }
+
+      const result = await storage.rateBlindTastingWhiskey(btwId, blindRating, blindNotes, getUserId(req));
+      if (!result) {
+        return res.status(404).json({ message: "Blind tasting whiskey not found or tasting is not active" });
+      }
+
+      res.json(result);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        return res.status(400).json({ message: "Validation error", error: validationError.message });
+      }
+      res.status(500).json({ message: "Failed to rate blind tasting whiskey", error: String(error) });
+    }
+  });
+
+  // Reveal a blind tasting
+  app.post("/api/blind-tastings/:id/reveal", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const btId = parseInt(req.params.id);
+      if (isNaN(btId)) {
+        return res.status(400).json({ message: "Invalid blind tasting ID format" });
+      }
+
+      const result = await storage.revealBlindTasting(btId, getUserId(req));
+      if (!result) {
+        return res.status(404).json({ message: "Blind tasting not found or not in active status" });
+      }
+
+      // Return the full tasting with whiskey details now visible
+      const fullResult = await storage.getBlindTastingWithWhiskeys(btId, getUserId(req));
+      res.json(fullResult);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to reveal blind tasting", error: String(error) });
+    }
+  });
+
+  // Complete a blind tasting
+  app.post("/api/blind-tastings/:id/complete", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const btId = parseInt(req.params.id);
+      if (isNaN(btId)) {
+        return res.status(400).json({ message: "Invalid blind tasting ID format" });
+      }
+
+      const result = await storage.completeBlindTasting(btId, getUserId(req));
+      if (!result) {
+        return res.status(404).json({ message: "Blind tasting not found or not in revealed status" });
+      }
+
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to complete blind tasting", error: String(error) });
+    }
+  });
+
+  // ==================== BARCODE LOOKUP ROUTES ====================
+
+  // Lookup whiskey info by barcode/UPC
+  app.get("/api/barcode/:code", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const barcode = req.params.code;
+
+      // First, check if user already has a whiskey with this barcode in their collection
+      const userWhiskeys = await storage.getWhiskeys(req.session.userId);
+      const existingWhiskey = userWhiskeys.find(w =>
+        w.barcode === barcode || w.upc === barcode
+      );
+
+      if (existingWhiskey) {
+        return res.json({
+          found: true,
+          source: 'collection',
+          whiskey: {
+            name: existingWhiskey.name,
+            distillery: existingWhiskey.distillery,
+            type: existingWhiskey.type,
+            region: existingWhiskey.region,
+            age: existingWhiskey.age,
+            abv: existingWhiskey.abv,
+            bottleType: existingWhiskey.bottleType,
+            mashBill: existingWhiskey.mashBill,
+            caskStrength: existingWhiskey.caskStrength,
+            finished: existingWhiskey.finished,
+            finishType: existingWhiskey.finishType,
+          },
+          message: 'Found in your collection'
+        });
+      }
+
+      // Check all whiskeys in the database for a match
+      const allWhiskeys = await storage.getWhiskeys();
+      const matchedWhiskey = allWhiskeys.find(w =>
+        w.barcode === barcode || w.upc === barcode
+      );
+
+      if (matchedWhiskey) {
+        return res.json({
+          found: true,
+          source: 'database',
+          whiskey: {
+            name: matchedWhiskey.name,
+            distillery: matchedWhiskey.distillery,
+            type: matchedWhiskey.type,
+            region: matchedWhiskey.region,
+            age: matchedWhiskey.age,
+            abv: matchedWhiskey.abv,
+            bottleType: matchedWhiskey.bottleType,
+            mashBill: matchedWhiskey.mashBill,
+            caskStrength: matchedWhiskey.caskStrength,
+            finished: matchedWhiskey.finished,
+            finishType: matchedWhiskey.finishType,
+          },
+          message: 'Found in database'
+        });
+      }
+
+      // Not found - return empty result
+      // Future: integrate with external whiskey database API (e.g., Distiller, WhiskyBase)
+      res.json({
+        found: false,
+        barcode,
+        message: 'No whiskey found for this barcode. You can still add it manually.'
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to lookup barcode", error: String(error) });
+    }
+  });
+
+  // ==================== DISTILLERY ROUTES ====================
+
+  // Get all distilleries (with optional search)
+  app.get("/api/distilleries", async (req: Request, res: Response) => {
+    try {
+      const search = req.query.search as string | undefined;
+      const distilleries = await storage.getDistilleries(search);
+      res.json(distilleries);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch distilleries", error: String(error) });
+    }
+  });
+
+  // Get single distillery
+  app.get("/api/distilleries/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid distillery ID" });
+      }
+
+      const distillery = await storage.getDistillery(id);
+      if (!distillery) {
+        return res.status(404).json({ message: "Distillery not found" });
+      }
+
+      res.json(distillery);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch distillery", error: String(error) });
+    }
+  });
+
+  // Get whiskeys from a distillery (for current user)
+  app.get("/api/distilleries/:id/whiskeys", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid distillery ID" });
+      }
+
+      const whiskeys = await storage.getDistilleryWhiskeys(id, getUserId(req));
+      res.json(whiskeys);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch distillery whiskeys", error: String(error) });
+    }
+  });
+
+  // Create a new distillery
+  app.post("/api/distilleries", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const { insertDistillerySchema } = await import("@shared/schema");
+      const validatedData = insertDistillerySchema.parse(req.body);
+      const newDistillery = await storage.createDistillery(validatedData);
+      res.status(201).json(newDistillery);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        return res.status(400).json({ message: "Validation error", error: validationError.message });
+      }
+      res.status(500).json({ message: "Failed to create distillery", error: String(error) });
+    }
+  });
+
+  // Update a distillery (admin only - userId 5)
+  app.patch("/api/distilleries/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = getUserId(req);
+      // Only admin (userId 5) can update distilleries
+      if (userId !== 5) {
+        return res.status(403).json({ message: "Only admin can update distilleries" });
+      }
+
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid distillery ID" });
+      }
+
+      const { updateDistillerySchema } = await import("@shared/schema");
+      const validatedData = updateDistillerySchema.parse(req.body);
+      const updated = await storage.updateDistillery(id, validatedData);
+
+      if (!updated) {
+        return res.status(404).json({ message: "Distillery not found" });
+      }
+
+      res.json(updated);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        return res.status(400).json({ message: "Validation error", error: validationError.message });
+      }
+      res.status(500).json({ message: "Failed to update distillery", error: String(error) });
+    }
+  });
+
+  // ==================== PROFILE ROUTES ====================
+
+  // Get current user's profile
+  app.get("/api/profile", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = await storage.getUser(getUserId(req));
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Return profile data (exclude password hash)
+      res.json({
+        id: user.id,
+        username: user.username,
+        displayName: user.displayName,
+        email: user.email,
+        profileImage: user.profileImage,
+        bio: user.bio,
+        profileSlug: user.profileSlug,
+        isPublic: user.isPublic,
+        showWishlistOnProfile: user.showWishlistOnProfile,
+        createdAt: user.createdAt
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch profile", error: String(error) });
+    }
+  });
+
+  // Update current user's profile
+  app.patch("/api/profile", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const updateData = updateProfileSchema.parse(req.body);
+      const updatedUser = await storage.updateProfile(getUserId(req), updateData);
+
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Return updated profile data (exclude password hash)
+      res.json({
+        id: updatedUser.id,
+        username: updatedUser.username,
+        displayName: updatedUser.displayName,
+        email: updatedUser.email,
+        profileImage: updatedUser.profileImage,
+        bio: updatedUser.bio,
+        profileSlug: updatedUser.profileSlug,
+        isPublic: updatedUser.isPublic,
+        showWishlistOnProfile: updatedUser.showWishlistOnProfile,
+        createdAt: updatedUser.createdAt
+      });
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        return res.status(400).json({ message: "Validation error", error: validationError.message });
+      }
+      res.status(500).json({ message: "Failed to update profile", error: String(error) });
+    }
+  });
+
+  // Get public profile by slug (no auth required)
+  app.get("/api/profile/:slug", async (req: Request, res: Response) => {
+    try {
+      const slug = req.params.slug;
+      // First find the user by their profile slug
+      const user = await storage.getUserByProfileSlug(slug);
+      if (!user) {
+        return res.status(404).json({ message: "Profile not found or not public" });
+      }
+
+      const profile = await storage.getPublicProfile(user.id);
+      if (!profile) {
+        return res.status(404).json({ message: "Profile not found or not public" });
+      }
+
+      res.json(profile);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch profile", error: String(error) });
+    }
+  });
+
+  // Get user's public whiskeys (no auth required)
+  app.get("/api/users/:id/whiskeys", async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.id);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID format" });
+      }
+
+      const whiskeys = await storage.getPublicWhiskeys(userId);
+      res.json(whiskeys);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch user's whiskeys", error: String(error) });
+    }
+  });
+
+  // Toggle whiskey visibility (public/private)
+  app.patch("/api/whiskeys/:id/visibility", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const whiskeyId = parseInt(req.params.id);
+      if (isNaN(whiskeyId)) {
+        return res.status(400).json({ message: "Invalid whiskey ID format" });
+      }
+
+      const { isPublic } = req.body;
+      if (typeof isPublic !== "boolean") {
+        return res.status(400).json({ message: "isPublic must be a boolean" });
+      }
+
+      const updated = await storage.setWhiskeyPublic(whiskeyId, isPublic, getUserId(req));
+      if (!updated) {
+        return res.status(404).json({ message: "Whiskey not found or not owned by you" });
+      }
+
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update whiskey visibility", error: String(error) });
+    }
+  });
+
+  // ==================== FOLLOW ROUTES ====================
+
+  // Follow a user
+  app.post("/api/users/:id/follow", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.id);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID format" });
+      }
+
+      if (userId === req.session.userId) {
+        return res.status(400).json({ message: "You cannot follow yourself" });
+      }
+
+      const follow = await storage.followUser(getUserId(req), userId);
+      if (!follow) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.status(201).json({ success: true, follow });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to follow user", error: String(error) });
+    }
+  });
+
+  // Unfollow a user
+  app.delete("/api/users/:id/follow", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.id);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID format" });
+      }
+
+      const success = await storage.unfollowUser(getUserId(req), userId);
+      if (!success) {
+        return res.status(404).json({ message: "Follow relationship not found" });
+      }
+
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to unfollow user", error: String(error) });
+    }
+  });
+
+  // Check if following a user
+  app.get("/api/users/:id/following-status", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.id);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID format" });
+      }
+
+      const isFollowing = await storage.isFollowing(getUserId(req), userId);
+      res.json({ isFollowing });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to check follow status", error: String(error) });
+    }
+  });
+
+  // Get user's followers
+  app.get("/api/users/:id/followers", async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.id);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID format" });
+      }
+
+      const followers = await storage.getFollowers(userId);
+      const count = await storage.getFollowersCount(userId);
+
+      res.json({ followers, count });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch followers", error: String(error) });
+    }
+  });
+
+  // Get user's following
+  app.get("/api/users/:id/following", async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.id);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID format" });
+      }
+
+      const following = await storage.getFollowing(userId);
+      const count = await storage.getFollowingCount(userId);
+
+      res.json({ following, count });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch following", error: String(error) });
+    }
+  });
+
+  // Get following feed (reviews from followed users)
+  app.get("/api/feed/following", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 20;
+
+      const reviews = await storage.getFollowingFeed(getUserId(req), limit);
+
+      // Sanitize the response similar to public reviews
+      const sanitizedReviews = reviews.map(({ whiskey, review, user }) => ({
+        whiskey: {
+          id: whiskey.id,
+          name: whiskey.name,
+          distillery: whiskey.distillery,
+          type: whiskey.type,
+          age: whiskey.age,
+          abv: whiskey.abv,
+          region: whiskey.region,
+          rating: whiskey.rating,
+          image: whiskey.image,
+          bottleType: whiskey.bottleType,
+          mashBill: whiskey.mashBill,
+          caskStrength: whiskey.caskStrength,
+          finished: whiskey.finished,
+          finishType: whiskey.finishType
+        },
+        review,
+        user: {
+          id: user.id,
+          displayName: user.displayName || user.username,
+          profileImage: user.profileImage,
+          profileSlug: user.profileSlug
+        }
+      }));
+
+      res.json(sanitizedReviews);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch following feed", error: String(error) });
+    }
+  });
+
+  // Get suggested users to follow
+  app.get("/api/users/suggested", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 10;
+      const suggestions = await storage.getSuggestedUsers(getUserId(req), limit);
+      res.json(suggestions);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch suggested users", error: String(error) });
+    }
+  });
+
+  // ==================== AI TASTING NOTES ROUTES ====================
+
+  const AI_DAILY_LIMIT = 10; // Rate limit: 10 AI calls per user per day
+
+  // Suggest tasting notes based on whiskey profile
+  app.post("/api/ai/suggest-notes", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = getUserId(req);
+
+      // Check rate limit
+      const { allowed, remaining } = await storage.canUseAi(userId, AI_DAILY_LIMIT);
+      if (!allowed) {
+        return res.status(429).json({
+          message: "Daily AI limit reached. You can use AI tasting assistance again tomorrow.",
+          remaining: 0
+        });
+      }
+
+      // Get whiskey details - either by ID or from request body
+      let whiskey;
+      const { whiskeyId, name, distillery, type, age, abv } = req.body;
+
+      if (whiskeyId) {
+        whiskey = await storage.getWhiskey(whiskeyId, userId);
+        if (!whiskey) {
+          return res.status(404).json({ message: "Whiskey not found" });
+        }
+      } else if (name) {
+        // Use provided details
+        whiskey = { name, distillery, type, age, abv };
+      } else {
+        return res.status(400).json({ message: "Either whiskeyId or whiskey details (name) required" });
+      }
+
+      // Check if Anthropic API key is configured
+      if (!process.env.ANTHROPIC_API_KEY) {
+        return res.status(503).json({
+          message: "AI service not configured. Please add ANTHROPIC_API_KEY to your environment."
+        });
+      }
+
+      // Get distillery info if available
+      let distilleryInfo = "";
+      if (whiskey.distilleryId) {
+        const distilleryData = await storage.getDistillery(whiskey.distilleryId);
+        if (distilleryData) {
+          distilleryInfo = `Distillery info: ${distilleryData.name} is located in ${distilleryData.location || distilleryData.country || 'unknown location'}. `;
+          if (distilleryData.type) {
+            distilleryInfo += `Known for ${distilleryData.type}. `;
+          }
+          if (distilleryData.description) {
+            distilleryInfo += distilleryData.description;
+          }
+        }
+      }
+
+      // Import Anthropic SDK
+      const Anthropic = (await import("@anthropic-ai/sdk")).default;
+      const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+      const prompt = `You are a whiskey expert. Based on this whiskey's profile, suggest likely tasting notes.
+
+Whiskey: ${whiskey.name}
+Distillery: ${whiskey.distillery || 'Unknown'}
+Type: ${whiskey.type || 'Unknown'}
+Age: ${whiskey.age ? whiskey.age + ' years' : 'NAS (No Age Statement)'}
+ABV: ${whiskey.abv ? whiskey.abv + '%' : 'Unknown'}
+${distilleryInfo}
+
+Provide tasting notes in this JSON format only, no other text:
+{
+  "nose": ["aroma1", "aroma2", "aroma3", "aroma4", "aroma5"],
+  "palate": ["taste1", "taste2", "taste3", "taste4", "taste5"],
+  "finish": ["note1", "note2", "note3"],
+  "summary": "A 2-3 sentence overall description of what to expect from this whiskey."
+}
+
+Be specific and realistic for this style of whiskey. Use common tasting descriptors like vanilla, caramel, oak, honey, spice, fruit, etc.`;
+
+      const message = await anthropic.messages.create({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1024,
+        messages: [{ role: "user", content: prompt }]
+      });
+
+      // Parse the response
+      const responseText = message.content[0].type === 'text' ? message.content[0].text : '';
+
+      // Extract JSON from response (it might have markdown code blocks)
+      let jsonStr = responseText;
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        jsonStr = jsonMatch[0];
+      }
+
+      let suggestions;
+      try {
+        suggestions = JSON.parse(jsonStr);
+      } catch {
+        return res.status(500).json({ message: "Failed to parse AI response", raw: responseText });
+      }
+
+      // Log AI usage
+      await storage.logAiUsage(userId, 'suggest-notes', whiskeyId || null);
+
+      res.json({
+        ...suggestions,
+        remaining: remaining - 1
+      });
+    } catch (error) {
+      console.error("AI suggest-notes error:", error);
+      res.status(500).json({ message: "Failed to generate suggestions", error: String(error) });
+    }
+  });
+
+  // Enhance user's brief notes into polished tasting notes
+  app.post("/api/ai/enhance-notes", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = getUserId(req);
+
+      // Check rate limit
+      const { allowed, remaining } = await storage.canUseAi(userId, AI_DAILY_LIMIT);
+      if (!allowed) {
+        return res.status(429).json({
+          message: "Daily AI limit reached. You can use AI tasting assistance again tomorrow.",
+          remaining: 0
+        });
+      }
+
+      const { whiskeyId, userNotes, rating } = req.body;
+
+      if (!userNotes || typeof userNotes !== 'string' || userNotes.trim().length === 0) {
+        return res.status(400).json({ message: "userNotes is required" });
+      }
+
+      // Get whiskey details if ID provided
+      let whiskeyName = "this whiskey";
+      if (whiskeyId) {
+        const whiskey = await storage.getWhiskey(whiskeyId, userId);
+        if (whiskey) {
+          whiskeyName = whiskey.name;
+        }
+      }
+
+      // Check if Anthropic API key is configured
+      if (!process.env.ANTHROPIC_API_KEY) {
+        return res.status(503).json({
+          message: "AI service not configured. Please add ANTHROPIC_API_KEY to your environment."
+        });
+      }
+
+      // Import Anthropic SDK
+      const Anthropic = (await import("@anthropic-ai/sdk")).default;
+      const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+      const prompt = `You are helping a whiskey enthusiast write tasting notes. They provided brief observations. Expand these into polished, descriptive tasting notes while preserving their personal voice.
+
+Whiskey: ${whiskeyName}
+Their notes: "${userNotes}"
+${rating ? `Their rating: ${rating}/5` : ''}
+
+Provide enhanced notes in this JSON format only, no other text:
+{
+  "nose": "Expanded nose description (2-3 sentences based on aromas they mentioned)",
+  "palate": "Expanded palate description (2-3 sentences based on flavors they mentioned)",
+  "finish": "Expanded finish description (1-2 sentences)",
+  "enhanced": "Their original notes rewritten as a cohesive, polished paragraph that sounds natural and authentic"
+}
+
+Important: Keep it authentic—don't invent flavors they didn't mention or imply, but elaborate on what they observed. Use their voice and style.`;
+
+      const message = await anthropic.messages.create({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1024,
+        messages: [{ role: "user", content: prompt }]
+      });
+
+      // Parse the response
+      const responseText = message.content[0].type === 'text' ? message.content[0].text : '';
+
+      // Extract JSON from response
+      let jsonStr = responseText;
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        jsonStr = jsonMatch[0];
+      }
+
+      let enhanced;
+      try {
+        enhanced = JSON.parse(jsonStr);
+      } catch {
+        return res.status(500).json({ message: "Failed to parse AI response", raw: responseText });
+      }
+
+      // Log AI usage
+      await storage.logAiUsage(userId, 'enhance-notes', whiskeyId || null);
+
+      res.json({
+        ...enhanced,
+        remaining: remaining - 1
+      });
+    } catch (error) {
+      console.error("AI enhance-notes error:", error);
+      res.status(500).json({ message: "Failed to enhance notes", error: String(error) });
+    }
+  });
+
+  // Get AI usage status for current user
+  app.get("/api/ai/status", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = getUserId(req);
+      const { allowed, remaining } = await storage.canUseAi(userId, AI_DAILY_LIMIT);
+
+      res.json({
+        dailyLimit: AI_DAILY_LIMIT,
+        remaining,
+        allowed,
+        configured: !!process.env.ANTHROPIC_API_KEY
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get AI status", error: String(error) });
     }
   });
 

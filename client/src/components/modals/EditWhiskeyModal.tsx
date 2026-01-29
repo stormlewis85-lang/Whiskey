@@ -2,10 +2,10 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import { Whiskey, UpdateWhiskey, updateWhiskeySchema } from "@shared/schema";
+import { Whiskey, UpdateWhiskey, updateWhiskeySchema, bottleStatusValues } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -13,6 +13,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Heart, Package, PackageOpen, Gift, CheckCircle2 } from "lucide-react";
+import { DistilleryCombobox } from "@/components/DistilleryCombobox";
+import AddDistilleryModal from "@/components/modals/AddDistilleryModal";
 
 interface EditWhiskeyModalProps {
   isOpen: boolean;
@@ -25,7 +28,9 @@ const EditWhiskeyModal = ({ isOpen, onClose, whiskey }: EditWhiskeyModalProps) =
   const [isBourbonSelected, setIsBourbonSelected] = useState(whiskey.type === "Bourbon" || whiskey.type === "Tennessee Whiskey");
   const [isFinishedSelected, setIsFinishedSelected] = useState(whiskey.finished === "Yes");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  
+  const [isWishlistMode, setIsWishlistMode] = useState(whiskey.isWishlist === true);
+  const [isAddDistilleryModalOpen, setIsAddDistilleryModalOpen] = useState(false);
+
   const form = useForm<UpdateWhiskey>({
     resolver: zodResolver(updateWhiskeySchema),
     defaultValues: {
@@ -37,7 +42,7 @@ const EditWhiskeyModal = ({ isOpen, onClose, whiskey }: EditWhiskeyModalProps) =
       abv: whiskey.abv || undefined,
       region: whiskey.region || "",
       // Keep the existing notes and ratings
-      notes: whiskey.notes,
+      notes: whiskey.notes as any,
       rating: whiskey.rating,
       // Bourbon/whiskey categorization fields
       bottleType: whiskey.bottleType || "",
@@ -45,6 +50,12 @@ const EditWhiskeyModal = ({ isOpen, onClose, whiskey }: EditWhiskeyModalProps) =
       caskStrength: whiskey.caskStrength || "No",
       finished: whiskey.finished || "No",
       finishType: whiskey.finishType || "",
+      // Collection management fields
+      isWishlist: whiskey.isWishlist || false,
+      status: whiskey.status || "sealed",
+      quantity: whiskey.quantity || 1,
+      purchaseDate: whiskey.purchaseDate || undefined,
+      purchaseLocation: whiskey.purchaseLocation || "",
     },
   });
 
@@ -138,6 +149,9 @@ const EditWhiskeyModal = ({ isOpen, onClose, whiskey }: EditWhiskeyModalProps) =
       if (name === "finished") {
         setIsFinishedSelected(value.finished === "Yes");
       }
+      if (name === "isWishlist") {
+        setIsWishlistMode(value.isWishlist === true);
+      }
     });
     return () => subscription.unsubscribe();
   }, [form.watch]);
@@ -187,7 +201,14 @@ const EditWhiskeyModal = ({ isOpen, onClose, whiskey }: EditWhiskeyModalProps) =
                       <FormItem>
                         <FormLabel>Distillery</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g. Buffalo Trace Distillery" {...field} value={field.value || ""} />
+                          <DistilleryCombobox
+                            value={form.watch("distilleryId") as number | null | undefined}
+                            onValueChange={(id, distillery) => {
+                              form.setValue("distilleryId", id);
+                              form.setValue("distillery", distillery?.name || "");
+                            }}
+                            onAddNew={() => setIsAddDistilleryModalOpen(true)}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -234,12 +255,12 @@ const EditWhiskeyModal = ({ isOpen, onClose, whiskey }: EditWhiskeyModalProps) =
                       <FormItem>
                         <FormLabel>Age (Years)</FormLabel>
                         <FormControl>
-                          <Input 
-                            type="number" 
-                            min="0" 
-                            placeholder="e.g. 12" 
+                          <Input
+                            type="number"
+                            min="0"
+                            placeholder="e.g. 12"
                             {...field}
-                            value={field.value === undefined ? "" : field.value}
+                            value={field.value ?? ""}
                             onChange={(e) => {
                               const value = e.target.value;
                               field.onChange(value === "" ? undefined : Number(value));
@@ -250,7 +271,7 @@ const EditWhiskeyModal = ({ isOpen, onClose, whiskey }: EditWhiskeyModalProps) =
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="price"
@@ -258,13 +279,13 @@ const EditWhiskeyModal = ({ isOpen, onClose, whiskey }: EditWhiskeyModalProps) =
                       <FormItem>
                         <FormLabel>Price ($)</FormLabel>
                         <FormControl>
-                          <Input 
-                            type="number" 
-                            min="0" 
+                          <Input
+                            type="number"
+                            min="0"
                             step="0.01"
-                            placeholder="e.g. 45.99" 
+                            placeholder="e.g. 45.99"
                             {...field}
-                            value={field.value === undefined ? "" : field.value}
+                            value={field.value ?? ""}
                             onChange={(e) => {
                               const value = e.target.value;
                               field.onChange(value === "" ? undefined : Number(value));
@@ -275,7 +296,7 @@ const EditWhiskeyModal = ({ isOpen, onClose, whiskey }: EditWhiskeyModalProps) =
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="abv"
@@ -283,14 +304,14 @@ const EditWhiskeyModal = ({ isOpen, onClose, whiskey }: EditWhiskeyModalProps) =
                       <FormItem>
                         <FormLabel>ABV (%)</FormLabel>
                         <FormControl>
-                          <Input 
-                            type="number" 
-                            min="0" 
-                            max="100" 
+                          <Input
+                            type="number"
+                            min="0"
+                            max="100"
                             step="0.1"
-                            placeholder="e.g. 46.5" 
+                            placeholder="e.g. 46.5"
                             {...field}
-                            value={field.value === undefined ? "" : field.value}
+                            value={field.value ?? ""}
                             onChange={(e) => {
                               const value = e.target.value;
                               field.onChange(value === "" ? undefined : Number(value));
@@ -425,9 +446,9 @@ const EditWhiskeyModal = ({ isOpen, onClose, whiskey }: EditWhiskeyModalProps) =
                             <FormItem>
                               <FormLabel>Finish Type</FormLabel>
                               <FormControl>
-                                <Input 
-                                  placeholder="E.g., Port, Sherry, Wine, etc." 
-                                  {...field} 
+                                <Input
+                                  placeholder="E.g., Port, Sherry, Wine, etc."
+                                  {...field}
                                   value={field.value || ""}
                                 />
                               </FormControl>
@@ -440,7 +461,156 @@ const EditWhiskeyModal = ({ isOpen, onClose, whiskey }: EditWhiskeyModalProps) =
                   </div>
                 </div>
               )}
-              
+
+              {/* Collection Management Section */}
+              <div className="mt-4">
+                <Separator className="my-4" />
+                <h3 className="text-lg font-medium text-foreground mb-4">Collection Details</h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Wishlist Toggle */}
+                  <FormField
+                    control={form.control}
+                    name="isWishlist"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border border-pink-500/30 bg-pink-500/5 p-3 shadow-sm">
+                        <div className="space-y-0.5">
+                          <FormLabel className="flex items-center gap-2">
+                            <Heart className="h-4 w-4 text-pink-500" />
+                            Wishlist Item
+                          </FormLabel>
+                          <FormDescription className="text-xs">
+                            Track bottles you want to buy
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value === true}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Quantity - only show if not wishlist */}
+                  {!isWishlistMode && (
+                    <FormField
+                      control={form.control}
+                      name="quantity"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Quantity</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min="0"
+                              placeholder="1"
+                              {...field}
+                              value={field.value || 1}
+                              onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : 1)}
+                            />
+                          </FormControl>
+                          <FormDescription className="text-xs">
+                            Number of bottles owned
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+
+                  {/* Status - only show if not wishlist */}
+                  {!isWishlistMode && (
+                    <FormField
+                      control={form.control}
+                      name="status"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Bottle Status</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value || "sealed"}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select status" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="sealed">
+                                <span className="flex items-center gap-2">
+                                  <Package className="h-4 w-4 text-blue-500" />
+                                  Sealed
+                                </span>
+                              </SelectItem>
+                              <SelectItem value="open">
+                                <span className="flex items-center gap-2">
+                                  <PackageOpen className="h-4 w-4 text-emerald-500" />
+                                  Open
+                                </span>
+                              </SelectItem>
+                              <SelectItem value="finished">
+                                <span className="flex items-center gap-2">
+                                  <CheckCircle2 className="h-4 w-4 text-slate-500" />
+                                  Finished
+                                </span>
+                              </SelectItem>
+                              <SelectItem value="gifted">
+                                <span className="flex items-center gap-2">
+                                  <Gift className="h-4 w-4 text-pink-500" />
+                                  Gifted
+                                </span>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+
+                  {/* Purchase Date - only show if not wishlist */}
+                  {!isWishlistMode && (
+                    <FormField
+                      control={form.control}
+                      name="purchaseDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Purchase Date</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="date"
+                              {...field}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+
+                  {/* Purchase Location - only show if not wishlist */}
+                  {!isWishlistMode && (
+                    <FormField
+                      control={form.control}
+                      name="purchaseLocation"
+                      render={({ field }) => (
+                        <FormItem className="col-span-1 md:col-span-2">
+                          <FormLabel>Purchase Location</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Store name or location"
+                              {...field}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                </div>
+              </div>
+
               <div className="mt-6 flex justify-between space-x-3">
                 <Button
                   type="button"
@@ -495,6 +665,16 @@ const EditWhiskeyModal = ({ isOpen, onClose, whiskey }: EditWhiskeyModalProps) =
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Add Distillery Modal */}
+      <AddDistilleryModal
+        isOpen={isAddDistilleryModalOpen}
+        onClose={() => setIsAddDistilleryModalOpen(false)}
+        onDistilleryCreated={(distillery) => {
+          form.setValue("distilleryId", distillery.id);
+          form.setValue("distillery", distillery.name);
+        }}
+      />
     </>
   );
 };

@@ -10,6 +10,9 @@ interface FilterOptions {
   bottleTypeFilter?: string;
   mashBillFilter?: string;
   caskStrengthFilter?: string;
+  // Collection management filters
+  collectionView?: 'all' | 'collection' | 'wishlist';
+  statusFilter?: string;
 }
 
 const useWhiskeyCollection = ({
@@ -19,7 +22,9 @@ const useWhiskeyCollection = ({
   ratingFilter,
   bottleTypeFilter = "all",
   mashBillFilter = "all",
-  caskStrengthFilter = "all"
+  caskStrengthFilter = "all",
+  collectionView = "all",
+  statusFilter = "all"
 }: FilterOptions) => {
   // State to store filtered whiskeys
   const [filteredWhiskeys, setFilteredWhiskeys] = useState<Whiskey[]>([]);
@@ -46,7 +51,22 @@ const useWhiskeyCollection = ({
     console.log("Processing whiskeys in useEffect:", whiskeys.length);
     
     let result = [...whiskeys];
-    
+
+    // Apply collection view filter (wishlist vs owned)
+    if (collectionView === 'collection') {
+      result = result.filter(whiskey => !whiskey.isWishlist);
+      console.log("After collection view filter (owned):", result.length);
+    } else if (collectionView === 'wishlist') {
+      result = result.filter(whiskey => whiskey.isWishlist === true);
+      console.log("After collection view filter (wishlist):", result.length);
+    }
+
+    // Apply status filter
+    if (statusFilter && statusFilter !== 'all') {
+      result = result.filter(whiskey => whiskey.status === statusFilter);
+      console.log("After status filter:", result.length);
+    }
+
     // Apply text search
     if (searchQuery) {
       const lowerQuery = searchQuery.toLowerCase();
@@ -145,14 +165,16 @@ const useWhiskeyCollection = ({
     console.log("Final filtered whiskeys:", result.length);
     setFilteredWhiskeys(result);
   }, [
-    whiskeys, 
-    searchQuery, 
-    sortBy, 
-    typeFilter, 
-    ratingFilter, 
-    bottleTypeFilter, 
-    mashBillFilter, 
-    caskStrengthFilter
+    whiskeys,
+    searchQuery,
+    sortBy,
+    typeFilter,
+    ratingFilter,
+    bottleTypeFilter,
+    mashBillFilter,
+    caskStrengthFilter,
+    collectionView,
+    statusFilter
   ]);
   
   return {

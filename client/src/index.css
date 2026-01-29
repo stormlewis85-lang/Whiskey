@@ -2,243 +2,348 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * WhiskeyPedia Design System
+ * A warm, sophisticated palette inspired by bourbon and whiskey culture
+ */
+
+/* ============================================
+   LIGHT MODE (Cream/Warm White)
+   ============================================ */
 :root {
-  --background: 0 0% 100%;
-  --foreground: 20 14.3% 4.1%;
-  --muted: 60 4.8% 95.9%;
-  --muted-foreground: 25 5.3% 44.7%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 20 14.3% 4.1%;
-  --card: 0 0% 100%;
-  --card-foreground: 20 14.3% 4.1%;
-  --border: 20 5.9% 90%;
-  --input: 20 5.9% 90%;
-  
-  /* Customize primary to whiskey colors */
-  --primary: 25 70% 45%;
-  --primary-foreground: 0 0% 100%;
-  
-  --secondary: 60 4.8% 95.9%;
-  --secondary-foreground: 24 9.8% 10%;
-  
-  /* Accent for secondary whiskey actions */
-  --accent: 28 100% 97%;
-  --accent-foreground: 24 9.8% 10%;
-  
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 60 9.1% 97.8%;
-  --ring: 25 70% 45%;
-  --radius: 0.5rem;
+  /* Core backgrounds - warm cream tones */
+  --background: 40 33% 97%;
+  --foreground: 24 45% 10%;
 
-  /* Whiskey theme colors */
-  --whiskey-100: 30 54% 92%;
-  --whiskey-200: 30 54% 82%;
-  --whiskey-300: 28 56% 70%;
-  --whiskey-400: 24 50% 52%;
-  --whiskey-500: 25 70% 45%;
-  --whiskey-600: 25 50% 33%;
-  --whiskey-700: 25 50% 25%;
-  --whiskey-800: 25 40% 15%;
-  --whiskey-900: 25 30% 8%;
-  
-  /* Burgundy accent colors */
-  --burgundy-400: 350 44% 46%;
-  --burgundy-500: 350 44% 32%;
-  --burgundy-600: 350 44% 26%;
+  /* Cards and surfaces - subtle warmth */
+  --card: 40 40% 99%;
+  --card-foreground: 24 45% 10%;
 
-  /* Chart colors for visualization */
-  --chart-1: 25 70% 45%;
-  --chart-2: 350 44% 32%;
-  --chart-3: 28 56% 70%;
-  --chart-4: 30 54% 82%;
-  --chart-5: 25 30% 8%;
+  /* Popovers and overlays */
+  --popover: 40 40% 99%;
+  --popover-foreground: 24 45% 10%;
+
+  /* Primary - rich amber/bourbon gold */
+  --primary: 30 80% 42%;
+  --primary-foreground: 40 40% 99%;
+
+  /* Secondary - soft warm beige */
+  --secondary: 35 25% 91%;
+  --secondary-foreground: 24 40% 15%;
+
+  /* Muted - subtle warm gray */
+  --muted: 35 20% 93%;
+  --muted-foreground: 24 15% 45%;
+
+  /* Accent - golden highlight */
+  --accent: 38 45% 88%;
+  --accent-foreground: 24 45% 12%;
+
+  /* Destructive - warm red */
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+
+  /* Success - warm green */
+  --success: 142 55% 38%;
+  --success-foreground: 0 0% 100%;
+
+  /* Warning - amber (fits naturally) */
+  --warning: 38 92% 50%;
+  --warning-foreground: 24 45% 10%;
+
+  /* Borders and inputs */
+  --border: 32 20% 88%;
+  --input: 32 20% 88%;
+  --ring: 30 80% 42%;
+
+  /* Radius */
+  --radius: 0.625rem;
+
+  /* Chart colors - warm palette */
+  --chart-1: 30 80% 42%;
+  --chart-2: 16 55% 40%;
+  --chart-3: 38 70% 55%;
+  --chart-4: 24 45% 58%;
+  --chart-5: 350 45% 45%;
+
+  /* Sidebar (if used) */
+  --sidebar-background: 38 30% 96%;
+  --sidebar-foreground: 24 45% 10%;
+  --sidebar-primary: 30 80% 42%;
+  --sidebar-primary-foreground: 40 40% 99%;
+  --sidebar-accent: 38 45% 88%;
+  --sidebar-accent-foreground: 24 45% 12%;
+  --sidebar-border: 32 20% 88%;
+  --sidebar-ring: 30 80% 42%;
 }
 
+/* ============================================
+   DARK MODE (Rich dark brown/warm charcoal)
+   ============================================ */
 .dark {
-  --background: 240 10% 3.9%;
-  --foreground: 0 0% 98%;
-  --muted: 240 3.7% 15.9%;
-  --muted-foreground: 240 5% 64.9%;
-  --popover: 240 10% 3.9%;
-  --popover-foreground: 0 0% 98%;
-  --card: 240 10% 3.9%;
-  --card-foreground: 0 0% 98%;
-  --border: 240 3.7% 15.9%;
-  --input: 240 3.7% 15.9%;
-  
-  /* Whiskey colors for dark mode */
-  --primary: 28 56% 70%;
-  --primary-foreground: 0 0% 0%;
-  
-  --secondary: 240 3.7% 15.9%;
-  --secondary-foreground: 0 0% 98%;
-  
-  --accent: 25 30% 16%;
-  --accent-foreground: 28 56% 70%;
-  
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 0 0% 98%;
-  --ring: 28 56% 70%;
+  /* Core backgrounds - rich dark brown, not pure black */
+  --background: 20 25% 7%;
+  --foreground: 35 25% 92%;
+
+  /* Cards and surfaces - slightly elevated */
+  --card: 22 22% 11%;
+  --card-foreground: 35 25% 92%;
+
+  /* Popovers and overlays */
+  --popover: 22 22% 11%;
+  --popover-foreground: 35 25% 92%;
+
+  /* Primary - bright amber/gold that pops */
+  --primary: 36 90% 54%;
+  --primary-foreground: 20 25% 7%;
+
+  /* Secondary - warm dark surface */
+  --secondary: 24 18% 16%;
+  --secondary-foreground: 35 25% 90%;
+
+  /* Muted - warm charcoal */
+  --muted: 24 15% 18%;
+  --muted-foreground: 30 15% 60%;
+
+  /* Accent - subtle gold tint */
+  --accent: 28 30% 18%;
+  --accent-foreground: 36 85% 60%;
+
+  /* Destructive - muted red for dark mode */
+  --destructive: 0 62% 45%;
+  --destructive-foreground: 0 0% 100%;
+
+  /* Success - muted green */
+  --success: 142 50% 35%;
+  --success-foreground: 0 0% 100%;
+
+  /* Warning - softer amber */
+  --warning: 38 85% 50%;
+  --warning-foreground: 20 25% 7%;
+
+  /* Borders and inputs */
+  --border: 24 15% 20%;
+  --input: 24 15% 20%;
+  --ring: 36 90% 54%;
+
+  /* Chart colors - adjusted for dark mode */
+  --chart-1: 36 90% 54%;
+  --chart-2: 16 50% 50%;
+  --chart-3: 42 75% 60%;
+  --chart-4: 28 40% 50%;
+  --chart-5: 350 50% 55%;
+
+  /* Sidebar */
+  --sidebar-background: 22 22% 9%;
+  --sidebar-foreground: 35 25% 92%;
+  --sidebar-primary: 36 90% 54%;
+  --sidebar-primary-foreground: 20 25% 7%;
+  --sidebar-accent: 28 30% 18%;
+  --sidebar-accent-foreground: 36 85% 60%;
+  --sidebar-border: 24 15% 20%;
+  --sidebar-ring: 36 90% 54%;
 }
 
+/* ============================================
+   BASE LAYER STYLES
+   ============================================ */
 @layer base {
   * {
     @apply border-border;
   }
 
+  html {
+    @apply scroll-smooth;
+  }
+
   body {
-    @apply bg-amber-50/30 font-sans text-gray-800;
-  }
-  
-  /* Custom scrollbar */
-  ::-webkit-scrollbar {
-    width: 16px;
-  }
-  
-  ::-webkit-scrollbar-track {
-    background-color: #f5f5f5;
-    border-radius: 8px;
-    border: 4px solid transparent;
-    background-clip: content-box;
-  }
-  
-  ::-webkit-scrollbar-thumb {
-    background-color: #d97706;
-    border-radius: 8px;
-    border: 4px solid transparent;
-    background-clip: content-box;
-  }
-  
-  ::-webkit-scrollbar-thumb:hover {
-    background-color: #b45309;
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 
+  /* Headings - clean, modern typography */
   h1, h2, h3, h4, h5, h6 {
-    @apply font-serif;
-    color: #7d5936; /* Bourbon color */
+    @apply font-semibold tracking-tight text-foreground;
+  }
+
+  h1 {
+    @apply text-3xl md:text-4xl;
+  }
+
+  h2 {
+    @apply text-2xl md:text-3xl;
+  }
+
+  h3 {
+    @apply text-xl md:text-2xl;
+  }
+
+  h4 {
+    @apply text-lg md:text-xl;
+  }
+
+  /* Focus styles */
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+
+  /* Selection color */
+  ::selection {
+    @apply bg-primary/20 text-foreground;
   }
 }
 
-/* Custom utility classes for the whiskey app */
-.bg-whiskey-100 { @apply bg-[hsl(var(--whiskey-100))]; }
-.bg-whiskey-200 { @apply bg-[hsl(var(--whiskey-200))]; }
-.bg-whiskey-300 { @apply bg-[hsl(var(--whiskey-300))]; }
-.bg-whiskey-400 { @apply bg-[hsl(var(--whiskey-400))]; }
-.bg-whiskey-500 { @apply bg-[hsl(var(--whiskey-500))]; }
-.bg-whiskey-600 { @apply bg-[hsl(var(--whiskey-600))]; }
-.bg-whiskey-700 { @apply bg-[hsl(var(--whiskey-700))]; }
-.bg-whiskey-800 { @apply bg-[hsl(var(--whiskey-800))]; }
-.bg-whiskey-900 { @apply bg-[hsl(var(--whiskey-900))]; }
+/* ============================================
+   SCROLLBAR STYLING
+   ============================================ */
+@layer base {
+  /* Webkit browsers (Chrome, Safari, Edge) */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
 
-.bg-burgundy-400 { @apply bg-[hsl(var(--burgundy-400))]; }
-.bg-burgundy-500 { @apply bg-[hsl(var(--burgundy-500))]; }
-.bg-burgundy-600 { @apply bg-[hsl(var(--burgundy-600))]; }
+  ::-webkit-scrollbar-track {
+    @apply bg-muted/50 rounded-full;
+  }
 
-.text-whiskey-400 { @apply text-[hsl(var(--whiskey-400))]; }
-.text-whiskey-500 { @apply text-[hsl(var(--whiskey-500))]; }
-.text-whiskey-600 { @apply text-[hsl(var(--whiskey-600))]; }
-.text-whiskey-700 { @apply text-[hsl(var(--whiskey-700))]; }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-primary/40 rounded-full border-2 border-transparent;
+    background-clip: content-box;
+  }
 
-.text-burgundy-400 { @apply text-[hsl(var(--burgundy-400))]; }
-.text-burgundy-500 { @apply text-[hsl(var(--burgundy-500))]; }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary/60;
+  }
 
-.hover\:bg-whiskey-400:hover { @apply hover:bg-[hsl(var(--whiskey-400))]; }
-.hover\:bg-whiskey-500:hover { @apply hover:bg-[hsl(var(--whiskey-500))]; }
-.hover\:bg-burgundy-400:hover { @apply hover:bg-[hsl(var(--burgundy-400))]; }
-
-.border-whiskey-100 { @apply border-[hsl(var(--whiskey-100))]; }
-.border-whiskey-200 { @apply border-[hsl(var(--whiskey-200))]; }
-
-/* Modern card theme */
-.card {
-  @apply bg-white/90 border border-gray-200 shadow-sm;
-  border-radius: 8px;
-  overflow: hidden;
-  transition: all 0.3s ease;
+  /* Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--primary) / 0.4) hsl(var(--muted) / 0.5);
+  }
 }
 
-.card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+/* ============================================
+   COMPONENT UTILITIES
+   ============================================ */
+@layer components {
+  /* Glass effect card */
+  .glass {
+    @apply bg-card/80 backdrop-blur-md border border-border/50;
+  }
+
+  .glass-dark {
+    @apply bg-card/60 backdrop-blur-md border border-white/10;
+  }
+
+  /* Warm glow effect for highlights */
+  .glow-amber {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.3),
+                0 0 40px hsl(var(--primary) / 0.1);
+  }
+
+  /* Gradient text */
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary via-amber-500 to-primary bg-clip-text text-transparent;
+  }
+
+  /* Primary button style */
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90
+           transition-all duration-200 shadow-warm hover:shadow-warm-md;
+  }
+
+  /* Ghost button with warm hover */
+  .btn-ghost {
+    @apply hover:bg-accent hover:text-accent-foreground transition-colors;
+  }
+
+  /* Card with hover effect */
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-warm-lg hover:-translate-y-1;
+  }
+
+  /* Subtle texture overlay (optional) */
+  .texture-noise {
+    position: relative;
+  }
+
+  .texture-noise::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Section divider */
+  .divider {
+    @apply h-px bg-gradient-to-r from-transparent via-border to-transparent;
+  }
+
+  /* Input focus ring */
+  .input-focus {
+    @apply focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all;
+  }
 }
 
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+@layer utilities {
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Smooth transitions */
+  .transition-theme {
+    @apply transition-colors duration-300;
+  }
+
+  /* Text balance for headings */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Subtle shimmer animation for loading states */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted)) 0%,
+      hsl(var(--muted-foreground) / 0.1) 50%,
+      hsl(var(--muted)) 100%
+    );
+    background-size: 200% 100%;
+    @apply animate-shimmer;
+  }
+}
+
+/* ============================================
+   DIALOG / MODAL STYLES
+   ============================================ */
 .dialog-content {
-  @apply bg-white border-gray-200;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  @apply bg-card border-border shadow-warm-xl;
+  max-height: 85vh;
+  overflow-y: auto;
 }
 
-.collection-header {
-  @apply font-serif text-4xl font-bold text-amber-600;
-  letter-spacing: 0.03em;
-}
-
-/* Style buttons with modern amber feel */
-.barrel-button {
-  @apply bg-amber-600 text-white border-amber-700;
-  transition: all 0.2s ease;
-}
-
-.barrel-button:hover {
-  @apply bg-amber-500;
-  transform: translateY(-1px);
-}
-
-/* Custom scrollable modal content */
 .scrollable-content {
   max-height: 70vh;
   overflow-y: auto;
   padding-right: 10px;
 }
 
-/* Style tables with modern feel */
-.whiskey-table {
-  @apply bg-white border border-gray-200;
-  border-collapse: separate;
-  border-spacing: 0;
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.whiskey-table th {
-  @apply bg-amber-600 text-white font-medium;
-}
-
-.whiskey-table tr:nth-child(even) {
-  @apply bg-gray-50;
-}
-
-.whiskey-table tr:hover {
-  @apply bg-amber-50;
-}
-
-/* Custom progress bar for amber theme */
-:where(.css-dev-only-do-not-override-nllxry).ant-progress .ant-progress-bg {
-  background-color: #d97706;
-}
-
-/* Customize the progress indicator */
-[role="progressbar"] > div {
-  background-color: #d97706 !important;
-}
-
-/* Dialog content styling for review modal */
-.dialog-content {
-  max-height: 85vh;
-  overflow-y: auto;
-}
-
-/* Ensure only one scrollbar in form content */
-.scrollable-content {
-  max-height: none;
-  overflow-y: visible;
-}
-
-/* Section header styling */
-.section-header {
-  @apply font-medium mb-2 text-[#7d5936];
-}
-
-/* Swipe animations */
+/* ============================================
+   ANIMATIONS
+   ============================================ */
 @keyframes slide-left {
   0% {
     transform: translateX(0);
@@ -275,4 +380,118 @@
 
 .animate-slide-right {
   animation: slide-right 0.3s ease-in-out;
+}
+
+/* ============================================
+   LEGACY CLASS SUPPORT
+   (For gradual migration - can be removed later)
+   ============================================ */
+.collection-header {
+  @apply text-3xl md:text-4xl font-bold text-foreground;
+}
+
+.section-header {
+  @apply font-medium mb-2 text-foreground;
+}
+
+.barrel-button {
+  @apply btn-primary;
+}
+
+.whiskey-table {
+  @apply bg-card border border-border rounded-lg overflow-hidden;
+}
+
+.whiskey-table th {
+  @apply bg-primary text-primary-foreground font-medium;
+}
+
+.whiskey-table tr:nth-child(even) {
+  @apply bg-muted/30;
+}
+
+.whiskey-table tr:hover {
+  @apply bg-accent/50;
+}
+
+/* ============================================
+   MOBILE RESPONSIVENESS (375px minimum)
+   ============================================ */
+@layer utilities {
+  /* Safe area padding for mobile devices */
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Touch-friendly tap targets (minimum 44px) */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+
+  /* Mobile-optimized text sizes */
+  .text-mobile-sm {
+    @apply text-sm;
+  }
+
+  @media (max-width: 375px) {
+    .text-mobile-sm {
+      @apply text-xs;
+    }
+  }
+
+  /* Mobile full-screen container */
+  .mobile-full {
+    @apply w-screen h-screen fixed inset-0;
+  }
+
+  /* Hide on very small screens */
+  .hide-on-tiny {
+    @media (max-width: 375px) {
+      display: none;
+    }
+  }
+}
+
+/* Mobile-specific base adjustments */
+@media (max-width: 640px) {
+  /* Increase base tap target size */
+  button, a, input, select, textarea {
+    min-height: 44px;
+  }
+
+  /* Prevent horizontal scroll */
+  body {
+    overflow-x: hidden;
+  }
+
+  /* Adjust container padding */
+  .container {
+    @apply px-4;
+  }
+}
+
+/* Very small screens (375px and below) */
+@media (max-width: 375px) {
+  /* Reduce base font size slightly */
+  html {
+    font-size: 14px;
+  }
+
+  /* Tighter spacing */
+  .container {
+    @apply px-3;
+  }
+
+  /* Smaller gaps */
+  .gap-4 {
+    gap: 0.75rem;
+  }
+
+  .gap-6 {
+    gap: 1rem;
+  }
 }

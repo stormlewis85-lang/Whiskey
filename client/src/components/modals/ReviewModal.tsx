@@ -1,32 +1,28 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { Whiskey, reviewNoteSchema, ReviewNote } from "@shared/schema";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { nanoid } from "nanoid";
 import { Progress } from "@/components/ui/progress";
-import { Checkbox } from "@/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { useSwipeable } from "react-swipeable";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Share2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Loader2, X, Eye, Droplets, Wind, Utensils, Clock, DollarSign, Star, Sparkles, Wand2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { StarRating } from "@/components/StarRating";
-import RadarChart from "@/components/RadarChart";
-import { 
-  COLOR_OPTIONS, 
-  VISCOSITY_OPTIONS, 
+import { FlavorChipGroup, SingleFlavorChipGroup } from "@/components/ui/flavor-chip";
+import { StandardFlavorAccordion } from "@/components/ui/flavor-accordion";
+import { cn } from "@/lib/utils";
+import { AiSuggestModal, AiEnhanceModal } from "@/components/modals/AiTastingModal";
+import {
+  COLOR_OPTIONS,
+  VISCOSITY_OPTIONS,
   CLARITY_OPTIONS,
-  AROMA_FLAVOR_OPTIONS,
   ALCOHOL_FEEL_OPTIONS,
   MOUTHFEEL_VISCOSITY_OPTIONS,
   PLEASANTNESS_OPTIONS,
@@ -43,199 +39,32 @@ interface ReviewModalProps {
   whiskey: Whiskey;
 }
 
-// Define the review pages
-enum ReviewPage {
-  Visual = 0,
-  Nose = 1,
-  MouthFeel = 2,
-  Taste = 3,
-  Finish = 4,
-  Value = 5,
-  Summary = 6,
-  FinalScores = 7
-}
-
-// Page titles and descriptions
-const pageData = [
-  {
-    title: "Visual",
-    description: "Describe the color, clarity, and appearance of the whiskey.",
-    placeholder: "Golden amber with slow, thick legs..."
-  },
-  {
-    title: "Nose",
-    description: "What aromas do you detect?",
-    placeholder: "Vanilla, caramel, hints of oak and spice..."
-  },
-  {
-    title: "Mouth Feel",
-    description: "How does it feel in your mouth? Texture, weight, etc.",
-    placeholder: "Velvety, creamy, oily, light bodied..."
-  },
-  {
-    title: "Taste",
-    description: "What flavors come through on the palate?",
-    placeholder: "Rich caramel, vanilla, baking spices with hints of dried fruits..."
-  },
-  {
-    title: "Finish",
-    description: "How long does the flavor last? What notes linger?",
-    placeholder: "Long finish with warming spice and oak tannins..."
-  },
-  {
-    title: "Value",
-    description: "Is this whiskey worth the price? How would you rate its value?",
-    placeholder: "Good value for the complexity and age..."
-  },
-  {
-    title: "Summary",
-    description: "Overall impression and final rating.",
-    placeholder: "Overall an excellent bourbon that balances..."
-  },
-  {
-    title: "Final Scores",
-    description: "Review your weighted category scores and make final adjustments.",
-    placeholder: ""
-  }
+// Define the review steps
+const STEPS = [
+  { id: "visual", title: "Visual", icon: Eye, description: "Color, clarity & legs" },
+  { id: "nose", title: "Nose", icon: Wind, description: "Aromas & scents" },
+  { id: "mouthfeel", title: "Mouthfeel", icon: Droplets, description: "Texture & weight" },
+  { id: "taste", title: "Taste", icon: Utensils, description: "Flavors on the palate" },
+  { id: "finish", title: "Finish", icon: Clock, description: "Aftertaste & length" },
+  { id: "value", title: "Value", icon: DollarSign, description: "Worth the price?" },
+  { id: "summary", title: "Summary", icon: Star, description: "Final thoughts" },
 ];
 
 const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
   const { toast } = useToast();
-  const [currentPage, setCurrentPage] = useState<ReviewPage>(ReviewPage.Visual);
+  const [currentStep, setCurrentStep] = useState(0);
   const [rating, setRating] = useState(0);
   const isMobile = useIsMobile();
-  const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
-  // Content element referenced by id="review-content" to avoid ref issues
-  
-  // State for selected aromas and flavors
+
+  // State for multi-select fields
   const [selectedNoseAromas, setSelectedNoseAromas] = useState<string[]>([]);
   const [selectedTasteFlavors, setSelectedTasteFlavors] = useState<string[]>([]);
   const [selectedFinishFlavors, setSelectedFinishFlavors] = useState<string[]>([]);
-  
-  // State for score adjustments
-  const [noseAdjustment, setNoseAdjustment] = useState(0);
-  const [mouthfeelAdjustment, setMouthfeelAdjustment] = useState(0);
-  const [tasteAdjustment, setTasteAdjustment] = useState(0);
-  const [finishAdjustment, setFinishAdjustment] = useState(0);
-  const [valueAdjustment, setValueAdjustment] = useState(0);
-  
-  // Special state for value score to prevent mirroring
-  const [valueScoreState, setValueScoreState] = useState<number | undefined>(undefined);
-  const [finalNotes, setFinalNotes] = useState('');
-  
-  // Handle swipe gestures
-  const swipeHandlers = useSwipeable({
-    onSwipedLeft: () => {
-      if (currentPage < ReviewPage.FinalScores) {
-        setSwipeDirection('left');
-        nextPage();
-      }
-    },
-    onSwipedRight: () => {
-      if (currentPage > ReviewPage.Visual) {
-        setSwipeDirection('right');
-        prevPage();
-      }
-    },
-    trackMouse: false,
-    preventScrollOnSwipe: true,
-    delta: 10, // min distance(px) before a swipe starts
-    swipeDuration: 500, // max time in ms for a swipe
-    touchEventOptions: { passive: true },
-  });
-  
-  // Handle animation end
-  useEffect(() => {
-    if (swipeDirection) {
-      const contentElement = document.getElementById('review-content');
-      if (contentElement) {
-        const handleAnimationEnd = () => {
-          setSwipeDirection(null);
-        };
-        
-        contentElement.addEventListener('animationend', handleAnimationEnd);
-        
-        return () => {
-          contentElement.removeEventListener('animationend', handleAnimationEnd);
-        };
-      }
-    }
-  }, [swipeDirection]);
 
-  // Reset function to clear all form values and states
-  const resetReview = () => {
-    setCurrentPage(ReviewPage.Visual);
-    setRating(0);
-    setSelectedNoseAromas([]);
-    setSelectedTasteFlavors([]);
-    setSelectedFinishFlavors([]);
-    setNoseAdjustment(0);
-    setMouthfeelAdjustment(0);
-    setTasteAdjustment(0);
-    setFinishAdjustment(0);
-    setValueAdjustment(0);
-    setFinalNotes('');
-    
-    // Force clear Value-related fields explicitly
-    setTimeout(() => {
-      form.setValue('valueScore', undefined);
-      form.setValue('valueAvailability', "");
-      form.setValue('valueBuyAgain', "");
-      form.setValue('valueOccasion', "");
-      form.setValue('valueNotes', "");
-    }, 0);
-    
-    form.reset({
-      rating: 0,
-      date: new Date().toISOString().split('T')[0],
-      text: "",
-      flavor: "",
-      id: nanoid(),
-      visual: "",
-      nose: "",
-      mouthfeel: "",
-      taste: "",
-      finish: "",
-      value: "",
-      visualColor: "",
-      visualViscosity: "",
-      visualClarity: "",
-      visualNotes: "",
-      noseAromas: [],
-      noseScore: undefined,
-      noseNotes: "",
-      mouthfeelAlcohol: "",
-      mouthfeelViscosity: "",
-      mouthfeelPleasantness: "",
-      mouthfeelScore: undefined,
-      mouthfeelNotes: "",
-      tasteFlavors: [],
-      tasteCorrelation: undefined,
-      tasteScore: undefined,
-      tasteNotes: "",
-      finishFlavors: [],
-      finishCorrelation: undefined,
-      finishLength: "",
-      finishPleasantness: "",
-      finishScore: undefined,
-      finishNotes: "",
-      valueAvailability: "",
-      valueBuyAgain: "",
-      valueOccasion: "",
-      valueScore: undefined,
-      valueNotes: "",
-      // Reset flavor profile ratings
-      flavorProfileFruitFloral: 0,
-      flavorProfileSweet: 0,
-      flavorProfileSpice: 0,
-      flavorProfileHerbal: 0,
-      flavorProfileGrain: 0,
-      flavorProfileOak: 0,
-      isPublic: false,
-      shareId: undefined
-    });
-  };
-  
+  // AI Assist modals state
+  const [showAiSuggestModal, setShowAiSuggestModal] = useState(false);
+  const [showAiEnhanceModal, setShowAiEnhanceModal] = useState(false);
+
   const form = useForm<ReviewNote>({
     resolver: zodResolver(reviewNoteSchema),
     defaultValues: {
@@ -244,14 +73,12 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
       text: "",
       flavor: "",
       id: nanoid(),
-      // Legacy fields
       visual: "",
       nose: "",
       mouthfeel: "",
       taste: "",
       finish: "",
       value: "",
-      // New detailed fields
       visualColor: "",
       visualViscosity: "",
       visualClarity: "",
@@ -279,51 +106,76 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
       valueOccasion: "",
       valueScore: undefined,
       valueNotes: "",
-      // Flavor profile ratings
       flavorProfileFruitFloral: 0,
       flavorProfileSweet: 0,
       flavorProfileSpice: 0,
       flavorProfileHerbal: 0,
       flavorProfileGrain: 0,
       flavorProfileOak: 0,
-      // Social features
       isPublic: false,
       shareId: undefined
     },
   });
-  
-  // Update form when selections change
+
+  // Sync flavor selections with form
   useEffect(() => {
     form.setValue('noseAromas', selectedNoseAromas);
   }, [selectedNoseAromas, form]);
-  
+
   useEffect(() => {
     form.setValue('tasteFlavors', selectedTasteFlavors);
   }, [selectedTasteFlavors, form]);
-  
+
   useEffect(() => {
     form.setValue('finishFlavors', selectedFinishFlavors);
   }, [selectedFinishFlavors, form]);
-  
-  // Helper function to toggle selection in array
-  const toggleSelection = (
-    array: string[], 
-    setter: React.Dispatch<React.SetStateAction<string[]>>, 
-    value: string
-  ) => {
-    if (array.includes(value)) {
-      setter(array.filter(item => item !== value));
-    } else {
-      setter([...array, value]);
-    }
+
+  const toggleAroma = (value: string) => {
+    setSelectedNoseAromas(prev =>
+      prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]
+    );
   };
 
-  // Calculate progress percentage
-  const progressPercentage = (currentPage / pageData.length) * 100;
+  const toggleTaste = (value: string) => {
+    setSelectedTasteFlavors(prev =>
+      prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]
+    );
+  };
+
+  const toggleFinish = (value: string) => {
+    setSelectedFinishFlavors(prev =>
+      prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]
+    );
+  };
+
+  const resetForm = () => {
+    setCurrentStep(0);
+    setRating(0);
+    setSelectedNoseAromas([]);
+    setSelectedTasteFlavors([]);
+    setSelectedFinishFlavors([]);
+    form.reset();
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
+
+  // Calculate weighted score
+  const calculateWeightedScore = () => {
+    const noseScore = Number(form.getValues('noseScore')) || 0;
+    const mouthfeelScore = Number(form.getValues('mouthfeelScore')) || 0;
+    const tasteScore = Number(form.getValues('tasteScore')) || 0;
+    const finishScore = Number(form.getValues('finishScore')) || 0;
+    const valueScore = Number(form.getValues('valueScore')) || 0;
+
+    const weighted = (noseScore * 1.5) + (mouthfeelScore * 2.0) + (tasteScore * 3.0) + (finishScore * 2.5) + (valueScore * 1.0);
+    return weighted / 10;
+  };
 
   const addReviewMutation = useMutation({
     mutationFn: async (data: ReviewNote) => {
-      // Ensure flavor profile values are numbers, not strings
       const reviewData = {
         ...data,
         flavorProfileFruitFloral: Number(data.flavorProfileFruitFloral || 0),
@@ -331,150 +183,46 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
         flavorProfileSpice: Number(data.flavorProfileSpice || 0),
         flavorProfileHerbal: Number(data.flavorProfileHerbal || 0),
         flavorProfileGrain: Number(data.flavorProfileGrain || 0),
-        flavorProfileOak: Number(data.flavorProfileOak || 0)
+        flavorProfileOak: Number(data.flavorProfileOak || 0),
       };
-      
-      console.log("Flavor profile data before submission:", {
-        fruitFloral: reviewData.flavorProfileFruitFloral, 
-        sweet: reviewData.flavorProfileSweet,
-        spice: reviewData.flavorProfileSpice,
-        herbal: reviewData.flavorProfileHerbal,
-        grain: reviewData.flavorProfileGrain,
-        oak: reviewData.flavorProfileOak
-      });
-      
-      // Generate a comprehensive summary from all the detailed review sections
-      const visualSection = [
-        `COLOR: ${reviewData.visualColor || 'Not specified'}`,
-        `VISCOSITY: ${reviewData.visualViscosity || 'Not specified'}`,
-        `CLARITY: ${reviewData.visualClarity || 'Not specified'}`,
-        `NOTES: ${reviewData.visualNotes || 'None'}`
-      ].join('\n');
-      
-      const noseSection = [
-        `AROMAS: ${reviewData.noseAromas?.join(', ') || 'None selected'}`,
-        `SCORE: ${reviewData.noseScore}/5`,
-        `NOTES: ${reviewData.noseNotes || 'None'}`
-      ].join('\n');
-      
-      const mouthfeelSection = [
-        `ALCOHOL: ${reviewData.mouthfeelAlcohol || 'Not specified'}`,
-        `VISCOSITY: ${reviewData.mouthfeelViscosity || 'Not specified'}`,
-        `PLEASANTNESS: ${reviewData.mouthfeelPleasantness || 'Not specified'}`,
-        `SCORE: ${reviewData.mouthfeelScore}/5`,
-        `NOTES: ${reviewData.mouthfeelNotes || 'None'}`
-      ].join('\n');
-      
-      const tasteSection = [
-        `FLAVORS: ${reviewData.tasteFlavors?.join(', ') || 'None selected'}`,
-        `MATCHES NOSE: ${reviewData.tasteCorrelation ? 'Yes' : 'No'}`,
-        `SCORE: ${reviewData.tasteScore}/5`,
-        `NOTES: ${reviewData.tasteNotes || 'None'}`
-      ].join('\n');
-      
-      const finishSection = [
-        `FLAVORS: ${reviewData.finishFlavors?.join(', ') || 'None selected'}`,
-        `MATCHES TASTE: ${reviewData.finishCorrelation ? 'Yes' : 'No'}`,
-        `LENGTH: ${reviewData.finishLength || 'Not specified'}`,
-        `PLEASANTNESS: ${reviewData.finishPleasantness || 'Not specified'}`,
-        `SCORE: ${reviewData.finishScore}/5`,
-        `NOTES: ${reviewData.finishNotes || 'None'}`
-      ].join('\n');
-      
-      const valueSection = [
-        `PRICE: $${whiskey.price}`,
-        `PRICE PER POUR: $${(whiskey.price ? (whiskey.price / 14).toFixed(2) : 'N/A')}`,
-        `AVAILABILITY: ${reviewData.valueAvailability || 'Not specified'}`,
-        `BUY AGAIN: ${reviewData.valueBuyAgain || 'Not specified'}`,
-        `OCCASION: ${reviewData.valueOccasion || 'Not specified'}`,
-        `SCORE: ${reviewData.valueScore}/5`,
-        `NOTES: ${reviewData.valueNotes || 'None'}`
-      ].join('\n');
-      
-      const flavorProfileSection = [
-        `FRUIT/FLORAL: ${reviewData.flavorProfileFruitFloral}/5`,
-        `SWEET: ${reviewData.flavorProfileSweet}/5`, 
-        `SPICE: ${reviewData.flavorProfileSpice}/5`,
-        `HERBAL: ${reviewData.flavorProfileHerbal}/5`,
-        `GRAIN: ${reviewData.flavorProfileGrain}/5`,
-        `OAK: ${reviewData.flavorProfileOak}/5`
-      ].join('\n');
-      
-      const summary = [
-        `## VISUAL ##\n${visualSection}`,
-        `## NOSE ##\n${noseSection}`,
-        `## MOUTHFEEL ##\n${mouthfeelSection}`,
-        `## TASTE ##\n${tasteSection}`,
-        `## FINISH ##\n${finishSection}`,
-        `## VALUE ##\n${valueSection}`,
-        `## FLAVOR PROFILE ##\n${flavorProfileSection}`,
-        `## OVERALL ##\n${reviewData.text}`,
-        `OVERALL RATING: ${reviewData.rating}/5`
-      ].join('\n\n');
-      
-      // Update the main text field with our comprehensive notes
-      reviewData.text = summary;
-      
-      // Include legacy fields for backward compatibility
-      reviewData.visual = `Color: ${reviewData.visualColor}, Viscosity: ${reviewData.visualViscosity}, Clarity: ${reviewData.visualClarity}`;
-      reviewData.nose = `Aromas: ${reviewData.noseAromas?.join(', ')} - ${reviewData.noseNotes}`;
-      reviewData.mouthfeel = `Alcohol: ${reviewData.mouthfeelAlcohol}, Viscosity: ${reviewData.mouthfeelViscosity}, Pleasantness: ${reviewData.mouthfeelPleasantness}`;
-      reviewData.taste = `Flavors: ${reviewData.tasteFlavors?.join(', ')} - ${reviewData.tasteNotes}`;
-      reviewData.finish = `Length: ${reviewData.finishLength}, Pleasantness: ${reviewData.finishPleasantness} - ${reviewData.finishNotes}`;
-      reviewData.value = `Availability: ${reviewData.valueAvailability}, Buy Again: ${reviewData.valueBuyAgain}, Occasion: ${reviewData.valueOccasion}`;
-      
-      // Add one final console log before submitting
-      console.log("Final review data with fixed flavor profile:", {
-        flavorProfileFruitFloral: reviewData.flavorProfileFruitFloral,
-        flavorProfileSweet: reviewData.flavorProfileSweet,
-        flavorProfileSpice: reviewData.flavorProfileSpice,
-        flavorProfileHerbal: reviewData.flavorProfileHerbal,
-        flavorProfileGrain: reviewData.flavorProfileGrain,
-        flavorProfileOak: reviewData.flavorProfileOak
-      });
-      
+
+      // Build comprehensive text summary
+      const sections = [
+        `## Visual\nColor: ${reviewData.visualColor}, Viscosity: ${reviewData.visualViscosity}, Clarity: ${reviewData.visualClarity}\n${reviewData.visualNotes || ''}`,
+        `## Nose\nAromas: ${reviewData.noseAromas?.join(', ') || 'None'}\nScore: ${reviewData.noseScore}/5\n${reviewData.noseNotes || ''}`,
+        `## Mouthfeel\nAlcohol: ${reviewData.mouthfeelAlcohol}, Viscosity: ${reviewData.mouthfeelViscosity}, Pleasantness: ${reviewData.mouthfeelPleasantness}\nScore: ${reviewData.mouthfeelScore}/5\n${reviewData.mouthfeelNotes || ''}`,
+        `## Taste\nFlavors: ${reviewData.tasteFlavors?.join(', ') || 'None'}\nScore: ${reviewData.tasteScore}/5\n${reviewData.tasteNotes || ''}`,
+        `## Finish\nLength: ${reviewData.finishLength}, Flavors: ${reviewData.finishFlavors?.join(', ') || 'None'}\nScore: ${reviewData.finishScore}/5\n${reviewData.finishNotes || ''}`,
+        `## Value\nAvailability: ${reviewData.valueAvailability}, Buy Again: ${reviewData.valueBuyAgain}, Occasion: ${reviewData.valueOccasion}\nScore: ${reviewData.valueScore}/5\n${reviewData.valueNotes || ''}`,
+        `## Overall\n${reviewData.text || 'No additional notes.'}\nRating: ${reviewData.rating}/5`,
+      ];
+
+      reviewData.text = sections.join('\n\n');
+
       const response = await apiRequest(
         "POST",
         `/api/whiskeys/${whiskey.id}/reviews`,
         reviewData
       );
-      
+
       if (!response.ok) {
         const errorData = await response.json();
-        console.error("Error submitting review:", errorData);
-        throw new Error(`Failed to submit review: ${errorData.message || 'Unknown error'}`);
+        throw new Error(errorData.message || 'Failed to submit review');
       }
-      
+
       return response.json();
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/whiskeys"] });
       toast({
         title: "Review Added",
-        description: "Your detailed tasting notes have been saved.",
+        description: "Your tasting notes have been saved.",
       });
-      
-      // Find the newly added review from the returned updated whiskey
+      handleClose();
+
       if (data && Array.isArray(data.notes) && data.notes.length > 0) {
-        // Get the last (most recently added) review
         const newReview = data.notes[data.notes.length - 1];
-        
-        // Add console log for debugging
-        console.log("New review created:", newReview.id, "type:", typeof newReview.id);
-        
-        // Close the modal
-        onClose();
-        
-        // Make sure the review ID is properly converted for URL purposes
-        const reviewIdForUrl = newReview.id.toString();
-        
-        // Navigate to the review detail page
-        window.location.href = `/whiskey/${data.id}/review/${reviewIdForUrl}`;
-      } else {
-        // Fallback if review not found in response
-        form.reset();
-        setCurrentPage(ReviewPage.Visual);
-        onClose();
+        window.location.href = `/whiskey/${data.id}/review/${newReview.id}`;
       }
     },
     onError: (error) => {
@@ -486,319 +234,84 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
     },
   });
 
-  // Calculate weighted scores
-  const calculateWeightedScores = () => {
-    // Get all scores with fallback to 0 for undefined values
-    const noseScore = Number(form.getValues('noseScore')) || 0;
-    const mouthfeelScore = Number(form.getValues('mouthfeelScore')) || 0;
-    const tasteScore = Number(form.getValues('tasteScore')) || 0;
-    const finishScore = Number(form.getValues('finishScore')) || 0;
-    const valueScore = Number(form.getValues('valueScore')) || 0;
-    
-    console.log("Calculating weighted scores with raw values:", {
-      noseScore,
-      mouthfeelScore,
-      tasteScore,
-      finishScore,
-      valueScore
-    });
-    
-    // Calculate individual weighted scores
-    const noseWeighted = noseScore * 1.5;
-    const mouthfeelWeighted = mouthfeelScore * 2.0;
-    const tasteWeighted = tasteScore * 3.0;
-    const finishWeighted = finishScore * 2.5;
-    const valueWeighted = valueScore * 1.0;
-    
-    // Calculate total weighted score
-    const weightedTotal = noseWeighted + mouthfeelWeighted + tasteWeighted + finishWeighted + valueWeighted;
-    
-    // Calculate 5-star score (weighted total / 10)
-    const fiveStarScore = weightedTotal / 10;
-    
-    // Calculate final score (weighted total * 2)
-    const finalScore = weightedTotal * 2;
-    
-    const result = {
-      nose: parseFloat(noseWeighted.toFixed(1)),
-      mouthfeel: parseFloat(mouthfeelWeighted.toFixed(1)),
-      taste: parseFloat(tasteWeighted.toFixed(1)),
-      finish: parseFloat(finishWeighted.toFixed(1)),
-      value: parseFloat(valueWeighted.toFixed(1)),
-      weightedTotal: parseFloat(weightedTotal.toFixed(1)),
-      fiveStarScore: parseFloat(fiveStarScore.toFixed(1)),
-      finalScore: Math.round(finalScore)
-    };
-    
-    console.log("Weighted score calculation result:", result);
-    return result;
-  };
-  
-  // Reference to dialog content div for scrolling
-  const dialogContentRef = useRef<HTMLDivElement>(null);
-  
-  // Scroll to top of dialog content
-  const scrollToTop = () => {
-    if (dialogContentRef.current) {
-      // Reset all possible scroll positions
-      dialogContentRef.current.scrollTop = 0;
-      
-      // Get the form element which is now scrollable
-      const formElement = dialogContentRef.current.querySelector('form');
-      if (formElement) {
-        formElement.scrollTop = 0;
-      }
-      
-      // Also try to find the content by ID
-      const contentElement = document.getElementById('review-content');
-      if (contentElement) {
-        contentElement.scrollTop = 0;
-      }
-      
-      // Additionally force scroll to top after a short delay
-      setTimeout(() => {
-        if (formElement) formElement.scrollTop = 0;
-        if (dialogContentRef.current) dialogContentRef.current.scrollTop = 0;
-      }, 50);
-    }
-  };
-
-  // Handle page navigation
   const handleNext = () => {
-    if (currentPage < ReviewPage.FinalScores) {
-      // Going to Summary page, clear the text field
-      if (currentPage === ReviewPage.Value) {
-        form.setValue('text', '');
-      }
-      
-      // If we're on the Summary page, set the initial rating based on weighted calculations
-      if (currentPage === ReviewPage.Summary) {
-        // Calculate the weighted scores and set the initial rating
-        const scores = calculateWeightedScores();
-        // Use the 5-star score for the initial rating
-        setRating(scores.fiveStarScore);
-      }
-      
-      // Go to the next page
-      setCurrentPage(prevPage => (prevPage + 1) as ReviewPage);
-      
-      // Scroll to top after state update with a longer delay to ensure the DOM has updated
-      setTimeout(scrollToTop, 100);
+    if (currentStep < STEPS.length - 1) {
+      setCurrentStep(prev => prev + 1);
     }
   };
 
   const handlePrevious = () => {
-    if (currentPage > ReviewPage.Visual) {
-      setCurrentPage(prevPage => (prevPage - 1) as ReviewPage);
-      
-      // Scroll to top after state update with a longer delay to ensure the DOM has updated
-      setTimeout(scrollToTop, 100);
+    if (currentStep > 0) {
+      setCurrentStep(prev => prev - 1);
     }
   };
-  
-  // Alias functions for backward compatibility
-  const nextPage = handleNext;
-  const prevPage = handlePrevious;
 
-  // Simplified onSubmit for intermediate pages - just moves to the next page
-  const onSubmit = (data: ReviewNote) => {
-    console.log("Form submission triggered, current page:", currentPage);
-    
-    // If we're not on the final page, just go to the next page
-    if (currentPage !== ReviewPage.FinalScores) {
-      nextPage();
-      return;
-    }
-    
-    // This should never be directly called for the final page 
-    // as we're using the direct submit function below
-    console.log("onSubmit called on final page - this shouldn't happen");
-  };
-  
-  // Direct submit function - called directly by the submit button
-  const submitReview = () => {
-    console.log("Direct submit function called");
-    
-    // Gather all form data
+  const handleSubmit = () => {
     const formData = form.getValues();
-    
-    // Calculate the final weighted scores with adjustments
-    const scores = calculateWeightedScores();
-    
-    // Use the scores calculated by the calculateWeightedScores function
-    const weightedTotal = scores.weightedTotal;
-    const fiveStarScore = scores.fiveStarScore;
-    const finalScore = scores.finalScore;
-    
-    // Ensure flavor profile values are numbers, not strings
-    // Convert all flavor profile fields to numbers
-    formData.flavorProfileFruitFloral = Number(formData.flavorProfileFruitFloral || 0);
-    formData.flavorProfileSweet = Number(formData.flavorProfileSweet || 0);
-    formData.flavorProfileSpice = Number(formData.flavorProfileSpice || 0);
-    formData.flavorProfileHerbal = Number(formData.flavorProfileHerbal || 0);
-    formData.flavorProfileGrain = Number(formData.flavorProfileGrain || 0);
-    formData.flavorProfileOak = Number(formData.flavorProfileOak || 0);
-    
-    // Debug log the flavor profile values
-    console.log("Direct submit - flavor profile values:", {
-      fruitFloral: formData.flavorProfileFruitFloral, 
-      sweet: formData.flavorProfileSweet,
-      spice: formData.flavorProfileSpice,
-      herbal: formData.flavorProfileHerbal,
-      grain: formData.flavorProfileGrain,
-      oak: formData.flavorProfileOak
-    });
-    
-    // Set the overall rating (now using 5-star score for rating)
-    formData.rating = fiveStarScore;
-    
-    // Add the final adjustment notes to the review
-    if (finalNotes) {
-      formData.text = formData.text ? `${formData.text}\n\nFINAL NOTES: ${finalNotes}` : `FINAL NOTES: ${finalNotes}`;
-    }
-    
-    // Get base scores
-    const noseScore = Number(form.getValues('noseScore')) || 0;
-    const mouthfeelScore = Number(form.getValues('mouthfeelScore')) || 0;
-    const tasteScore = Number(form.getValues('tasteScore')) || 0;
-    const finishScore = Number(form.getValues('finishScore')) || 0;
-    const valueScore = Number(form.getValues('valueScore')) || 0;
-    
-    // Add weighted scores to the review text
-    const weightedScoresText = [
-      `WEIGHTED SCORES:`,
-      `- Nose: ${noseScore} × 1.5 = ${scores.nose}/7.5`,
-      `- Mouth Feel: ${mouthfeelScore} × 2.0 = ${scores.mouthfeel}/10`,
-      `- Taste: ${tasteScore} × 3.0 = ${scores.taste}/15`,
-      `- Finish: ${finishScore} × 2.5 = ${scores.finish}/12.5`,
-      `- Value: ${valueScore} × 1.0 = ${scores.value}/5`,
-      `- Weighted Total: ${weightedTotal}/50`,
-      `- 5-Star Score: ${fiveStarScore}/5 (Weighted Total ÷ 10)`,
-      `- Final Score: ${finalScore}/100 (Weighted Total × 2)`
-    ].join('\n');
-    
-    // Append the weighted scores to the review text
-    formData.text = formData.text ? `${formData.text}\n\n${weightedScoresText}` : weightedScoresText;
-    
-    // Submit the review directly
-    console.log("About to submit review data:", formData);
-    
-    // Extra logging for flavor profile values
-    console.log("Flavor profile values (should all be numbers):");
-    console.log("- fruitFloral:", typeof formData.flavorProfileFruitFloral, formData.flavorProfileFruitFloral);
-    console.log("- sweet:", typeof formData.flavorProfileSweet, formData.flavorProfileSweet);
-    console.log("- spice:", typeof formData.flavorProfileSpice, formData.flavorProfileSpice);
-    console.log("- herbal:", typeof formData.flavorProfileHerbal, formData.flavorProfileHerbal);
-    console.log("- grain:", typeof formData.flavorProfileGrain, formData.flavorProfileGrain);
-    console.log("- oak:", typeof formData.flavorProfileOak, formData.flavorProfileOak);
-    
+    const weightedScore = calculateWeightedScore();
+    formData.rating = Math.round(weightedScore * 10) / 10;
     addReviewMutation.mutate(formData);
   };
 
-  // Render content based on current page
-  const renderPageContent = () => {
-    switch(currentPage) {
-      case ReviewPage.Visual:
+  const progress = ((currentStep + 1) / STEPS.length) * 100;
+  const currentStepData = STEPS[currentStep];
+  const StepIcon = currentStepData.icon;
+
+  // Render step content
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 0: // Visual
         return (
           <div className="space-y-6">
-            <div>
-              <h3 className="section-header">Color</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                {COLOR_OPTIONS.map((color) => (
-                  <FormField
-                    key={color.value}
-                    control={form.control}
-                    name="visualColor"
-                    render={({ field }) => (
-                      <FormItem className="flex items-center space-x-1 space-y-0">
-                        <FormControl>
-                          <RadioGroup 
-                            onValueChange={field.onChange} 
-                            defaultValue={field.value}
-                            className="flex flex-col space-y-1"
-                          >
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem value={color.value} id={`color-${color.value}`} />
-                              <Label 
-                                htmlFor={`color-${color.value}`}
-                                className="flex items-center cursor-pointer"
-                              >
-                                <div 
-                                  className="w-4 h-4 rounded-full mr-2" 
-                                  style={{ backgroundColor: color.hex }}
-                                ></div>
-                                <span className="text-sm">{color.label}</span>
-                              </Label>
-                            </div>
-                          </RadioGroup>
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                ))}
+            {/* AI Suggest Button */}
+            <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 rounded-lg border border-amber-200 dark:border-amber-800">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="font-medium text-sm">Need help knowing what to look for?</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Get AI-suggested tasting notes based on this whiskey's profile.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowAiSuggestModal(true)}
+                  className="shrink-0"
+                >
+                  <Sparkles className="w-4 h-4 mr-1" />
+                  Suggest Flavors
+                </Button>
               </div>
             </div>
-            
-            <div>
-              <h3 className="section-header">Viscosity</h3>
-              <FormField
-                control={form.control}
-                name="visualViscosity"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <RadioGroup 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                        className="flex flex-col space-y-1"
-                      >
-                        <div className="grid grid-cols-2 gap-2">
-                          {VISCOSITY_OPTIONS.map((option) => (
-                            <div key={option.value} className="flex items-center space-x-2">
-                              <RadioGroupItem value={option.value} id={`viscosity-${option.value}`} />
-                              <Label htmlFor={`viscosity-${option.value}`}>{option.label}</Label>
-                            </div>
-                          ))}
-                        </div>
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            <div>
-              <h3 className="section-header">Clarity</h3>
-              <FormField
-                control={form.control}
-                name="visualClarity"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <RadioGroup 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                        className="flex flex-col space-y-1"
-                      >
-                        <div className="grid grid-cols-2 gap-2">
-                          {CLARITY_OPTIONS.map((option) => (
-                            <div key={option.value} className="flex items-center space-x-2">
-                              <RadioGroupItem value={option.value} id={`clarity-${option.value}`} />
-                              <Label htmlFor={`clarity-${option.value}`}>{option.label}</Label>
-                            </div>
-                          ))}
-                        </div>
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
 
-            
+            <div>
+              <FormLabel className="text-base font-medium mb-3 block">Color</FormLabel>
+              <SingleFlavorChipGroup
+                options={COLOR_OPTIONS.map(c => ({ value: c.value, label: c.label, hex: c.hex }))}
+                selected={form.watch('visualColor')}
+                onSelect={(value) => form.setValue('visualColor', value)}
+              />
+            </div>
+
+            <div>
+              <FormLabel className="text-base font-medium mb-3 block">Viscosity (Legs)</FormLabel>
+              <SingleFlavorChipGroup
+                options={VISCOSITY_OPTIONS}
+                selected={form.watch('visualViscosity')}
+                onSelect={(value) => form.setValue('visualViscosity', value)}
+              />
+            </div>
+
+            <div>
+              <FormLabel className="text-base font-medium mb-3 block">Clarity</FormLabel>
+              <SingleFlavorChipGroup
+                options={CLARITY_OPTIONS}
+                selected={form.watch('visualClarity')}
+                onSelect={(value) => form.setValue('visualClarity', value)}
+              />
+            </div>
+
             <FormField
               control={form.control}
               name="visualNotes"
@@ -807,1749 +320,536 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
                   <FormLabel>Additional Notes</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Any additional observations about the visual appearance..."
-                      className="resize-none"
-                      rows={2}
+                      placeholder="Any other visual observations..."
+                      className="resize-none h-20"
                       {...field}
                     />
                   </FormControl>
-                  <FormMessage />
                 </FormItem>
               )}
             />
           </div>
         );
-      case ReviewPage.Nose:
+
+      case 1: // Nose
         return (
           <div className="space-y-6">
             <div>
-              <h3 className="section-header">Aromas</h3>
-              <p className="text-sm text-gray-500 mb-2">Select all aromas that you detect (select multiple as needed)</p>
-              
-              <div className="space-y-4">
-                {/* Sweet Aromas */}
-                <div>
-                  <h4 className="text-sm font-medium mb-1">Sweet</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {AROMA_FLAVOR_OPTIONS.sweet.map((aroma) => (
-                      <div key={aroma.value} className="flex items-center space-x-2">
-                        <Checkbox 
-                          id={`nose-${aroma.value}`} 
-                          checked={selectedNoseAromas.includes(aroma.value)}
-                          onCheckedChange={() => toggleSelection(
-                            selectedNoseAromas, 
-                            setSelectedNoseAromas, 
-                            aroma.value
-                          )}
-                        />
-                        <Label htmlFor={`nose-${aroma.value}`} className="text-sm">{aroma.label}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                {/* Spice Aromas */}
-                <div>
-                  <h4 className="text-sm font-medium mb-1">Spice</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {AROMA_FLAVOR_OPTIONS.spice.map((aroma) => (
-                      <div key={aroma.value} className="flex items-center space-x-2">
-                        <Checkbox 
-                          id={`nose-${aroma.value}`} 
-                          checked={selectedNoseAromas.includes(aroma.value)}
-                          onCheckedChange={() => toggleSelection(
-                            selectedNoseAromas, 
-                            setSelectedNoseAromas, 
-                            aroma.value
-                          )}
-                        />
-                        <Label htmlFor={`nose-${aroma.value}`} className="text-sm">{aroma.label}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                {/* Fruit Aromas */}
-                <div>
-                  <h4 className="text-sm font-medium mb-1">Fruit</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {AROMA_FLAVOR_OPTIONS.fruit.map((aroma) => (
-                      <div key={aroma.value} className="flex items-center space-x-2">
-                        <Checkbox 
-                          id={`nose-${aroma.value}`} 
-                          checked={selectedNoseAromas.includes(aroma.value)}
-                          onCheckedChange={() => toggleSelection(
-                            selectedNoseAromas, 
-                            setSelectedNoseAromas, 
-                            aroma.value
-                          )}
-                        />
-                        <Label htmlFor={`nose-${aroma.value}`} className="text-sm">{aroma.label}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                {/* Wood Aromas */}
-                <div>
-                  <h4 className="text-sm font-medium mb-1">Wood</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {AROMA_FLAVOR_OPTIONS.wood.map((aroma) => (
-                      <div key={aroma.value} className="flex items-center space-x-2">
-                        <Checkbox 
-                          id={`nose-${aroma.value}`} 
-                          checked={selectedNoseAromas.includes(aroma.value)}
-                          onCheckedChange={() => toggleSelection(
-                            selectedNoseAromas, 
-                            setSelectedNoseAromas, 
-                            aroma.value
-                          )}
-                        />
-                        <Label htmlFor={`nose-${aroma.value}`} className="text-sm">{aroma.label}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                {/* Grain Aromas */}
-                <div>
-                  <h4 className="text-sm font-medium mb-1">Grain</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {AROMA_FLAVOR_OPTIONS.grain.map((aroma) => (
-                      <div key={aroma.value} className="flex items-center space-x-2">
-                        <Checkbox 
-                          id={`nose-${aroma.value}`} 
-                          checked={selectedNoseAromas.includes(aroma.value)}
-                          onCheckedChange={() => toggleSelection(
-                            selectedNoseAromas, 
-                            setSelectedNoseAromas, 
-                            aroma.value
-                          )}
-                        />
-                        <Label htmlFor={`nose-${aroma.value}`} className="text-sm">{aroma.label}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div>
-              <h3 className="section-header">Nose Score (1-5)</h3>
-              <FormField
-                control={form.control}
-                name="noseScore"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <RadioGroup 
-                        onValueChange={(value) => field.onChange(parseInt(value))} 
-                        defaultValue={field.value?.toString()}
-                        className="flex justify-between"
-                      >
-                        {SCORE_OPTIONS.map((score) => (
-                          <div key={score.value} className="flex flex-col items-center">
-                            <RadioGroupItem value={score.value.toString()} id={`nose-score-${score.value}`} />
-                            <Label htmlFor={`nose-score-${score.value}`} className="text-xs mt-1">{score.value}</Label>
-                          </div>
-                        ))}
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+              <FormLabel className="text-base font-medium mb-3 block">
+                Aromas Detected
+                {selectedNoseAromas.length > 0 && (
+                  <span className="ml-2 text-sm font-normal text-primary">
+                    ({selectedNoseAromas.length} selected)
+                  </span>
                 )}
+              </FormLabel>
+              <StandardFlavorAccordion
+                selected={selectedNoseAromas}
+                onToggle={toggleAroma}
               />
             </div>
-            
+
+            <div>
+              <FormLabel className="text-base font-medium mb-3 block">Nose Score</FormLabel>
+              <SingleFlavorChipGroup
+                options={SCORE_OPTIONS.map(s => ({ value: String(s.value), label: s.label }))}
+                selected={form.watch('noseScore')?.toString()}
+                onSelect={(value) => form.setValue('noseScore', Number(value))}
+              />
+            </div>
+
             <FormField
               control={form.control}
               name="noseNotes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Additional Notes</FormLabel>
+                  <FormLabel>Nose Notes</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Any additional observations about the aroma..."
-                      className="resize-none"
-                      rows={2}
+                      placeholder="Describe what you smell..."
+                      className="resize-none h-20"
                       {...field}
                     />
                   </FormControl>
-                  <FormMessage />
                 </FormItem>
               )}
             />
           </div>
         );
-      case ReviewPage.MouthFeel:
+
+      case 2: // Mouthfeel
         return (
           <div className="space-y-6">
-            {/* Alcohol Feel */}
             <div>
-              <h3 className="section-header">Alcohol Feel</h3>
-              <FormField
-                control={form.control}
-                name="mouthfeelAlcohol"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <RadioGroup 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                        className="flex flex-col space-y-1"
-                      >
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                          {ALCOHOL_FEEL_OPTIONS.map((option) => (
-                            <div key={option.value} className="flex items-center space-x-2">
-                              <RadioGroupItem value={option.value} id={`alcohol-${option.value}`} />
-                              <Label htmlFor={`alcohol-${option.value}`}>{option.label}</Label>
-                            </div>
-                          ))}
-                        </div>
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+              <FormLabel className="text-base font-medium mb-3 block">Alcohol Feel</FormLabel>
+              <SingleFlavorChipGroup
+                options={ALCOHOL_FEEL_OPTIONS}
+                selected={form.watch('mouthfeelAlcohol')}
+                onSelect={(value) => form.setValue('mouthfeelAlcohol', value)}
               />
             </div>
-            
-            {/* Mouthfeel Viscosity */}
+
             <div>
-              <h3 className="section-header">Viscosity</h3>
-              <FormField
-                control={form.control}
-                name="mouthfeelViscosity"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <RadioGroup 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                        className="flex flex-col space-y-1"
-                      >
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                          {MOUTHFEEL_VISCOSITY_OPTIONS.map((option) => (
-                            <div key={option.value} className="flex items-center space-x-2">
-                              <RadioGroupItem value={option.value} id={`mouthfeel-viscosity-${option.value}`} />
-                              <Label htmlFor={`mouthfeel-viscosity-${option.value}`}>{option.label}</Label>
-                            </div>
-                          ))}
-                        </div>
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+              <FormLabel className="text-base font-medium mb-3 block">Body/Weight</FormLabel>
+              <SingleFlavorChipGroup
+                options={MOUTHFEEL_VISCOSITY_OPTIONS}
+                selected={form.watch('mouthfeelViscosity')}
+                onSelect={(value) => form.setValue('mouthfeelViscosity', value)}
               />
             </div>
-            
-            {/* Pleasantness */}
+
             <div>
-              <h3 className="section-header">Pleasantness</h3>
-              <FormField
-                control={form.control}
-                name="mouthfeelPleasantness"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <RadioGroup 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                        className="flex flex-col space-y-1"
-                      >
-                        <div className="grid grid-cols-2 gap-2">
-                          {PLEASANTNESS_OPTIONS.map((option) => (
-                            <div key={option.value} className="flex items-center space-x-2">
-                              <RadioGroupItem value={option.value} id={`pleasantness-${option.value}`} />
-                              <Label htmlFor={`pleasantness-${option.value}`}>{option.label}</Label>
-                            </div>
-                          ))}
-                        </div>
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+              <FormLabel className="text-base font-medium mb-3 block">Pleasantness</FormLabel>
+              <SingleFlavorChipGroup
+                options={PLEASANTNESS_OPTIONS}
+                selected={form.watch('mouthfeelPleasantness')}
+                onSelect={(value) => form.setValue('mouthfeelPleasantness', value)}
               />
             </div>
-            
-            {/* Score */}
+
             <div>
-              <h3 className="section-header">Mouthfeel Score (1-5)</h3>
-              <FormField
-                control={form.control}
-                name="mouthfeelScore"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <RadioGroup 
-                        onValueChange={(value) => field.onChange(parseInt(value))} 
-                        defaultValue={field.value?.toString()}
-                        className="flex justify-between"
-                      >
-                        {SCORE_OPTIONS.map((score) => (
-                          <div key={score.value} className="flex flex-col items-center">
-                            <RadioGroupItem value={score.value.toString()} id={`mouthfeel-score-${score.value}`} />
-                            <Label htmlFor={`mouthfeel-score-${score.value}`} className="text-xs mt-1">{score.value}</Label>
-                          </div>
-                        ))}
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+              <FormLabel className="text-base font-medium mb-3 block">Mouthfeel Score</FormLabel>
+              <SingleFlavorChipGroup
+                options={SCORE_OPTIONS.map(s => ({ value: String(s.value), label: s.label }))}
+                selected={form.watch('mouthfeelScore')?.toString()}
+                onSelect={(value) => form.setValue('mouthfeelScore', Number(value))}
               />
             </div>
-            
-            {/* Additional Notes */}
+
             <FormField
               control={form.control}
               name="mouthfeelNotes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Additional Notes</FormLabel>
+                  <FormLabel>Mouthfeel Notes</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Any additional observations about the mouthfeel..."
-                      className="resize-none"
-                      rows={2}
+                      placeholder="Describe the texture and feel..."
+                      className="resize-none h-20"
                       {...field}
                     />
                   </FormControl>
-                  <FormMessage />
                 </FormItem>
               )}
             />
           </div>
         );
-      case ReviewPage.Taste:
+
+      case 3: // Taste
         return (
           <div className="space-y-6">
             <div>
-              <h3 className="section-header">Flavors</h3>
-              <p className="text-sm text-gray-500 mb-2">Select all flavors that you detect (select multiple as needed)</p>
-              
-              <div className="space-y-4">
-                {/* Sweet Flavors */}
-                <div>
-                  <h4 className="text-sm font-medium mb-1">Sweet</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {AROMA_FLAVOR_OPTIONS.sweet.map((flavor) => (
-                      <div key={flavor.value} className="flex items-center space-x-2">
-                        <Checkbox 
-                          id={`taste-${flavor.value}`} 
-                          checked={selectedTasteFlavors.includes(flavor.value)}
-                          onCheckedChange={() => toggleSelection(
-                            selectedTasteFlavors, 
-                            setSelectedTasteFlavors, 
-                            flavor.value
-                          )}
-                        />
-                        <Label htmlFor={`taste-${flavor.value}`} className="text-sm">{flavor.label}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                {/* Spice Flavors */}
-                <div>
-                  <h4 className="text-sm font-medium mb-1">Spice</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {AROMA_FLAVOR_OPTIONS.spice.map((flavor) => (
-                      <div key={flavor.value} className="flex items-center space-x-2">
-                        <Checkbox 
-                          id={`taste-${flavor.value}`} 
-                          checked={selectedTasteFlavors.includes(flavor.value)}
-                          onCheckedChange={() => toggleSelection(
-                            selectedTasteFlavors, 
-                            setSelectedTasteFlavors, 
-                            flavor.value
-                          )}
-                        />
-                        <Label htmlFor={`taste-${flavor.value}`} className="text-sm">{flavor.label}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                {/* Fruit Flavors */}
-                <div>
-                  <h4 className="text-sm font-medium mb-1">Fruit</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {AROMA_FLAVOR_OPTIONS.fruit.map((flavor) => (
-                      <div key={flavor.value} className="flex items-center space-x-2">
-                        <Checkbox 
-                          id={`taste-${flavor.value}`} 
-                          checked={selectedTasteFlavors.includes(flavor.value)}
-                          onCheckedChange={() => toggleSelection(
-                            selectedTasteFlavors, 
-                            setSelectedTasteFlavors, 
-                            flavor.value
-                          )}
-                        />
-                        <Label htmlFor={`taste-${flavor.value}`} className="text-sm">{flavor.label}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                {/* Wood Flavors */}
-                <div>
-                  <h4 className="text-sm font-medium mb-1">Wood</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {AROMA_FLAVOR_OPTIONS.wood.map((flavor) => (
-                      <div key={flavor.value} className="flex items-center space-x-2">
-                        <Checkbox 
-                          id={`taste-${flavor.value}`} 
-                          checked={selectedTasteFlavors.includes(flavor.value)}
-                          onCheckedChange={() => toggleSelection(
-                            selectedTasteFlavors, 
-                            setSelectedTasteFlavors, 
-                            flavor.value
-                          )}
-                        />
-                        <Label htmlFor={`taste-${flavor.value}`} className="text-sm">{flavor.label}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                {/* Grain Flavors */}
-                <div>
-                  <h4 className="text-sm font-medium mb-1">Grain</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {AROMA_FLAVOR_OPTIONS.grain.map((flavor) => (
-                      <div key={flavor.value} className="flex items-center space-x-2">
-                        <Checkbox 
-                          id={`taste-${flavor.value}`} 
-                          checked={selectedTasteFlavors.includes(flavor.value)}
-                          onCheckedChange={() => toggleSelection(
-                            selectedTasteFlavors, 
-                            setSelectedTasteFlavors, 
-                            flavor.value
-                          )}
-                        />
-                        <Label htmlFor={`taste-${flavor.value}`} className="text-sm">{flavor.label}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Correlation with Nose */}
-            <div>
-              <h3 className="section-header">Correlation with Nose</h3>
-              <div className="flex items-center space-x-4">
-                <div className="text-sm">
-                  {selectedNoseAromas.length > 0 ? (
-                    <div>
-                      <p className="font-medium">Detected Aromas:</p>
-                      <p>{selectedNoseAromas.map(aroma => {
-                        // Find the label for this aroma value
-                        const category = Object.keys(AROMA_FLAVOR_OPTIONS).find(cat => 
-                          AROMA_FLAVOR_OPTIONS[cat as keyof typeof AROMA_FLAVOR_OPTIONS]
-                            .some(a => a.value === aroma)
-                        );
-                        
-                        if (category) {
-                          const aromaObj = AROMA_FLAVOR_OPTIONS[category as keyof typeof AROMA_FLAVOR_OPTIONS]
-                            .find(a => a.value === aroma);
-                          return aromaObj?.label;
-                        }
-                        return aroma;
-                      }).join(', ')}</p>
-                    </div>
-                  ) : (
-                    <p>No aromas were selected in the Nose section</p>
-                  )}
-                </div>
-              </div>
-              
-              <FormField
-                control={form.control}
-                name="tasteCorrelation"
-                render={({ field }) => (
-                  <FormItem className="mt-2">
-                    <div className="flex items-center space-x-2">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                          id="taste-correlation"
-                        />
-                      </FormControl>
-                      <Label 
-                        htmlFor="taste-correlation"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        The taste correlates with the nose
-                      </Label>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
+              <FormLabel className="text-base font-medium mb-3 block">
+                Flavors on Palate
+                {selectedTasteFlavors.length > 0 && (
+                  <span className="ml-2 text-sm font-normal text-primary">
+                    ({selectedTasteFlavors.length} selected)
+                  </span>
                 )}
+              </FormLabel>
+              <StandardFlavorAccordion
+                selected={selectedTasteFlavors}
+                onToggle={toggleTaste}
               />
             </div>
-            
-            {/* Score */}
+
             <div>
-              <h3 className="section-header">Taste Score (1-5)</h3>
-              <FormField
-                control={form.control}
-                name="tasteScore"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <RadioGroup 
-                        onValueChange={(value) => field.onChange(parseInt(value))} 
-                        defaultValue={field.value?.toString()}
-                        className="flex justify-between"
-                      >
-                        {SCORE_OPTIONS.map((score) => (
-                          <div key={score.value} className="flex flex-col items-center">
-                            <RadioGroupItem value={score.value.toString()} id={`taste-score-${score.value}`} />
-                            <Label htmlFor={`taste-score-${score.value}`} className="text-xs mt-1">{score.value}</Label>
-                          </div>
-                        ))}
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+              <FormLabel className="text-base font-medium mb-3 block">Matches the Nose?</FormLabel>
+              <div className="flex items-center gap-4">
+                <Button
+                  type="button"
+                  variant={form.watch('tasteCorrelation') === true ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => form.setValue('tasteCorrelation', true)}
+                >
+                  Yes
+                </Button>
+                <Button
+                  type="button"
+                  variant={form.watch('tasteCorrelation') === false ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => form.setValue('tasteCorrelation', false)}
+                >
+                  No
+                </Button>
+              </div>
+            </div>
+
+            <div>
+              <FormLabel className="text-base font-medium mb-3 block">Taste Score</FormLabel>
+              <SingleFlavorChipGroup
+                options={SCORE_OPTIONS.map(s => ({ value: String(s.value), label: s.label }))}
+                selected={form.watch('tasteScore')?.toString()}
+                onSelect={(value) => form.setValue('tasteScore', Number(value))}
               />
             </div>
-            
-            {/* Additional Notes */}
+
             <FormField
               control={form.control}
               name="tasteNotes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Additional Notes</FormLabel>
+                  <FormLabel>Taste Notes</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Any additional observations about the taste..."
-                      className="resize-none"
-                      rows={2}
+                      placeholder="Describe what you taste..."
+                      className="resize-none h-20"
                       {...field}
                     />
                   </FormControl>
-                  <FormMessage />
                 </FormItem>
               )}
             />
           </div>
         );
-      case ReviewPage.Finish:
+
+      case 4: // Finish
         return (
           <div className="space-y-6">
             <div>
-              <h3 className="section-header">Finish Flavors</h3>
-              <p className="text-sm text-gray-500 mb-2">Select all flavors that linger in the finish</p>
-              
-              <div className="space-y-4">
-                {/* Sweet Flavors */}
-                <div>
-                  <h4 className="text-sm font-medium mb-1">Sweet</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {AROMA_FLAVOR_OPTIONS.sweet.map((flavor) => (
-                      <div key={flavor.value} className="flex items-center space-x-2">
-                        <Checkbox 
-                          id={`finish-${flavor.value}`} 
-                          checked={selectedFinishFlavors.includes(flavor.value)}
-                          onCheckedChange={() => toggleSelection(
-                            selectedFinishFlavors, 
-                            setSelectedFinishFlavors, 
-                            flavor.value
-                          )}
-                        />
-                        <Label htmlFor={`finish-${flavor.value}`} className="text-sm">{flavor.label}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                {/* Spice Flavors */}
-                <div>
-                  <h4 className="text-sm font-medium mb-1">Spice</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {AROMA_FLAVOR_OPTIONS.spice.map((flavor) => (
-                      <div key={flavor.value} className="flex items-center space-x-2">
-                        <Checkbox 
-                          id={`finish-${flavor.value}`} 
-                          checked={selectedFinishFlavors.includes(flavor.value)}
-                          onCheckedChange={() => toggleSelection(
-                            selectedFinishFlavors, 
-                            setSelectedFinishFlavors, 
-                            flavor.value
-                          )}
-                        />
-                        <Label htmlFor={`finish-${flavor.value}`} className="text-sm">{flavor.label}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                {/* Fruit Flavors */}
-                <div>
-                  <h4 className="text-sm font-medium mb-1">Fruit</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {AROMA_FLAVOR_OPTIONS.fruit.map((flavor) => (
-                      <div key={flavor.value} className="flex items-center space-x-2">
-                        <Checkbox 
-                          id={`finish-${flavor.value}`} 
-                          checked={selectedFinishFlavors.includes(flavor.value)}
-                          onCheckedChange={() => toggleSelection(
-                            selectedFinishFlavors, 
-                            setSelectedFinishFlavors, 
-                            flavor.value
-                          )}
-                        />
-                        <Label htmlFor={`finish-${flavor.value}`} className="text-sm">{flavor.label}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                {/* Wood Flavors */}
-                <div>
-                  <h4 className="text-sm font-medium mb-1">Wood</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {AROMA_FLAVOR_OPTIONS.wood.map((flavor) => (
-                      <div key={flavor.value} className="flex items-center space-x-2">
-                        <Checkbox 
-                          id={`finish-${flavor.value}`} 
-                          checked={selectedFinishFlavors.includes(flavor.value)}
-                          onCheckedChange={() => toggleSelection(
-                            selectedFinishFlavors, 
-                            setSelectedFinishFlavors, 
-                            flavor.value
-                          )}
-                        />
-                        <Label htmlFor={`finish-${flavor.value}`} className="text-sm">{flavor.label}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                {/* Grain Flavors */}
-                <div>
-                  <h4 className="text-sm font-medium mb-1">Grain</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {AROMA_FLAVOR_OPTIONS.grain.map((flavor) => (
-                      <div key={flavor.value} className="flex items-center space-x-2">
-                        <Checkbox 
-                          id={`finish-${flavor.value}`} 
-                          checked={selectedFinishFlavors.includes(flavor.value)}
-                          onCheckedChange={() => toggleSelection(
-                            selectedFinishFlavors, 
-                            setSelectedFinishFlavors, 
-                            flavor.value
-                          )}
-                        />
-                        <Label htmlFor={`finish-${flavor.value}`} className="text-sm">{flavor.label}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Correlation with Taste */}
-            <div>
-              <h3 className="section-header">Correlation with Taste</h3>
-              <div className="flex items-center space-x-4">
-                <div className="text-sm">
-                  {selectedTasteFlavors.length > 0 ? (
-                    <div>
-                      <p className="font-medium">Detected Taste Flavors:</p>
-                      <p>{selectedTasteFlavors.map(flavor => {
-                        // Find the label for this flavor value
-                        const category = Object.keys(AROMA_FLAVOR_OPTIONS).find(cat => 
-                          AROMA_FLAVOR_OPTIONS[cat as keyof typeof AROMA_FLAVOR_OPTIONS]
-                            .some(f => f.value === flavor)
-                        );
-                        
-                        if (category) {
-                          const flavorObj = AROMA_FLAVOR_OPTIONS[category as keyof typeof AROMA_FLAVOR_OPTIONS]
-                            .find(f => f.value === flavor);
-                          return flavorObj?.label;
-                        }
-                        return flavor;
-                      }).join(', ')}</p>
-                    </div>
-                  ) : (
-                    <p>No flavors were selected in the Taste section</p>
-                  )}
-                </div>
-              </div>
-              
-              <FormField
-                control={form.control}
-                name="finishCorrelation"
-                render={({ field }) => (
-                  <FormItem className="mt-2">
-                    <div className="flex items-center space-x-2">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                          id="finish-correlation"
-                        />
-                      </FormControl>
-                      <Label 
-                        htmlFor="finish-correlation"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        The finish correlates with the taste
-                      </Label>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
+              <FormLabel className="text-base font-medium mb-3 block">Finish Length</FormLabel>
+              <SingleFlavorChipGroup
+                options={FINISH_LENGTH_OPTIONS}
+                selected={form.watch('finishLength')}
+                onSelect={(value) => form.setValue('finishLength', value)}
               />
             </div>
-            
-            {/* Finish Length */}
+
             <div>
-              <h3 className="section-header">Finish Length</h3>
-              <FormField
-                control={form.control}
-                name="finishLength"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <RadioGroup 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                        className="flex flex-col space-y-1"
-                      >
-                        <div className="grid grid-cols-2 gap-2">
-                          {FINISH_LENGTH_OPTIONS.map((option) => (
-                            <div key={option.value} className="flex items-center space-x-2">
-                              <RadioGroupItem value={option.value} id={`length-${option.value}`} />
-                              <Label htmlFor={`length-${option.value}`}>{option.label}</Label>
-                            </div>
-                          ))}
-                        </div>
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+              <FormLabel className="text-base font-medium mb-3 block">
+                Lingering Flavors
+                {selectedFinishFlavors.length > 0 && (
+                  <span className="ml-2 text-sm font-normal text-primary">
+                    ({selectedFinishFlavors.length} selected)
+                  </span>
                 )}
+              </FormLabel>
+              <StandardFlavorAccordion
+                selected={selectedFinishFlavors}
+                onToggle={toggleFinish}
               />
             </div>
-            
-            {/* Finish Pleasantness */}
+
             <div>
-              <h3 className="section-header">Finish Pleasantness</h3>
-              <FormField
-                control={form.control}
-                name="finishPleasantness"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <RadioGroup 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                        className="flex flex-col space-y-1"
-                      >
-                        <div className="grid grid-cols-2 gap-2">
-                          {PLEASANTNESS_OPTIONS.map((option) => (
-                            <div key={option.value} className="flex items-center space-x-2">
-                              <RadioGroupItem value={option.value} id={`finish-pleasantness-${option.value}`} />
-                              <Label htmlFor={`finish-pleasantness-${option.value}`}>{option.label}</Label>
-                            </div>
-                          ))}
-                        </div>
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+              <FormLabel className="text-base font-medium mb-3 block">Finish Pleasantness</FormLabel>
+              <SingleFlavorChipGroup
+                options={PLEASANTNESS_OPTIONS}
+                selected={form.watch('finishPleasantness')}
+                onSelect={(value) => form.setValue('finishPleasantness', value)}
               />
             </div>
-            
-            {/* Score */}
+
             <div>
-              <h3 className="section-header">Finish Score (1-5)</h3>
-              <FormField
-                control={form.control}
-                name="finishScore"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <RadioGroup 
-                        onValueChange={(value) => field.onChange(parseInt(value))} 
-                        value={field.value?.toString() || ""}
-                        className="flex justify-between"
-                      >
-                        {SCORE_OPTIONS.map((score) => (
-                          <div key={score.value} className="flex flex-col items-center">
-                            <RadioGroupItem value={score.value.toString()} id={`finish-score-${score.value}`} />
-                            <Label htmlFor={`finish-score-${score.value}`} className="text-xs mt-1">{score.value}</Label>
-                          </div>
-                        ))}
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+              <FormLabel className="text-base font-medium mb-3 block">Finish Score</FormLabel>
+              <SingleFlavorChipGroup
+                options={SCORE_OPTIONS.map(s => ({ value: String(s.value), label: s.label }))}
+                selected={form.watch('finishScore')?.toString()}
+                onSelect={(value) => form.setValue('finishScore', Number(value))}
               />
             </div>
-            
-            {/* Additional Notes */}
+
             <FormField
               control={form.control}
               name="finishNotes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Additional Notes</FormLabel>
+                  <FormLabel>Finish Notes</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Any additional observations about the finish..."
-                      className="resize-none"
-                      rows={2}
+                      placeholder="Describe the aftertaste..."
+                      className="resize-none h-20"
                       {...field}
                     />
                   </FormControl>
-                  <FormMessage />
                 </FormItem>
               )}
             />
           </div>
         );
-      case ReviewPage.Value:
+
+      case 5: // Value
         return (
           <div className="space-y-6">
-            {/* Price Display */}
-            <div className="bg-secondary/30 p-4 rounded-lg space-y-2">
-              <h3 className="font-medium">Bottle Price</h3>
-              <div className="text-2xl font-bold">${whiskey.price ? whiskey.price.toFixed(2) : 'N/A'}</div>
-              
-              <h3 className="font-medium mt-4">Price Per Pour</h3>
-              <div className="text-xl font-medium">
-                ${whiskey.price ? (whiskey.price / 14).toFixed(2) : 'N/A'}
-                <span className="text-sm text-muted-foreground ml-2">(Bottle price ÷ 14)</span>
+            {whiskey.price && (
+              <div className="p-4 bg-accent/50 rounded-lg">
+                <p className="text-sm text-muted-foreground">Price: <span className="text-foreground font-medium">${whiskey.price}</span></p>
+                <p className="text-sm text-muted-foreground">Per pour (~14 pours): <span className="text-foreground font-medium">${(whiskey.price / 14).toFixed(2)}</span></p>
               </div>
-            </div>
-            
-            {/* Availability */}
+            )}
+
             <div>
-              <h3 className="section-header">Availability</h3>
-              <FormField
-                control={form.control}
-                name="valueAvailability"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <RadioGroup 
-                        onValueChange={field.onChange} 
-                        value={field.value || ""}
-                        className="flex flex-col space-y-1"
-                      >
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                          {AVAILABILITY_OPTIONS.map((option) => (
-                            <div key={option.value} className="flex items-center space-x-2">
-                              <RadioGroupItem 
-                                value={option.value} 
-                                id={`availability-${option.value}`} 
-                              />
-                              <Label 
-                                htmlFor={`availability-${option.value}`} 
-                                className="cursor-pointer"
-                              >
-                                {option.label}
-                              </Label>
-                            </div>
-                          ))}
-                        </div>
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+              <FormLabel className="text-base font-medium mb-3 block">Availability</FormLabel>
+              <SingleFlavorChipGroup
+                options={AVAILABILITY_OPTIONS}
+                selected={form.watch('valueAvailability')}
+                onSelect={(value) => form.setValue('valueAvailability', value)}
               />
             </div>
-            
-            {/* Buy Again */}
+
             <div>
-              <h3 className="section-header">Would You Buy Again?</h3>
-              <FormField
-                control={form.control}
-                name="valueBuyAgain"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <RadioGroup 
-                        onValueChange={(value) => {
-                          console.log("Buy Again selected:", value);
-                          form.setValue('valueBuyAgain', value);
-                        }} 
-                        value={form.getValues('valueBuyAgain') || ""}
-                        className="flex flex-col space-y-1"
-                      >
-                        <div className="grid grid-cols-1 gap-2 w-full">
-                          {BUY_AGAIN_OPTIONS.map((option) => (
-                            <div key={option.value} className="flex items-center space-x-2">
-                              <RadioGroupItem 
-                                value={option.value} 
-                                id={`buy-again-${option.value}`} 
-                                checked={form.getValues('valueBuyAgain') === option.value}
-                                onClick={() => {
-                                  console.log("Select Buy Again:", option.value);
-                                  form.setValue('valueBuyAgain', option.value, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
-                                }}
-                              />
-                              <Label 
-                                htmlFor={`buy-again-${option.value}`} 
-                                className="w-full cursor-pointer"
-                              >
-                                {option.label}
-                              </Label>
-                            </div>
-                          ))}
-                        </div>
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+              <FormLabel className="text-base font-medium mb-3 block">Would Buy Again?</FormLabel>
+              <SingleFlavorChipGroup
+                options={BUY_AGAIN_OPTIONS}
+                selected={form.watch('valueBuyAgain')}
+                onSelect={(value) => form.setValue('valueBuyAgain', value)}
               />
             </div>
-            
-            {/* Occasion */}
+
             <div>
-              <h3 className="section-header">Occasion</h3>
-              <FormField
-                control={form.control}
-                name="valueOccasion"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <RadioGroup 
-                        onValueChange={(value) => {
-                          console.log("Occasion selected:", value);
-                          form.setValue('valueOccasion', value);
-                        }} 
-                        value={form.getValues('valueOccasion') || ""}
-                        className="flex flex-col space-y-1"
-                      >
-                        <div className="grid grid-cols-1 gap-2 w-full">
-                          {OCCASION_OPTIONS.map((option) => (
-                            <div key={option.value} className="flex items-center space-x-2">
-                              <RadioGroupItem 
-                                value={option.value} 
-                                id={`occasion-${option.value}`} 
-                                checked={form.getValues('valueOccasion') === option.value}
-                                onClick={() => {
-                                  console.log("Select Occasion:", option.value);
-                                  form.setValue('valueOccasion', option.value, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
-                                }}
-                              />
-                              <Label 
-                                htmlFor={`occasion-${option.value}`} 
-                                className="w-full cursor-pointer"
-                              >
-                                {option.label}
-                              </Label>
-                            </div>
-                          ))}
-                        </div>
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+              <FormLabel className="text-base font-medium mb-3 block">Best For</FormLabel>
+              <SingleFlavorChipGroup
+                options={OCCASION_OPTIONS}
+                selected={form.watch('valueOccasion')}
+                onSelect={(value) => form.setValue('valueOccasion', value)}
               />
             </div>
-            
-            {/* Score */}
+
             <div>
-              <h3 className="section-header">Value Score (1-5)</h3>
-              <FormField
-                control={form.control}
-                name="valueScore"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <RadioGroup 
-                        onValueChange={(value) => {
-                          console.log("Value Score changed to:", value);
-                          form.setValue('valueScore', parseInt(value), { shouldDirty: true, shouldTouch: true, shouldValidate: true });
-                        }} 
-                        value={valueScoreState?.toString() || ""}
-                        className="flex justify-between"
-                      >
-                        {SCORE_OPTIONS.map((score) => (
-                          <div key={score.value} className="flex flex-col items-center">
-                            <RadioGroupItem 
-                              value={score.value.toString()} 
-                              id={`value-score-${score.value}`}
-                              checked={valueScoreState === score.value}
-                              onClick={() => {
-                                console.log("Direct click on Value Score:", score.value);
-                                setValueScoreState(score.value);
-                                form.setValue('valueScore', score.value, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
-                              }}
-                            />
-                            <Label 
-                              htmlFor={`value-score-${score.value}`} 
-                              className="text-xs cursor-pointer"
-                            >
-                              {score.value}
-                            </Label>
-                          </div>
-                        ))}
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+              <FormLabel className="text-base font-medium mb-3 block">Value Score</FormLabel>
+              <SingleFlavorChipGroup
+                options={SCORE_OPTIONS.map(s => ({ value: String(s.value), label: s.label }))}
+                selected={form.watch('valueScore')?.toString()}
+                onSelect={(value) => form.setValue('valueScore', Number(value))}
               />
-              
-              {/* Helpful label descriptions */}
-              <div className="flex justify-between mt-1 text-xs text-muted-foreground px-2">
-                <div>Poor</div>
-                <div className="ml-auto">Excellent</div>
-              </div>
             </div>
-            
-            {/* Additional Notes */}
+
             <FormField
               control={form.control}
               name="valueNotes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Additional Notes</FormLabel>
+                  <FormLabel>Value Notes</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Any additional thoughts on the value of this whiskey..."
-                      className="resize-none"
-                      rows={2}
+                      placeholder="Worth the price? Any value thoughts..."
+                      className="resize-none h-20"
                       {...field}
                     />
                   </FormControl>
-                  <FormMessage />
                 </FormItem>
               )}
             />
           </div>
         );
-      case ReviewPage.Summary:
+
+      case 6: // Summary
+        const weightedScore = calculateWeightedScore();
         return (
-          <>
-            {/* Sharing Options */}
-            <div className="mb-6 bg-blue-50 p-4 rounded-lg border border-blue-200">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Share2 className="h-5 w-5 text-blue-600" />
-                  <h3 className="font-medium text-blue-800">Share This Review</h3>
-                </div>
-                <FormField
-                  control={form.control}
-                  name="isPublic"
-                  render={({ field }) => (
-                    <FormItem className="flex items-center space-x-2 space-y-0">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-sm text-gray-600">Make public</FormLabel>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
+          <div className="space-y-6">
+            <div className="text-center p-6 bg-accent/30 rounded-xl">
+              <p className="text-sm text-muted-foreground mb-2">Calculated Rating</p>
+              <div className="text-4xl font-bold text-primary mb-2">
+                {weightedScore.toFixed(1)}/5
               </div>
-              <p className="text-sm text-blue-600 mt-2">
-                {form.watch("isPublic") 
-                  ? "This review will be shared with other users. They will be able to like and comment on it." 
-                  : "This review is private. Only you can see it."}
+              <StarRating rating={weightedScore} size="lg" />
+              <p className="text-xs text-muted-foreground mt-2">
+                Based on weighted scores: Nose (15%), Mouthfeel (20%), Taste (30%), Finish (25%), Value (10%)
               </p>
             </div>
-            
-            {/* Review Summary */}
-            <div className="mb-6 bg-secondary/20 p-4 rounded-lg">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Review Summary</h3>
-              
-              <div className="grid gap-4">
-                {/* Nose */}
-                <div className="border-b pb-3 border-[#D9C4A3] last:border-0">
-                  <div className="flex justify-between items-center mb-2">
-                    <h4 className="font-medium text-[#7d5936]">Nose:</h4>
-                    <span className="text-[#794E2F] font-bold">{form.getValues('noseScore')}/5</span>
-                  </div>
-                  <div className="flex justify-end">
-                    <StarRating 
-                      rating={Number(form.getValues('noseScore')) || 0} 
-                      maxRating={5}
-                      size="md"
-                    />
-                  </div>
-                </div>
-                
-                {/* Mouthfeel */}
-                <div className="border-b pb-3 border-[#D9C4A3] last:border-0">
-                  <div className="flex justify-between items-center mb-2">
-                    <h4 className="font-medium text-[#7d5936]">Mouthfeel:</h4>
-                    <span className="text-[#794E2F] font-bold">{form.getValues('mouthfeelScore')}/5</span>
-                  </div>
-                  <div className="flex justify-end">
-                    <StarRating 
-                      rating={Number(form.getValues('mouthfeelScore')) || 0} 
-                      maxRating={5}
-                      size="md"
-                    />
-                  </div>
-                </div>
-                
-                {/* Taste */}
-                <div className="border-b pb-3 border-[#D9C4A3] last:border-0">
-                  <div className="flex justify-between items-center mb-2">
-                    <h4 className="font-medium text-[#7d5936]">Taste:</h4>
-                    <span className="text-[#794E2F] font-bold">{form.getValues('tasteScore')}/5</span>
-                  </div>
-                  <div className="flex justify-end">
-                    <StarRating 
-                      rating={Number(form.getValues('tasteScore')) || 0} 
-                      maxRating={5}
-                      size="md"
-                    />
-                  </div>
-                </div>
-                
-                {/* Finish */}
-                <div className="border-b pb-3 border-[#D9C4A3] last:border-0">
-                  <div className="flex justify-between items-center mb-2">
-                    <h4 className="font-medium text-[#7d5936]">Finish:</h4>
-                    <span className="text-[#794E2F] font-bold">{form.getValues('finishScore')}/5</span>
-                  </div>
-                  <div className="flex justify-end">
-                    <StarRating 
-                      rating={Number(form.getValues('finishScore')) || 0} 
-                      maxRating={5}
-                      size="md"
-                    />
-                  </div>
-                </div>
-                
-                {/* Value */}
-                <div className="border-b pb-3 border-[#D9C4A3] last:border-0">
-                  <div className="flex justify-between items-center mb-2">
-                    <h4 className="font-medium text-[#7d5936]">Value:</h4>
-                    <span className="text-[#794E2F] font-bold">{form.getValues('valueScore') || 0}/5</span>
-                  </div>
-                  <div className="flex justify-end">
-                    <StarRating 
-                      rating={Number(form.getValues('valueScore')) || 0} 
-                      maxRating={5}
-                      size="md"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-            
 
-            
-            {/* Overall Impression */}
             <FormField
               control={form.control}
               name="text"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Overall Impression</FormLabel>
+                  <div className="flex items-center justify-between mb-2">
+                    <FormLabel>Overall Thoughts</FormLabel>
+                    {field.value && field.value.length > 10 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowAiEnhanceModal(true)}
+                        className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/30"
+                      >
+                        <Wand2 className="w-4 h-4 mr-1" />
+                        Enhance Notes
+                      </Button>
+                    )}
+                  </div>
                   <FormControl>
                     <Textarea
-                      placeholder="Provide your final thoughts and summary of this whiskey..."
-                      className="resize-none"
-                      rows={4}
+                      placeholder="Your final thoughts on this whiskey..."
+                      className="resize-none h-32"
                       {...field}
                     />
                   </FormControl>
-                  <FormMessage />
+                  {(!field.value || field.value.length <= 10) && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Write a brief note first, then use AI to enhance it.
+                    </p>
+                  )}
                 </FormItem>
               )}
             />
-            
-            {/* Final Details */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="mb-4">
-                <h3 className="section-header">Flavor Profile</h3>
-                <p className="text-sm text-muted-foreground mb-3">Rate each flavor characteristic from 0 to 5</p>
-                
-                {/* Fruit/Floral */}
-                <div className="mb-2">
-                  <FormField
-                    control={form.control}
-                    name="flavorProfileFruitFloral"
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="flex items-center justify-between mb-1">
-                          <FormLabel className="text-[#7d5936]">Fruit/Floral</FormLabel>
-                          <span className="text-sm">{field.value || 0}/5</span>
-                        </div>
-                        <FormControl>
-                          <input
-                            type="range"
-                            min="0"
-                            max="5"
-                            step="0.5"
-                            value={field.value || 0}
-                            onChange={field.onChange}
-                            className="w-full"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                {/* Sweet */}
-                <div className="mb-2">
-                  <FormField
-                    control={form.control}
-                    name="flavorProfileSweet"
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="flex items-center justify-between mb-1">
-                          <FormLabel className="text-[#7d5936]">Sweet</FormLabel>
-                          <span className="text-sm">{field.value || 0}/5</span>
-                        </div>
-                        <FormControl>
-                          <input
-                            type="range"
-                            min="0"
-                            max="5"
-                            step="0.5"
-                            value={field.value || 0}
-                            onChange={field.onChange}
-                            className="w-full"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                {/* Spice */}
-                <div className="mb-2">
-                  <FormField
-                    control={form.control}
-                    name="flavorProfileSpice"
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="flex items-center justify-between mb-1">
-                          <FormLabel className="text-[#7d5936]">Spice</FormLabel>
-                          <span className="text-sm">{field.value || 0}/5</span>
-                        </div>
-                        <FormControl>
-                          <input
-                            type="range"
-                            min="0"
-                            max="5"
-                            step="0.5"
-                            value={field.value || 0}
-                            onChange={field.onChange}
-                            className="w-full"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                {/* Herbal */}
-                <div className="mb-2">
-                  <FormField
-                    control={form.control}
-                    name="flavorProfileHerbal"
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="flex items-center justify-between mb-1">
-                          <FormLabel className="text-[#7d5936]">Herbal</FormLabel>
-                          <span className="text-sm">{field.value || 0}/5</span>
-                        </div>
-                        <FormControl>
-                          <input
-                            type="range"
-                            min="0"
-                            max="5"
-                            step="0.5"
-                            value={field.value || 0}
-                            onChange={field.onChange}
-                            className="w-full"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                {/* Grain */}
-                <div className="mb-2">
-                  <FormField
-                    control={form.control}
-                    name="flavorProfileGrain"
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="flex items-center justify-between mb-1">
-                          <FormLabel className="text-[#7d5936]">Grain</FormLabel>
-                          <span className="text-sm">{field.value || 0}/5</span>
-                        </div>
-                        <FormControl>
-                          <input
-                            type="range"
-                            min="0"
-                            max="5"
-                            step="0.5"
-                            value={field.value || 0}
-                            onChange={field.onChange}
-                            className="w-full"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                {/* Oak */}
-                <div className="mb-2">
-                  <FormField
-                    control={form.control}
-                    name="flavorProfileOak"
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="flex items-center justify-between mb-1">
-                          <FormLabel className="text-[#7d5936]">Oak</FormLabel>
-                          <span className="text-sm">{field.value || 0}/5</span>
-                        </div>
-                        <FormControl>
-                          <input
-                            type="range"
-                            min="0"
-                            max="5"
-                            step="0.5"
-                            value={field.value || 0}
-                            onChange={field.onChange}
-                            className="w-full"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+
+            <div className="flex items-center justify-between p-4 bg-card border border-border rounded-lg">
+              <div>
+                <p className="font-medium">Make Review Public</p>
+                <p className="text-sm text-muted-foreground">Share with the community</p>
               </div>
-              
-              <FormField
-                control={form.control}
-                name="date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Date</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="date"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            {/* Review Serial Number */}
-            <div className="bg-secondary/20 p-3 rounded-md">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-medium text-sm">Review Serial Number:</h4>
-                  <p className="text-xs text-muted-foreground">Each bottle can have multiple reviews</p>
-                </div>
-                <div className="bg-primary-foreground px-3 py-1 rounded font-mono text-sm">
-                  {form.getValues('id') || nanoid().substring(0, 8)}
-                </div>
-              </div>
-            </div>
-          </>
-        );
-      case ReviewPage.FinalScores:
-        const weightedScores = calculateWeightedScores();
-        console.log("Final Scores - Weighted scores:", weightedScores);
-        
-        // Use the pre-calculated fiveStarScore instead of recalculating
-        const finalRating = weightedScores.fiveStarScore;
-        
-        // Get flavor profile values from form
-        const flavorProfile = {
-          fruitFloral: form.getValues('flavorProfileFruitFloral') || 0,
-          sweet: form.getValues('flavorProfileSweet') || 0, 
-          spice: form.getValues('flavorProfileSpice') || 0,
-          herbal: form.getValues('flavorProfileHerbal') || 0,
-          grain: form.getValues('flavorProfileGrain') || 0,
-          oak: form.getValues('flavorProfileOak') || 0
-        };
-        
-        return (
-          <div className="space-y-6">
-            <div className="text-center mb-4">
-              <h3 className="text-lg font-bold text-[#7d5936] mb-2">Final Score</h3>
-              <div className="flex justify-center items-center">
-                <StarRating rating={finalRating} size="lg" />
-              </div>
-            </div>
-            
-            <div className="bg-[#F5EFE0] p-4 rounded-lg border border-[#D9C4A3]">
-              <h3 className="text-lg font-bold text-[#7d5936] mb-4">Flavor Profile</h3>
-              <div className="mb-4">
-                <RadarChart flavorProfile={flavorProfile} size={250} className="mb-2" />
-              </div>
-            </div>
-            
-            <div className="bg-[#F5EFE0] p-4 rounded-lg border border-[#D9C4A3]">
-              <h3 className="text-lg font-bold text-[#7d5936] mb-4">Adjustments</h3>
-              
-              <div className="space-y-4">
-                {/* Nose Score */}
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="font-medium text-[#794E2F]">Nose (×1.5)</span>
-                    <span className="text-[#986A44] font-medium">{(weightedScores.nose * 2).toFixed(1)} pts</span>
-                  </div>
-                  <div className="flex items-center">
-                    <button 
-                      className="p-1 bg-[#E8D9BD] hover:bg-[#D9C4A3] rounded-l-md border border-[#D9C4A3]"
-                      onClick={() => setNoseAdjustment(prev => Math.max(prev - 0.5, -2.5))}
-                      type="button"
-                    >
-                      −0.5
-                    </button>
-                    <div className="flex-1 h-2 mx-1 bg-[#E8D9BD] relative">
-                      <div 
-                        className="absolute h-full bg-[#986A44]" 
-                        style={{ width: `${(weightedScores.nose / 7.5) * 100}%` }}
-                      ></div>
-                    </div>
-                    <button 
-                      className="p-1 bg-[#E8D9BD] hover:bg-[#D9C4A3] rounded-r-md border border-[#D9C4A3]"
-                      onClick={() => setNoseAdjustment(prev => Math.min(prev + 0.5, 2.5))}
-                      type="button"
-                    >
-                      +0.5
-                    </button>
-                  </div>
-                  {noseAdjustment !== 0 && (
-                    <div className="text-xs text-[#986A44] mt-1">
-                      Adjustment: {noseAdjustment > 0 ? "+" : ""}{noseAdjustment}
-                    </div>
-                  )}
-                </div>
-                
-                {/* Mouthfeel Score */}
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="font-medium text-[#794E2F]">Mouthfeel (×2.0)</span>
-                    <span className="text-[#986A44] font-medium">{(weightedScores.mouthfeel * 2).toFixed(1)} pts</span>
-                  </div>
-                  <div className="flex items-center">
-                    <button 
-                      className="p-1 bg-[#E8D9BD] hover:bg-[#D9C4A3] rounded-l-md border border-[#D9C4A3]"
-                      onClick={() => setMouthfeelAdjustment(prev => Math.max(prev - 0.5, -2.5))}
-                      type="button"
-                    >
-                      −0.5
-                    </button>
-                    <div className="flex-1 h-2 mx-1 bg-[#E8D9BD] relative">
-                      <div 
-                        className="absolute h-full bg-[#986A44]" 
-                        style={{ width: `${(weightedScores.mouthfeel / 10) * 100}%` }}
-                      ></div>
-                    </div>
-                    <button 
-                      className="p-1 bg-[#E8D9BD] hover:bg-[#D9C4A3] rounded-r-md border border-[#D9C4A3]"
-                      onClick={() => setMouthfeelAdjustment(prev => Math.min(prev + 0.5, 2.5))}
-                      type="button"
-                    >
-                      +0.5
-                    </button>
-                  </div>
-                  {mouthfeelAdjustment !== 0 && (
-                    <div className="text-xs text-[#986A44] mt-1">
-                      Adjustment: {mouthfeelAdjustment > 0 ? "+" : ""}{mouthfeelAdjustment}
-                    </div>
-                  )}
-                </div>
-                
-                {/* Taste Score */}
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="font-medium text-[#794E2F]">Taste (×3.0)</span>
-                    <span className="text-[#986A44] font-medium">{(weightedScores.taste * 2).toFixed(1)} pts</span>
-                  </div>
-                  <div className="flex items-center">
-                    <button 
-                      className="p-1 bg-[#E8D9BD] hover:bg-[#D9C4A3] rounded-l-md border border-[#D9C4A3]"
-                      onClick={() => setTasteAdjustment(prev => Math.max(prev - 0.5, -2.5))}
-                      type="button"
-                    >
-                      −0.5
-                    </button>
-                    <div className="flex-1 h-2 mx-1 bg-[#E8D9BD] relative">
-                      <div 
-                        className="absolute h-full bg-[#986A44]" 
-                        style={{ width: `${(weightedScores.taste / 15) * 100}%` }}
-                      ></div>
-                    </div>
-                    <button 
-                      className="p-1 bg-[#E8D9BD] hover:bg-[#D9C4A3] rounded-r-md border border-[#D9C4A3]"
-                      onClick={() => setTasteAdjustment(prev => Math.min(prev + 0.5, 2.5))}
-                      type="button"
-                    >
-                      +0.5
-                    </button>
-                  </div>
-                  {tasteAdjustment !== 0 && (
-                    <div className="text-xs text-[#986A44] mt-1">
-                      Adjustment: {tasteAdjustment > 0 ? "+" : ""}{tasteAdjustment}
-                    </div>
-                  )}
-                </div>
-                
-                {/* Finish Score */}
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="font-medium text-[#794E2F]">Finish (×2.5)</span>
-                    <span className="text-[#986A44] font-medium">{(weightedScores.finish * 2).toFixed(1)} pts</span>
-                  </div>
-                  <div className="flex items-center">
-                    <button 
-                      className="p-1 bg-[#E8D9BD] hover:bg-[#D9C4A3] rounded-l-md border border-[#D9C4A3]"
-                      onClick={() => setFinishAdjustment(prev => Math.max(prev - 0.5, -2.5))}
-                      type="button"
-                    >
-                      −0.5
-                    </button>
-                    <div className="flex-1 h-2 mx-1 bg-[#E8D9BD] relative">
-                      <div 
-                        className="absolute h-full bg-[#986A44]" 
-                        style={{ width: `${(weightedScores.finish / 12.5) * 100}%` }}
-                      ></div>
-                    </div>
-                    <button 
-                      className="p-1 bg-[#E8D9BD] hover:bg-[#D9C4A3] rounded-r-md border border-[#D9C4A3]"
-                      onClick={() => setFinishAdjustment(prev => Math.min(prev + 0.5, 2.5))}
-                      type="button"
-                    >
-                      +0.5
-                    </button>
-                  </div>
-                  {finishAdjustment !== 0 && (
-                    <div className="text-xs text-[#986A44] mt-1">
-                      Adjustment: {finishAdjustment > 0 ? "+" : ""}{finishAdjustment}
-                    </div>
-                  )}
-                </div>
-                
-                {/* Value Score */}
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="font-medium text-[#794E2F]">Value (×1.0)</span>
-                    <span className="text-[#986A44] font-medium">{(weightedScores.value * 2).toFixed(1)} pts</span>
-                  </div>
-                  <div className="flex items-center">
-                    <button 
-                      className="p-1 bg-[#E8D9BD] hover:bg-[#D9C4A3] rounded-l-md border border-[#D9C4A3]"
-                      onClick={() => setValueAdjustment(prev => Math.max(prev - 0.5, -2.5))}
-                      type="button"
-                    >
-                      −0.5
-                    </button>
-                    <div className="flex-1 h-2 mx-1 bg-[#E8D9BD] relative">
-                      <div 
-                        className="absolute h-full bg-[#986A44]" 
-                        style={{ width: `${(weightedScores.value / 5.0) * 100}%` }}
-                      ></div>
-                    </div>
-                    <button 
-                      className="p-1 bg-[#E8D9BD] hover:bg-[#D9C4A3] rounded-r-md border border-[#D9C4A3]"
-                      onClick={() => setValueAdjustment(prev => Math.min(prev + 0.5, 2.5))}
-                      type="button"
-                    >
-                      +0.5
-                    </button>
-                  </div>
-                  {valueAdjustment !== 0 && (
-                    <div className="text-xs text-[#986A44] mt-1">
-                      Adjustment: {valueAdjustment > 0 ? "+" : ""}{valueAdjustment}
-                    </div>
-                  )}
-                </div>
-                
-                {/* Final Scores */}
-                <div className="border-t border-[#D9C4A3] pt-3 mt-4">
-                  {/* 5-Star Score with Star Images */}
-                  <div className="flex justify-between items-center mb-4">
-                    <span className="font-medium text-[#593D25] text-lg">Final Rating</span>
-                  </div>
-                  <div className="flex justify-center items-center mb-4">
-                    <StarRating 
-                      rating={calculateWeightedScores().fiveStarScore} 
-                      maxRating={5}
-                      size="lg"
-                    />
-                  </div>
-                  
-                  <div className="text-center">
-                    <span className="text-[#794E2F] font-bold text-xl">
-                      {calculateWeightedScores().fiveStarScore.toFixed(1)}/5
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Additional notes for final adjustment */}
-            <div className="mt-6 bg-white p-4 rounded-lg border border-gray-300">
-              <label className="block text-base font-bold text-gray-900 mb-2">
-                Additional Notes
-              </label>
-              <p className="text-sm text-gray-600 mb-2">Add any final thoughts or comments about this whiskey.</p>
-              <textarea
-                value={finalNotes}
-                onChange={(e) => setFinalNotes(e.target.value)}
-                placeholder="Notes on bottle rarity, special occasions, personal preferences, etc..."
-                className="w-full p-3 border border-gray-300 rounded-md bg-white text-gray-800 min-h-[100px] focus:ring-1 focus:ring-amber-500 focus:border-amber-500"
+              <Switch
+                checked={form.watch('isPublic')}
+                onCheckedChange={(checked) => form.setValue('isPublic', checked)}
               />
             </div>
           </div>
         );
+
       default:
         return null;
     }
   };
 
-  // Reset all form values when the dialog is opened
-  useEffect(() => {
-    if (isOpen) {
-      // Always reset the review completely when opening the dialog
-      resetReview();
-      
-      // Force reset scroll position with a delay to ensure the modal is fully rendered
-      setTimeout(() => {
-        scrollToTop();
-        // Double check with a longer delay
-        setTimeout(scrollToTop, 150);
-      }, 50);
-    }
-  }, [isOpen, form]);
-
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md dialog-content overflow-hidden max-h-[90vh] flex flex-col" ref={dialogContentRef}>
-        <div className="sticky top-0 bg-white z-10 pb-2">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-gray-900">
-              Review Whiskey - {pageData[currentPage].title}
-            </DialogTitle>
-          </DialogHeader>
-          
-          <div className="text-center mb-4">
-            <h4 className="font-bold text-xl text-[#7d5936]">{whiskey.name}</h4>
-            <p className="text-[#986A44]">{whiskey.distillery}</p>
-          </div>
-          
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent
+        hideCloseButton
+        className={cn(
+          "p-0 gap-0 overflow-hidden flex flex-col",
+          isMobile
+            ? "w-screen h-screen max-w-none max-h-none rounded-none border-0 translate-x-0 translate-y-0 left-0 top-0"
+            : "max-w-2xl max-h-[90vh]"
+        )}
+      >
+        {/* Sticky Header */}
+        <div className="sticky top-0 z-10 bg-card border-b border-border">
           {/* Progress bar */}
-          <div className="mb-4">
-            <Progress value={progressPercentage} className="h-2 bg-[#e8d9bd]" />
-            <p className="text-xs text-right mt-1 text-[#986A44]">
-              Step {currentPage + 1} of {pageData.length}
-            </p>
+          <div className="h-1 bg-muted">
+            <div
+              className="h-full bg-primary transition-all duration-300 ease-out"
+              style={{ width: `${progress}%` }}
+            />
           </div>
-          
-          {isMobile && (
-            <div className="mt-0 mb-2 text-xs text-center text-amber-700 flex items-center justify-center">
-              <ChevronLeft className="h-3 w-3 mr-1" />
-              <span>Swipe to navigate</span>
-              <ChevronRight className="h-3 w-3 ml-1" />
+
+          {/* Title and whiskey info */}
+          <div className="px-6 py-4">
+            <div className="flex items-center justify-between mb-3">
+              <DialogTitle className="text-lg font-semibold text-foreground">
+                Review: {whiskey.name}
+              </DialogTitle>
+              <button
+                onClick={handleClose}
+                className="p-1 rounded-md hover:bg-accent transition-colors"
+              >
+                <X className="w-5 h-5 text-muted-foreground" />
+              </button>
             </div>
-          )}
-        </div>
-        
-        <Form {...form}>
-          <form 
-            // Use the form.handleSubmit for regular page navigation
-            // But not for the final submission - that's handled by the submit button
-            onSubmit={form.handleSubmit(onSubmit)} 
-            className="space-y-4 flex-1 overflow-y-auto"
-          >
-            <div 
-              id="review-content"
-              className={`${swipeDirection ? (swipeDirection === 'left' ? 'animate-slide-left' : 'animate-slide-right') : ''}`}
-              {...(isMobile ? swipeHandlers : {})}
-            >
-              {renderPageContent()}
-            </div>
-            
-            <div className="flex justify-between pt-2">
+
+            {/* Step indicator */}
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <StepIcon className="w-5 h-5 text-primary" />
+              </div>
               <div>
-                {currentPage > 0 && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={prevPage}
-                    className="border-[#d9c4a3] text-[#794e2f] hover:bg-[#f5efe0] flex items-center"
-                  >
-                    {isMobile && <ArrowLeft className="h-4 w-4 mr-1" />}
-                    Previous
-                  </Button>
-                )}
-              </div>
-              
-              <div className="flex space-x-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={onClose}
-                  className="border-[#d9c4a3] text-[#794e2f] hover:bg-[#f5efe0]"
-                >
-                  Cancel
-                </Button>
-                
-                {currentPage < ReviewPage.FinalScores ? (
-                  <Button
-                    type="button"
-                    className="barrel-button flex items-center"
-                    onClick={nextPage}
-                  >
-                    Next
-                    {isMobile && <ArrowRight className="h-4 w-4 ml-1" />}
-                  </Button>
-                ) : (
-                  <Button
-                    type="button"
-                    className="barrel-button"
-                    disabled={addReviewMutation.isPending}
-                    onClick={submitReview}
-                  >
-                    {addReviewMutation.isPending ? "Submitting..." : "Submit Review"}
-                  </Button>
-                )}
+                <p className="font-medium text-foreground">
+                  {currentStepData.title}
+                  <span className="text-muted-foreground font-normal ml-2">
+                    {currentStep + 1}/{STEPS.length}
+                  </span>
+                </p>
+                <p className="text-sm text-muted-foreground">{currentStepData.description}</p>
               </div>
             </div>
-          </form>
-        </Form>
+          </div>
+        </div>
+
+        {/* Scrollable Content Area */}
+        <div className={cn(
+          "overflow-y-auto",
+          isMobile ? "flex-1" : "max-h-[calc(90vh-200px)]"
+        )}>
+          <Form {...form}>
+            <form className="p-6">
+              {renderStepContent()}
+            </form>
+          </Form>
+        </div>
+
+        {/* Sticky Footer */}
+        <div className="sticky bottom-0 z-10 bg-card border-t border-border px-6 py-4">
+          <div className="flex items-center justify-between">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={handlePrevious}
+              disabled={currentStep === 0}
+              className="gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back
+            </Button>
+
+            {currentStep === STEPS.length - 1 ? (
+              <Button
+                type="button"
+                onClick={handleSubmit}
+                disabled={addReviewMutation.isPending}
+                className="gap-2"
+              >
+                {addReviewMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-4 h-4" />
+                    Save Review
+                  </>
+                )}
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                onClick={handleNext}
+                className="gap-2"
+              >
+                Next
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
+        </div>
       </DialogContent>
+
+      {/* AI Suggest Flavors Modal */}
+      <AiSuggestModal
+        isOpen={showAiSuggestModal}
+        onClose={() => setShowAiSuggestModal(false)}
+        whiskeyId={whiskey.id}
+        whiskeyName={whiskey.name}
+        whiskeyDetails={{
+          name: whiskey.name,
+          distillery: whiskey.distillery || undefined,
+          type: whiskey.type || undefined,
+          age: whiskey.age || undefined,
+          abv: whiskey.abv || undefined,
+        }}
+        onApplySuggestions={(suggestions) => {
+          // Merge with existing selections
+          setSelectedNoseAromas((prev) => Array.from(new Set([...prev, ...suggestions.noseAromas])));
+          setSelectedTasteFlavors((prev) => Array.from(new Set([...prev, ...suggestions.tasteFlavors])));
+          setSelectedFinishFlavors((prev) => Array.from(new Set([...prev, ...suggestions.finishFlavors])));
+          // Update form values
+          form.setValue('noseAromas', Array.from(new Set([...selectedNoseAromas, ...suggestions.noseAromas])));
+          form.setValue('tasteFlavors', Array.from(new Set([...selectedTasteFlavors, ...suggestions.tasteFlavors])));
+          form.setValue('finishFlavors', Array.from(new Set([...selectedFinishFlavors, ...suggestions.finishFlavors])));
+        }}
+      />
+
+      {/* AI Enhance Notes Modal */}
+      <AiEnhanceModal
+        isOpen={showAiEnhanceModal}
+        onClose={() => setShowAiEnhanceModal(false)}
+        whiskeyId={whiskey.id}
+        whiskeyName={whiskey.name}
+        currentNotes={form.watch('text') || ''}
+        rating={rating}
+        onApplyEnhanced={(enhanced) => {
+          form.setValue('text', enhanced);
+        }}
+      />
     </Dialog>
   );
 };

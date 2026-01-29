@@ -1,14 +1,27 @@
 import { nanoid } from "nanoid";
-import { 
-  Whiskey, InsertWhiskey, UpdateWhiskey, ReviewNote, 
+import {
+  Whiskey, InsertWhiskey, UpdateWhiskey, ReviewNote,
   whiskeys, users, User, InsertUser, UpdateUser,
   reviewComments, reviewLikes, priceTracks, marketValues,
-  InsertReviewComment, UpdateReviewComment, ReviewComment, 
+  InsertReviewComment, UpdateReviewComment, ReviewComment,
   ReviewLike, InsertReviewLike, PriceTrack, InsertPriceTrack,
-  UpdatePriceTrack, MarketValue, InsertMarketValue, UpdateMarketValue
+  UpdatePriceTrack, MarketValue, InsertMarketValue, UpdateMarketValue,
+  // Flight and Blind Tasting imports
+  flights, flightWhiskeys, blindTastings, blindTastingWhiskeys,
+  Flight, InsertFlight, UpdateFlight,
+  FlightWhiskey, InsertFlightWhiskey, UpdateFlightWhiskey,
+  BlindTasting, InsertBlindTasting, UpdateBlindTasting,
+  BlindTastingWhiskey, InsertBlindTastingWhiskey, UpdateBlindTastingWhiskey,
+  BlindTastingStatus,
+  // Social features imports
+  follows, Follow, UpdateProfile, PublicUser,
+  // Distillery imports
+  distilleries, Distillery, InsertDistillery, UpdateDistillery,
+  // AI usage imports
+  aiUsageLogs, AiUsageLog, InsertAiUsageLog
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, or, asc, desc, sql } from "drizzle-orm";
+import { eq, and, or, asc, desc, sql, ne, count, ilike } from "drizzle-orm";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 
@@ -725,8 +738,1009 @@ export class DatabaseStorage implements IStorage {
         eq(marketValues.userId, userId)
       ))
       .returning();
-    
+
     return result.length > 0;
+  }
+
+  // ==================== FLIGHT METHODS ====================
+
+  async getFlights(userId: number): Promise<Flight[]> {
+    return db
+      .select()
+      .from(flights)
+      .where(eq(flights.userId, userId))
+      .orderBy(desc(flights.createdAt));
+  }
+
+  async getFlight(flightId: number, userId: number): Promise<Flight | undefined> {
+    const [flight] = await db
+      .select()
+      .from(flights)
+      .where(and(eq(flights.id, flightId), eq(flights.userId, userId)));
+    return flight || undefined;
+  }
+
+  async getFlightWithWhiskeys(flightId: number, userId: number): Promise<{
+    flight: Flight;
+    whiskeys: (FlightWhiskey & { whiskey: Whiskey })[];
+  } | undefined> {
+    const flight = await this.getFlight(flightId, userId);
+    if (!flight) return undefined;
+
+    const flightWhiskeyRecords = await db
+      .select()
+      .from(flightWhiskeys)
+      .where(eq(flightWhiskeys.flightId, flightId))
+      .orderBy(asc(flightWhiskeys.order));
+
+    const whiskeysWithDetails = await Promise.all(
+      flightWhiskeyRecords.map(async (fw) => {
+        const [whiskey] = await db
+          .select()
+          .from(whiskeys)
+          .where(eq(whiskeys.id, fw.whiskeyId));
+        return { ...fw, whiskey };
+      })
+    );
+
+    return { flight, whiskeys: whiskeysWithDetails };
+  }
+
+  async createFlight(flightData: InsertFlight): Promise<Flight> {
+    const [newFlight] = await db
+      .insert(flights)
+      .values(flightData)
+      .returning();
+    return newFlight;
+  }
+
+  async updateFlight(flightId: number, flightData: UpdateFlight, userId: number): Promise<Flight | undefined> {
+    const [updated] = await db
+      .update(flights)
+      .set({ ...flightData, updatedAt: new Date() })
+      .where(and(eq(flights.id, flightId), eq(flights.userId, userId)))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteFlight(flightId: number, userId: number): Promise<boolean> {
+    const result = await db
+      .delete(flights)
+      .where(and(eq(flights.id, flightId), eq(flights.userId, userId)))
+      .returning();
+    return result.length > 0;
+  }
+
+  async addWhiskeyToFlight(flightId: number, whiskeyId: number, userId: number): Promise<FlightWhiskey | undefined> {
+    // Verify flight belongs to user
+    const flight = await this.getFlight(flightId, userId);
+    if (!flight) return undefined;
+
+    // Get current max order
+    const existing = await db
+      .select()
+      .from(flightWhiskeys)
+      .where(eq(flightWhiskeys.flightId, flightId))
+      .orderBy(desc(flightWhiskeys.order));
+
+    const nextOrder = existing.length > 0 ? (existing[0].order + 1) : 0;
+
+    const [newFlightWhiskey] = await db
+      .insert(flightWhiskeys)
+      .values({ flightId, whiskeyId, order: nextOrder })
+      .returning();
+
+    return newFlightWhiskey;
+  }
+
+  async removeWhiskeyFromFlight(flightWhiskeyId: number, userId: number): Promise<boolean> {
+    // Get the flight whiskey to find its flight
+    const [fw] = await db
+      .select()
+      .from(flightWhiskeys)
+      .where(eq(flightWhiskeys.id, flightWhiskeyId));
+
+    if (!fw) return false;
+
+    // Verify flight belongs to user
+    const flight = await this.getFlight(fw.flightId, userId);
+    if (!flight) return false;
+
+    const result = await db
+      .delete(flightWhiskeys)
+      .where(eq(flightWhiskeys.id, flightWhiskeyId))
+      .returning();
+
+    return result.length > 0;
+  }
+
+  async updateFlightWhiskey(flightWhiskeyId: number, data: UpdateFlightWhiskey, userId: number): Promise<FlightWhiskey | undefined> {
+    // Get the flight whiskey to find its flight
+    const [fw] = await db
+      .select()
+      .from(flightWhiskeys)
+      .where(eq(flightWhiskeys.id, flightWhiskeyId));
+
+    if (!fw) return undefined;
+
+    // Verify flight belongs to user
+    const flight = await this.getFlight(fw.flightId, userId);
+    if (!flight) return undefined;
+
+    const [updated] = await db
+      .update(flightWhiskeys)
+      .set(data)
+      .where(eq(flightWhiskeys.id, flightWhiskeyId))
+      .returning();
+
+    return updated || undefined;
+  }
+
+  async reorderFlightWhiskeys(flightId: number, whiskeyIds: number[], userId: number): Promise<boolean> {
+    // Verify flight belongs to user
+    const flight = await this.getFlight(flightId, userId);
+    if (!flight) return false;
+
+    // Update order for each whiskey
+    await Promise.all(
+      whiskeyIds.map((whiskeyId, index) =>
+        db
+          .update(flightWhiskeys)
+          .set({ order: index })
+          .where(and(
+            eq(flightWhiskeys.flightId, flightId),
+            eq(flightWhiskeys.whiskeyId, whiskeyId)
+          ))
+      )
+    );
+
+    return true;
+  }
+
+  // ==================== BLIND TASTING METHODS ====================
+
+  async getBlindTastings(userId: number): Promise<BlindTasting[]> {
+    return db
+      .select()
+      .from(blindTastings)
+      .where(eq(blindTastings.userId, userId))
+      .orderBy(desc(blindTastings.createdAt));
+  }
+
+  async getBlindTasting(blindTastingId: number, userId: number): Promise<BlindTasting | undefined> {
+    const [bt] = await db
+      .select()
+      .from(blindTastings)
+      .where(and(eq(blindTastings.id, blindTastingId), eq(blindTastings.userId, userId)));
+    return bt || undefined;
+  }
+
+  async getBlindTastingWithWhiskeys(blindTastingId: number, userId: number): Promise<{
+    blindTasting: BlindTasting;
+    whiskeys: (BlindTastingWhiskey & { whiskey?: Whiskey })[];
+  } | undefined> {
+    const bt = await this.getBlindTasting(blindTastingId, userId);
+    if (!bt) return undefined;
+
+    const btWhiskeys = await db
+      .select()
+      .from(blindTastingWhiskeys)
+      .where(eq(blindTastingWhiskeys.blindTastingId, blindTastingId))
+      .orderBy(asc(blindTastingWhiskeys.order));
+
+    // Only include whiskey details if revealed
+    const whiskeysWithDetails = await Promise.all(
+      btWhiskeys.map(async (btw) => {
+        if (bt.status === 'active') {
+          // Don't reveal whiskey identity in active tastings
+          return { ...btw, whiskey: undefined };
+        }
+        const [whiskey] = await db
+          .select()
+          .from(whiskeys)
+          .where(eq(whiskeys.id, btw.whiskeyId));
+        return { ...btw, whiskey };
+      })
+    );
+
+    return { blindTasting: bt, whiskeys: whiskeysWithDetails };
+  }
+
+  async createBlindTasting(data: InsertBlindTasting, whiskeyIds: number[]): Promise<BlindTasting> {
+    const [newBt] = await db
+      .insert(blindTastings)
+      .values(data)
+      .returning();
+
+    // Shuffle the whiskey IDs and assign labels
+    const shuffled = [...whiskeyIds].sort(() => Math.random() - 0.5);
+    const labels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+
+    await Promise.all(
+      shuffled.map((whiskeyId, index) =>
+        db.insert(blindTastingWhiskeys).values({
+          blindTastingId: newBt.id,
+          whiskeyId,
+          label: labels[index] || `#${index + 1}`,
+          order: index
+        })
+      )
+    );
+
+    return newBt;
+  }
+
+  async updateBlindTasting(blindTastingId: number, data: UpdateBlindTasting, userId: number): Promise<BlindTasting | undefined> {
+    const [updated] = await db
+      .update(blindTastings)
+      .set(data)
+      .where(and(eq(blindTastings.id, blindTastingId), eq(blindTastings.userId, userId)))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteBlindTasting(blindTastingId: number, userId: number): Promise<boolean> {
+    const result = await db
+      .delete(blindTastings)
+      .where(and(eq(blindTastings.id, blindTastingId), eq(blindTastings.userId, userId)))
+      .returning();
+    return result.length > 0;
+  }
+
+  async rateBlindTastingWhiskey(
+    blindTastingWhiskeyId: number,
+    rating: number,
+    notes: string | undefined,
+    userId: number
+  ): Promise<BlindTastingWhiskey | undefined> {
+    // Get the blind tasting whiskey to find its blind tasting
+    const [btw] = await db
+      .select()
+      .from(blindTastingWhiskeys)
+      .where(eq(blindTastingWhiskeys.id, blindTastingWhiskeyId));
+
+    if (!btw) return undefined;
+
+    // Verify blind tasting belongs to user and is active
+    const bt = await this.getBlindTasting(btw.blindTastingId, userId);
+    if (!bt || bt.status !== 'active') return undefined;
+
+    const [updated] = await db
+      .update(blindTastingWhiskeys)
+      .set({ blindRating: rating, blindNotes: notes })
+      .where(eq(blindTastingWhiskeys.id, blindTastingWhiskeyId))
+      .returning();
+
+    return updated || undefined;
+  }
+
+  async revealBlindTasting(blindTastingId: number, userId: number): Promise<BlindTasting | undefined> {
+    const bt = await this.getBlindTasting(blindTastingId, userId);
+    if (!bt || bt.status !== 'active') return undefined;
+
+    const now = new Date();
+
+    // Update blind tasting status
+    const [updated] = await db
+      .update(blindTastings)
+      .set({ status: 'revealed' as BlindTastingStatus, revealedAt: now })
+      .where(eq(blindTastings.id, blindTastingId))
+      .returning();
+
+    // Mark all whiskeys as revealed
+    await db
+      .update(blindTastingWhiskeys)
+      .set({ revealedAt: now })
+      .where(eq(blindTastingWhiskeys.blindTastingId, blindTastingId));
+
+    return updated || undefined;
+  }
+
+  async completeBlindTasting(blindTastingId: number, userId: number): Promise<BlindTasting | undefined> {
+    const bt = await this.getBlindTasting(blindTastingId, userId);
+    if (!bt || bt.status !== 'revealed') return undefined;
+
+    const [updated] = await db
+      .update(blindTastings)
+      .set({ status: 'completed' as BlindTastingStatus, completedAt: new Date() })
+      .where(eq(blindTastings.id, blindTastingId))
+      .returning();
+
+    return updated || undefined;
+  }
+
+  // ==================== FLAVOR EXTRACTION ====================
+
+  extractFlavorTags(whiskey: Whiskey): string[] {
+    const flavors = new Set<string>();
+
+    if (!Array.isArray(whiskey.notes)) return [];
+
+    for (const review of whiskey.notes) {
+      // Extract from nose aromas
+      if (Array.isArray(review.noseAromas)) {
+        review.noseAromas.forEach((f: string) => flavors.add(f));
+      }
+      // Extract from taste flavors
+      if (Array.isArray(review.tasteFlavors)) {
+        review.tasteFlavors.forEach((f: string) => flavors.add(f));
+      }
+      // Extract from finish flavors
+      if (Array.isArray(review.finishFlavors)) {
+        review.finishFlavors.forEach((f: string) => flavors.add(f));
+      }
+    }
+
+    return Array.from(flavors);
+  }
+
+  getTopFlavors(whiskey: Whiskey, limit: number = 5): string[] {
+    const flavorCounts = new Map<string, number>();
+
+    if (!Array.isArray(whiskey.notes)) return [];
+
+    for (const review of whiskey.notes) {
+      const allFlavors = [
+        ...(review.noseAromas || []),
+        ...(review.tasteFlavors || []),
+        ...(review.finishFlavors || [])
+      ];
+
+      for (const flavor of allFlavors) {
+        flavorCounts.set(flavor, (flavorCounts.get(flavor) || 0) + 1);
+      }
+    }
+
+    return Array.from(flavorCounts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, limit)
+      .map(([flavor]) => flavor);
+  }
+
+  async getWhiskeysWithFlavor(flavor: string, userId: number): Promise<Whiskey[]> {
+    const allWhiskeys = await this.getWhiskeys(userId);
+
+    return allWhiskeys.filter(whiskey => {
+      const flavors = this.extractFlavorTags(whiskey);
+      return flavors.some(f => f.toLowerCase().includes(flavor.toLowerCase()));
+    });
+  }
+
+  async getAllUserFlavors(userId: number): Promise<{ flavor: string; count: number }[]> {
+    const allWhiskeys = await this.getWhiskeys(userId);
+    const flavorCounts = new Map<string, number>();
+
+    for (const whiskey of allWhiskeys) {
+      const flavors = this.extractFlavorTags(whiskey);
+      for (const flavor of flavors) {
+        flavorCounts.set(flavor, (flavorCounts.get(flavor) || 0) + 1);
+      }
+    }
+
+    return Array.from(flavorCounts.entries())
+      .map(([flavor, count]) => ({ flavor, count }))
+      .sort((a, b) => b.count - a.count);
+  }
+
+  // ==================== RECOMMENDATIONS ====================
+
+  async getRecommendations(userId: number, limit: number = 5): Promise<{
+    whiskey: Whiskey;
+    reason: string;
+    score: number;
+  }[]> {
+    const userWhiskeys = await this.getWhiskeys(userId);
+    if (userWhiskeys.length === 0) return [];
+
+    // Get highly rated whiskeys (4+ rating)
+    const topRated = userWhiskeys.filter(w => (w.rating || 0) >= 4);
+
+    // Get favorite distilleries
+    const distilleryCounts = new Map<string, number>();
+    for (const w of topRated) {
+      if (w.distillery) {
+        distilleryCounts.set(w.distillery, (distilleryCounts.get(w.distillery) || 0) + 1);
+      }
+    }
+    const topDistilleries = Array.from(distilleryCounts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([d]) => d);
+
+    // Get favorite types
+    const typeCounts = new Map<string, number>();
+    for (const w of topRated) {
+      if (w.type) {
+        typeCounts.set(w.type, (typeCounts.get(w.type) || 0) + 1);
+      }
+    }
+    const topTypes = Array.from(typeCounts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 2)
+      .map(([t]) => t);
+
+    // Get user's flavor preferences
+    const userFlavors = await this.getAllUserFlavors(userId);
+    const topFlavors = userFlavors.slice(0, 10).map(f => f.flavor);
+
+    // Find whiskeys user doesn't have that match their preferences
+    const userWhiskeyIds = new Set(userWhiskeys.map(w => w.id));
+    const recommendations: { whiskey: Whiskey; reason: string; score: number }[] = [];
+
+    // For now, recommend based on same distillery or type from user's collection
+    // In a real app, you'd query a broader database of whiskeys
+    for (const whiskey of userWhiskeys) {
+      // Skip if already reviewed (has notes)
+      if (Array.isArray(whiskey.notes) && whiskey.notes.length > 0) continue;
+
+      // Skip wishlisted items - they're already on the radar
+      if (whiskey.isWishlist) continue;
+
+      let score = 0;
+      let reason = '';
+
+      // Check distillery match
+      if (whiskey.distillery && topDistilleries.includes(whiskey.distillery)) {
+        score += 3;
+        reason = `From ${whiskey.distillery}, one of your favorites`;
+      }
+
+      // Check type match
+      if (whiskey.type && topTypes.includes(whiskey.type)) {
+        score += 2;
+        if (!reason) reason = `You enjoy ${whiskey.type} whiskeys`;
+      }
+
+      // Check flavor match
+      const whiskeyFlavors = this.extractFlavorTags(whiskey);
+      const matchingFlavors = whiskeyFlavors.filter(f => topFlavors.includes(f));
+      if (matchingFlavors.length > 0) {
+        score += matchingFlavors.length;
+        if (!reason) reason = `Similar flavor profile: ${matchingFlavors.slice(0, 3).join(', ')}`;
+      }
+
+      if (score > 0 && reason) {
+        recommendations.push({ whiskey, reason, score });
+      }
+    }
+
+    return recommendations
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit);
+  }
+
+  async getSimilarWhiskeys(whiskeyId: number, userId: number, limit: number = 5): Promise<{
+    whiskey: Whiskey;
+    reason: string;
+    matchScore: number;
+  }[]> {
+    const targetWhiskey = await this.getWhiskey(whiskeyId, userId);
+    if (!targetWhiskey) return [];
+
+    const userWhiskeys = await this.getWhiskeys(userId);
+    const targetFlavors = this.extractFlavorTags(targetWhiskey);
+
+    const similar: { whiskey: Whiskey; reason: string; matchScore: number }[] = [];
+
+    for (const whiskey of userWhiskeys) {
+      if (whiskey.id === whiskeyId) continue;
+
+      let matchScore = 0;
+      const reasons: string[] = [];
+
+      // Same distillery
+      if (targetWhiskey.distillery && whiskey.distillery === targetWhiskey.distillery) {
+        matchScore += 5;
+        reasons.push('Same distillery');
+      }
+
+      // Same type
+      if (targetWhiskey.type && whiskey.type === targetWhiskey.type) {
+        matchScore += 3;
+        reasons.push(`Also a ${whiskey.type}`);
+      }
+
+      // Similar age (within 3 years)
+      if (targetWhiskey.age && whiskey.age && Math.abs(targetWhiskey.age - whiskey.age) <= 3) {
+        matchScore += 2;
+        reasons.push('Similar age');
+      }
+
+      // Similar ABV (within 5%)
+      if (targetWhiskey.abv && whiskey.abv && Math.abs(targetWhiskey.abv - whiskey.abv) <= 5) {
+        matchScore += 1;
+        reasons.push('Similar strength');
+      }
+
+      // Similar price (within 30%)
+      if (targetWhiskey.price && whiskey.price) {
+        const priceDiff = Math.abs(targetWhiskey.price - whiskey.price) / targetWhiskey.price;
+        if (priceDiff <= 0.3) {
+          matchScore += 1;
+          reasons.push('Similar price range');
+        }
+      }
+
+      // Flavor overlap
+      const whiskeyFlavors = this.extractFlavorTags(whiskey);
+      const overlap = targetFlavors.filter(f => whiskeyFlavors.includes(f));
+      if (overlap.length > 0) {
+        matchScore += overlap.length;
+        reasons.push(`Shared flavors: ${overlap.slice(0, 3).join(', ')}`);
+      }
+
+      if (matchScore > 0) {
+        similar.push({
+          whiskey,
+          reason: reasons[0] || 'Similar characteristics',
+          matchScore
+        });
+      }
+    }
+
+    return similar
+      .sort((a, b) => b.matchScore - a.matchScore)
+      .slice(0, limit);
+  }
+
+  // ==================== PROFILE METHODS ====================
+
+  async getUserByProfileSlug(slug: string): Promise<User | undefined> {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(and(eq(users.profileSlug, slug), eq(users.isPublic, true)));
+    return user || undefined;
+  }
+
+  async getPublicProfile(userId: number): Promise<{
+    user: PublicUser;
+    stats: {
+      totalBottles: number;
+      uniqueBottles: number;
+      averageRating: number;
+      topTypes: { type: string; count: number }[];
+      topDistilleries: { distillery: string; count: number }[];
+    };
+    followersCount: number;
+    followingCount: number;
+  } | undefined> {
+    const user = await this.getUser(userId);
+    if (!user || !user.isPublic) return undefined;
+
+    // Get public whiskeys
+    const userWhiskeys = await db
+      .select()
+      .from(whiskeys)
+      .where(and(
+        eq(whiskeys.userId, userId),
+        eq(whiskeys.isPublic, true),
+        eq(whiskeys.isWishlist, false)
+      ));
+
+    // Calculate stats
+    const totalBottles = userWhiskeys.reduce((sum, w) => sum + (w.quantity || 1), 0);
+    const uniqueBottles = userWhiskeys.length;
+    const ratingsSum = userWhiskeys.reduce((sum, w) => sum + (w.rating || 0), 0);
+    const ratedCount = userWhiskeys.filter(w => w.rating && w.rating > 0).length;
+    const averageRating = ratedCount > 0 ? ratingsSum / ratedCount : 0;
+
+    // Get top types
+    const typeCounts = new Map<string, number>();
+    userWhiskeys.forEach(w => {
+      if (w.type) {
+        typeCounts.set(w.type, (typeCounts.get(w.type) || 0) + 1);
+      }
+    });
+    const topTypes = Array.from(typeCounts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([type, count]) => ({ type, count }));
+
+    // Get top distilleries
+    const distilleryCounts = new Map<string, number>();
+    userWhiskeys.forEach(w => {
+      if (w.distillery) {
+        distilleryCounts.set(w.distillery, (distilleryCounts.get(w.distillery) || 0) + 1);
+      }
+    });
+    const topDistilleries = Array.from(distilleryCounts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([distillery, count]) => ({ distillery, count }));
+
+    // Get follow counts
+    const followersCount = await this.getFollowersCount(userId);
+    const followingCount = await this.getFollowingCount(userId);
+
+    const publicUser: PublicUser = {
+      id: user.id,
+      username: user.username,
+      displayName: user.displayName,
+      profileImage: user.profileImage,
+      bio: user.bio,
+      profileSlug: user.profileSlug,
+      createdAt: user.createdAt,
+    };
+
+    return {
+      user: publicUser,
+      stats: {
+        totalBottles,
+        uniqueBottles,
+        averageRating,
+        topTypes,
+        topDistilleries,
+      },
+      followersCount,
+      followingCount,
+    };
+  }
+
+  async getPublicWhiskeys(userId: number, includeWishlist: boolean = false): Promise<Whiskey[]> {
+    const conditions = [
+      eq(whiskeys.userId, userId),
+      eq(whiskeys.isPublic, true),
+    ];
+
+    if (!includeWishlist) {
+      conditions.push(eq(whiskeys.isWishlist, false));
+    }
+
+    return db
+      .select()
+      .from(whiskeys)
+      .where(and(...conditions))
+      .orderBy(desc(whiskeys.rating));
+  }
+
+  async updateProfile(userId: number, profileData: UpdateProfile): Promise<User | undefined> {
+    // If updating profileSlug, check it's not taken
+    if (profileData.profileSlug) {
+      const existing = await db
+        .select()
+        .from(users)
+        .where(and(
+          eq(users.profileSlug, profileData.profileSlug),
+          ne(users.id, userId)
+        ));
+      if (existing.length > 0) {
+        throw new Error("Profile URL is already taken");
+      }
+    }
+
+    const [updated] = await db
+      .update(users)
+      .set({ ...profileData, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+
+    return updated || undefined;
+  }
+
+  async setWhiskeyPublic(whiskeyId: number, isPublic: boolean, userId: number): Promise<Whiskey | undefined> {
+    const [updated] = await db
+      .update(whiskeys)
+      .set({ isPublic })
+      .where(and(eq(whiskeys.id, whiskeyId), eq(whiskeys.userId, userId)))
+      .returning();
+
+    return updated || undefined;
+  }
+
+  // ==================== FOLLOW METHODS ====================
+
+  async followUser(followerId: number, followingId: number): Promise<Follow | undefined> {
+    // Can't follow yourself
+    if (followerId === followingId) return undefined;
+
+    // Check if target user exists and is public
+    const targetUser = await this.getUser(followingId);
+    if (!targetUser || !targetUser.isPublic) return undefined;
+
+    // Check if already following
+    const existing = await db
+      .select()
+      .from(follows)
+      .where(and(
+        eq(follows.followerId, followerId),
+        eq(follows.followingId, followingId)
+      ));
+
+    if (existing.length > 0) return existing[0];
+
+    const [newFollow] = await db
+      .insert(follows)
+      .values({ followerId, followingId })
+      .returning();
+
+    return newFollow;
+  }
+
+  async unfollowUser(followerId: number, followingId: number): Promise<boolean> {
+    const result = await db
+      .delete(follows)
+      .where(and(
+        eq(follows.followerId, followerId),
+        eq(follows.followingId, followingId)
+      ))
+      .returning();
+
+    return result.length > 0;
+  }
+
+  async isFollowing(followerId: number, followingId: number): Promise<boolean> {
+    const result = await db
+      .select()
+      .from(follows)
+      .where(and(
+        eq(follows.followerId, followerId),
+        eq(follows.followingId, followingId)
+      ));
+
+    return result.length > 0;
+  }
+
+  async getFollowers(userId: number): Promise<PublicUser[]> {
+    const followerRecords = await db
+      .select()
+      .from(follows)
+      .where(eq(follows.followingId, userId))
+      .orderBy(desc(follows.createdAt));
+
+    const followerUsers = await Promise.all(
+      followerRecords.map(async (f) => {
+        const user = await this.getUser(f.followerId);
+        if (!user) return null;
+        return {
+          id: user.id,
+          username: user.username,
+          displayName: user.displayName,
+          profileImage: user.profileImage,
+          bio: user.bio,
+          profileSlug: user.profileSlug,
+          createdAt: user.createdAt,
+        } as PublicUser;
+      })
+    );
+
+    return followerUsers.filter((u): u is PublicUser => u !== null);
+  }
+
+  async getFollowing(userId: number): Promise<PublicUser[]> {
+    const followingRecords = await db
+      .select()
+      .from(follows)
+      .where(eq(follows.followerId, userId))
+      .orderBy(desc(follows.createdAt));
+
+    const followingUsers = await Promise.all(
+      followingRecords.map(async (f) => {
+        const user = await this.getUser(f.followingId);
+        if (!user) return null;
+        return {
+          id: user.id,
+          username: user.username,
+          displayName: user.displayName,
+          profileImage: user.profileImage,
+          bio: user.bio,
+          profileSlug: user.profileSlug,
+          createdAt: user.createdAt,
+        } as PublicUser;
+      })
+    );
+
+    return followingUsers.filter((u): u is PublicUser => u !== null);
+  }
+
+  async getFollowersCount(userId: number): Promise<number> {
+    const result = await db
+      .select({ count: count() })
+      .from(follows)
+      .where(eq(follows.followingId, userId));
+
+    return result[0]?.count || 0;
+  }
+
+  async getFollowingCount(userId: number): Promise<number> {
+    const result = await db
+      .select({ count: count() })
+      .from(follows)
+      .where(eq(follows.followerId, userId));
+
+    return result[0]?.count || 0;
+  }
+
+  async getFollowingFeed(userId: number, limit: number = 20): Promise<Array<{
+    whiskey: Whiskey;
+    review: ReviewNote;
+    user: PublicUser;
+  }>> {
+    // Get who the user is following
+    const followingRecords = await db
+      .select()
+      .from(follows)
+      .where(eq(follows.followerId, userId));
+
+    const followingIds = followingRecords.map(f => f.followingId);
+
+    if (followingIds.length === 0) return [];
+
+    // Get public reviews from followed users
+    const results: Array<{ whiskey: Whiskey; review: ReviewNote; user: PublicUser }> = [];
+
+    for (const followedId of followingIds) {
+      const followedUser = await this.getUser(followedId);
+      if (!followedUser) continue;
+
+      const publicWhiskeys = await this.getPublicWhiskeys(followedId);
+
+      for (const whiskey of publicWhiskeys) {
+        if (!Array.isArray(whiskey.notes)) continue;
+
+        for (const review of whiskey.notes) {
+          if (review.isPublic) {
+            results.push({
+              whiskey,
+              review,
+              user: {
+                id: followedUser.id,
+                username: followedUser.username,
+                displayName: followedUser.displayName,
+                profileImage: followedUser.profileImage,
+                bio: followedUser.bio,
+                profileSlug: followedUser.profileSlug,
+                createdAt: followedUser.createdAt,
+              },
+            });
+          }
+        }
+      }
+    }
+
+    // Sort by review date and limit
+    return results
+      .sort((a, b) => new Date(b.review.date).getTime() - new Date(a.review.date).getTime())
+      .slice(0, limit);
+  }
+
+  async getSuggestedUsers(userId: number, limit: number = 5): Promise<PublicUser[]> {
+    // Get all public users except current user and already following
+    const followingRecords = await db
+      .select()
+      .from(follows)
+      .where(eq(follows.followerId, userId));
+
+    const followingIds = new Set(followingRecords.map(f => f.followingId));
+    followingIds.add(userId); // Exclude self
+
+    const publicUsers = await db
+      .select()
+      .from(users)
+      .where(eq(users.isPublic, true));
+
+    const suggestions = publicUsers
+      .filter(u => !followingIds.has(u.id))
+      .slice(0, limit)
+      .map(u => ({
+        id: u.id,
+        username: u.username,
+        displayName: u.displayName,
+        profileImage: u.profileImage,
+        bio: u.bio,
+        profileSlug: u.profileSlug,
+        createdAt: u.createdAt,
+      }));
+
+    return suggestions;
+  }
+
+  // ==================== DISTILLERY METHODS ====================
+
+  async getDistilleries(search?: string): Promise<Distillery[]> {
+    if (search) {
+      return db
+        .select()
+        .from(distilleries)
+        .where(
+          or(
+            ilike(distilleries.name, `%${search}%`),
+            ilike(distilleries.location, `%${search}%`),
+            ilike(distilleries.parentCompany, `%${search}%`),
+            ilike(distilleries.country, `%${search}%`),
+            ilike(distilleries.region, `%${search}%`)
+          )
+        )
+        .orderBy(asc(distilleries.name));
+    }
+
+    return db
+      .select()
+      .from(distilleries)
+      .orderBy(asc(distilleries.name));
+  }
+
+  async getDistillery(id: number): Promise<Distillery | undefined> {
+    const [distillery] = await db
+      .select()
+      .from(distilleries)
+      .where(eq(distilleries.id, id));
+
+    return distillery || undefined;
+  }
+
+  async getDistilleryWhiskeys(distilleryId: number, userId: number): Promise<Whiskey[]> {
+    return db
+      .select()
+      .from(whiskeys)
+      .where(
+        and(
+          eq(whiskeys.distilleryId, distilleryId),
+          eq(whiskeys.userId, userId)
+        )
+      )
+      .orderBy(asc(whiskeys.name));
+  }
+
+  async createDistillery(data: InsertDistillery): Promise<Distillery> {
+    const [newDistillery] = await db
+      .insert(distilleries)
+      .values(data)
+      .returning();
+
+    return newDistillery;
+  }
+
+  async updateDistillery(id: number, data: UpdateDistillery): Promise<Distillery | undefined> {
+    const [updated] = await db
+      .update(distilleries)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(distilleries.id, id))
+      .returning();
+
+    return updated || undefined;
+  }
+
+  // ==================== AI USAGE TRACKING ====================
+
+  async logAiUsage(userId: number, endpoint: string, whiskeyId?: number): Promise<AiUsageLog> {
+    const [log] = await db
+      .insert(aiUsageLogs)
+      .values({
+        userId,
+        endpoint,
+        whiskeyId: whiskeyId || null,
+      })
+      .returning();
+
+    return log;
+  }
+
+  async getAiUsageCountToday(userId: number): Promise<number> {
+    // Get count of AI calls made by user today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const result = await db
+      .select({ count: count() })
+      .from(aiUsageLogs)
+      .where(
+        and(
+          eq(aiUsageLogs.userId, userId),
+          sql`${aiUsageLogs.createdAt} >= ${today}`
+        )
+      );
+
+    return result[0]?.count || 0;
+  }
+
+  async canUseAi(userId: number, dailyLimit: number = 10): Promise<{ allowed: boolean; remaining: number }> {
+    const usedToday = await this.getAiUsageCountToday(userId);
+    const remaining = Math.max(0, dailyLimit - usedToday);
+    return {
+      allowed: remaining > 0,
+      remaining
+    };
   }
 }
 

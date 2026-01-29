@@ -97,35 +97,43 @@ export async function isAuthenticated(req: Request, res: Response, next: NextFun
 
 // Setup authentication and session
 export function setupAuth(app: express.Express) {
+  // Warn if SESSION_SECRET is not set
+  if (!process.env.SESSION_SECRET) {
+    console.warn("WARNING: SESSION_SECRET not set in .env - sessions will be lost on server restart!");
+  }
+
+  const isProduction = process.env.NODE_ENV === 'production';
+
   // Configure session middleware with PostgreSQL for persistence
   app.use(
     session({
       secret: process.env.SESSION_SECRET || nanoid(32),
       resave: false,
       saveUninitialized: false,
+      rolling: true, // Extend session expiry on each request
       store: new PgStore({
         pool: pool,
         tableName: 'session',
         createTableIfMissing: true
       }),
       name: 'whiskeypedia.sid', // Name the cookie for better identification
-      proxy: true, // Trust the reverse proxy when setting secure cookies
+      proxy: isProduction, // Only trust proxy in production
       cookie: {
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days for longer persistence
         httpOnly: true,
-        secure: false, // Set to false for both HTTP and HTTPS (will enable in production)
-        sameSite: "none", // Needed for cross-site access in deployed environments
+        secure: isProduction, // Only use secure cookies in production (HTTPS)
+        sameSite: isProduction ? "none" : "lax", // "lax" for dev, "none" for prod cross-site
         path: '/'
       }
     })
   );
-  
-  // Update secure flag based on environment
-  if (process.env.NODE_ENV === 'production') {
+
+  // Log environment info
+  if (isProduction) {
     app.set('trust proxy', 1); // Trust first proxy
     console.log("Production environment detected, enabling secure cookies");
   } else {
-    console.log("Development environment detected, using non-secure cookies");
+    console.log("Development environment detected, using non-secure cookies with sameSite=lax");
   }
 
   // User Registration

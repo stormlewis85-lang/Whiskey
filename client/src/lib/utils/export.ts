@@ -1,7 +1,112 @@
-import { Whiskey } from "@shared/schema";
+import { Whiskey, ReviewNote } from "@shared/schema";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+
+// ==================== JSON EXPORT ====================
+
+export const exportToJSON = (whiskeys: Whiskey[], filename: string = 'whiskey_collection') => {
+  const data = whiskeys.map(w => ({
+    id: w.id,
+    name: w.name,
+    distillery: w.distillery,
+    type: w.type,
+    region: w.region,
+    age: w.age,
+    abv: w.abv,
+    price: w.price,
+    rating: w.rating,
+    bottleType: w.bottleType,
+    mashBill: w.mashBill,
+    caskStrength: w.caskStrength,
+    finished: w.finished,
+    finishType: w.finishType,
+    isWishlist: w.isWishlist,
+    status: w.status,
+    quantity: w.quantity,
+    purchaseDate: w.purchaseDate,
+    purchaseLocation: w.purchaseLocation,
+    dateAdded: w.dateAdded,
+    lastReviewed: w.lastReviewed,
+    reviews: w.notes ? (w.notes as ReviewNote[]).map(n => ({
+      id: n.id,
+      date: n.date,
+      rating: n.rating,
+      text: n.text,
+      noseAromas: n.noseAromas,
+      tasteFlavors: n.tasteFlavors,
+      finishFlavors: n.finishFlavors,
+      noseScore: n.noseScore,
+      tasteScore: n.tasteScore,
+      finishScore: n.finishScore,
+    })) : [],
+  }));
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${filename}.json`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
+// ==================== CSV EXPORT ====================
+
+const escapeCSV = (value: any): string => {
+  if (value === null || value === undefined) return '';
+  const str = String(value);
+  if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
+};
+
+export const exportToCSV = (whiskeys: Whiskey[], filename: string = 'whiskey_collection') => {
+  const headers = [
+    'Name', 'Distillery', 'Type', 'Region', 'Age', 'ABV', 'Price', 'Rating',
+    'Bottle Type', 'Mash Bill', 'Cask Strength', 'Finished', 'Finish Type',
+    'Status', 'Quantity', 'Is Wishlist', 'Purchase Date', 'Purchase Location',
+    'Date Added', 'Review Count'
+  ];
+
+  const rows = whiskeys.map(w => [
+    escapeCSV(w.name),
+    escapeCSV(w.distillery),
+    escapeCSV(w.type),
+    escapeCSV(w.region),
+    escapeCSV(w.age),
+    escapeCSV(w.abv),
+    escapeCSV(w.price),
+    escapeCSV(w.rating),
+    escapeCSV(w.bottleType),
+    escapeCSV(w.mashBill),
+    escapeCSV(w.caskStrength),
+    escapeCSV(w.finished),
+    escapeCSV(w.finishType),
+    escapeCSV(w.status),
+    escapeCSV(w.quantity),
+    escapeCSV(w.isWishlist ? 'Yes' : 'No'),
+    escapeCSV(w.purchaseDate ? new Date(w.purchaseDate).toLocaleDateString() : ''),
+    escapeCSV(w.purchaseLocation),
+    escapeCSV(w.dateAdded ? new Date(w.dateAdded).toLocaleDateString() : ''),
+    escapeCSV(w.notes ? (w.notes as ReviewNote[]).length : 0),
+  ]);
+
+  const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${filename}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
 
 // Helper for date formatting
 const formatDate = (date: Date | string | null): string => {

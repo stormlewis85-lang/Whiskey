@@ -1,9 +1,11 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { CircleUser, LogOut, BarChart3, Home, Menu, Users } from "lucide-react";
+import { CircleUser, LogOut, BarChart3, Home, Menu, Users, Wine, Eye, Settings, UserCircle } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ThemeToggle } from "@/components/theme-toggle";
+import ProfileSettingsModal from "@/components/modals/ProfileSettingsModal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,6 +25,7 @@ export function Header() {
   const [location] = useLocation();
   const isMobile = useIsMobile();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isProfileSettingsOpen, setIsProfileSettingsOpen] = useState(false);
 
   const handleLogout = () => {
     logoutMutation.mutate();
@@ -38,10 +41,10 @@ export function Header() {
       <Link href="/">
         <button
           onClick={() => setIsSheetOpen(false)}
-          className={`flex items-center space-x-1 px-2 py-1 rounded-md text-sm font-medium transition-colors ${
-            isActive('/') 
-              ? 'text-amber-800 bg-amber-50' 
-              : 'text-gray-600 hover:text-amber-700 hover:bg-amber-50/50'
+          className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+            isActive('/')
+              ? 'text-primary bg-accent'
+              : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
           }`}
         >
           <Home className="h-4 w-4" />
@@ -51,10 +54,10 @@ export function Header() {
       <Link href="/dashboard">
         <button
           onClick={() => setIsSheetOpen(false)}
-          className={`flex items-center space-x-1 px-2 py-1 rounded-md text-sm font-medium transition-colors ${
-            isActive('/dashboard') 
-              ? 'text-amber-800 bg-amber-50' 
-              : 'text-gray-600 hover:text-amber-700 hover:bg-amber-50/50'
+          className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+            isActive('/dashboard')
+              ? 'text-primary bg-accent'
+              : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
           }`}
         >
           <BarChart3 className="h-4 w-4" />
@@ -64,88 +67,107 @@ export function Header() {
       <Link href="/community">
         <button
           onClick={() => setIsSheetOpen(false)}
-          className={`flex items-center space-x-1 px-2 py-1 rounded-md text-sm font-medium transition-colors ${
-            isActive('/community') 
-              ? 'text-amber-800 bg-amber-50' 
-              : 'text-gray-600 hover:text-amber-700 hover:bg-amber-50/50'
+          className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+            isActive('/community')
+              ? 'text-primary bg-accent'
+              : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
           }`}
         >
           <Users className="h-4 w-4" />
           <span>Community</span>
         </button>
       </Link>
+      <Link href="/flights">
+        <button
+          onClick={() => setIsSheetOpen(false)}
+          className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+            isActive('/flights')
+              ? 'text-primary bg-accent'
+              : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+          }`}
+        >
+          <Wine className="h-4 w-4" />
+          <span>Flights</span>
+        </button>
+      </Link>
+      <Link href="/blind-tastings">
+        <button
+          onClick={() => setIsSheetOpen(false)}
+          className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+            isActive('/blind-tastings')
+              ? 'text-primary bg-accent'
+              : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+          }`}
+        >
+          <Eye className="h-4 w-4" />
+          <span>Blind Tastings</span>
+        </button>
+      </Link>
     </>
   );
 
   return (
-    <header className="border-b bg-white">
-      <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-        <div className="flex items-center space-x-3">
-          {/* Logo */}
-          <h1 className="text-xl font-bold">
-            <span className="bg-gradient-to-r from-amber-900 to-amber-600 bg-clip-text text-transparent">
-              WhiskeyPedia
-            </span>
-          </h1>
-        </div>
-
-        {/* Desktop Navigation */}
-        {user && !isMobile && (
-          <div className="flex-1 flex justify-center">
-            <nav className="flex space-x-6">
-              <NavLinks />
-            </nav>
-          </div>
-        )}
-
-        {/* User menu for desktop */}
-        {user && !isMobile && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-8 flex items-center space-x-2">
-                <CircleUser className="h-5 w-5" />
-                <span>{user.displayName || user.username}</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout} disabled={logoutMutation.isPending}>
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Log out</span>
-                {logoutMutation.isPending && <span className="ml-2">...</span>}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-
-        {/* Mobile Menu */}
-        {user && isMobile && (
-          <div className="flex items-center space-x-2">
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container mx-auto px-4 h-14 flex items-center justify-between">
+        {/* Logo */}
+        <div className="flex items-center gap-2">
+          {/* Mobile menu button */}
+          {user && isMobile && (
             <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" className="mr-2">
                   <Menu className="h-5 w-5" />
+                  <span className="sr-only">Toggle menu</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-[260px] sm:w-[360px]">
-                <div className="px-2 py-6">
-                  <div className="flex items-center mb-8">
-                    <CircleUser className="h-8 w-8 text-amber-700 mr-2" />
+              <SheetContent side="left" className="w-[280px] sm:w-[320px]">
+                <div className="flex flex-col h-full">
+                  {/* User info */}
+                  <div className="flex items-center gap-3 pb-6 pt-2 border-b border-border">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <CircleUser className="h-6 w-6 text-primary" />
+                    </div>
                     <div>
-                      <p className="font-medium">{user.displayName || user.username}</p>
-                      <p className="text-sm text-muted-foreground">Welcome back!</p>
+                      <p className="font-medium text-foreground">
+                        {user.displayName || user.username}
+                      </p>
+                      <p className="text-sm text-muted-foreground">Welcome back</p>
                     </div>
                   </div>
-                  
-                  <nav className="flex flex-col space-y-4">
+
+                  {/* Navigation */}
+                  <nav className="flex flex-col gap-1 py-6">
                     <NavLinks />
                   </nav>
-                  
-                  <div className="mt-auto pt-8 border-t mt-8">
-                    <Button 
-                      variant="ghost" 
-                      className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+
+                  {/* Footer with settings and logout */}
+                  <div className="mt-auto pt-6 border-t border-border space-y-1">
+                    {(user as any).profileSlug && (
+                      <Link href={`/u/${(user as any).profileSlug}`}>
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start"
+                          onClick={() => setIsSheetOpen(false)}
+                        >
+                          <UserCircle className="mr-2 h-4 w-4" />
+                          <span>View Profile</span>
+                        </Button>
+                      </Link>
+                    )}
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start"
+                      onClick={() => {
+                        setIsSheetOpen(false);
+                        setIsProfileSettingsOpen(true);
+                      }}
+                    >
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Profile Settings</span>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
                       onClick={() => {
                         setIsSheetOpen(false);
                         handleLogout();
@@ -160,9 +182,84 @@ export function Header() {
                 </div>
               </SheetContent>
             </Sheet>
-          </div>
+          )}
+
+          <Link href="/">
+            <span className="text-xl font-bold tracking-tight cursor-pointer">
+              <span className="text-gradient">WhiskeyPedia</span>
+            </span>
+          </Link>
+        </div>
+
+        {/* Desktop Navigation */}
+        {user && !isMobile && (
+          <nav className="flex items-center gap-1">
+            <NavLinks />
+          </nav>
         )}
+
+        {/* Right side: Theme toggle and user menu */}
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+
+          {/* User menu for desktop */}
+          {user && !isMobile && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="h-9 gap-2 px-2 text-muted-foreground hover:text-foreground"
+                >
+                  <CircleUser className="h-5 w-5" />
+                  <span className="hidden sm:inline-block max-w-[100px] truncate">
+                    {user.displayName || user.username}
+                  </span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium">{user.displayName || user.username}</p>
+                    <p className="text-xs text-muted-foreground">Manage your account</p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {(user as any).profileSlug && (
+                  <Link href={`/u/${(user as any).profileSlug}`}>
+                    <DropdownMenuItem className="cursor-pointer">
+                      <UserCircle className="mr-2 h-4 w-4" />
+                      <span>View Profile</span>
+                    </DropdownMenuItem>
+                  </Link>
+                )}
+                <DropdownMenuItem
+                  onClick={() => setIsProfileSettingsOpen(true)}
+                  className="cursor-pointer"
+                >
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Profile Settings</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  disabled={logoutMutation.isPending}
+                  className="text-destructive focus:text-destructive cursor-pointer"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                  {logoutMutation.isPending && <span className="ml-2">...</span>}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
       </div>
+
+      {/* Profile Settings Modal */}
+      <ProfileSettingsModal
+        isOpen={isProfileSettingsOpen}
+        onClose={() => setIsProfileSettingsOpen(false)}
+      />
     </header>
   );
 }

@@ -8,16 +8,13 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
-  TableHeader,
   TableRow,
 } from "@/components/ui/table";
 import { StarRating } from '@/components/StarRating';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-
-// Define a CSS class for section titles
-const sectionTitleClass = "font-bold mb-2 text-gray-900";
+import { Wine, Star, Calendar, AlertCircle } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface ReviewDetailPageProps {
   whiskey?: Whiskey;
@@ -28,96 +25,85 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
   // Ensure both whiskey and review are defined before rendering
   if (!whiskey || !review) {
     return (
-      <div className="bg-white rounded-lg shadow p-6 text-center">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">Missing Data</h2>
-        <p className="text-gray-600 mb-6">Cannot display review details due to missing data.</p>
-      </div>
+      <Card className="bg-card border-border/50 shadow-warm-sm">
+        <CardContent className="p-8 text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
+            <AlertCircle className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <h2 className="text-xl font-bold text-foreground mb-2">Missing Data</h2>
+          <p className="text-muted-foreground">Cannot display review details due to missing data.</p>
+        </CardContent>
+      </Card>
     );
   }
+
   const renderMashBill = () => {
     if (whiskey.type !== 'Bourbon' || !whiskey.mashBill) return null;
-    
+
     const mashBill = whiskey.mashBill
       .split(',')
       .map(item => item.trim())
       .filter(Boolean);
-      
+
     if (mashBill.length === 0) return null;
-    
+
     return (
       <TableRow>
-        <TableCell className="font-medium bg-gray-200 text-gray-900">Mashbill</TableCell>
+        <TableCell className="font-medium bg-accent/50 text-foreground">Mashbill</TableCell>
         <TableCell colSpan={2}>
-          <Table>
-            <TableBody>
-              {mashBill.map((ingredient, index) => {
-                // Parse ingredient - assume format like "Corn 75%" or just "Corn"
-                const parts = ingredient.split(' ');
-                const grain = parts[0];
-                const percentage = parts.length > 1 ? parts[1] : '';
-                
-                return (
-                  <TableRow key={index}>
-                    <TableCell className="py-1 border font-medium">{grain}</TableCell>
-                    <TableCell className="py-1 text-right border font-semibold text-gray-900">{percentage}</TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+          <div className="flex flex-wrap gap-2">
+            {mashBill.map((ingredient, index) => (
+              <Badge key={index} variant="outline" className="bg-primary/5 text-primary border-primary/20">
+                {ingredient}
+              </Badge>
+            ))}
+          </div>
         </TableCell>
       </TableRow>
     );
   };
 
   const calculateScores = () => {
-    // Calculate scores based on the weighted scoring system:
-    // Nose: 1.5x, Mouth Feel: 2.0x, Taste: 3.0x, Finish: 2.5x, Value: 1.0x
     let weightedTotal = 0;
     let scoresPresent = false;
-    
-    // Apply weights to each score
+
     if (review.noseScore) {
       weightedTotal += review.noseScore * 1.5;
       scoresPresent = true;
     }
-    
+
     if (review.mouthfeelScore) {
       weightedTotal += review.mouthfeelScore * 2.0;
       scoresPresent = true;
     }
-    
+
     if (review.tasteScore) {
       weightedTotal += review.tasteScore * 3.0;
       scoresPresent = true;
     }
-    
+
     if (review.finishScore) {
       weightedTotal += review.finishScore * 2.5;
       scoresPresent = true;
     }
-    
+
     if (review.valueScore) {
       weightedTotal += review.valueScore * 1.0;
       scoresPresent = true;
     }
-    
-    // If no detailed scores are present, return scores based on overall rating
+
     if (!scoresPresent) {
-      const baseScore = review.rating * 10; // Convert 5-scale to 50-scale
+      const baseScore = review.rating * 10;
       return {
         weightedTotal: baseScore,
         fiveStarScore: review.rating,
         finalScore: baseScore * 2
       };
     }
-    
-    // Calculate the 5-star score (weighted total divided by 10)
+
     const fiveStarScore = weightedTotal / 10;
-    
-    // Calculate the final score (weighted total multiplied by 2)
     const finalScore = weightedTotal * 2;
-    
+
     return {
       weightedTotal,
       fiveStarScore,
@@ -127,12 +113,12 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
 
   const renderScoreRow = (label: string, score?: number) => {
     if (!score) return null;
-    
+
     return (
-      <tr className="border-b border-gray-100">
-        <td className="px-4 py-2 font-medium text-gray-800">{label}</td>
+      <tr className="border-b border-border/30">
+        <td className="px-4 py-2 font-medium text-foreground">{label}</td>
         <td className="px-4 py-2 flex items-center">
-          <span className="mr-2 font-semibold text-gray-900">{score}</span>
+          <span className="mr-2 font-semibold text-primary">{score}</span>
           <StarRating rating={score} maxRating={5} />
         </td>
       </tr>
@@ -140,46 +126,46 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
   };
 
   const capitalizeFirstLetter = (text: string) => {
-    return text.split('-').map(word => 
+    return text.split('-').map(word =>
       word.charAt(0).toUpperCase() + word.slice(1)
     ).join(' ');
   };
 
   const formatAromasList = (aromas: string[] | undefined) => {
-    if (!aromas || aromas.length === 0) return '-';
-    
-    const formattedAromas = aromas.map(aroma => 
+    if (!aromas || aromas.length === 0) return <span className="text-muted-foreground">-</span>;
+
+    const formattedAromas = aromas.map(aroma =>
       aroma.split(',').map(part => capitalizeFirstLetter(part.trim())).join(', ')
     );
-    
+
     return (
-      <div className="flex flex-wrap gap-1 mt-1">
+      <div className="flex flex-wrap gap-1.5 mt-1">
         {formattedAromas.map((aroma, index) => (
-          <span 
-            key={index} 
-            className="bg-gray-200 text-gray-800 px-2 py-1 rounded-md text-sm font-medium"
+          <Badge
+            key={index}
+            variant="outline"
+            className="bg-primary/5 text-primary border-primary/20 text-xs"
           >
             {aroma}
-          </span>
+          </Badge>
         ))}
       </div>
     );
   };
 
   const formatNotes = (notes: string | undefined) => {
-    if (!notes) return '-';
-    
-    // Split by new lines and handle paragraphs
-    const paragraphs = notes.split(/\n\s*\n|\r\n\s*\r\n/); // Split on empty lines
-    
+    if (!notes) return <span className="text-muted-foreground">-</span>;
+
+    const paragraphs = notes.split(/\n\s*\n|\r\n\s*\r\n/);
+
     if (paragraphs.length <= 1) {
-      return notes; // Return as-is if no paragraphs detected
+      return <span className="text-foreground">{notes}</span>;
     }
-    
+
     return (
       <div className="space-y-2">
         {paragraphs.map((paragraph, index) => (
-          <p key={index} className="text-gray-800">
+          <p key={index} className="text-foreground">
             {paragraph.trim()}
           </p>
         ))}
@@ -187,82 +173,101 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
     );
   };
 
+  const scores = calculateScores();
+
+  // Section component for tasting notes
+  const TastingSection = ({
+    title,
+    score,
+    profilesTitle,
+    profiles,
+    characteristics,
+    notes
+  }: {
+    title: string;
+    score?: number;
+    profilesTitle: string;
+    profiles?: React.ReactNode;
+    characteristics?: React.ReactNode;
+    notes?: string;
+  }) => (
+    <Card className="bg-card border-border/50 shadow-warm-sm overflow-hidden">
+      <CardContent className="p-0">
+        <div className="grid grid-cols-1 md:grid-cols-8">
+          {/* Score column */}
+          <div className="md:col-span-1 bg-gradient-to-br from-amber-900 to-amber-950 text-white p-4 flex flex-col items-center justify-center">
+            <div className="text-sm font-medium text-amber-200">{title}</div>
+            <div className="text-4xl font-bold mt-1 text-amber-50">{score || '-'}</div>
+          </div>
+
+          {/* Profiles column */}
+          <div className="md:col-span-2 bg-accent/30 p-4 border-r border-border/20">
+            <h3 className="font-semibold text-foreground mb-2 text-sm">{profilesTitle}</h3>
+            {profiles || characteristics}
+          </div>
+
+          {/* Notes column */}
+          <div className="md:col-span-5 p-4">
+            <h3 className="font-semibold text-foreground mb-2 text-sm">Description</h3>
+            <div className="text-sm leading-relaxed">{formatNotes(notes)}</div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   return (
-    <div className="bg-white rounded-lg shadow-lg max-w-5xl mx-auto">
-      {/* Header with whiskey name and overall score */}
-      <div className="bg-gray-800 text-white p-6 rounded-t-lg">
-        <h1 className="text-3xl font-bold text-center">{whiskey.name}</h1>
-        {whiskey.distillery && <p className="text-center text-gray-300 mt-1">{whiskey.distillery}</p>}
+    <div className="bg-card rounded-xl shadow-warm-lg max-w-5xl mx-auto overflow-hidden border border-border/50">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-amber-950 via-amber-900 to-amber-950 text-white p-6">
+        <h1 className="text-2xl md:text-3xl font-bold text-center text-amber-50">{whiskey.name}</h1>
+        {whiskey.distillery && <p className="text-center text-amber-200/80 mt-1">{whiskey.distillery}</p>}
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
         {/* Left column - Whiskey Details */}
         <div className="md:col-span-1">
-          <h3 className="text-lg font-bold mb-2 text-gray-900 border-b border-gray-300 pb-2">Whiskey Details</h3>
+          <h3 className="text-lg font-semibold mb-3 text-foreground border-b border-border/50 pb-2">Whiskey Details</h3>
           <Table>
             <TableBody>
-              <TableRow>
-                <TableCell className="font-medium bg-gray-200 text-gray-900">Category</TableCell>
-                <TableCell>{whiskey.type || '-'}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell className="font-medium bg-gray-200 text-gray-900">Company</TableCell>
-                <TableCell>{whiskey.distillery || '-'}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell className="font-medium bg-gray-200 text-gray-900">Distillery</TableCell>
-                <TableCell>{whiskey.distillery || '-'}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell className="font-medium bg-gray-200 text-gray-900">Release Date</TableCell>
-                <TableCell>{whiskey.releaseDate ? new Date(whiskey.releaseDate).toLocaleDateString() : '-'}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell className="font-medium bg-gray-200 text-gray-900">Proof</TableCell>
-                <TableCell>{whiskey.proof || (whiskey.abv ? Math.round(whiskey.abv * 2) : '-')}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell className="font-medium bg-gray-200 text-gray-900">Age</TableCell>
-                <TableCell>{whiskey.age ? `${whiskey.age} years` : '-'}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell className="font-medium bg-gray-200 text-gray-900">MSRP</TableCell>
-                <TableCell>
-                  {whiskey.msrp ? `$${whiskey.msrp.toFixed(2)}` : 
-                   whiskey.price ? `$${whiskey.price.toFixed(2)}` : '-'}
-                </TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell className="font-medium bg-gray-200 text-gray-900">Paid</TableCell>
-                <TableCell>
-                  {whiskey.pricePaid ? `$${whiskey.pricePaid.toFixed(2)}` : 
-                   whiskey.price ? `$${whiskey.price.toFixed(2)}` : '-'}
-                </TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell className="font-medium bg-gray-200 text-gray-900">Color</TableCell>
-                <TableCell>{review.visualColor ? capitalizeFirstLetter(review.visualColor) : '-'}</TableCell>
-              </TableRow>
+              {[
+                { label: 'Category', value: whiskey.type },
+                { label: 'Distillery', value: whiskey.distillery },
+                { label: 'Release Date', value: whiskey.releaseDate ? new Date(whiskey.releaseDate).toLocaleDateString() : null },
+                { label: 'Proof', value: whiskey.proof || (whiskey.abv ? Math.round(whiskey.abv * 2) : null) },
+                { label: 'Age', value: whiskey.age ? `${whiskey.age} years` : null },
+                { label: 'MSRP', value: whiskey.msrp ? `$${whiskey.msrp.toFixed(2)}` : whiskey.price ? `$${whiskey.price.toFixed(2)}` : null },
+                { label: 'Paid', value: whiskey.pricePaid ? `$${whiskey.pricePaid.toFixed(2)}` : whiskey.price ? `$${whiskey.price.toFixed(2)}` : null },
+                { label: 'Color', value: review.visualColor ? capitalizeFirstLetter(review.visualColor) : null },
+              ].filter(item => item.value).map((item, index) => (
+                <TableRow key={index}>
+                  <TableCell className="font-medium bg-accent/50 text-foreground text-sm py-2">{item.label}</TableCell>
+                  <TableCell className="text-foreground text-sm py-2">{item.value}</TableCell>
+                </TableRow>
+              ))}
               {renderMashBill()}
             </TableBody>
           </Table>
         </div>
-        
+
         {/* Middle column - Score */}
         <div className="md:col-span-1 flex flex-col items-center justify-start">
           <div className="text-center">
-            <div className="border-4 border-gray-800 rounded-lg p-6 w-32 h-32 flex flex-col items-center justify-center bg-gray-50">
-              <span className="text-7xl font-bold text-gray-900">{Math.round(calculateScores().finalScore)}</span>
-              <span className="text-xs mt-1 text-gray-700 font-medium">Final Score</span>
+            <div className="border-4 border-primary rounded-xl p-6 w-36 h-36 flex flex-col items-center justify-center bg-primary/5">
+              <span className="text-6xl font-bold text-primary">{Math.round(scores.finalScore)}</span>
+              <span className="text-xs mt-1 text-muted-foreground font-medium">Final Score</span>
             </div>
-            <div className="mt-3 text-md">
-              <div className="text-gray-900 font-semibold">5★ Score: <span className="text-lg">{calculateScores().fiveStarScore.toFixed(1)}</span></div>
-              <div className="text-gray-600 text-sm">Weighted Total: {Math.round(calculateScores().weightedTotal)}</div>
+            <div className="mt-3">
+              <div className="text-foreground font-semibold">
+                <Star className="h-4 w-4 inline text-amber-400 fill-amber-400 mr-1" />
+                5-Star: <span className="text-lg text-primary">{scores.fiveStarScore.toFixed(1)}</span>
+              </div>
+              <div className="text-muted-foreground text-sm">Weighted: {Math.round(scores.weightedTotal)}</div>
             </div>
           </div>
-          
+
           <div className="mt-4 w-full">
-            <h3 className="text-lg font-bold text-center mb-2 text-gray-900 border-b border-gray-300 pb-2">Component Scores</h3>
+            <h3 className="text-lg font-semibold text-center mb-3 text-foreground border-b border-border/50 pb-2">Component Scores</h3>
             <table className="w-full">
               <tbody>
                 {renderScoreRow('Nose', review.noseScore)}
@@ -275,163 +280,118 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
             </table>
           </div>
         </div>
-        
+
         {/* Right column - Image */}
         <div className="md:col-span-1 flex flex-col">
-          <h3 className="text-lg font-bold mb-2 text-gray-900 border-b border-gray-300 pb-2">Bottle Image</h3>
+          <h3 className="text-lg font-semibold mb-3 text-foreground border-b border-border/50 pb-2">Bottle Image</h3>
           <div className="flex justify-center flex-1">
             {whiskey.image ? (
-              <img 
-                src={whiskey.image} 
-                alt={whiskey.name} 
-                className="max-h-56 object-contain"
+              <img
+                src={whiskey.image}
+                alt={whiskey.name}
+                className="max-h-56 object-contain rounded-lg"
               />
             ) : (
-              <div className="bg-gray-100 h-56 w-full flex items-center justify-center text-gray-400 rounded-md">
-                No Image Available
+              <div className="bg-accent/30 h-56 w-full flex flex-col items-center justify-center text-muted-foreground rounded-lg border border-border/30">
+                <Wine className="h-12 w-12 mb-2 opacity-50" />
+                <span className="text-sm">No Image</span>
               </div>
             )}
           </div>
         </div>
       </div>
-      
-      <Separator className="my-4" />
-      
-      {/* Review Details */}
-      <div className="p-4">
-        <h2 className="text-2xl font-bold mb-4 text-gray-900 border-b-2 border-gray-800 pb-2">Tasting Notes</h2>
-        
-        <div className="space-y-4">
-          {/* Nose */}
-          <Card>
-            <CardContent className="p-0">
-              <div className="grid grid-cols-1 md:grid-cols-8">
-                <div className="md:col-span-1 bg-gray-800 text-white p-4 flex flex-col items-center justify-center">
-                  <div className="text-lg font-bold">Nose</div>
-                  <div className="text-3xl font-bold mt-1">{review.noseScore || '-'}</div>
-                </div>
-                <div className="md:col-span-2 bg-gray-100 p-4">
-                  <h3 className={sectionTitleClass}>Profiles</h3>
-                  <p>{formatAromasList(review.noseAromas)}</p>
-                </div>
-                <div className="md:col-span-5 p-4">
-                  <h3 className={sectionTitleClass}>Description</h3>
-                  <p>{formatNotes(review.noseNotes)}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          {/* Mouthfeel */}
-          <Card>
-            <CardContent className="p-0">
-              <div className="grid grid-cols-1 md:grid-cols-8">
-                <div className="md:col-span-1 bg-gray-800 text-white p-4 flex flex-col items-center justify-center">
-                  <div className="text-lg font-bold">Mouth Feel</div>
-                  <div className="text-3xl font-bold mt-1">{review.mouthfeelScore || '-'}</div>
-                </div>
-                <div className="md:col-span-2 bg-gray-100 p-4">
-                  <h3 className={sectionTitleClass}>Characteristics</h3>
-                  <div className="space-y-1">
-                    <div className="bg-gray-200 px-3 py-2 rounded-md mb-1">
-                      <p><span className="font-medium text-gray-900">Alcohol:</span> {review.mouthfeelAlcohol ? capitalizeFirstLetter(review.mouthfeelAlcohol) : '-'}</p>
-                    </div>
-                    <div className="bg-gray-200 px-3 py-2 rounded-md mb-1">
-                      <p><span className="font-medium text-gray-900">Viscosity:</span> {review.mouthfeelViscosity ? capitalizeFirstLetter(review.mouthfeelViscosity) : '-'}</p>
-                    </div>
-                    <div className="bg-gray-200 px-3 py-2 rounded-md mb-1">
-                      <p><span className="font-medium text-gray-900">Feel:</span> {review.mouthfeelPleasantness ? capitalizeFirstLetter(review.mouthfeelPleasantness) : '-'}</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="md:col-span-5 p-4">
-                  <h3 className={sectionTitleClass}>Description</h3>
-                  <p>{formatNotes(review.mouthfeelNotes)}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          {/* Taste */}
-          <Card>
-            <CardContent className="p-0">
-              <div className="grid grid-cols-1 md:grid-cols-8">
-                <div className="md:col-span-1 bg-gray-800 text-white p-4 flex flex-col items-center justify-center">
-                  <div className="text-lg font-bold">Taste</div>
-                  <div className="text-3xl font-bold mt-1">{review.tasteScore || '-'}</div>
-                </div>
-                <div className="md:col-span-2 bg-gray-100 p-4">
-                  <h3 className={sectionTitleClass}>Profiles</h3>
-                  <p>{formatAromasList(review.tasteFlavors)}</p>
-                </div>
-                <div className="md:col-span-5 p-4">
-                  <h3 className={sectionTitleClass}>Description</h3>
-                  <p>{formatNotes(review.tasteNotes)}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          {/* Finish */}
-          <Card>
-            <CardContent className="p-0">
-              <div className="grid grid-cols-1 md:grid-cols-8">
-                <div className="md:col-span-1 bg-gray-800 text-white p-4 flex flex-col items-center justify-center">
-                  <div className="text-lg font-bold">Finish</div>
-                  <div className="text-3xl font-bold mt-1">{review.finishScore || '-'}</div>
-                </div>
-                <div className="md:col-span-2 bg-gray-100 p-4">
-                  <h3 className={sectionTitleClass}>Profiles</h3>
-                  <p>{formatAromasList(review.finishFlavors)}</p>
-                  <div className="bg-gray-200 px-3 py-2 rounded-md mt-2">
-                    <p><span className="font-medium text-gray-900">Length:</span> {review.finishLength ? capitalizeFirstLetter(review.finishLength) : '-'}</p>
-                  </div>
-                </div>
-                <div className="md:col-span-5 p-4">
-                  <h3 className={sectionTitleClass}>Description</h3>
-                  <p>{formatNotes(review.finishNotes)}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          {/* Value */}
-          <Card>
-            <CardContent className="p-0">
-              <div className="grid grid-cols-1 md:grid-cols-8">
-                <div className="md:col-span-1 bg-gray-800 text-white p-4 flex flex-col items-center justify-center">
-                  <div className="text-lg font-bold">Value</div>
-                  <div className="text-3xl font-bold mt-1">{review.valueScore || '-'}</div>
-                </div>
-                <div className="md:col-span-2 bg-gray-100 p-4">
-                  <h3 className={sectionTitleClass}>Assessment</h3>
-                  <div className="space-y-1">
-                    <div className="bg-gray-200 px-3 py-2 rounded-md mb-1">
-                      <p><span className="font-medium text-gray-900">Availability:</span> {review.valueAvailability ? capitalizeFirstLetter(review.valueAvailability) : '-'}</p>
-                    </div>
-                    <div className="bg-gray-200 px-3 py-2 rounded-md mb-1">
-                      <p><span className="font-medium text-gray-900">Buy Again:</span> {review.valueBuyAgain ? capitalizeFirstLetter(review.valueBuyAgain) : '-'}</p>
-                    </div>
-                    <div className="bg-gray-200 px-3 py-2 rounded-md mb-1">
-                      <p><span className="font-medium text-gray-900">Occasion:</span> {review.valueOccasion ? capitalizeFirstLetter(review.valueOccasion) : '-'}</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="md:col-span-5 p-4">
-                  <h3 className={sectionTitleClass}>Description</h3>
-                  <p>{formatNotes(review.valueNotes)}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
 
+      <Separator className="my-4" />
+
+      {/* Tasting Notes */}
+      <div className="p-4">
+        <h2 className="text-xl font-bold mb-4 text-foreground border-b-2 border-primary pb-2">Tasting Notes</h2>
+
+        <div className="space-y-4">
+          <TastingSection
+            title="Nose"
+            score={review.noseScore}
+            profilesTitle="Profiles"
+            profiles={formatAromasList(review.noseAromas)}
+            notes={review.noseNotes}
+          />
+
+          <TastingSection
+            title="Mouthfeel"
+            score={review.mouthfeelScore}
+            profilesTitle="Characteristics"
+            characteristics={
+              <div className="space-y-1.5">
+                {[
+                  { label: 'Alcohol', value: review.mouthfeelAlcohol },
+                  { label: 'Viscosity', value: review.mouthfeelViscosity },
+                  { label: 'Feel', value: review.mouthfeelPleasantness },
+                ].map(item => item.value && (
+                  <div key={item.label} className="bg-accent/50 px-3 py-1.5 rounded-md text-sm">
+                    <span className="font-medium text-foreground">{item.label}:</span>{' '}
+                    <span className="text-muted-foreground">{capitalizeFirstLetter(item.value)}</span>
+                  </div>
+                ))}
+              </div>
+            }
+            notes={review.mouthfeelNotes}
+          />
+
+          <TastingSection
+            title="Taste"
+            score={review.tasteScore}
+            profilesTitle="Profiles"
+            profiles={formatAromasList(review.tasteFlavors)}
+            notes={review.tasteNotes}
+          />
+
+          <TastingSection
+            title="Finish"
+            score={review.finishScore}
+            profilesTitle="Profiles"
+            profiles={
+              <>
+                {formatAromasList(review.finishFlavors)}
+                {review.finishLength && (
+                  <div className="bg-accent/50 px-3 py-1.5 rounded-md mt-2 text-sm">
+                    <span className="font-medium text-foreground">Length:</span>{' '}
+                    <span className="text-muted-foreground">{capitalizeFirstLetter(review.finishLength)}</span>
+                  </div>
+                )}
+              </>
+            }
+            notes={review.finishNotes}
+          />
+
+          <TastingSection
+            title="Value"
+            score={review.valueScore}
+            profilesTitle="Assessment"
+            characteristics={
+              <div className="space-y-1.5">
+                {[
+                  { label: 'Availability', value: review.valueAvailability },
+                  { label: 'Buy Again', value: review.valueBuyAgain },
+                  { label: 'Occasion', value: review.valueOccasion },
+                ].map(item => item.value && (
+                  <div key={item.label} className="bg-accent/50 px-3 py-1.5 rounded-md text-sm">
+                    <span className="font-medium text-foreground">{item.label}:</span>{' '}
+                    <span className="text-muted-foreground">{capitalizeFirstLetter(item.value)}</span>
+                  </div>
+                ))}
+              </div>
+            }
+            notes={review.valueNotes}
+          />
         </div>
       </div>
-      
-      {/* Footer with review date */}
-      <div className="bg-gray-100 p-4 text-center text-sm text-gray-500 rounded-b-lg">
-        Review date: {review.date ? new Date(review.date).toLocaleDateString() : 'Unknown'}
+
+      {/* Footer */}
+      <div className="bg-accent/30 p-4 text-center border-t border-border/30">
+        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+          <Calendar className="h-4 w-4" />
+          <span>Review date: {review.date ? new Date(review.date).toLocaleDateString() : 'Unknown'}</span>
+        </div>
       </div>
     </div>
   );

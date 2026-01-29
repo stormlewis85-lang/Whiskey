@@ -1,8 +1,30 @@
-import { pgTable, text, serial, integer, real, timestamp, jsonb, uuid, boolean, unique, date } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, real, timestamp, jsonb, uuid, boolean, unique, date, pgEnum } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { v4 as uuidv4 } from 'uuid';
+
+// Bottle status enum for collection management
+export const bottleStatusEnum = pgEnum('bottle_status', ['sealed', 'open', 'finished', 'gifted']);
+
+// Blind tasting status enum
+export const blindTastingStatusEnum = pgEnum('blind_tasting_status', ['active', 'revealed', 'completed']);
+
+// Distilleries Schema
+export const distilleries = pgTable("distilleries", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  location: text("location"),
+  country: text("country"),
+  region: text("region"),
+  type: text("type"), // Primary spirit type: Bourbon, Scotch, Irish, Japanese, Rye, etc.
+  yearFounded: integer("year_founded"),
+  parentCompany: text("parent_company"),
+  website: text("website"),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
 
 // User Schema
 export const users = pgTable("users", {
@@ -16,12 +38,18 @@ export const users = pgTable("users", {
   profileImage: text("profile_image"),
   authToken: text("auth_token"),  // Add token field for token-based auth
   tokenExpiry: timestamp("token_expiry"),  // When the token expires
+  // Profile fields
+  bio: text("bio"),
+  profileSlug: text("profile_slug"),
+  isPublic: boolean("is_public").default(false),
+  showWishlistOnProfile: boolean("show_wishlist_on_profile").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => {
   return {
     usernameUnique: unique("username_unique").on(table.username),
     emailUnique: unique("email_unique").on(table.email),
+    profileSlugUnique: unique("profile_slug_unique").on(table.profileSlug),
   };
 });
 
@@ -52,8 +80,34 @@ export const whiskeys = pgTable("whiskeys", {
   caskStrength: text("cask_strength"), // Yes/No
   finished: text("finished"), // Yes/No
   finishType: text("finish_type"), // What it was finished in
+  // Collection management fields
+  isWishlist: boolean("is_wishlist").default(false), // Track bottles on wishlist vs owned
+  status: bottleStatusEnum("status").default('sealed'), // sealed, open, finished, gifted
+  quantity: integer("quantity").default(1), // Number of bottles owned
+  purchaseDate: date("purchase_date"), // When bottle was purchased
+  purchaseLocation: text("purchase_location"), // Where bottle was purchased
+  // Visibility for public profiles
+  isPublic: boolean("is_public").default(false), // Whether this whiskey shows on public profile
+  // Barcode/UPC for lookup
+  barcode: text("barcode"), // Barcode for scanning/lookup
+  upc: text("upc"), // Universal Product Code
+  // Distillery reference
+  distilleryId: integer("distillery_id").references(() => distilleries.id, { onDelete: 'set null' }),
   // User relationship
   userId: integer("user_id").references(() => users.id, { onDelete: 'cascade' }),
+});
+
+// Follows table for social features
+export const follows = pgTable("follows", {
+  id: serial("id").primaryKey(),
+  followerId: integer("follower_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  followingId: integer("following_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => {
+  return {
+    // Prevent duplicate follows
+    uniqueFollow: unique("unique_follow").on(table.followerId, table.followingId),
+  };
 });
 
 // Review Comments schema
@@ -106,6 +160,51 @@ export const marketValues = pgTable("market_values", {
   source: text("source"), // Source of the valuation (website, auction house, etc.)
   date: date("date").notNull().defaultNow(),
   notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Tasting Flights schema
+export const flights = pgTable("flights", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  name: text("name").notNull(),
+  description: text("description"),
+  tastingDate: date("tasting_date"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Flight Whiskeys junction table
+export const flightWhiskeys = pgTable("flight_whiskeys", {
+  id: serial("id").primaryKey(),
+  flightId: integer("flight_id").notNull().references(() => flights.id, { onDelete: 'cascade' }),
+  whiskeyId: integer("whiskey_id").notNull().references(() => whiskeys.id, { onDelete: 'cascade' }),
+  order: integer("order").notNull().default(0),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Blind Tastings schema
+export const blindTastings = pgTable("blind_tastings", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  name: text("name").notNull(),
+  status: blindTastingStatusEnum("status").default('active'),
+  createdAt: timestamp("created_at").defaultNow(),
+  revealedAt: timestamp("revealed_at"),
+  completedAt: timestamp("completed_at"),
+});
+
+// Blind Tasting Whiskeys table
+export const blindTastingWhiskeys = pgTable("blind_tasting_whiskeys", {
+  id: serial("id").primaryKey(),
+  blindTastingId: integer("blind_tasting_id").notNull().references(() => blindTastings.id, { onDelete: 'cascade' }),
+  whiskeyId: integer("whiskey_id").notNull().references(() => whiskeys.id, { onDelete: 'cascade' }),
+  label: text("label").notNull(), // A, B, C, etc.
+  order: integer("order").notNull().default(0),
+  blindRating: real("blind_rating"),
+  blindNotes: text("blind_notes"),
+  revealedAt: timestamp("revealed_at"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -181,6 +280,10 @@ export const insertWhiskeySchema = createInsertSchema(whiskeys)
 // Update Schema for Whiskey
 export const updateWhiskeySchema = insertWhiskeySchema.partial();
 
+// Bottle status type for validation
+export const bottleStatusValues = ['sealed', 'open', 'finished', 'gifted'] as const;
+export type BottleStatus = typeof bottleStatusValues[number];
+
 // Excel Import Schema
 export const excelImportSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -198,6 +301,17 @@ export const excelImportSchema = z.object({
   caskStrength: z.string().optional(),
   finished: z.string().optional(),
   finishType: z.string().optional(),
+  // Collection management fields
+  isWishlist: z.boolean().optional().default(false),
+  status: z.enum(bottleStatusValues).optional().default('sealed'),
+  quantity: z.number().int().min(0).optional().default(1),
+  purchaseDate: z.string().optional().nullable(),
+  purchaseLocation: z.string().optional().nullable(),
+  // Barcode/UPC
+  barcode: z.string().optional().nullable(),
+  upc: z.string().optional().nullable(),
+  // Distillery reference
+  distilleryId: z.number().int().optional().nullable(),
 });
 
 // Add relations after tables are defined
@@ -207,6 +321,30 @@ export const usersRelations = relations(users, ({ many }) => ({
   reviewLikes: many(reviewLikes),
   priceTracks: many(priceTracks),
   marketValues: many(marketValues),
+  flights: many(flights),
+  blindTastings: many(blindTastings),
+  // Follow relations
+  followers: many(follows, { relationName: 'followers' }),
+  following: many(follows, { relationName: 'following' }),
+}));
+
+// Distilleries relations
+export const distilleriesRelations = relations(distilleries, ({ many }) => ({
+  whiskeys: many(whiskeys),
+}));
+
+// Follows relations
+export const followsRelations = relations(follows, ({ one }) => ({
+  follower: one(users, {
+    fields: [follows.followerId],
+    references: [users.id],
+    relationName: 'following',
+  }),
+  following: one(users, {
+    fields: [follows.followingId],
+    references: [users.id],
+    relationName: 'followers',
+  }),
 }));
 
 export const whiskeysRelations = relations(whiskeys, ({ one, many }) => ({
@@ -214,10 +352,16 @@ export const whiskeysRelations = relations(whiskeys, ({ one, many }) => ({
     fields: [whiskeys.userId],
     references: [users.id],
   }),
+  distillery: one(distilleries, {
+    fields: [whiskeys.distilleryId],
+    references: [distilleries.id],
+  }),
   comments: many(reviewComments),
   likes: many(reviewLikes),
   priceHistory: many(priceTracks),
   marketValuations: many(marketValues),
+  flightWhiskeys: many(flightWhiskeys),
+  blindTastingWhiskeys: many(blindTastingWhiskeys),
 }));
 
 export const reviewCommentsRelations = relations(reviewComments, ({ one }) => ({
@@ -283,6 +427,12 @@ export const updateMarketValueSchema = createInsertSchema(marketValues)
   .omit({ id: true, userId: true, whiskeyId: true, createdAt: true })
   .partial();
 
+// Distillery schemas
+export const insertDistillerySchema = createInsertSchema(distilleries)
+  .omit({ id: true, createdAt: true, updatedAt: true });
+
+export const updateDistillerySchema = insertDistillerySchema.partial();
+
 // Price Track relations
 export const priceTracksRelations = relations(priceTracks, ({ one }) => ({
   user: one(users, {
@@ -303,6 +453,46 @@ export const marketValuesRelations = relations(marketValues, ({ one }) => ({
   }),
   whiskey: one(whiskeys, {
     fields: [marketValues.whiskeyId],
+    references: [whiskeys.id],
+  }),
+}));
+
+// Flight relations
+export const flightsRelations = relations(flights, ({ one, many }) => ({
+  user: one(users, {
+    fields: [flights.userId],
+    references: [users.id],
+  }),
+  whiskeys: many(flightWhiskeys),
+}));
+
+export const flightWhiskeysRelations = relations(flightWhiskeys, ({ one }) => ({
+  flight: one(flights, {
+    fields: [flightWhiskeys.flightId],
+    references: [flights.id],
+  }),
+  whiskey: one(whiskeys, {
+    fields: [flightWhiskeys.whiskeyId],
+    references: [whiskeys.id],
+  }),
+}));
+
+// Blind Tasting relations
+export const blindTastingsRelations = relations(blindTastings, ({ one, many }) => ({
+  user: one(users, {
+    fields: [blindTastings.userId],
+    references: [users.id],
+  }),
+  whiskeys: many(blindTastingWhiskeys),
+}));
+
+export const blindTastingWhiskeysRelations = relations(blindTastingWhiskeys, ({ one }) => ({
+  blindTasting: one(blindTastings, {
+    fields: [blindTastingWhiskeys.blindTastingId],
+    references: [blindTastings.id],
+  }),
+  whiskey: one(whiskeys, {
+    fields: [blindTastingWhiskeys.whiskeyId],
     references: [whiskeys.id],
   }),
 }));
@@ -332,3 +522,137 @@ export type UpdatePriceTrack = z.infer<typeof updatePriceTrackSchema>;
 export type MarketValue = typeof marketValues.$inferSelect;
 export type InsertMarketValue = z.infer<typeof insertMarketValueSchema>;
 export type UpdateMarketValue = z.infer<typeof updateMarketValueSchema>;
+
+export type Distillery = typeof distilleries.$inferSelect;
+export type InsertDistillery = z.infer<typeof insertDistillerySchema>;
+export type UpdateDistillery = z.infer<typeof updateDistillerySchema>;
+
+// Flight schemas
+export const insertFlightSchema = createInsertSchema(flights)
+  .omit({ id: true, createdAt: true, updatedAt: true });
+
+export const updateFlightSchema = insertFlightSchema.partial();
+
+export const insertFlightWhiskeySchema = createInsertSchema(flightWhiskeys)
+  .omit({ id: true, createdAt: true });
+
+export const updateFlightWhiskeySchema = insertFlightWhiskeySchema
+  .omit({ flightId: true, whiskeyId: true })
+  .partial();
+
+// Blind Tasting schemas
+export const blindTastingStatusValues = ['active', 'revealed', 'completed'] as const;
+export type BlindTastingStatus = typeof blindTastingStatusValues[number];
+
+export const insertBlindTastingSchema = createInsertSchema(blindTastings)
+  .omit({ id: true, createdAt: true, revealedAt: true, completedAt: true });
+
+export const updateBlindTastingSchema = insertBlindTastingSchema.partial();
+
+export const insertBlindTastingWhiskeySchema = createInsertSchema(blindTastingWhiskeys)
+  .omit({ id: true, createdAt: true, revealedAt: true });
+
+export const updateBlindTastingWhiskeySchema = z.object({
+  blindRating: z.number().min(0).max(5).optional(),
+  blindNotes: z.string().optional(),
+});
+
+// Flight types
+export type Flight = typeof flights.$inferSelect;
+export type InsertFlight = z.infer<typeof insertFlightSchema>;
+export type UpdateFlight = z.infer<typeof updateFlightSchema>;
+
+export type FlightWhiskey = typeof flightWhiskeys.$inferSelect;
+export type InsertFlightWhiskey = z.infer<typeof insertFlightWhiskeySchema>;
+export type UpdateFlightWhiskey = z.infer<typeof updateFlightWhiskeySchema>;
+
+// Blind Tasting types
+export type BlindTasting = typeof blindTastings.$inferSelect;
+export type InsertBlindTasting = z.infer<typeof insertBlindTastingSchema>;
+export type UpdateBlindTasting = z.infer<typeof updateBlindTastingSchema>;
+
+export type BlindTastingWhiskey = typeof blindTastingWhiskeys.$inferSelect;
+export type InsertBlindTastingWhiskey = z.infer<typeof insertBlindTastingWhiskeySchema>;
+export type UpdateBlindTastingWhiskey = z.infer<typeof updateBlindTastingWhiskeySchema>;
+
+// Follow schemas and types
+export const insertFollowSchema = createInsertSchema(follows)
+  .omit({ id: true, createdAt: true });
+
+export type Follow = typeof follows.$inferSelect;
+export type InsertFollow = z.infer<typeof insertFollowSchema>;
+
+// Profile settings schema
+export const updateProfileSchema = z.object({
+  displayName: z.string().optional(),
+  bio: z.string().max(500).optional(),
+  profileSlug: z.string().min(3).max(30).regex(/^[a-z0-9_-]+$/,
+    "Profile URL can only contain lowercase letters, numbers, underscores, and hyphens").optional(),
+  isPublic: z.boolean().optional(),
+  showWishlistOnProfile: z.boolean().optional(),
+  profileImage: z.string().optional(),
+});
+
+export type UpdateProfile = z.infer<typeof updateProfileSchema>;
+
+// Public profile type (safe to expose)
+export type PublicUser = Pick<User,
+  'id' | 'username' | 'displayName' | 'profileImage' | 'bio' | 'profileSlug' | 'createdAt'
+>;
+
+// AI Usage Logs for rate limiting and analytics
+export const aiUsageLogs = pgTable("ai_usage_logs", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  endpoint: text("endpoint").notNull(), // 'suggest-notes' or 'enhance-notes'
+  whiskeyId: integer("whiskey_id").references(() => whiskeys.id, { onDelete: 'set null' }),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// AI Usage relations
+export const aiUsageLogsRelations = relations(aiUsageLogs, ({ one }) => ({
+  user: one(users, {
+    fields: [aiUsageLogs.userId],
+    references: [users.id],
+  }),
+  whiskey: one(whiskeys, {
+    fields: [aiUsageLogs.whiskeyId],
+    references: [whiskeys.id],
+  }),
+}));
+
+// AI Usage types
+export type AiUsageLog = typeof aiUsageLogs.$inferSelect;
+export type InsertAiUsageLog = typeof aiUsageLogs.$inferInsert;
+
+// Flavor tag constants for search/filter
+export const FLAVOR_TAGS = {
+  nose: [
+    'Vanilla', 'Caramel', 'Oak', 'Honey', 'Butterscotch', 'Maple',
+    'Cherry', 'Apple', 'Citrus', 'Orange Peel', 'Dried Fruit', 'Raisin',
+    'Cinnamon', 'Nutmeg', 'Clove', 'Black Pepper', 'Allspice',
+    'Tobacco', 'Leather', 'Coffee', 'Chocolate', 'Dark Chocolate',
+    'Mint', 'Eucalyptus', 'Floral', 'Rose', 'Lavender',
+    'Corn', 'Wheat', 'Rye', 'Biscuit', 'Bread',
+    'Smoke', 'Peat', 'Charred Wood', 'Toasted Oak', 'Burnt Sugar'
+  ],
+  taste: [
+    'Vanilla', 'Caramel', 'Brown Sugar', 'Honey', 'Butterscotch', 'Toffee',
+    'Cherry', 'Dark Fruit', 'Apple', 'Pear', 'Banana', 'Tropical Fruit',
+    'Cinnamon', 'Nutmeg', 'Baking Spice', 'Black Pepper', 'White Pepper',
+    'Oak', 'Charred Oak', 'Toasted Wood', 'Cedar',
+    'Chocolate', 'Cocoa', 'Coffee', 'Espresso',
+    'Corn', 'Grain', 'Malt', 'Bread', 'Cereal',
+    'Leather', 'Tobacco', 'Earth', 'Mineral',
+    'Mint', 'Herbal', 'Grass', 'Hay'
+  ],
+  finish: [
+    'Vanilla', 'Caramel', 'Honey', 'Maple', 'Butterscotch',
+    'Oak', 'Char', 'Smoke', 'Ash', 'Toasted',
+    'Spice', 'Cinnamon', 'Pepper', 'Warmth', 'Heat',
+    'Fruit', 'Cherry', 'Berry', 'Citrus',
+    'Chocolate', 'Coffee', 'Mocha',
+    'Leather', 'Tobacco', 'Earth',
+    'Sweet', 'Dry', 'Tannic', 'Bitter', 'Lingering'
+  ]
+} as const;

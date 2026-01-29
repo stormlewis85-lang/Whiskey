@@ -4,8 +4,9 @@ import { useQuery } from '@tanstack/react-query';
 import { Whiskey, ReviewNote } from '@shared/schema';
 import { ReviewDetailPage } from '@/components/ReviewDetailPage';
 import { Header } from '@/components/Header';
-import { Loader2 } from 'lucide-react';
+import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 
 interface ReviewData {
   whiskey: Whiskey;
@@ -17,16 +18,11 @@ export default function ReviewPage() {
   const params = useParams<{ id: string, reviewId: string }>();
   const whiskeyId = parseInt(params.id);
   const reviewId = params.reviewId;
-  
-  // For VERY DETAILED debugging, log everything related to our data
-  console.log("=== REVIEW PAGE TRACING BEGINS ===");
-  console.log("URL Parameters:", { id: params.id, reviewId: params.reviewId });
-  console.log("Parsed IDs:", { whiskeyId, reviewId, whiskeyIdType: typeof whiskeyId, reviewIdType: typeof reviewId });
-  
+
   // Use the dedicated endpoint to get both whiskey and review at once
-  const { 
+  const {
     data: reviewData,
-    isLoading, 
+    isLoading,
     isError,
     error
   } = useQuery<ReviewData>({
@@ -34,122 +30,99 @@ export default function ReviewPage() {
     enabled: !isNaN(whiskeyId) && !!reviewId,
     retry: 1,
   });
-  
-  // Log our query and results
-  console.log("Query info:", {
-    endpoint: `/api/whiskeys/${whiskeyId}/reviews/${reviewId}`,
-    queryKey: [`/api/whiskeys/${whiskeyId}/reviews/${reviewId}`],
-    isEnabled: !isNaN(whiskeyId) && !!reviewId,
-    isLoading,
-    isError
-  });
-  
-  // Make an explicit fetch call just for debugging purposes
-  React.useEffect(() => {
-    if (!isNaN(whiskeyId) && reviewId) {
-      const debugFetch = async () => {
-        try {
-          const response = await fetch(`/api/whiskeys/${whiskeyId}/reviews/${reviewId}`, {
-            credentials: 'include'
-          });
-          console.log("DEBUG Fetch Status:", response.status);
-          if (response.ok) {
-            const data = await response.json();
-            console.log("DEBUG Fetch Response:", data);
-          } else {
-            const errorText = await response.text();
-            console.error("DEBUG Fetch Error:", errorText);
-          }
-        } catch (err) {
-          console.error("DEBUG Fetch Exception:", err);
-        }
-      };
-      debugFetch();
-    }
-  }, [whiskeyId, reviewId]);
-  
-  console.log("Review data from query:", reviewData);
-  console.log("Error if any:", error);
-  console.log("=== REVIEW PAGE TRACING ENDS ===");
-  
+
   // Go back to the previous page
   const handleBack = () => {
     setLocation('/');
   };
-  
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background">
         <Header />
-        <div className="container mx-auto py-8 flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-amber-600" />
+        <div className="flex flex-col items-center justify-center h-[60vh]">
+          <div className="relative">
+            <div className="h-16 w-16 rounded-full border-4 border-primary/20" />
+            <div className="absolute inset-0 h-16 w-16 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+          </div>
+          <p className="mt-6 text-muted-foreground font-medium">Loading review...</p>
         </div>
       </div>
     );
   }
-  
+
   if (isError || !reviewData) {
-    console.error("Error loading review data:", error);
-    
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background">
         <Header />
-        <div className="container mx-auto py-8">
-          <div className="bg-white rounded-lg shadow p-6 text-center">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Review Not Found</h2>
-            <p className="text-gray-600 mb-6">
-              The review you're looking for doesn't exist or has been removed.
-            </p>
-            <div className="mb-4 text-left p-4 bg-gray-50 rounded text-sm font-mono overflow-x-auto">
-              <p>Whiskey ID: {whiskeyId}</p>
-              <p>Review ID: {reviewId}</p>
-              <p>Error: {error instanceof Error ? error.message : "Unknown error"}</p>
-              <p>Query Key: {JSON.stringify([`/api/whiskeys/${whiskeyId}/reviews/${reviewId}`])}</p>
-            </div>
-            <Button onClick={handleBack}>Go Back</Button>
+        <div className="container mx-auto px-4 py-12">
+          <div className="max-w-md mx-auto">
+            <Card className="bg-card border-destructive/30 shadow-warm-sm">
+              <CardHeader className="text-center pb-2">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-destructive/10 mx-auto mb-4">
+                  <AlertCircle className="h-8 w-8 text-destructive" />
+                </div>
+                <CardTitle className="text-foreground">Review Not Found</CardTitle>
+                <CardDescription className="text-muted-foreground">
+                  The review you're looking for doesn't exist or has been removed.
+                </CardDescription>
+              </CardHeader>
+              <CardFooter className="justify-center pt-4">
+                <Button onClick={handleBack}>
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Go Back
+                </Button>
+              </CardFooter>
+            </Card>
           </div>
         </div>
       </div>
     );
   }
-  
+
   const { whiskey, review } = reviewData;
-  
+
   // Extra validation to prevent downstream errors
   if (!whiskey || !review) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background">
         <Header />
-        <div className="container mx-auto py-8">
-          <div className="bg-white rounded-lg shadow p-6 text-center">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Invalid Review Data</h2>
-            <p className="text-gray-600 mb-6">
-              The data received from the server was incomplete or invalid.
-            </p>
-            <div className="mb-4 text-left p-4 bg-gray-50 rounded text-sm font-mono overflow-x-auto">
-              <p>Whiskey ID: {whiskeyId}</p>
-              <p>Review ID: {reviewId}</p>
-              <p>Whiskey data received: {whiskey ? 'Yes' : 'No'}</p>
-              <p>Review data received: {review ? 'Yes' : 'No'}</p>
-              <p>Raw data: {JSON.stringify(reviewData)}</p>
-            </div>
-            <Button onClick={handleBack}>Go Back</Button>
+        <div className="container mx-auto px-4 py-12">
+          <div className="max-w-md mx-auto">
+            <Card className="bg-card border-warning/30 shadow-warm-sm">
+              <CardHeader className="text-center pb-2">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-warning/10 mx-auto mb-4">
+                  <AlertCircle className="h-8 w-8 text-warning" />
+                </div>
+                <CardTitle className="text-foreground">Invalid Review Data</CardTitle>
+                <CardDescription className="text-muted-foreground">
+                  The data received from the server was incomplete or invalid.
+                </CardDescription>
+              </CardHeader>
+              <CardFooter className="justify-center pt-4">
+                <Button onClick={handleBack}>
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Go Back
+                </Button>
+              </CardFooter>
+            </Card>
           </div>
         </div>
       </div>
     );
   }
-  
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <Header />
-      <div className="container mx-auto py-8">
+      <div className="container mx-auto px-4 py-6">
         <div className="mb-4">
-          <Button onClick={handleBack} variant="outline">
-            &larr; Back to Collection
+          <Button onClick={handleBack} variant="outline" className="border-border/50">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Collection
           </Button>
         </div>
-        
+
         <ReviewDetailPage whiskey={whiskey} review={review} />
       </div>
     </div>

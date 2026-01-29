@@ -4,35 +4,51 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useQuery } from "@tanstack/react-query";
-import { exportToExcel, exportToPDF, exportDetailedPDF } from "@/lib/utils/export";
-import { Loader2 } from "lucide-react";
+import { exportToExcel, exportToPDF, exportDetailedPDF, exportToJSON, exportToCSV } from "@/lib/utils/export";
+import { Loader2, FileSpreadsheet, FileText, FileJson, FileDown, Download } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface ExportModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-type ExportFormat = "excel" | "pdf-simple" | "pdf-detailed";
+type ExportFormat = "excel" | "csv" | "json" | "pdf-simple" | "pdf-detailed";
+
+const formatOptions: { value: ExportFormat; label: string; description: string; icon: React.ReactNode }[] = [
+  { value: "excel", label: "Excel Spreadsheet", description: "Best for editing and analysis (.xlsx)", icon: <FileSpreadsheet className="h-4 w-4 text-green-600" /> },
+  { value: "csv", label: "CSV File", description: "Universal format for any spreadsheet app", icon: <FileDown className="h-4 w-4 text-blue-600" /> },
+  { value: "json", label: "JSON Data", description: "Full data with reviews for backup/import", icon: <FileJson className="h-4 w-4 text-amber-600" /> },
+  { value: "pdf-simple", label: "Simple PDF", description: "Clean table format for printing", icon: <FileText className="h-4 w-4 text-red-600" /> },
+  { value: "pdf-detailed", label: "Detailed PDF Report", description: "Full details including tasting notes", icon: <FileText className="h-4 w-4 text-purple-600" /> },
+];
 
 const ExportModal = ({ isOpen, onClose }: ExportModalProps) => {
+  const { toast } = useToast();
   const [exportFormat, setExportFormat] = useState<ExportFormat>("excel");
   const [isExporting, setIsExporting] = useState(false);
-  
+
   // Fetch whiskey data for export
   const { data: whiskeys, isLoading } = useQuery({
     queryKey: ["/api/whiskeys"],
-    enabled: isOpen, // Only fetch when modal is open
+    enabled: isOpen,
   });
-  
+
   const handleExport = async () => {
     if (!whiskeys || isLoading || !Array.isArray(whiskeys)) return;
-    
+
     setIsExporting(true);
-    
+
     try {
       switch (exportFormat) {
         case "excel":
           exportToExcel(whiskeys);
+          break;
+        case "csv":
+          exportToCSV(whiskeys);
+          break;
+        case "json":
+          exportToJSON(whiskeys);
           break;
         case "pdf-simple":
           exportToPDF(whiskeys);
@@ -42,63 +58,76 @@ const ExportModal = ({ isOpen, onClose }: ExportModalProps) => {
           break;
         default:
           console.error("Invalid export format");
+          return;
       }
-      
-      // Close modal after export
+
+      toast({
+        title: "Export successful!",
+        description: `Your collection has been exported as ${exportFormat.toUpperCase()}.`,
+      });
+
       onClose();
     } catch (error) {
       console.error("Export failed:", error);
+      toast({
+        title: "Export failed",
+        description: "There was an error exporting your collection. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsExporting(false);
     }
   };
-  
+
+  const collectionCount = Array.isArray(whiskeys) ? whiskeys.length : 0;
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[450px]">
         <DialogHeader>
-          <DialogTitle>Export Collection</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Download className="h-5 w-5 text-primary" />
+            Export Collection
+          </DialogTitle>
           <DialogDescription>
-            Choose a format to export your whiskey collection data.
+            Export your {collectionCount} whiskey{collectionCount !== 1 ? 's' : ''} to your preferred format.
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="py-4">
           <RadioGroup value={exportFormat} onValueChange={(value) => setExportFormat(value as ExportFormat)}>
-            <div className="flex items-center space-x-2 mb-3">
-              <RadioGroupItem value="excel" id="excel" />
-              <Label htmlFor="excel" className="cursor-pointer">
-                <span className="font-medium">Excel Spreadsheet</span>
-                <p className="text-sm text-gray-500">Export to Excel (.xlsx) format with all data</p>
-              </Label>
-            </div>
-            
-            <div className="flex items-center space-x-2 mb-3">
-              <RadioGroupItem value="pdf-simple" id="pdf-simple" />
-              <Label htmlFor="pdf-simple" className="cursor-pointer">
-                <span className="font-medium">Simple PDF</span>
-                <p className="text-sm text-gray-500">Clean table format with essential details</p>
-              </Label>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="pdf-detailed" id="pdf-detailed" />
-              <Label htmlFor="pdf-detailed" className="cursor-pointer">
-                <span className="font-medium">Detailed PDF</span>
-                <p className="text-sm text-gray-500">Full details including review notes</p>
-              </Label>
+            <div className="space-y-3">
+              {formatOptions.map((option) => (
+                <div
+                  key={option.value}
+                  className={`flex items-start space-x-3 p-3 rounded-lg border transition-colors cursor-pointer ${
+                    exportFormat === option.value
+                      ? 'border-primary bg-primary/5'
+                      : 'border-border hover:border-primary/50 hover:bg-accent/50'
+                  }`}
+                  onClick={() => setExportFormat(option.value)}
+                >
+                  <RadioGroupItem value={option.value} id={option.value} className="mt-1" />
+                  <div className="flex items-start gap-3 flex-1">
+                    <div className="mt-0.5">{option.icon}</div>
+                    <Label htmlFor={option.value} className="cursor-pointer flex-1">
+                      <span className="font-medium">{option.label}</span>
+                      <p className="text-sm text-muted-foreground mt-0.5">{option.description}</p>
+                    </Label>
+                  </div>
+                </div>
+              ))}
             </div>
           </RadioGroup>
         </div>
-        
-        <DialogFooter>
+
+        <DialogFooter className="gap-2 sm:gap-0">
           <Button variant="outline" onClick={onClose} disabled={isExporting}>
             Cancel
           </Button>
-          <Button 
-            onClick={handleExport} 
-            disabled={isLoading || isExporting}
-            className="bg-blue-600 hover:bg-blue-500 text-white"
+          <Button
+            onClick={handleExport}
+            disabled={isLoading || isExporting || collectionCount === 0}
           >
             {isExporting ? (
               <>
@@ -106,7 +135,10 @@ const ExportModal = ({ isOpen, onClose }: ExportModalProps) => {
                 Exporting...
               </>
             ) : (
-              "Export Now"
+              <>
+                <Download className="h-4 w-4 mr-2" />
+                Export Now
+              </>
             )}
           </Button>
         </DialogFooter>

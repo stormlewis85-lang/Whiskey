@@ -11,12 +11,16 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { WhiskeyCategory } from '@/components/ui/whiskey-category';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Star, Home, AlertCircle, Calendar, Wine } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'wouter';
 import ReviewLikes from '@/components/ReviewLikes';
 import ReviewComments from '@/components/ReviewComments';
 import { useAuth } from '@/hooks/use-auth';
+import { Header } from '@/components/Header';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
+import { Whiskey, ReviewNote } from '@shared/schema';
 
 interface SharedReviewData {
   whiskey: {
@@ -58,113 +62,161 @@ const SharedReview = () => {
     queryKey: [`/api/shared/${shareId}`],
     queryFn: getQueryFn({ on401: 'returnNull' }),
   });
+  const { user: currentUser } = useAuth();
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-border" />
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="flex flex-col items-center justify-center h-[60vh]">
+          <div className="relative">
+            <div className="h-16 w-16 rounded-full border-4 border-primary/20" />
+            <div className="absolute inset-0 h-16 w-16 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+          </div>
+          <p className="mt-6 text-muted-foreground font-medium">Loading review...</p>
+        </div>
       </div>
     );
   }
 
   if (error || !data) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <Card className="border-red-200 bg-red-50">
-          <CardHeader>
-            <CardTitle className="text-red-700">Review Not Found</CardTitle>
-            <CardDescription className="text-red-600">
-              This review may have been removed or made private by the author.
-            </CardDescription>
-          </CardHeader>
-          <CardFooter>
-            <Button asChild>
-              <Link to="/">Go to Homepage</Link>
-            </Button>
-          </CardFooter>
-        </Card>
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container mx-auto px-4 py-12">
+          <div className="max-w-md mx-auto">
+            <Card className="bg-card border-destructive/30 shadow-warm-sm">
+              <CardHeader className="text-center pb-2">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-destructive/10 mx-auto mb-4">
+                  <AlertCircle className="h-8 w-8 text-destructive" />
+                </div>
+                <CardTitle className="text-foreground">Review Not Found</CardTitle>
+                <CardDescription className="text-muted-foreground">
+                  This review may have been removed or made private by the author.
+                </CardDescription>
+              </CardHeader>
+              <CardFooter className="justify-center pt-4">
+                <Button asChild>
+                  <Link to="/">
+                    <Home className="h-4 w-4 mr-2" />
+                    Go to Homepage
+                  </Link>
+                </Button>
+              </CardFooter>
+            </Card>
+          </div>
+        </div>
       </div>
     );
   }
 
   const { whiskey, review, user } = data;
-
-  // Extract overall rating
   const overallRating = review.rating;
 
   // Function to format review text for display
   const formatReviewText = (text: string) => {
-    // Replace section headers with styled headers
     const formattedText = text
-      .replace(/## (.*?) ##/g, '<h3 class="text-lg font-bold mt-4 mb-2 text-amber-800">$1</h3>')
+      .replace(/## (.*?) ##/g, '<h3 class="text-lg font-semibold mt-4 mb-2 text-foreground">$1</h3>')
       .replace(/\n\n/g, '<br><br>')
       .replace(/\n/g, '<br>');
-    
+
     return <div dangerouslySetInnerHTML={{ __html: formattedText }} />;
   };
 
-  const { user: currentUser } = useAuth();
-
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <Card className="mb-8">
-        <CardHeader className="pb-2">
-          <div className="flex justify-between items-start">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <WhiskeyCategory type={whiskey.type} />
-                <span className="text-sm text-muted-foreground">Shared by {user.username}</span>
+    <div className="min-h-screen bg-background">
+      <Header />
+
+      {/* Hero Header */}
+      <div className="bg-gradient-to-r from-amber-950 via-amber-900 to-amber-950 text-white border-b border-amber-800/30">
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <Badge variant="outline" className="bg-amber-500/20 border-amber-500/30 text-amber-200">
+                  {whiskey.type}
+                </Badge>
+                <span className="text-amber-200/70 text-sm">Shared by {user.username}</span>
               </div>
-              <CardTitle className="text-2xl">{whiskey.name}</CardTitle>
-              <CardDescription>
+              <h1 className="text-2xl md:text-3xl font-bold text-amber-50">{whiskey.name}</h1>
+              <p className="text-amber-200/80 mt-1">
                 {whiskey.distillery}
                 {whiskey.age && ` • ${whiskey.age} years`}
                 {whiskey.abv && ` • ${whiskey.abv}% ABV`}
                 {whiskey.region && ` • ${whiskey.region}`}
-              </CardDescription>
+              </p>
             </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-amber-600">{overallRating.toFixed(1)}</div>
-              <div className="text-xs text-muted-foreground">Rating</div>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="mt-4 space-y-4">
-            {whiskey.imageUrl && (
-              <img
-                src={whiskey.imageUrl}
-                alt={whiskey.name}
-                className="w-full max-h-64 object-contain rounded-md"
-              />
-            )}
-            <div className="mt-6 prose prose-amber max-w-none text-sm">
-              {formatReviewText(review.text)}
+            <div className="flex items-center gap-3 bg-amber-800/30 rounded-xl px-5 py-3 border border-amber-600/30">
+              <div className="text-center">
+                <div className="flex items-center gap-1">
+                  <Star className="h-6 w-6 text-amber-400 fill-amber-400" />
+                  <span className="text-3xl font-bold text-amber-50">{overallRating.toFixed(1)}</span>
+                </div>
+                <div className="text-xs text-amber-300/70">Overall Rating</div>
+              </div>
             </div>
           </div>
-          
-          {/* Review Actions */}
-          <div className="mt-8 pt-4 border-t flex items-center justify-between">
-            <ReviewLikes whiskey={whiskey} review={review} />
-            
-            <div className="text-sm text-muted-foreground">
-              Reviewed on {new Date(review.date).toLocaleDateString()}
-            </div>
+        </div>
+      </div>
+
+      <main className="container mx-auto px-4 py-6">
+        <div className="max-w-4xl mx-auto space-y-6">
+          {/* Main Review Card */}
+          <Card className="bg-card border-border/50 shadow-warm-sm overflow-hidden">
+            <CardContent className="p-0">
+              <div className="flex flex-col md:flex-row">
+                {/* Image */}
+                {whiskey.imageUrl && (
+                  <div className="md:w-1/3 bg-accent/30">
+                    <img
+                      src={whiskey.imageUrl}
+                      alt={whiskey.name}
+                      className="w-full h-64 md:h-full object-contain"
+                    />
+                  </div>
+                )}
+
+                {/* Review Content */}
+                <div className={cn("flex-1 p-6", whiskey.imageUrl && "md:w-2/3")}>
+                  <div className="prose prose-sm max-w-none text-muted-foreground leading-relaxed">
+                    {formatReviewText(review.text)}
+                  </div>
+
+                  {/* Review Meta */}
+                  <div className="mt-6 pt-4 border-t border-border/30 flex items-center justify-between">
+                    <ReviewLikes whiskey={whiskey as unknown as Whiskey} review={review as unknown as ReviewNote} />
+
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Calendar className="h-4 w-4" />
+                      <span>Reviewed on {new Date(review.date).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Comments Section */}
+          <Card className="bg-card border-border/50 shadow-warm-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg text-foreground">Comments</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ReviewComments whiskey={whiskey as unknown as Whiskey} review={review as unknown as ReviewNote} />
+            </CardContent>
+          </Card>
+
+          {/* Back Button */}
+          <div className="flex justify-center pb-8">
+            <Button asChild variant="outline" className="border-border/50">
+              <Link to="/community">
+                <Home className="h-4 w-4 mr-2" />
+                Back to Community
+              </Link>
+            </Button>
           </div>
-        </CardContent>
-        <CardFooter className="flex justify-between border-t pt-4">
-          <Button asChild variant="outline">
-            <Link to="/">Back to Collection</Link>
-          </Button>
-        </CardFooter>
-      </Card>
-      
-      {/* Comments Section */}
-      <Card className="mb-8">
-        <CardContent className="pt-6">
-          <ReviewComments whiskey={whiskey} review={review} />
-        </CardContent>
-      </Card>
+        </div>
+      </main>
     </div>
   );
 };

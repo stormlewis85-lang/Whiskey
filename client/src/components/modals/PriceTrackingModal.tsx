@@ -26,11 +26,15 @@ interface PriceTrackingModalProps {
   whiskey: Whiskey;
 }
 
-const priceTrackSchema = insertPriceTrackSchema
-  .extend({
-    date: z.date({ required_error: "A date is required" }),
-  })
-  .omit({ userId: true, whiskeyId: true, createdAt: true });
+// Define form schema directly to avoid type inference issues
+const priceTrackSchema = z.object({
+  price: z.number({ required_error: "Price is required" }),
+  store: z.string().nullable().optional(),
+  location: z.string().nullable().optional(),
+  date: z.date({ required_error: "A date is required" }),
+  url: z.string().nullable().optional(),
+  isAvailable: z.boolean().optional().default(true),
+});
 
 type PriceTrackFormValues = z.infer<typeof priceTrackSchema>;
 
@@ -223,11 +227,11 @@ export default function PriceTrackingModal({
                           <FormItem>
                             <FormLabel>Price ($)</FormLabel>
                             <FormControl>
-                              <Input 
-                                type="number" 
-                                step="0.01" 
-                                {...field} 
-                                onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                              <Input
+                                type="number"
+                                step="0.01"
+                                value={field.value ?? ""}
+                                onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : 0)}
                               />
                             </FormControl>
                             <FormMessage />
@@ -286,13 +290,13 @@ export default function PriceTrackingModal({
                           <FormItem>
                             <FormLabel>Store</FormLabel>
                             <FormControl>
-                              <Input {...field} />
+                              <Input value={field.value ?? ""} onChange={field.onChange} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-                      
+
                       <FormField
                         control={form.control}
                         name="location"
@@ -300,7 +304,7 @@ export default function PriceTrackingModal({
                           <FormItem>
                             <FormLabel>Location</FormLabel>
                             <FormControl>
-                              <Input {...field} />
+                              <Input value={field.value ?? ""} onChange={field.onChange} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -315,7 +319,7 @@ export default function PriceTrackingModal({
                         <FormItem>
                           <FormLabel>URL (optional)</FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder="https://" />
+                            <Input value={field.value ?? ""} onChange={field.onChange} placeholder="https://" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>

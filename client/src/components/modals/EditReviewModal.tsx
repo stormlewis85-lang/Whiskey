@@ -38,10 +38,10 @@ const EditReviewModal = ({ isOpen, onClose, whiskey, review }: EditReviewModalPr
       
       // Find the updated review
       if (data && Array.isArray(data.notes)) {
-        const updatedReview = data.notes.find(note => 
-          note.id === review.id || 
-          (typeof note.id === 'string' && note.id === review.id.toString()) ||
-          (typeof review.id === 'string' && note.id.toString() === review.id)
+        const updatedReview = data.notes.find((note: ReviewNote) =>
+          note.id === review.id ||
+          (typeof note.id === 'string' && note.id === review.id?.toString()) ||
+          (typeof review.id === 'string' && note.id?.toString() === review.id)
         );
         if (updatedReview) {
           // Close modal

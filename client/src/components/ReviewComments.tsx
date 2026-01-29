@@ -34,6 +34,11 @@ const commentSchema = z.object({
 
 type CommentFormValues = z.infer<typeof commentSchema>;
 
+// Extended comment type with user info from API
+interface CommentWithUser extends ReviewComment {
+  username?: string;
+}
+
 interface ReviewCommentsProps {
   whiskey: Whiskey;
   review: ReviewNote;
@@ -46,12 +51,12 @@ const ReviewComments = ({ whiskey, review, className = '' }: ReviewCommentsProps
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
   
   // Query to get comments
-  const { 
-    data: comments = [], 
+  const {
+    data: comments = [],
     isLoading,
     error,
     refetch
-  } = useQuery<ReviewComment[]>({
+  } = useQuery<CommentWithUser[]>({
     queryKey: [`/api/whiskeys/${whiskey.id}/reviews/${review.id}/comments`],
     queryFn: getQueryFn({ on401: 'returnNull' }),
     enabled: !!whiskey.id && !!review.id,
@@ -191,8 +196,9 @@ const ReviewComments = ({ whiskey, review, className = '' }: ReviewCommentsProps
   };
 
   // Format date for display
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+  const formatDate = (dateInput: Date | string | null) => {
+    if (!dateInput) return 'Unknown';
+    const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',

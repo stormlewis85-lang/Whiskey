@@ -25,11 +25,15 @@ interface MarketValueModalProps {
   whiskey: Whiskey;
 }
 
-const marketValueSchema = insertMarketValueSchema
-  .extend({
-    date: z.date({ required_error: "A date is required" }),
-  })
-  .omit({ userId: true, whiskeyId: true, createdAt: true });
+// Define form schema directly to avoid type inference issues
+const marketValueSchema = z.object({
+  retailPrice: z.number().nullable().optional(),
+  secondaryValue: z.number().nullable().optional(),
+  auctionValue: z.number().nullable().optional(),
+  source: z.string().nullable().optional(),
+  date: z.date({ required_error: "A date is required" }),
+  notes: z.string().nullable().optional(),
+});
 
 type MarketValueFormValues = z.infer<typeof marketValueSchema>;
 
@@ -271,18 +275,18 @@ export default function MarketValueModal({
                           <FormItem>
                             <FormLabel>Retail Price ($)</FormLabel>
                             <FormControl>
-                              <Input 
-                                type="number" 
-                                step="0.01" 
-                                {...field} 
-                                onChange={(e) => field.onChange(parseFloat(e.target.value) || null)}
+                              <Input
+                                type="number"
+                                step="0.01"
+                                value={field.value ?? ""}
+                                onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
                               />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-                      
+
                       <FormField
                         control={form.control}
                         name="secondaryValue"
@@ -290,18 +294,18 @@ export default function MarketValueModal({
                           <FormItem>
                             <FormLabel>Secondary Value ($)</FormLabel>
                             <FormControl>
-                              <Input 
-                                type="number" 
-                                step="0.01" 
-                                {...field} 
-                                onChange={(e) => field.onChange(parseFloat(e.target.value) || null)}
+                              <Input
+                                type="number"
+                                step="0.01"
+                                value={field.value ?? ""}
+                                onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
                               />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-                      
+
                       <FormField
                         control={form.control}
                         name="auctionValue"
@@ -309,11 +313,11 @@ export default function MarketValueModal({
                           <FormItem>
                             <FormLabel>Auction Value ($)</FormLabel>
                             <FormControl>
-                              <Input 
-                                type="number" 
-                                step="0.01" 
-                                {...field} 
-                                onChange={(e) => field.onChange(parseFloat(e.target.value) || null)}
+                              <Input
+                                type="number"
+                                step="0.01"
+                                value={field.value ?? ""}
+                                onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
                               />
                             </FormControl>
                             <FormMessage />
@@ -330,7 +334,11 @@ export default function MarketValueModal({
                           <FormItem>
                             <FormLabel>Source</FormLabel>
                             <FormControl>
-                              <Input {...field} placeholder="Where did you find this value?" />
+                              <Input
+                                value={field.value ?? ""}
+                                onChange={field.onChange}
+                                placeholder="Where did you find this value?"
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -388,7 +396,8 @@ export default function MarketValueModal({
                           <FormLabel>Notes (optional)</FormLabel>
                           <FormControl>
                             <Textarea
-                              {...field}
+                              value={field.value ?? ""}
+                              onChange={field.onChange}
                               placeholder="Additional details about this valuation"
                               className="resize-none"
                             />

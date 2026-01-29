@@ -42,22 +42,29 @@ const Home = () => {
   const [mashBillFilter, setMashBillFilter] = useState<string>("all");
   const [caskStrengthFilter, setCaskStrengthFilter] = useState<string>("all");
 
+  // Collection management filters
+  const [collectionView, setCollectionView] = useState<'all' | 'collection' | 'wishlist'>('all');
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+
   // Get whiskey collection
-  const { 
+  const {
     whiskeys,
     filteredWhiskeys,
     isLoading,
     isError,
-    setFilters, 
-  } = useWhiskeyCollection({ 
-    searchQuery, 
-    sortBy, 
-    typeFilter, 
+    setFilters,
+  } = useWhiskeyCollection({
+    searchQuery,
+    sortBy,
+    typeFilter,
     ratingFilter,
     // Add bourbon-specific filters
     bottleTypeFilter,
     mashBillFilter,
-    caskStrengthFilter
+    caskStrengthFilter,
+    // Collection management filters
+    collectionView,
+    statusFilter
   });
   
   // Debug logging
@@ -97,40 +104,46 @@ const Home = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* User Authentication Header */}
       <Header />
-      
+
       {/* App Header */}
-      <header className="bg-slate-800 text-white shadow-md">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl md:text-3xl font-bold text-amber-100">
-            {user?.displayName || user?.username}'s Whiskey Vault
-          </h1>
-          <div className="flex items-center space-x-2">
+      <header className="bg-gradient-to-r from-amber-950 via-amber-900 to-amber-950 text-white shadow-warm-lg border-b border-amber-800/30">
+        <div className="container mx-auto px-4 py-5 flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-amber-50">
+              {user?.displayName || user?.username}'s Collection
+            </h1>
+            <p className="text-amber-200/70 text-sm mt-0.5 hidden sm:block">
+              Manage and explore your whiskey vault
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
             <Button
               onClick={openBarcodeScanner}
               variant="ghost"
-              className="text-amber-100 hover:text-white hover:bg-amber-700/30"
+              size="icon"
+              className="text-amber-200 hover:text-white hover:bg-amber-700/40 h-10 w-10"
             >
               <Scan className="h-5 w-5" />
             </Button>
             <Button
               onClick={openAddWhiskeyModal}
-              variant="secondary"
-              className="bg-amber-600 hover:bg-amber-500 text-white"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-warm-sm"
             >
-              <PlusIcon className="h-4 w-4 mr-1" />
-              Add Whiskey
+              <PlusIcon className="h-4 w-4 mr-1.5" />
+              <span className="hidden sm:inline">Add Whiskey</span>
+              <span className="sm:hidden">Add</span>
             </Button>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-6">
+      <main className="container mx-auto px-4 py-6 space-y-6">
         {/* Filters */}
-        <FilterBar 
+        <FilterBar
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           sortBy={sortBy}
@@ -146,6 +159,11 @@ const Home = () => {
           setMashBillFilter={setMashBillFilter}
           caskStrengthFilter={caskStrengthFilter}
           setCaskStrengthFilter={setCaskStrengthFilter}
+          // Collection management filters
+          collectionView={collectionView}
+          setCollectionView={setCollectionView}
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
         />
         
         {/* Stats */}
@@ -163,29 +181,29 @@ const Home = () => {
         />
         
         {/* Import, Export, and Compare Buttons at bottom */}
-        <div className="mt-8 flex flex-wrap justify-center gap-4 pb-8">
+        <div className="mt-8 flex flex-wrap justify-center gap-3 pb-8">
           <Button
             onClick={openImportModal}
             variant="outline"
-            className="border-amber-700 hover:bg-amber-50"
+            className="border-border hover:border-primary/50 hover:bg-accent/50"
           >
-            <UploadIcon className="h-4 w-4 mr-2 text-amber-700" />
+            <UploadIcon className="h-4 w-4 mr-2 text-primary" />
             Import Collection
           </Button>
           <Button
             onClick={openExportModal}
             variant="outline"
-            className="border-amber-700 hover:bg-amber-50"
+            className="border-border hover:border-primary/50 hover:bg-accent/50"
           >
-            <DownloadIcon className="h-4 w-4 mr-2 text-amber-700" />
+            <DownloadIcon className="h-4 w-4 mr-2 text-primary" />
             Export Collection
           </Button>
-          
+
           {/* Comparison Tool */}
           {whiskeys && whiskeys.length > 1 && (
-            <ComparisonTool 
+            <ComparisonTool
               whiskeys={whiskeys}
-              className="border-amber-700 hover:bg-amber-50" 
+              className="border-border hover:border-primary/50 hover:bg-accent/50"
             />
           )}
         </div>

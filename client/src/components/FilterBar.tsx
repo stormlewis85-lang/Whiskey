@@ -1,9 +1,9 @@
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Search, Filter, X } from "lucide-react";
+import { Search, SlidersHorizontal, X } from "lucide-react";
 import { useState } from "react";
-import { 
+import {
   Sheet,
   SheetContent,
   SheetHeader,
@@ -13,6 +13,7 @@ import {
   SheetClose
 } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 interface FilterBarProps {
   searchQuery: string;
@@ -30,6 +31,11 @@ interface FilterBarProps {
   setMashBillFilter?: (mashBill: string) => void;
   caskStrengthFilter?: string;
   setCaskStrengthFilter?: (caskStrength: string) => void;
+  // Collection management filters
+  collectionView?: 'all' | 'collection' | 'wishlist';
+  setCollectionView?: (view: 'all' | 'collection' | 'wishlist') => void;
+  statusFilter?: string;
+  setStatusFilter?: (status: string) => void;
 }
 
 const FilterBar = ({
@@ -46,14 +52,18 @@ const FilterBar = ({
   mashBillFilter,
   setMashBillFilter,
   caskStrengthFilter,
-  setCaskStrengthFilter
+  setCaskStrengthFilter,
+  collectionView = 'all',
+  setCollectionView,
+  statusFilter = 'all',
+  setStatusFilter
 }: FilterBarProps) => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const isMobile = useIsMobile();
-  
+
   // Check if bourbon is selected to show bourbon-specific filters
   const isBourbonSelected = typeFilter === "Bourbon";
-  
+
   // Count active filters
   const getActiveFilterCount = () => {
     let count = 0;
@@ -62,11 +72,13 @@ const FilterBar = ({
     if (isBourbonSelected && bottleTypeFilter !== 'all') count++;
     if (isBourbonSelected && mashBillFilter !== 'all') count++;
     if (isBourbonSelected && caskStrengthFilter !== 'all') count++;
+    if (collectionView !== 'all') count++;
+    if (statusFilter !== 'all') count++;
     return count;
   };
-  
+
   const activeFilterCount = getActiveFilterCount();
-  
+
   // Reset all filters
   const resetFilters = () => {
     setTypeFilter('all');
@@ -74,15 +86,20 @@ const FilterBar = ({
     if (setBottleTypeFilter) setBottleTypeFilter('all');
     if (setMashBillFilter) setMashBillFilter('all');
     if (setCaskStrengthFilter) setCaskStrengthFilter('all');
+    if (setCollectionView) setCollectionView('all');
+    if (setStatusFilter) setStatusFilter('all');
     setSearchQuery('');
   };
-  
+
+  // Styled select trigger class
+  const selectTriggerClass = "bg-card border-border/50 text-foreground hover:bg-accent/50 focus:ring-primary/30";
+
   // Filter components that can be reused between desktop and mobile
   const SortSelect = () => (
-    <div className="mb-3">
-      <label className="text-sm text-gray-500 block mb-1">Sort by:</label>
+    <div className="space-y-1.5">
+      <label className="text-sm font-medium text-foreground">Sort by</label>
       <Select value={sortBy} onValueChange={setSortBy}>
-        <SelectTrigger className="w-full border border-gray-300 rounded py-1 px-2 text-sm bg-white">
+        <SelectTrigger className={cn("w-full h-10", selectTriggerClass)}>
           <SelectValue placeholder="Sort by..." />
         </SelectTrigger>
         <SelectContent>
@@ -98,12 +115,12 @@ const FilterBar = ({
       </Select>
     </div>
   );
-  
+
   const TypeSelect = () => (
-    <div className="mb-3">
-      <label className="text-sm text-gray-500 block mb-1">Whiskey Type:</label>
+    <div className="space-y-1.5">
+      <label className="text-sm font-medium text-foreground">Whiskey Type</label>
       <Select value={typeFilter} onValueChange={setTypeFilter}>
-        <SelectTrigger className="w-full border border-gray-300 rounded py-1 px-2 text-sm bg-white">
+        <SelectTrigger className={cn("w-full h-10", selectTriggerClass)}>
           <SelectValue placeholder="All Types" />
         </SelectTrigger>
         <SelectContent>
@@ -119,12 +136,12 @@ const FilterBar = ({
       </Select>
     </div>
   );
-  
+
   const RatingSelect = () => (
-    <div className="mb-3">
-      <label className="text-sm text-gray-500 block mb-1">Rating:</label>
+    <div className="space-y-1.5">
+      <label className="text-sm font-medium text-foreground">Rating</label>
       <Select value={ratingFilter} onValueChange={setRatingFilter}>
-        <SelectTrigger className="w-full border border-gray-300 rounded py-1 px-2 text-sm bg-white">
+        <SelectTrigger className={cn("w-full h-10", selectTriggerClass)}>
           <SelectValue placeholder="All Ratings" />
         </SelectTrigger>
         <SelectContent>
@@ -139,15 +156,56 @@ const FilterBar = ({
       </Select>
     </div>
   );
-  
+
+  // Collection management filters
+  const CollectionViewSelect = () => (
+    setCollectionView && (
+      <div className="space-y-1.5">
+        <label className="text-sm font-medium text-foreground">View</label>
+        <Select value={collectionView} onValueChange={(value) => setCollectionView(value as 'all' | 'collection' | 'wishlist')}>
+          <SelectTrigger className={cn("w-full h-10", selectTriggerClass)}>
+            <SelectValue placeholder="All Bottles" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Bottles</SelectItem>
+            <SelectItem value="collection">My Collection</SelectItem>
+            <SelectItem value="wishlist">Wishlist</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+    )
+  );
+
+  const StatusSelect = () => (
+    setStatusFilter && collectionView !== 'wishlist' && (
+      <div className="space-y-1.5">
+        <label className="text-sm font-medium text-foreground">Status</label>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className={cn("w-full h-10", selectTriggerClass)}>
+            <SelectValue placeholder="All Statuses" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="sealed">Sealed</SelectItem>
+            <SelectItem value="open">Open</SelectItem>
+            <SelectItem value="finished">Finished</SelectItem>
+            <SelectItem value="gifted">Gifted</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+    )
+  );
+
   const BourbonFilters = () => (
     isBourbonSelected && (
-      <div className="space-y-3">
+      <div className="space-y-4 pt-2 border-t border-border/50">
+        <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Bourbon Filters</p>
+
         {setBottleTypeFilter && (
-          <div className="mb-3">
-            <label className="text-sm text-gray-500 block mb-1">Bottle Type:</label>
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-foreground">Bottle Type</label>
             <Select value={bottleTypeFilter} onValueChange={setBottleTypeFilter}>
-              <SelectTrigger className="w-full border border-gray-300 rounded py-1 px-2 text-sm bg-white">
+              <SelectTrigger className={cn("w-full h-10", selectTriggerClass)}>
                 <SelectValue placeholder="All Bottle Types" />
               </SelectTrigger>
               <SelectContent>
@@ -160,12 +218,12 @@ const FilterBar = ({
             </Select>
           </div>
         )}
-        
+
         {setMashBillFilter && (
-          <div className="mb-3">
-            <label className="text-sm text-gray-500 block mb-1">Mash Bill:</label>
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-foreground">Mash Bill</label>
             <Select value={mashBillFilter} onValueChange={setMashBillFilter}>
-              <SelectTrigger className="w-full border border-gray-300 rounded py-1 px-2 text-sm bg-white">
+              <SelectTrigger className={cn("w-full h-10", selectTriggerClass)}>
                 <SelectValue placeholder="All Mash Bills" />
               </SelectTrigger>
               <SelectContent>
@@ -178,13 +236,13 @@ const FilterBar = ({
             </Select>
           </div>
         )}
-        
+
         {setCaskStrengthFilter && (
-          <div className="mb-3">
-            <label className="text-sm text-gray-500 block mb-1">Strength:</label>
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-foreground">Strength</label>
             <Select value={caskStrengthFilter} onValueChange={setCaskStrengthFilter}>
-              <SelectTrigger className="w-full border border-gray-300 rounded py-1 px-2 text-sm bg-white">
-                <SelectValue placeholder="Cask Strength" />
+              <SelectTrigger className={cn("w-full h-10", selectTriggerClass)}>
+                <SelectValue placeholder="All" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All</SelectItem>
@@ -197,237 +255,292 @@ const FilterBar = ({
       </div>
     )
   );
-  
+
   const SearchBox = () => (
-    <div className="relative mb-3">
-      <label className="text-sm text-gray-500 block mb-1">Search:</label>
-      <Input
-        type="text"
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        placeholder="Search collection..."
-        className="pl-8 w-full border border-gray-300 rounded py-1 px-3 text-sm"
-      />
-      <Search className="h-4 w-4 text-gray-400 absolute left-2 top-[calc(50%+4px)] transform -translate-y-1/2" />
+    <div className="space-y-1.5">
+      <label className="text-sm font-medium text-foreground">Search</label>
+      <div className="relative">
+        <Input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search collection..."
+          className="pl-9 h-10 bg-card border-border/50"
+        />
+        <Search className="h-4 w-4 text-muted-foreground absolute left-3 top-1/2 transform -translate-y-1/2" />
+      </div>
     </div>
   );
-  
+
   // Mobile view with a slide-out filter panel
   if (isMobile) {
     return (
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-3">
-          <div className="relative flex-1 mr-2">
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
             <Input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search collection..."
-              className="pl-8 w-full border border-gray-300 rounded py-1 px-3 text-sm h-9"
+              className="pl-9 h-10 bg-card border-border/50"
             />
-            <Search className="h-4 w-4 text-gray-400 absolute left-2 top-1/2 transform -translate-y-1/2" />
+            <Search className="h-4 w-4 text-muted-foreground absolute left-3 top-1/2 transform -translate-y-1/2" />
           </div>
-          
+
           <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
             <SheetTrigger asChild>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="flex items-center text-sm h-9"
+              <Button
+                variant="outline"
+                size="sm"
+                className={cn(
+                  "h-10 px-3 border-border/50",
+                  activeFilterCount > 0 && "border-primary text-primary"
+                )}
               >
-                <Filter className="h-4 w-4 mr-1" />
-                <span>Filter{activeFilterCount > 0 && ` (${activeFilterCount})`}</span>
+                <SlidersHorizontal className="h-4 w-4 mr-1.5" />
+                <span>Filters</span>
+                {activeFilterCount > 0 && (
+                  <span className="ml-1.5 px-1.5 py-0.5 text-xs bg-primary text-primary-foreground rounded-full">
+                    {activeFilterCount}
+                  </span>
+                )}
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[280px] sm:w-[360px] p-4">
-              <SheetHeader className="text-left pb-2">
-                <SheetTitle>Filter Collection</SheetTitle>
+            <SheetContent side="right" className="w-[300px] sm:w-[380px] bg-card border-border/50">
+              <SheetHeader className="text-left pb-4 border-b border-border/50">
+                <SheetTitle className="text-foreground">Filter Collection</SheetTitle>
               </SheetHeader>
-              
-              <div className="py-4 space-y-2">
+
+              <div className="py-6 space-y-5 overflow-y-auto max-h-[calc(100vh-200px)]">
+                <CollectionViewSelect />
+                <StatusSelect />
                 <SortSelect />
                 <TypeSelect />
                 <RatingSelect />
                 <BourbonFilters />
                 <SearchBox />
               </div>
-              
-              <SheetFooter className="flex justify-between pt-4 border-t mt-6">
-                <Button 
-                  variant="outline" 
+
+              <SheetFooter className="flex gap-2 pt-4 border-t border-border/50">
+                <Button
+                  variant="outline"
                   size="sm"
                   onClick={resetFilters}
-                  className="flex items-center"
+                  className="flex-1 border-border/50"
                 >
-                  <X className="h-4 w-4 mr-1" />
-                  Reset Filters
+                  <X className="h-4 w-4 mr-1.5" />
+                  Reset
                 </Button>
                 <SheetClose asChild>
-                  <Button size="sm">Apply Filters</Button>
+                  <Button size="sm" className="flex-1">Apply Filters</Button>
                 </SheetClose>
               </SheetFooter>
             </SheetContent>
           </Sheet>
         </div>
-        
+
         {activeFilterCount > 0 && (
-          <div className="flex justify-between items-center bg-amber-50/80 rounded-md px-3 py-2 text-xs">
-            <div className="flex items-center">
-              <span className="text-amber-800 font-medium">Active filters: </span>
-              <div className="flex flex-wrap ml-2 gap-1">
-                {typeFilter !== 'all' && (
-                  <span className="px-2 py-0.5 bg-amber-100 text-amber-800 rounded-full">{typeFilter}</span>
-                )}
-                {ratingFilter !== 'all' && (
-                  <span className="px-2 py-0.5 bg-amber-100 text-amber-800 rounded-full">{ratingFilter}+ Rating</span>
-                )}
-                {isBourbonSelected && bottleTypeFilter !== 'all' && (
-                  <span className="px-2 py-0.5 bg-amber-100 text-amber-800 rounded-full">{bottleTypeFilter}</span>
-                )}
-              </div>
+          <div className="flex items-center justify-between bg-accent/50 rounded-lg px-3 py-2 border border-border/30">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-medium text-muted-foreground">Active:</span>
+              {collectionView !== 'all' && (
+                <span className="px-2 py-0.5 text-xs bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-full border border-amber-500/20">
+                  {collectionView === 'collection' ? 'Collection' : 'Wishlist'}
+                </span>
+              )}
+              {statusFilter !== 'all' && (
+                <span className="px-2 py-0.5 text-xs bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full border border-emerald-500/20">
+                  {statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)}
+                </span>
+              )}
+              {typeFilter !== 'all' && (
+                <span className="px-2 py-0.5 text-xs bg-primary/10 text-primary rounded-full border border-primary/20">
+                  {typeFilter}
+                </span>
+              )}
+              {ratingFilter !== 'all' && (
+                <span className="px-2 py-0.5 text-xs bg-primary/10 text-primary rounded-full border border-primary/20">
+                  {ratingFilter}+ Stars
+                </span>
+              )}
+              {isBourbonSelected && bottleTypeFilter !== 'all' && (
+                <span className="px-2 py-0.5 text-xs bg-primary/10 text-primary rounded-full border border-primary/20">
+                  {bottleTypeFilter}
+                </span>
+              )}
+              {isBourbonSelected && mashBillFilter !== 'all' && (
+                <span className="px-2 py-0.5 text-xs bg-primary/10 text-primary rounded-full border border-primary/20">
+                  {mashBillFilter}
+                </span>
+              )}
             </div>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="text-amber-700 h-6 px-2"
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground hover:text-foreground h-7 px-2"
               onClick={resetFilters}
             >
-              <X className="h-3 w-3 mr-1" />Clear
+              <X className="h-3 w-3" />
             </Button>
           </div>
         )}
       </div>
     );
   }
-  
+
   // Desktop view with all filters visible
   return (
-    <div className="flex flex-col md:flex-row justify-between mb-6 space-y-4 md:space-y-0">
-      <div className="flex items-center space-x-2">
-        <span className="text-sm text-gray-500">Sort by:</span>
-        <Select value={sortBy} onValueChange={setSortBy}>
-          <SelectTrigger className="w-[180px] border border-gray-300 rounded py-1 px-2 text-sm bg-white h-9">
-            <SelectValue placeholder="Sort by..." />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="name">Name (A-Z)</SelectItem>
-            <SelectItem value="nameDesc">Name (Z-A)</SelectItem>
-            <SelectItem value="ratingDesc">Rating (High-Low)</SelectItem>
-            <SelectItem value="rating">Rating (Low-High)</SelectItem>
-            <SelectItem value="priceDesc">Price (High-Low)</SelectItem>
-            <SelectItem value="price">Price (Low-High)</SelectItem>
-            <SelectItem value="ageDesc">Age (High-Low)</SelectItem>
-            <SelectItem value="age">Age (Low-High)</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      
-      <div className="flex flex-wrap gap-2 md:gap-3">
-        <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-[130px] border border-gray-300 rounded py-1 px-2 text-sm bg-white h-9">
-            <SelectValue placeholder="All Types" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
-            <SelectItem value="Bourbon">Bourbon</SelectItem>
-            <SelectItem value="Tennessee Whiskey">Tennessee Whiskey</SelectItem>
-            <SelectItem value="Scotch">Scotch</SelectItem>
-            <SelectItem value="Rye">Rye</SelectItem>
-            <SelectItem value="Irish">Irish</SelectItem>
-            <SelectItem value="Japanese">Japanese</SelectItem>
-            <SelectItem value="Other">Other</SelectItem>
-          </SelectContent>
-        </Select>
-        
-        <Select value={ratingFilter} onValueChange={setRatingFilter}>
-          <SelectTrigger className="w-[130px] border border-gray-300 rounded py-1 px-2 text-sm bg-white h-9">
-            <SelectValue placeholder="All Ratings" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Ratings</SelectItem>
-            <SelectItem value="5">5 Stars</SelectItem>
-            <SelectItem value="4">4+ Stars</SelectItem>
-            <SelectItem value="3">3+ Stars</SelectItem>
-            <SelectItem value="2">2+ Stars</SelectItem>
-            <SelectItem value="1">1+ Star</SelectItem>
-            <SelectItem value="0">Unrated</SelectItem>
-          </SelectContent>
-        </Select>
-        
-        {/* Bourbon-specific filters */}
-        {isBourbonSelected && setBottleTypeFilter && (
-          <Select 
-            value={bottleTypeFilter} 
-            onValueChange={setBottleTypeFilter}
-          >
-            <SelectTrigger className="w-[140px] border border-gray-300 rounded py-1 px-2 text-sm bg-white h-9">
-              <SelectValue placeholder="All Bottle Types" />
+    <div className="bg-card/50 border border-border/30 rounded-lg p-4">
+      <div className="flex flex-col lg:flex-row justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Sort:</span>
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className={cn("w-[180px] h-9", selectTriggerClass)}>
+              <SelectValue placeholder="Sort by..." />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Bottle Types</SelectItem>
-              <SelectItem value="Single Barrel">Single Barrel</SelectItem>
-              <SelectItem value="Small Batch">Small Batch</SelectItem>
-              <SelectItem value="Blend">Blend</SelectItem>
-              <SelectItem value="Other">Other</SelectItem>
+              <SelectItem value="name">Name (A-Z)</SelectItem>
+              <SelectItem value="nameDesc">Name (Z-A)</SelectItem>
+              <SelectItem value="ratingDesc">Rating (High-Low)</SelectItem>
+              <SelectItem value="rating">Rating (Low-High)</SelectItem>
+              <SelectItem value="priceDesc">Price (High-Low)</SelectItem>
+              <SelectItem value="price">Price (Low-High)</SelectItem>
+              <SelectItem value="ageDesc">Age (High-Low)</SelectItem>
+              <SelectItem value="age">Age (Low-High)</SelectItem>
             </SelectContent>
           </Select>
-        )}
-        
-        {isBourbonSelected && setMashBillFilter && (
-          <Select 
-            value={mashBillFilter} 
-            onValueChange={setMashBillFilter}
-          >
-            <SelectTrigger className="w-[130px] border border-gray-300 rounded py-1 px-2 text-sm bg-white h-9">
-              <SelectValue placeholder="All Mash Bills" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Mash Bills</SelectItem>
-              <SelectItem value="High Corn">High Corn</SelectItem>
-              <SelectItem value="High Rye">High Rye</SelectItem>
-              <SelectItem value="Wheated">Wheated</SelectItem>
-              <SelectItem value="Other">Other</SelectItem>
-            </SelectContent>
-          </Select>
-        )}
-        
-        {isBourbonSelected && setCaskStrengthFilter && (
-          <Select 
-            value={caskStrengthFilter} 
-            onValueChange={setCaskStrengthFilter}
-          >
-            <SelectTrigger className="w-[140px] border border-gray-300 rounded py-1 px-2 text-sm bg-white h-9">
-              <SelectValue placeholder="Cask Strength" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="Yes">Cask Strength</SelectItem>
-              <SelectItem value="No">Standard Proof</SelectItem>
-            </SelectContent>
-          </Select>
-        )}
-        
-        <div className="relative">
-          <Input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search collection..."
-            className="pl-8 w-full border border-gray-300 rounded py-1 px-3 text-sm h-9"
-          />
-          <Search className="h-4 w-4 text-gray-400 absolute left-2 top-1/2 transform -translate-y-1/2" />
         </div>
-        
-        {activeFilterCount > 0 && (
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="text-amber-700 h-9"
-            onClick={resetFilters}
-          >
-            <X className="h-4 w-4 mr-1" />Clear Filters
-          </Button>
-        )}
+
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Collection View Filter */}
+          {setCollectionView && (
+            <Select value={collectionView} onValueChange={(value) => setCollectionView(value as 'all' | 'collection' | 'wishlist')}>
+              <SelectTrigger className={cn("w-[130px] h-9", selectTriggerClass)}>
+                <SelectValue placeholder="All Bottles" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Bottles</SelectItem>
+                <SelectItem value="collection">Collection</SelectItem>
+                <SelectItem value="wishlist">Wishlist</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+
+          {/* Status Filter (only show when not viewing wishlist) */}
+          {setStatusFilter && collectionView !== 'wishlist' && (
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className={cn("w-[120px] h-9", selectTriggerClass)}>
+                <SelectValue placeholder="All Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="sealed">Sealed</SelectItem>
+                <SelectItem value="open">Open</SelectItem>
+                <SelectItem value="finished">Finished</SelectItem>
+                <SelectItem value="gifted">Gifted</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+
+          <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <SelectTrigger className={cn("w-[140px] h-9", selectTriggerClass)}>
+              <SelectValue placeholder="All Types" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="Bourbon">Bourbon</SelectItem>
+              <SelectItem value="Tennessee Whiskey">Tennessee Whiskey</SelectItem>
+              <SelectItem value="Scotch">Scotch</SelectItem>
+              <SelectItem value="Rye">Rye</SelectItem>
+              <SelectItem value="Irish">Irish</SelectItem>
+              <SelectItem value="Japanese">Japanese</SelectItem>
+              <SelectItem value="Other">Other</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={ratingFilter} onValueChange={setRatingFilter}>
+            <SelectTrigger className={cn("w-[130px] h-9", selectTriggerClass)}>
+              <SelectValue placeholder="All Ratings" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Ratings</SelectItem>
+              <SelectItem value="5">5 Stars</SelectItem>
+              <SelectItem value="4">4+ Stars</SelectItem>
+              <SelectItem value="3">3+ Stars</SelectItem>
+              <SelectItem value="2">2+ Stars</SelectItem>
+              <SelectItem value="1">1+ Star</SelectItem>
+              <SelectItem value="0">Unrated</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Bourbon-specific filters */}
+          {isBourbonSelected && setBottleTypeFilter && (
+            <Select value={bottleTypeFilter} onValueChange={setBottleTypeFilter}>
+              <SelectTrigger className={cn("w-[150px] h-9", selectTriggerClass)}>
+                <SelectValue placeholder="All Bottle Types" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Bottle Types</SelectItem>
+                <SelectItem value="Single Barrel">Single Barrel</SelectItem>
+                <SelectItem value="Small Batch">Small Batch</SelectItem>
+                <SelectItem value="Blend">Blend</SelectItem>
+                <SelectItem value="Other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+
+          {isBourbonSelected && setMashBillFilter && (
+            <Select value={mashBillFilter} onValueChange={setMashBillFilter}>
+              <SelectTrigger className={cn("w-[140px] h-9", selectTriggerClass)}>
+                <SelectValue placeholder="All Mash Bills" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Mash Bills</SelectItem>
+                <SelectItem value="High Corn">High Corn</SelectItem>
+                <SelectItem value="High Rye">High Rye</SelectItem>
+                <SelectItem value="Wheated">Wheated</SelectItem>
+                <SelectItem value="Other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+
+          {isBourbonSelected && setCaskStrengthFilter && (
+            <Select value={caskStrengthFilter} onValueChange={setCaskStrengthFilter}>
+              <SelectTrigger className={cn("w-[140px] h-9", selectTriggerClass)}>
+                <SelectValue placeholder="Strength" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="Yes">Cask Strength</SelectItem>
+                <SelectItem value="No">Standard Proof</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+
+          <div className="relative">
+            <Input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search..."
+              className="pl-9 w-[180px] h-9 bg-card border-border/50"
+            />
+            <Search className="h-4 w-4 text-muted-foreground absolute left-3 top-1/2 transform -translate-y-1/2" />
+          </div>
+
+          {activeFilterCount > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground hover:text-foreground h-9"
+              onClick={resetFilters}
+            >
+              <X className="h-4 w-4 mr-1" />
+              Clear
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );
