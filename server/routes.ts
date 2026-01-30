@@ -1216,6 +1216,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const userId = getUserId(req);
 
+      // Check rate limit (10 generations per day)
+      const { allowed, remaining } = await storage.canUseAi(userId, 10);
+      if (!allowed) {
+        return res.status(429).json({
+          message: "Daily limit reached. You can generate up to 10 scripts per day.",
+          remaining: 0
+        });
+      }
+
       // Import and call the Rick service
       const { generateRickScript } = await import('./rick-service');
 
@@ -1225,7 +1234,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         mode
       });
 
-      res.json(result);
+      // Log AI usage only if we actually generated (not cached)
+      if (!result.cached) {
+        await storage.logAiUsage(userId, 'rick-generate-script', whiskeyId);
+      }
+
+      res.json({ ...result, remaining: result.cached ? remaining : remaining - 1 });
     } catch (error) {
       console.error('Rick script generation error:', error);
       res.status(500).json({
@@ -1239,6 +1253,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/rick/text-to-speech", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const { text, phase } = req.body;
+      const userId = getUserId(req);
 
       // Validate input
       if (!text || typeof text !== 'string') {
@@ -1249,16 +1264,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "text is too long (max 5000 characters)" });
       }
 
+      // Check rate limit (10 TTS calls per day, shared with script generation)
+      const { allowed, remaining } = await storage.canUseAi(userId, 10);
+      if (!allowed) {
+        return res.status(429).json({
+          message: "Daily limit reached. You can use Rick House up to 10 times per day.",
+          remaining: 0
+        });
+      }
+
       // Import and call the ElevenLabs service
       const { generateSpeech } = await import('./elevenlabs-service');
 
       const result = await generateSpeech({ text });
 
+      // Log AI usage
+      await storage.logAiUsage(userId, 'rick-text-to-speech');
+
       res.json({
         audio: result.audioBase64,
         contentType: result.contentType,
         durationEstimate: result.durationEstimate,
-        phase: phase || null
+        phase: phase || null,
+        remaining: remaining - 1
       });
     } catch (error) {
       console.error('Text-to-speech error:', error);
