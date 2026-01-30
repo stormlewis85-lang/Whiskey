@@ -1252,7 +1252,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Convert text to speech using ElevenLabs with Rick's voice
   app.post("/api/rick/text-to-speech", isAuthenticated, async (req: Request, res: Response) => {
     try {
-      const { text, phase } = req.body;
+      const { text, phase, requireAudio } = req.body;
       const userId = getUserId(req);
 
       // Validate input
@@ -1264,6 +1264,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "text is too long (max 5000 characters)" });
       }
 
+      // Import ElevenLabs service
+      const { checkElevenLabsConfig, generateSpeech } = await import('./elevenlabs-service');
+
+      // Check if ElevenLabs is configured
+      const configStatus = checkElevenLabsConfig();
+      if (!configStatus.configured) {
+        // Return text-only mode (don't count against rate limit)
+        return res.json({
+          audio: null,
+          contentType: null,
+          durationEstimate: Math.ceil((text.split(/\s+/).length / 150) * 60),
+          phase: phase || null,
+          textOnly: true,
+          error: configStatus.error
+        });
+      }
+
       // Check rate limit (10 TTS calls per day, shared with script generation)
       const { allowed, remaining } = await storage.canUseAi(userId, 10);
       if (!allowed) {
@@ -1273,21 +1290,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Import and call the ElevenLabs service
-      const { generateSpeech } = await import('./elevenlabs-service');
+      // Try to generate audio
+      try {
+        const result = await generateSpeech({ text });
 
-      const result = await generateSpeech({ text });
+        // Log AI usage only on success
+        await storage.logAiUsage(userId, 'rick-text-to-speech');
 
-      // Log AI usage
-      await storage.logAiUsage(userId, 'rick-text-to-speech');
+        res.json({
+          audio: result.audioBase64,
+          contentType: result.contentType,
+          durationEstimate: result.durationEstimate,
+          phase: phase || null,
+          textOnly: false,
+          remaining: remaining - 1
+        });
+      } catch (ttsError) {
+        // If audio is required, return error
+        if (requireAudio) {
+          throw ttsError;
+        }
 
-      res.json({
-        audio: result.audioBase64,
-        contentType: result.contentType,
-        durationEstimate: result.durationEstimate,
-        phase: phase || null,
-        remaining: remaining - 1
-      });
+        // Otherwise, return text-only fallback (don't count against rate limit)
+        const errorMessage = ttsError instanceof Error ? ttsError.message : String(ttsError);
+        console.warn('TTS failed, falling back to text-only:', errorMessage);
+
+        res.json({
+          audio: null,
+          contentType: null,
+          durationEstimate: Math.ceil((text.split(/\s+/).length / 150) * 60),
+          phase: phase || null,
+          textOnly: true,
+          error: `Audio unavailable: ${errorMessage}`
+        });
+      }
     } catch (error) {
       console.error('Text-to-speech error:', error);
       res.status(500).json({

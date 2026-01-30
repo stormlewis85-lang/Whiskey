@@ -25,6 +25,48 @@ export interface TextToSpeechResult {
   durationEstimate?: number;
 }
 
+export interface AudioGenerationResult {
+  audioUrl: string | null;
+  durationEstimate: number;
+  cached: boolean;
+  textOnly: boolean;
+  error?: string;
+}
+
+export interface ElevenLabsStatus {
+  configured: boolean;
+  available: boolean;
+  error?: string;
+}
+
+/**
+ * Check if ElevenLabs is properly configured
+ */
+export function checkElevenLabsConfig(): ElevenLabsStatus {
+  const config = getRickConfig();
+
+  if (!config.elevenLabsApiKey) {
+    return {
+      configured: false,
+      available: false,
+      error: 'ElevenLabs API key not configured'
+    };
+  }
+
+  if (!config.elevenLabsVoiceId) {
+    return {
+      configured: false,
+      available: false,
+      error: 'ElevenLabs voice ID not configured'
+    };
+  }
+
+  return {
+    configured: true,
+    available: true
+  };
+}
+
 /**
  * Generate speech audio from text using ElevenLabs API
  */
@@ -122,6 +164,78 @@ export async function generatePhaseAudio(
 }
 
 /**
+ * Safely generate script audio with text-only fallback
+ */
+export async function generateScriptAudioSafe(script: {
+  visual: string;
+  nose: string;
+  palate: string;
+  finish: string;
+  ricksTake: string;
+  quip?: string;
+}): Promise<{ result: TextToSpeechResult | null; textOnly: boolean; error?: string }> {
+  // Check config first
+  const configStatus = checkElevenLabsConfig();
+  if (!configStatus.configured) {
+    return {
+      result: null,
+      textOnly: true,
+      error: configStatus.error
+    };
+  }
+
+  try {
+    const result = await generateScriptAudio(script);
+    return {
+      result,
+      textOnly: false
+    };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Script audio generation failed:', errorMessage);
+    return {
+      result: null,
+      textOnly: true,
+      error: `Audio generation failed: ${errorMessage}`
+    };
+  }
+}
+
+/**
+ * Safely generate phase audio with text-only fallback
+ */
+export async function generatePhaseAudioSafe(
+  phase: 'visual' | 'nose' | 'palate' | 'finish' | 'ricksTake',
+  text: string
+): Promise<{ result: TextToSpeechResult | null; textOnly: boolean; error?: string }> {
+  // Check config first
+  const configStatus = checkElevenLabsConfig();
+  if (!configStatus.configured) {
+    return {
+      result: null,
+      textOnly: true,
+      error: configStatus.error
+    };
+  }
+
+  try {
+    const result = await generatePhaseAudio(phase, text);
+    return {
+      result,
+      textOnly: false
+    };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`Phase ${phase} audio generation failed:`, errorMessage);
+    return {
+      result: null,
+      textOnly: true,
+      error: `Audio generation failed: ${errorMessage}`
+    };
+  }
+}
+
+/**
  * Ensure audio directory exists
  */
 function ensureAudioDir(): void {
@@ -192,12 +306,30 @@ export function getCachedAudio(hash: string): string | null {
 
 /**
  * Generate and save audio with caching support
+ * Returns text-only result if audio generation fails
  */
 export async function generateAndSaveAudio(
   text: string,
   sessionId: number,
   phase?: string
-): Promise<{ audioUrl: string; durationEstimate: number; cached: boolean }> {
+): Promise<AudioGenerationResult> {
+  // Calculate duration estimate from text (used regardless of audio success)
+  const wordCount = text.split(/\s+/).length;
+  const durationEstimate = Math.ceil((wordCount / 150) * 60);
+
+  // Check if ElevenLabs is configured
+  const configStatus = checkElevenLabsConfig();
+  if (!configStatus.configured) {
+    console.log('ElevenLabs not configured, returning text-only mode');
+    return {
+      audioUrl: null,
+      durationEstimate,
+      cached: false,
+      textOnly: true,
+      error: configStatus.error
+    };
+  }
+
   // Generate hash for caching
   const hash = generateAudioHash(text);
 
@@ -205,38 +337,72 @@ export async function generateAndSaveAudio(
   const cachedUrl = getCachedAudio(hash);
   if (cachedUrl) {
     console.log(`Using cached audio for hash ${hash}`);
-    // Estimate duration from text
-    const wordCount = text.split(/\s+/).length;
-    const durationEstimate = Math.ceil((wordCount / 150) * 60);
     return {
       audioUrl: cachedUrl,
       durationEstimate,
-      cached: true
+      cached: true,
+      textOnly: false
     };
   }
 
-  // Generate new audio
-  console.log(`Generating new audio for hash ${hash}`);
-  const result = await generateSpeech({ text });
+  // Generate new audio with error handling
+  try {
+    console.log(`Generating new audio for hash ${hash}`);
+    const result = await generateSpeech({ text });
 
-  // Save with hash in filename for future caching
-  ensureAudioDir();
-  const timestamp = Date.now();
-  const phaseSuffix = phase ? `-${phase}` : '';
-  const filename = `rick-${sessionId}${phaseSuffix}-${hash}-${timestamp}.mp3`;
-  const filepath = join(AUDIO_DIR, filename);
+    // Save with hash in filename for future caching
+    ensureAudioDir();
+    const timestamp = Date.now();
+    const phaseSuffix = phase ? `-${phase}` : '';
+    const filename = `rick-${sessionId}${phaseSuffix}-${hash}-${timestamp}.mp3`;
+    const filepath = join(AUDIO_DIR, filename);
 
-  const buffer = Buffer.from(result.audioBase64, 'base64');
-  writeFileSync(filepath, buffer);
+    const buffer = Buffer.from(result.audioBase64, 'base64');
+    writeFileSync(filepath, buffer);
 
-  const audioUrl = `/uploads/audio/${filename}`;
+    const audioUrl = `/uploads/audio/${filename}`;
 
-  // Update cache
-  audioCache.set(hash, audioUrl);
+    // Update cache
+    audioCache.set(hash, audioUrl);
+
+    return {
+      audioUrl,
+      durationEstimate: result.durationEstimate || durationEstimate,
+      cached: false,
+      textOnly: false
+    };
+  } catch (error) {
+    // Log the error but don't fail - return text-only mode
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('ElevenLabs audio generation failed, falling back to text-only:', errorMessage);
+
+    return {
+      audioUrl: null,
+      durationEstimate,
+      cached: false,
+      textOnly: true,
+      error: `Audio generation failed: ${errorMessage}`
+    };
+  }
+}
+
+/**
+ * Generate and save audio - throws on error (use when audio is required)
+ */
+export async function generateAndSaveAudioRequired(
+  text: string,
+  sessionId: number,
+  phase?: string
+): Promise<{ audioUrl: string; durationEstimate: number; cached: boolean }> {
+  const result = await generateAndSaveAudio(text, sessionId, phase);
+
+  if (result.textOnly || !result.audioUrl) {
+    throw new Error(result.error || 'Audio generation failed');
+  }
 
   return {
-    audioUrl,
-    durationEstimate: result.durationEstimate || 0,
-    cached: false
+    audioUrl: result.audioUrl,
+    durationEstimate: result.durationEstimate,
+    cached: result.cached
   };
 }
