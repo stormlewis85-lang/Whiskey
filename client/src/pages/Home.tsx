@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Whiskey, ReviewNote } from "@shared/schema";
 import { Header } from "@/components/Header";
@@ -12,8 +12,10 @@ import EditWhiskeyModal from "@/components/modals/EditWhiskeyModal";
 import ReviewModal from "@/components/modals/ReviewModal";
 import WhiskeyDetailModal from "@/components/modals/WhiskeyDetailModal";
 import ExportModal from "@/components/modals/ExportModal";
-import TastingModeModal from "@/components/modals/TastingModeModal";
-import TastingSession from "@/components/TastingSession";
+// Lazy load Rick House components for better initial load performance
+const TastingModeModal = lazy(() => import("@/components/modals/TastingModeModal"));
+const TastingSession = lazy(() => import("@/components/TastingSession"));
+const RickErrorBoundary = lazy(() => import("@/components/RickErrorBoundary"));
 import { BarcodeScanner } from "@/components/BarcodeScanner";
 import { Button } from "@/components/ui/button";
 import { PlusIcon, UploadIcon, DownloadIcon, Scan } from "lucide-react";
@@ -277,28 +279,47 @@ const Home = () => {
             onTasteWithRick={openTastingModeModal}
           />
 
-          <TastingModeModal
-            isOpen={isTastingModeModalOpen}
-            onClose={() => setIsTastingModeModalOpen(false)}
-            whiskey={currentWhiskey}
-            onSelectMode={(mode) => {
-              setTastingMode(mode);
-              setIsTastingModeModalOpen(false);
-              setIsTastingSessionActive(true);
-            }}
-          />
-
-          {isTastingSessionActive && (
-            <TastingSession
+          <Suspense fallback={null}>
+            <TastingModeModal
+              isOpen={isTastingModeModalOpen}
+              onClose={() => setIsTastingModeModalOpen(false)}
               whiskey={currentWhiskey}
-              mode={tastingMode}
-              onClose={() => setIsTastingSessionActive(false)}
-              onComplete={() => {
-                setIsTastingSessionActive(false);
-                // Optionally open review modal
-                openReviewModal(currentWhiskey);
+              onSelectMode={(mode) => {
+                setTastingMode(mode);
+                setIsTastingModeModalOpen(false);
+                setIsTastingSessionActive(true);
               }}
             />
+          </Suspense>
+
+          {isTastingSessionActive && (
+            <Suspense fallback={
+              <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex items-center justify-center">
+                <div className="text-center">
+                  <div className="animate-pulse text-amber-500">Loading Rick House...</div>
+                </div>
+              </div>
+            }>
+              <RickErrorBoundary
+                onClose={() => setIsTastingSessionActive(false)}
+                onRetry={() => {
+                  // Reset and restart the session
+                  setIsTastingSessionActive(false);
+                  setTimeout(() => setIsTastingSessionActive(true), 100);
+                }}
+              >
+                <TastingSession
+                  whiskey={currentWhiskey}
+                  mode={tastingMode}
+                  onClose={() => setIsTastingSessionActive(false)}
+                  onComplete={() => {
+                    setIsTastingSessionActive(false);
+                    // Optionally open review modal
+                    openReviewModal(currentWhiskey);
+                  }}
+                />
+              </RickErrorBoundary>
+            </Suspense>
           )}
         </>
       )}

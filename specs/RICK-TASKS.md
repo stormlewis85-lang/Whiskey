@@ -156,9 +156,9 @@ This is what lets Ralph run unattended overnight.
 | R043 | Add haptic feedback on phase transitions | Subtle vibration when moving to next phase (mobile) | ✅ |
 | R044 | Implement text fallback mode | If audio fails or user prefers, show text-only with manual advance | ✅ |
 | R045 | Add session history to profile | Users can see past tasting sessions | ✅ |
-| R046 | Error boundary for Rick components | Graceful error handling, retry options | ⬜ |
-| R047 | Add analytics events | Track: session starts, completions, mode preference, drop-off phase | ⬜ |
-| R048 | Performance optimization | Lazy load Rick components, preload audio for next phase | ⬜ |
+| R046 | Error boundary for Rick components | Graceful error handling, retry options | ✅ |
+| R047 | Add analytics events | Track: session starts, completions, mode preference, drop-off phase | ✅ |
+| R048 | Performance optimization | Lazy load Rick components, preload audio for next phase | ✅ |
 
 ---
 

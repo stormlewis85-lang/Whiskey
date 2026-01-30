@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, X, Mic, Volume2, VolumeX, CheckCircle, PenLine, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import AudioPlayer from "./AudioPlayer";
+import { RickAnalytics } from "@/lib/analytics";
 
 // Rick Script interface matching the backend
 interface RickScript {
@@ -93,6 +94,8 @@ const TastingSession = ({ whiskey, mode, onClose, onComplete }: TastingSessionPr
     onSuccess: (data) => {
       setSession(data.session);
       setScript(data.script);
+      // Track session started
+      RickAnalytics.sessionStarted(whiskey.id, whiskey.name, mode);
     },
     onError: (error) => {
       toast({
@@ -145,6 +148,18 @@ const TastingSession = ({ whiskey, mode, onClose, onComplete }: TastingSessionPr
   useEffect(() => {
     if (script && isAudioEnabled) {
       loadPhaseAudio(currentPhase, script[currentPhase]);
+
+      // Preload next phase audio for smoother transitions
+      const nextPhaseIndex = PHASES.indexOf(currentPhase) + 1;
+      if (nextPhaseIndex < PHASES.length) {
+        const nextPhase = PHASES[nextPhaseIndex];
+        // Load next phase audio in background (non-blocking)
+        setTimeout(() => {
+          if (script[nextPhase]) {
+            loadPhaseAudio(nextPhase, script[nextPhase]);
+          }
+        }, 1000); // Delay to not compete with current phase load
+      }
     }
   }, [currentPhase, script, isAudioEnabled]);
 
@@ -160,6 +175,8 @@ const TastingSession = ({ whiskey, mode, onClose, onComplete }: TastingSessionPr
     onSuccess: () => {
       // Show completion screen instead of immediately navigating away
       setIsCompleted(true);
+      // Track session completed (duration would require tracking start time)
+      RickAnalytics.sessionCompleted(whiskey.id, whiskey.name, mode, 0);
     },
     onError: (error) => {
       toast({
@@ -185,7 +202,10 @@ const TastingSession = ({ whiskey, mode, onClose, onComplete }: TastingSessionPr
   const handleNext = () => {
     if (currentPhaseIndex < PHASES.length - 1) {
       triggerHaptic(30); // Short vibration for phase transition
-      setCurrentPhaseIndex(prev => prev + 1);
+      const nextPhaseIndex = currentPhaseIndex + 1;
+      setCurrentPhaseIndex(nextPhaseIndex);
+      // Track phase advancement
+      RickAnalytics.phaseAdvanced(whiskey.id, PHASES[nextPhaseIndex], nextPhaseIndex);
     } else {
       // Last phase - complete session
       triggerHaptic([50, 50, 50]); // Longer pattern for completion
