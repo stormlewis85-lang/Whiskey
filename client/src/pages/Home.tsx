@@ -12,6 +12,7 @@ import EditWhiskeyModal from "@/components/modals/EditWhiskeyModal";
 import ReviewModal from "@/components/modals/ReviewModal";
 import WhiskeyDetailModal from "@/components/modals/WhiskeyDetailModal";
 import ExportModal from "@/components/modals/ExportModal";
+import TastingModeModal from "@/components/modals/TastingModeModal";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
 import { Button } from "@/components/ui/button";
 import { PlusIcon, UploadIcon, DownloadIcon, Scan } from "lucide-react";
@@ -271,6 +272,17 @@ const Home = () => {
             onReview={openReviewModal}
             onEdit={openEditWhiskeyModal}
             onTasteWithRick={openTastingModeModal}
+          />
+
+          <TastingModeModal
+            isOpen={isTastingModeModalOpen}
+            onClose={() => setIsTastingModeModalOpen(false)}
+            whiskey={currentWhiskey}
+            onSelectMode={(mode) => {
+              // TODO: R031 - This will open the TastingSession component
+              console.log(`Starting tasting session for ${currentWhiskey.name} in ${mode} mode`);
+              setIsTastingModeModalOpen(false);
+            }}
           />
         </>
       )}
