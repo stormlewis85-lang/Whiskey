@@ -20,7 +20,8 @@ import {
   // AI usage imports
   aiUsageLogs, AiUsageLog, InsertAiUsageLog,
   // Rick House imports
-  generatedScripts, GeneratedScript, InsertGeneratedScript
+  generatedScripts, GeneratedScript, InsertGeneratedScript,
+  tastingSessions, TastingSession, InsertTastingSession, UpdateTastingSession
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, asc, desc, sql, ne, count, ilike } from "drizzle-orm";
@@ -2115,6 +2116,79 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(generatedScripts)
       .where(eq(generatedScripts.whiskeyId, whiskeyId));
+  }
+
+  // ==================== RICK HOUSE TASTING SESSIONS ====================
+
+  /**
+   * Create a new tasting session
+   */
+  async createTastingSession(data: InsertTastingSession): Promise<TastingSession> {
+    const [session] = await db
+      .insert(tastingSessions)
+      .values(data)
+      .returning();
+
+    return session;
+  }
+
+  /**
+   * Get a tasting session by ID
+   */
+  async getTastingSession(sessionId: number, userId: number): Promise<TastingSession | null> {
+    const [session] = await db
+      .select()
+      .from(tastingSessions)
+      .where(
+        and(
+          eq(tastingSessions.id, sessionId),
+          eq(tastingSessions.userId, userId)
+        )
+      );
+
+    return session || null;
+  }
+
+  /**
+   * Get all tasting sessions for a user
+   */
+  async getUserTastingSessions(userId: number): Promise<TastingSession[]> {
+    return db
+      .select()
+      .from(tastingSessions)
+      .where(eq(tastingSessions.userId, userId))
+      .orderBy(desc(tastingSessions.createdAt));
+  }
+
+  /**
+   * Update a tasting session
+   */
+  async updateTastingSession(
+    sessionId: number,
+    userId: number,
+    data: UpdateTastingSession
+  ): Promise<TastingSession | null> {
+    const [updated] = await db
+      .update(tastingSessions)
+      .set(data)
+      .where(
+        and(
+          eq(tastingSessions.id, sessionId),
+          eq(tastingSessions.userId, userId)
+        )
+      )
+      .returning();
+
+    return updated || null;
+  }
+
+  /**
+   * Complete a tasting session
+   */
+  async completeTastingSession(sessionId: number, userId: number): Promise<TastingSession | null> {
+    return this.updateTastingSession(sessionId, userId, {
+      completedAt: new Date()
+    });
   }
 }
 

@@ -1269,6 +1269,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Start a new tasting session with Rick
+  app.post("/api/rick/start-session", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const { whiskeyId, mode } = req.body;
+      const userId = getUserId(req);
+
+      // Validate input
+      if (!whiskeyId || typeof whiskeyId !== 'number') {
+        return res.status(400).json({ message: "whiskeyId is required and must be a number" });
+      }
+
+      if (!mode || !['guided', 'notes'].includes(mode)) {
+        return res.status(400).json({ message: "mode is required and must be 'guided' or 'notes'" });
+      }
+
+      // Verify whiskey exists and belongs to user
+      const whiskey = await storage.getWhiskey(whiskeyId, userId);
+      if (!whiskey) {
+        return res.status(404).json({ message: "Whiskey not found or not accessible" });
+      }
+
+      // Generate script (will use cache if available)
+      const { generateRickScript } = await import('./rick-service');
+      const scriptResult = await generateRickScript({ whiskeyId, userId, mode });
+
+      // Create tasting session
+      const session = await storage.createTastingSession({
+        userId,
+        whiskeyId,
+        mode: mode as 'guided' | 'notes',
+        scriptJson: scriptResult.script,
+      });
+
+      res.json({
+        session: {
+          id: session.id,
+          whiskeyId: session.whiskeyId,
+          mode: session.mode,
+          startedAt: session.startedAt,
+          completedAt: session.completedAt,
+        },
+        script: scriptResult.script,
+        cached: scriptResult.cached,
+        whiskeyName: scriptResult.whiskeyName,
+      });
+    } catch (error) {
+      console.error('Start session error:', error);
+      res.status(500).json({
+        message: "Failed to start tasting session",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
   // ==================== RECOMMENDATION ROUTES ====================
 
   // Get recommendations for the user
