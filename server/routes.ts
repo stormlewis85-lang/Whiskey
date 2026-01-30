@@ -1235,6 +1235,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Convert text to speech using ElevenLabs with Rick's voice
+  app.post("/api/rick/text-to-speech", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const { text, phase } = req.body;
+
+      // Validate input
+      if (!text || typeof text !== 'string') {
+        return res.status(400).json({ message: "text is required and must be a string" });
+      }
+
+      if (text.length > 5000) {
+        return res.status(400).json({ message: "text is too long (max 5000 characters)" });
+      }
+
+      // Import and call the ElevenLabs service
+      const { generateSpeech } = await import('./elevenlabs-service');
+
+      const result = await generateSpeech({ text });
+
+      res.json({
+        audio: result.audioBase64,
+        contentType: result.contentType,
+        durationEstimate: result.durationEstimate,
+        phase: phase || null
+      });
+    } catch (error) {
+      console.error('Text-to-speech error:', error);
+      res.status(500).json({
+        message: "Failed to generate speech",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
   // ==================== RECOMMENDATION ROUTES ====================
 
   // Get recommendations for the user
