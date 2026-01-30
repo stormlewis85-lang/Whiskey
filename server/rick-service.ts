@@ -151,6 +151,7 @@ function parseScriptResponse(responseText: string): RickScript {
 
 /**
  * Generate a tasting script using Claude API with Rick's persona
+ * Implements caching: returns cached script if valid (<7 days old AND review count unchanged)
  */
 export async function generateRickScript(input: GenerateScriptInput): Promise<GenerateScriptResult> {
   const config = getRickConfig();
@@ -164,6 +165,22 @@ export async function generateRickScript(input: GenerateScriptInput): Promise<Ge
   if (!whiskey) {
     throw new Error('Whiskey not found or not accessible');
   }
+
+  // Check for cached script first
+  const cachedScript = await storage.getCachedScript(input.whiskeyId, input.mode);
+  if (cachedScript) {
+    console.log(`Using cached script for whiskey ${input.whiskeyId}`);
+    const scriptJson = cachedScript.scriptJson as RickScript;
+    return {
+      script: scriptJson,
+      cached: true,
+      whiskeyName: whiskey.name,
+      mode: input.mode
+    };
+  }
+
+  // No valid cache - generate new script
+  console.log(`Generating new script for whiskey ${input.whiskeyId}`);
 
   // Get community notes for this whiskey
   const communityNotes = await storage.getCommunityNotes(input.whiskeyId);
@@ -198,6 +215,15 @@ export async function generateRickScript(input: GenerateScriptInput): Promise<Ge
 
   // Parse the script
   const script = parseScriptResponse(responseText);
+
+  // Save to cache for future requests
+  try {
+    await storage.saveScriptCache(input.whiskeyId, script as unknown as Record<string, unknown>, input.mode);
+    console.log(`Cached script for whiskey ${input.whiskeyId}`);
+  } catch (cacheError) {
+    // Don't fail the request if caching fails
+    console.error('Failed to cache script:', cacheError);
+  }
 
   return {
     script,

@@ -18,7 +18,9 @@ import {
   // Distillery imports
   distilleries, Distillery, InsertDistillery, UpdateDistillery,
   // AI usage imports
-  aiUsageLogs, AiUsageLog, InsertAiUsageLog
+  aiUsageLogs, AiUsageLog, InsertAiUsageLog,
+  // Rick House imports
+  generatedScripts, GeneratedScript, InsertGeneratedScript
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, asc, desc, sql, ne, count, ilike } from "drizzle-orm";
@@ -2027,6 +2029,92 @@ export class DatabaseStorage implements IStorage {
       allowed: remaining > 0,
       remaining
     };
+  }
+
+  // ==================== RICK HOUSE SCRIPT CACHING ====================
+
+  /**
+   * Get cached script for a whiskey if valid
+   * Cache is valid if: <7 days old AND review count unchanged
+   */
+  async getCachedScript(whiskeyId: number, mode: 'guided' | 'notes'): Promise<GeneratedScript | null> {
+    const now = new Date();
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    // Get the cached script
+    const [cached] = await db
+      .select()
+      .from(generatedScripts)
+      .where(eq(generatedScripts.whiskeyId, whiskeyId))
+      .orderBy(desc(generatedScripts.generatedAt))
+      .limit(1);
+
+    if (!cached) return null;
+
+    // Check if cache is expired (>7 days old)
+    if (cached.generatedAt && cached.generatedAt < sevenDaysAgo) {
+      return null;
+    }
+
+    // Check if review count has changed
+    const communityNotes = await this.getCommunityNotes(whiskeyId);
+    const currentReviewCount = communityNotes?.totalReviews || 0;
+
+    if (cached.reviewCountAtGeneration !== currentReviewCount) {
+      return null;
+    }
+
+    // Check if the cached script is for the requested mode
+    const scriptJson = cached.scriptJson as { mode?: string } | null;
+    if (scriptJson?.mode && scriptJson.mode !== mode) {
+      return null;
+    }
+
+    return cached;
+  }
+
+  /**
+   * Save a generated script to cache
+   */
+  async saveScriptCache(
+    whiskeyId: number,
+    scriptJson: Record<string, unknown>,
+    mode: 'guided' | 'notes'
+  ): Promise<GeneratedScript> {
+    // Get current review count
+    const communityNotes = await this.getCommunityNotes(whiskeyId);
+    const reviewCount = communityNotes?.totalReviews || 0;
+
+    // Set expiry to 7 days from now
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7);
+
+    // Delete any existing cache for this whiskey
+    await db
+      .delete(generatedScripts)
+      .where(eq(generatedScripts.whiskeyId, whiskeyId));
+
+    // Insert new cache entry
+    const [newCache] = await db
+      .insert(generatedScripts)
+      .values({
+        whiskeyId,
+        scriptJson: { ...scriptJson, mode },
+        reviewCountAtGeneration: reviewCount,
+        expiresAt,
+      })
+      .returning();
+
+    return newCache;
+  }
+
+  /**
+   * Invalidate cache for a whiskey (call when reviews change)
+   */
+  async invalidateScriptCache(whiskeyId: number): Promise<void> {
+    await db
+      .delete(generatedScripts)
+      .where(eq(generatedScripts.whiskeyId, whiskeyId));
   }
 }
 
