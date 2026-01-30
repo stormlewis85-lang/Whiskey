@@ -1122,6 +1122,144 @@ export class DatabaseStorage implements IStorage {
       .sort((a, b) => b.count - a.count);
   }
 
+  // ==================== COMMUNITY NOTES (Rick House) ====================
+
+  /**
+   * Get aggregated community notes for a whiskey
+   * Finds all whiskeys with same name across all users and aggregates reviews
+   */
+  async getCommunityNotes(whiskeyId: number): Promise<{
+    whiskeyName: string;
+    distillery: string | null;
+    totalReviews: number;
+    averageScores: {
+      overall: number | null;
+      nose: number | null;
+      mouthfeel: number | null;
+      taste: number | null;
+      finish: number | null;
+      value: number | null;
+    };
+    topFlavors: {
+      nose: { flavor: string; count: number }[];
+      taste: { flavor: string; count: number }[];
+      finish: { flavor: string; count: number }[];
+    };
+    commonNotes: string[];
+  } | null> {
+    // Get the target whiskey to find its name
+    const [targetWhiskey] = await db
+      .select()
+      .from(whiskeys)
+      .where(eq(whiskeys.id, whiskeyId));
+
+    if (!targetWhiskey) return null;
+
+    // Find all whiskeys with the same name (case-insensitive) across all users
+    const communityWhiskeys = await db
+      .select()
+      .from(whiskeys)
+      .where(ilike(whiskeys.name, targetWhiskey.name));
+
+    // Aggregate all reviews
+    const allReviews: ReviewNote[] = [];
+    for (const w of communityWhiskeys) {
+      if (Array.isArray(w.notes)) {
+        allReviews.push(...(w.notes as ReviewNote[]));
+      }
+    }
+
+    if (allReviews.length === 0) {
+      return {
+        whiskeyName: targetWhiskey.name,
+        distillery: targetWhiskey.distillery,
+        totalReviews: 0,
+        averageScores: {
+          overall: null,
+          nose: null,
+          mouthfeel: null,
+          taste: null,
+          finish: null,
+          value: null,
+        },
+        topFlavors: { nose: [], taste: [], finish: [] },
+        commonNotes: [],
+      };
+    }
+
+    // Calculate average scores
+    const scores = {
+      overall: [] as number[],
+      nose: [] as number[],
+      mouthfeel: [] as number[],
+      taste: [] as number[],
+      finish: [] as number[],
+      value: [] as number[],
+    };
+
+    const noseFlavors = new Map<string, number>();
+    const tasteFlavors = new Map<string, number>();
+    const finishFlavors = new Map<string, number>();
+    const noteTexts: string[] = [];
+
+    for (const review of allReviews) {
+      // Collect scores
+      if (typeof review.rating === 'number') scores.overall.push(review.rating);
+      if (typeof review.noseScore === 'number') scores.nose.push(review.noseScore);
+      if (typeof review.mouthfeelScore === 'number') scores.mouthfeel.push(review.mouthfeelScore);
+      if (typeof review.tasteScore === 'number') scores.taste.push(review.tasteScore);
+      if (typeof review.finishScore === 'number') scores.finish.push(review.finishScore);
+      if (typeof review.valueScore === 'number') scores.value.push(review.valueScore);
+
+      // Collect flavors
+      if (Array.isArray(review.noseAromas)) {
+        review.noseAromas.forEach((f: string) => noseFlavors.set(f, (noseFlavors.get(f) || 0) + 1));
+      }
+      if (Array.isArray(review.tasteFlavors)) {
+        review.tasteFlavors.forEach((f: string) => tasteFlavors.set(f, (tasteFlavors.get(f) || 0) + 1));
+      }
+      if (Array.isArray(review.finishFlavors)) {
+        review.finishFlavors.forEach((f: string) => finishFlavors.set(f, (finishFlavors.get(f) || 0) + 1));
+      }
+
+      // Collect note texts
+      if (review.text) noteTexts.push(review.text);
+      if (review.noseNotes) noteTexts.push(review.noseNotes);
+      if (review.tasteNotes) noteTexts.push(review.tasteNotes);
+      if (review.finishNotes) noteTexts.push(review.finishNotes);
+    }
+
+    // Helper to calculate average
+    const avg = (arr: number[]) => arr.length > 0 ? Math.round((arr.reduce((a, b) => a + b, 0) / arr.length) * 10) / 10 : null;
+
+    // Helper to get top N flavors
+    const getTopFlavors = (map: Map<string, number>, n: number = 5) =>
+      Array.from(map.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, n)
+        .map(([flavor, count]) => ({ flavor, count }));
+
+    return {
+      whiskeyName: targetWhiskey.name,
+      distillery: targetWhiskey.distillery,
+      totalReviews: allReviews.length,
+      averageScores: {
+        overall: avg(scores.overall),
+        nose: avg(scores.nose),
+        mouthfeel: avg(scores.mouthfeel),
+        taste: avg(scores.taste),
+        finish: avg(scores.finish),
+        value: avg(scores.value),
+      },
+      topFlavors: {
+        nose: getTopFlavors(noseFlavors),
+        taste: getTopFlavors(tasteFlavors),
+        finish: getTopFlavors(finishFlavors),
+      },
+      commonNotes: noteTexts.slice(0, 10), // Return up to 10 sample notes
+    };
+  }
+
   // ==================== RECOMMENDATIONS ====================
 
   async getRecommendations(userId: number, limit: number = 5): Promise<{

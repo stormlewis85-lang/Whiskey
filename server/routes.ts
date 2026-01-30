@@ -1155,6 +1155,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ==================== RICK HOUSE ROUTES ====================
+
+  // Get community notes for a whiskey (aggregated from all users' reviews)
+  app.get("/api/whiskeys/:id/community-notes", async (req: Request, res: Response) => {
+    try {
+      const whiskeyId = parseInt(req.params.id);
+      if (isNaN(whiskeyId)) {
+        return res.status(400).json({ message: "Invalid whiskey ID format" });
+      }
+
+      const communityNotes = await storage.getCommunityNotes(whiskeyId);
+
+      if (!communityNotes) {
+        return res.status(404).json({ message: "Whiskey not found" });
+      }
+
+      res.json(communityNotes);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch community notes", error: String(error) });
+    }
+  });
+
   // ==================== RECOMMENDATION ROUTES ====================
 
   // Get recommendations for the user

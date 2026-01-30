@@ -89,7 +89,7 @@ This is what lets Ralph run unattended overnight.
 
 | ID | Task | Success Criteria | Status |
 |----|------|------------------|--------|
-| R007 | GET /api/whiskeys/:id/community-notes | Returns aggregated flavor tags, common notes, avg scores from all reviews of this whiskey | ⬜ |
+| R007 | GET /api/whiskeys/:id/community-notes | Returns aggregated flavor tags, common notes, avg scores from all reviews of this whiskey | ✅ |
 | R008 | GET /api/users/:id/palate-profile | Returns user's most-used flavor tags, scoring tendencies, review count | ⬜ |
 | R009 | POST /api/rick/generate-script | Accepts whiskey_id, mode, user_id. Calls Claude API with Rick prompt + whiskey data + community notes. Returns structured script JSON | ⬜ |
 | R010 | Implement script caching logic | Check cache before generating. Cache valid if <7 days old AND review count unchanged. Return cached if valid | ⬜ |
