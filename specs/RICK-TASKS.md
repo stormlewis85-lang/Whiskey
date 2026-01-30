@@ -105,7 +105,7 @@ This is what lets Ralph run unattended overnight.
 
 | ID | Task | Success Criteria | Status |
 |----|------|------------------|--------|
-| R016 | Create script structure interface | TypeScript interface: { visual: string, nose: string, palate: string, finish: string, ricksTake: string, metadata: {...} } | ⬜ |
+| R016 | Create script structure interface | TypeScript interface: { visual: string, nose: string, palate: string, finish: string, ricksTake: string, metadata: {...} } | ✅ |
 | R017 | Build Claude prompt template | Prompt includes: Rick character, whiskey details, community notes, user palate (if available), requested mode | ⬜ |
 | R018 | Implement "Guide Me" script generation | Full walkthrough with Rick's personality, pauses for user, educational content | ⬜ |
 | R019 | Implement "Just Notes" script generation | Brief flavor profile, Rick's take, no walkthrough | ⬜ |

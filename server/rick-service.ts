@@ -16,6 +16,16 @@ export interface RickScript {
   finish: string;
   ricksTake: string;
   quip: string;
+  metadata?: RickScriptMetadata;
+}
+
+export interface RickScriptMetadata {
+  whiskeyId: number;
+  whiskeyName: string;
+  mode: 'guided' | 'notes';
+  generatedAt: string;
+  personalized: boolean;
+  communityReviewCount: number;
 }
 
 export interface GenerateScriptInput {
@@ -215,6 +225,17 @@ export async function generateRickScript(input: GenerateScriptInput): Promise<Ge
 
   // Parse the script
   const script = parseScriptResponse(responseText);
+
+  // Add metadata to the script
+  const isPersonalized = palateProfile !== null && palateProfile.reviewCount >= 5;
+  script.metadata = {
+    whiskeyId: input.whiskeyId,
+    whiskeyName: whiskey.name,
+    mode: input.mode,
+    generatedAt: new Date().toISOString(),
+    personalized: isPersonalized,
+    communityReviewCount: communityNotes?.totalReviews || 0,
+  };
 
   // Save to cache for future requests
   try {
