@@ -326,6 +326,8 @@ export const usersRelations = relations(users, ({ many }) => ({
   // Follow relations
   followers: many(follows, { relationName: 'followers' }),
   following: many(follows, { relationName: 'following' }),
+  // Rick House relations
+  tastingSessions: many(tastingSessions),
 }));
 
 // Distilleries relations
@@ -362,6 +364,9 @@ export const whiskeysRelations = relations(whiskeys, ({ one, many }) => ({
   marketValuations: many(marketValues),
   flightWhiskeys: many(flightWhiskeys),
   blindTastingWhiskeys: many(blindTastingWhiskeys),
+  // Rick House relations
+  tastingSessions: many(tastingSessions),
+  generatedScripts: many(generatedScripts),
 }));
 
 export const reviewCommentsRelations = relations(reviewComments, ({ one }) => ({
