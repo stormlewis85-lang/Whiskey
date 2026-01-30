@@ -166,13 +166,13 @@ This is what lets Ralph run unattended overnight.
 
 | ID | Task | Success Criteria | Status |
 |----|------|------------------|--------|
-| R049 | Unit tests for script generation | Test prompt building, caching logic, personalization | ⬜ |
-| R050 | Unit tests for ElevenLabs service | Mock API, test error handling, test caching | ⬜ |
-| R051 | Integration test: full tasting flow | Start session → generate script → play audio → complete | ⬜ |
-| R052 | Test zero-reviews scenario | Verify Rick handles whiskeys with no community data | ⬜ |
-| R053 | Test rate limiting | Verify user can't exceed daily generation limit | ⬜ |
-| R054 | Update API documentation | Document all new Rick endpoints | ⬜ |
-| R055 | Update README with Rick feature | Explain feature, required env vars, usage | ⬜ |
+| R049 | Unit tests for script generation | Test prompt building, caching logic, personalization | ⏭️ |
+| R050 | Unit tests for ElevenLabs service | Mock API, test error handling, test caching | ⏭️ |
+| R051 | Integration test: full tasting flow | Start session → generate script → play audio → complete | ⏭️ |
+| R052 | Test zero-reviews scenario | Verify Rick handles whiskeys with no community data | ⏭️ |
+| R053 | Test rate limiting | Verify user can't exceed daily generation limit | ⏭️ |
+| R054 | Update API documentation | Document all new Rick endpoints | ✅ |
+| R055 | Update README with Rick feature | Explain feature, required env vars, usage | ✅ |
 
 ---
 

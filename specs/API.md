@@ -471,6 +471,196 @@ Mode options:
 
 ---
 
+### Rick House Endpoints (AI Tasting Guide)
+
+Rick House is an AI-powered tasting guide that generates personalized scripts using Claude API and optional voice playback via ElevenLabs.
+
+#### POST /rick/generate-script
+Generate a tasting script for a whiskey.
+
+**Request:**
+```json
+{
+  "whiskeyId": 1,
+  "mode": "guided"
+}
+```
+
+Mode options:
+- `guided`: Full walkthrough with educational content and pauses
+- `notes`: Brief flavor profile for experienced tasters
+
+**Response (200):**
+```json
+{
+  "script": {
+    "visual": "Pour yourself about two fingers...",
+    "nose": "Bring the glass to your nose...",
+    "palate": "Take a small sip...",
+    "finish": "Notice how it ends...",
+    "ricksTake": "This is a solid bourbon...",
+    "quip": "The glass don't know what you paid for it.",
+    "metadata": {
+      "whiskeyId": 1,
+      "whiskeyName": "Buffalo Trace",
+      "mode": "guided",
+      "generatedAt": "2024-01-15T10:30:00Z",
+      "personalized": true,
+      "communityReviewCount": 5
+    }
+  },
+  "cached": false,
+  "whiskeyName": "Buffalo Trace",
+  "mode": "guided"
+}
+```
+
+**Errors:**
+- 429: Daily limit reached (10 per user per day)
+- 500: AI service error
+
+---
+
+#### POST /rick/text-to-speech
+Convert script text to audio using ElevenLabs.
+
+**Request:**
+```json
+{
+  "text": "Pour yourself about two fingers...",
+  "phase": "visual",
+  "requireAudio": false
+}
+```
+
+**Response (200):**
+```json
+{
+  "audio": "<base64-encoded-audio>",
+  "contentType": "audio/mpeg",
+  "durationEstimate": 15,
+  "phase": "visual",
+  "textOnly": false,
+  "remaining": 9
+}
+```
+
+If ElevenLabs fails or is not configured:
+```json
+{
+  "audio": null,
+  "contentType": null,
+  "durationEstimate": 15,
+  "phase": "visual",
+  "textOnly": true,
+  "error": "Audio unavailable: ElevenLabs not configured"
+}
+```
+
+**Errors:**
+- 429: Daily limit reached
+
+---
+
+#### POST /rick/start-session
+Start a new tasting session with Rick.
+
+**Request:**
+```json
+{
+  "whiskeyId": 1,
+  "mode": "guided"
+}
+```
+
+**Response (200):**
+```json
+{
+  "session": {
+    "id": 123,
+    "whiskeyId": 1,
+    "mode": "guided",
+    "startedAt": "2024-01-15T10:30:00Z",
+    "completedAt": null
+  },
+  "script": { ... },
+  "cached": false,
+  "whiskeyName": "Buffalo Trace"
+}
+```
+
+---
+
+#### PATCH /rick/session/:id
+Update a tasting session.
+
+**Request:**
+```json
+{
+  "currentPhase": "palate"
+}
+```
+
+**Response (200):**
+```json
+{
+  "id": 123,
+  "whiskeyId": 1,
+  "mode": "guided",
+  "startedAt": "2024-01-15T10:30:00Z",
+  "completedAt": null,
+  "currentPhase": "palate"
+}
+```
+
+---
+
+#### POST /rick/complete-session
+Mark a tasting session as complete.
+
+**Request:**
+```json
+{
+  "sessionId": 123,
+  "reviewId": 456
+}
+```
+
+**Response (200):**
+```json
+{
+  "id": 123,
+  "whiskeyId": 1,
+  "mode": "guided",
+  "startedAt": "2024-01-15T10:30:00Z",
+  "completedAt": "2024-01-15T10:45:00Z",
+  "linkedReviewId": 456,
+  "message": "Session completed successfully"
+}
+```
+
+---
+
+#### GET /rick/sessions
+Get user's tasting session history.
+
+**Response (200):**
+```json
+[
+  {
+    "id": 123,
+    "whiskeyId": 1,
+    "whiskeyName": "Buffalo Trace",
+    "mode": "guided",
+    "startedAt": "2024-01-15T10:30:00Z",
+    "completedAt": "2024-01-15T10:45:00Z",
+    "createdAt": "2024-01-15T10:30:00Z"
+  }
+]
+```
+
+---
+
 ### Flight Endpoints
 
 #### GET /flights

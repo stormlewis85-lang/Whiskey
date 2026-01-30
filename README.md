@@ -150,3 +150,62 @@ Edit `specs/TASKS.md` and change ✅ or ❌ back to ⬜
 Total: ~50 iterations, roughly 2-4 hours depending on complexity.
 
 Good luck! 🥃
+
+---
+
+## Rick House - AI Tasting Guide
+
+Rick House is an AI-powered tasting guide feature that provides personalized whiskey tasting experiences using Claude API for script generation and ElevenLabs for voice narration.
+
+### Features
+
+- **Guided Mode**: Full walkthrough with educational content, phase-by-phase navigation, and voice playback
+- **Quick Notes Mode**: Brief flavor profiles for experienced tasters
+- **Personalization**: Scripts adapt based on user's palate profile (after 5+ reviews)
+- **Community Integration**: Incorporates community tasting notes
+- **Caching**: Scripts and audio are cached to reduce API costs
+
+### Environment Variables
+
+Add to your `.env` file:
+
+```
+# Required for Rick House
+ANTHROPIC_API_KEY=your_anthropic_api_key
+
+# Optional (enables voice playback)
+ELEVENLABS_API_KEY=your_elevenlabs_api_key
+ELEVENLABS_VOICE_ID=voice_id_for_rick
+```
+
+### Usage
+
+1. Open a whiskey from your collection
+2. Click "Taste with Rick" button
+3. Choose mode: "Guide Me" or "Just the Notes"
+4. Follow along with Rick's tasting guide
+5. Optionally write a review when complete
+
+### Rate Limiting
+
+- 10 script generations per user per day
+- Audio requests share the same daily limit
+
+### Technical Details
+
+| Component | Technology |
+|-----------|------------|
+| Script Generation | Claude API (claude-sonnet-4) |
+| Voice Synthesis | ElevenLabs API |
+| Script Caching | 7 days or until review count changes |
+| Audio Caching | Hash-based file caching |
+
+### API Endpoints
+
+See `specs/API.md` for full documentation of Rick House endpoints:
+- POST /api/rick/generate-script
+- POST /api/rick/text-to-speech
+- POST /api/rick/start-session
+- PATCH /api/rick/session/:id
+- POST /api/rick/complete-session
+- GET /api/rick/sessions
