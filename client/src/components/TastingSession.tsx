@@ -5,7 +5,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, X, Mic, Volume2, VolumeX } from "lucide-react";
+import { Loader2, X, Mic, Volume2, VolumeX, CheckCircle, PenLine, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import AudioPlayer from "./AudioPlayer";
 
@@ -69,6 +69,7 @@ const TastingSession = ({ whiskey, mode, onClose, onComplete }: TastingSessionPr
   const [script, setScript] = useState<RickScript | null>(null);
   const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
+  const [isCompleted, setIsCompleted] = useState(false);
   const [phaseAudio, setPhaseAudio] = useState<Record<TastingPhase, PhaseAudio | null>>({
     visual: null,
     nose: null,
@@ -157,11 +158,8 @@ const TastingSession = ({ whiskey, mode, onClose, onComplete }: TastingSessionPr
       return response.json();
     },
     onSuccess: () => {
-      toast({
-        title: "Tasting Complete",
-        description: "Great job! Ready to write your review?"
-      });
-      onComplete();
+      // Show completion screen instead of immediately navigating away
+      setIsCompleted(true);
     },
     onError: (error) => {
       toast({
@@ -195,6 +193,69 @@ const TastingSession = ({ whiskey, mode, onClose, onComplete }: TastingSessionPr
   const toggleAudio = () => {
     setIsAudioEnabled(prev => !prev);
   };
+
+  // Completion screen
+  if (isCompleted && script) {
+    return (
+      <div className="fixed inset-0 z-50 bg-background">
+        <div className="flex flex-col items-center justify-center min-h-screen p-4">
+          <div className="max-w-lg w-full">
+            <Card className="border-border/50 shadow-warm-lg">
+              <CardContent className="p-8 text-center space-y-6">
+                {/* Success Icon */}
+                <div className="mx-auto w-16 h-16 bg-amber-500/20 rounded-full flex items-center justify-center">
+                  <CheckCircle className="h-10 w-10 text-amber-500" />
+                </div>
+
+                {/* Title & Whiskey */}
+                <div className="space-y-2">
+                  <h2 className="text-2xl font-bold text-foreground">Tasting Complete!</h2>
+                  <p className="text-muted-foreground">{whiskey.name}</p>
+                </div>
+
+                {/* Rick's Closing Quip */}
+                {script.quip && (
+                  <div className="p-4 bg-amber-500/10 rounded-lg border border-amber-500/20">
+                    <p className="text-amber-700 dark:text-amber-400 italic">
+                      "{script.quip}"
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-2">— Rick House</p>
+                  </div>
+                )}
+
+                {/* Summary */}
+                <div className="text-left space-y-3 border-t border-border/50 pt-4">
+                  <h3 className="font-semibold text-foreground">Rick's Take</h3>
+                  <p className="text-sm text-muted-foreground whitespace-pre-line">
+                    {script.ricksTake}
+                  </p>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={onClose}
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Back to Collection
+                  </Button>
+                  <Button
+                    className="flex-1 bg-amber-600 hover:bg-amber-700 text-white"
+                    onClick={onComplete}
+                  >
+                    <PenLine className="h-4 w-4 mr-2" />
+                    Write Your Review
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Loading state
   if (startSessionMutation.isPending || !script) {
