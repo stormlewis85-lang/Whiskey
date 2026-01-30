@@ -670,6 +670,35 @@ export type UpdateTastingSession = z.infer<typeof updateTastingSessionSchema>;
 export const tastingSessionModeValues = ['guided', 'notes'] as const;
 export type TastingSessionMode = typeof tastingSessionModeValues[number];
 
+// Generated Scripts cache table - caches Rick's generated scripts per whiskey
+export const generatedScripts = pgTable("generated_scripts", {
+  id: serial("id").primaryKey(),
+  whiskeyId: integer("whiskey_id").notNull().references(() => whiskeys.id, { onDelete: 'cascade' }),
+  scriptJson: jsonb("script_json").notNull(), // The cached Rick script
+  reviewCountAtGeneration: integer("review_count_at_generation").notNull().default(0), // Number of reviews when script was generated
+  generatedAt: timestamp("generated_at").defaultNow(),
+  expiresAt: timestamp("expires_at"), // When the cache expires (e.g., 7 days after generation)
+});
+
+// Generated Scripts relations
+export const generatedScriptsRelations = relations(generatedScripts, ({ one }) => ({
+  whiskey: one(whiskeys, {
+    fields: [generatedScripts.whiskeyId],
+    references: [whiskeys.id],
+  }),
+}));
+
+// Generated Scripts schemas
+export const insertGeneratedScriptSchema = createInsertSchema(generatedScripts)
+  .omit({ id: true, generatedAt: true });
+
+export const updateGeneratedScriptSchema = insertGeneratedScriptSchema.partial();
+
+// Generated Scripts types
+export type GeneratedScript = typeof generatedScripts.$inferSelect;
+export type InsertGeneratedScript = z.infer<typeof insertGeneratedScriptSchema>;
+export type UpdateGeneratedScript = z.infer<typeof updateGeneratedScriptSchema>;
+
 // Flavor tag constants for search/filter
 export const FLAVOR_TAGS = {
   nose: [
