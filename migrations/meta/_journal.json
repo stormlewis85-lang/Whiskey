@@ -15,6 +15,13 @@
       "when": 1768166721211,
       "tag": "0001_lazy_silver_centurion",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1769743245463,
+      "tag": "0002_open_justin_hammer",
+      "breakpoints": true
     }
   ]
 }

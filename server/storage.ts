@@ -1122,6 +1122,154 @@ export class DatabaseStorage implements IStorage {
       .sort((a, b) => b.count - a.count);
   }
 
+  // ==================== PALATE PROFILE (Rick House) ====================
+
+  /**
+   * Get a user's palate profile for Rick House personalization
+   * Returns their most-used flavor tags, scoring tendencies, and review count
+   */
+  async getPalateProfile(userId: number): Promise<{
+    userId: number;
+    reviewCount: number;
+    topFlavors: {
+      nose: { flavor: string; count: number }[];
+      taste: { flavor: string; count: number }[];
+      finish: { flavor: string; count: number }[];
+      all: { flavor: string; count: number }[];
+    };
+    scoringTendencies: {
+      averageOverall: number | null;
+      averageNose: number | null;
+      averageMouthfeel: number | null;
+      averageTaste: number | null;
+      averageFinish: number | null;
+      averageValue: number | null;
+      tendency: 'generous' | 'critical' | 'balanced';
+    };
+    preferredTypes: { type: string; count: number }[];
+    preferredDistilleries: { distillery: string; count: number }[];
+  }> {
+    const userWhiskeys = await this.getWhiskeys(userId);
+
+    // Collect all reviews from user's whiskeys
+    const allReviews: ReviewNote[] = [];
+    for (const whiskey of userWhiskeys) {
+      if (Array.isArray(whiskey.notes)) {
+        allReviews.push(...(whiskey.notes as ReviewNote[]));
+      }
+    }
+
+    // Count flavors by category
+    const noseFlavors = new Map<string, number>();
+    const tasteFlavors = new Map<string, number>();
+    const finishFlavors = new Map<string, number>();
+    const allFlavors = new Map<string, number>();
+
+    // Score accumulators
+    const scores = {
+      overall: [] as number[],
+      nose: [] as number[],
+      mouthfeel: [] as number[],
+      taste: [] as number[],
+      finish: [] as number[],
+      value: [] as number[],
+    };
+
+    for (const review of allReviews) {
+      // Collect flavors
+      if (Array.isArray(review.noseAromas)) {
+        review.noseAromas.forEach((f: string) => {
+          noseFlavors.set(f, (noseFlavors.get(f) || 0) + 1);
+          allFlavors.set(f, (allFlavors.get(f) || 0) + 1);
+        });
+      }
+      if (Array.isArray(review.tasteFlavors)) {
+        review.tasteFlavors.forEach((f: string) => {
+          tasteFlavors.set(f, (tasteFlavors.get(f) || 0) + 1);
+          allFlavors.set(f, (allFlavors.get(f) || 0) + 1);
+        });
+      }
+      if (Array.isArray(review.finishFlavors)) {
+        review.finishFlavors.forEach((f: string) => {
+          finishFlavors.set(f, (finishFlavors.get(f) || 0) + 1);
+          allFlavors.set(f, (allFlavors.get(f) || 0) + 1);
+        });
+      }
+
+      // Collect scores
+      if (typeof review.rating === 'number') scores.overall.push(review.rating);
+      if (typeof review.noseScore === 'number') scores.nose.push(review.noseScore);
+      if (typeof review.mouthfeelScore === 'number') scores.mouthfeel.push(review.mouthfeelScore);
+      if (typeof review.tasteScore === 'number') scores.taste.push(review.tasteScore);
+      if (typeof review.finishScore === 'number') scores.finish.push(review.finishScore);
+      if (typeof review.valueScore === 'number') scores.value.push(review.valueScore);
+    }
+
+    // Helper to calculate average
+    const avg = (arr: number[]) => arr.length > 0 ? Math.round((arr.reduce((a, b) => a + b, 0) / arr.length) * 10) / 10 : null;
+
+    // Helper to get top N flavors
+    const getTopFlavors = (map: Map<string, number>, n: number = 10) =>
+      Array.from(map.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, n)
+        .map(([flavor, count]) => ({ flavor, count }));
+
+    // Determine scoring tendency
+    const avgOverall = avg(scores.overall);
+    let tendency: 'generous' | 'critical' | 'balanced' = 'balanced';
+    if (avgOverall !== null) {
+      if (avgOverall >= 85) tendency = 'generous';
+      else if (avgOverall <= 70) tendency = 'critical';
+    }
+
+    // Get type preferences
+    const typeCounts = new Map<string, number>();
+    for (const w of userWhiskeys) {
+      if (w.type && (w.rating || 0) >= 70) {
+        typeCounts.set(w.type, (typeCounts.get(w.type) || 0) + 1);
+      }
+    }
+    const preferredTypes = Array.from(typeCounts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([type, count]) => ({ type, count }));
+
+    // Get distillery preferences
+    const distilleryCounts = new Map<string, number>();
+    for (const w of userWhiskeys) {
+      if (w.distillery && (w.rating || 0) >= 70) {
+        distilleryCounts.set(w.distillery, (distilleryCounts.get(w.distillery) || 0) + 1);
+      }
+    }
+    const preferredDistilleries = Array.from(distilleryCounts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([distillery, count]) => ({ distillery, count }));
+
+    return {
+      userId,
+      reviewCount: allReviews.length,
+      topFlavors: {
+        nose: getTopFlavors(noseFlavors),
+        taste: getTopFlavors(tasteFlavors),
+        finish: getTopFlavors(finishFlavors),
+        all: getTopFlavors(allFlavors),
+      },
+      scoringTendencies: {
+        averageOverall: avgOverall,
+        averageNose: avg(scores.nose),
+        averageMouthfeel: avg(scores.mouthfeel),
+        averageTaste: avg(scores.taste),
+        averageFinish: avg(scores.finish),
+        averageValue: avg(scores.value),
+        tendency,
+      },
+      preferredTypes,
+      preferredDistilleries,
+    };
+  }
+
   // ==================== COMMUNITY NOTES (Rick House) ====================
 
   /**

@@ -1177,6 +1177,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user's palate profile (Rick House personalization)
+  app.get("/api/users/:id/palate-profile", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const targetUserId = parseInt(req.params.id);
+      if (isNaN(targetUserId)) {
+        return res.status(400).json({ message: "Invalid user ID format" });
+      }
+
+      // Users can only view their own palate profile
+      const requestingUserId = getUserId(req);
+      if (targetUserId !== requestingUserId) {
+        return res.status(403).json({ message: "You can only view your own palate profile" });
+      }
+
+      const palateProfile = await storage.getPalateProfile(targetUserId);
+      res.json(palateProfile);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch palate profile", error: String(error) });
+    }
+  });
+
   // ==================== RECOMMENDATION ROUTES ====================
 
   // Get recommendations for the user
