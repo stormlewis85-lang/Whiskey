@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Whiskey } from "@shared/schema";
+import { Whiskey, ReviewNote } from "@shared/schema";
 import { Header } from "@/components/Header";
 import CollectionStats from "@/components/CollectionStats";
 import FilterBar from "@/components/FilterBar";
@@ -30,12 +30,13 @@ const Home = () => {
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isBarcodeScannerOpen, setIsBarcodeScannerOpen] = useState(false);
   const [currentWhiskey, setCurrentWhiskey] = useState<Whiskey | null>(null);
+  const [existingReview, setExistingReview] = useState<ReviewNote | undefined>(undefined);
   
   // Filters state
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<string>("name");
-  const [typeFilter, setTypeFilter] = useState<string>("");
-  const [ratingFilter, setRatingFilter] = useState<string>("");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [ratingFilter, setRatingFilter] = useState<string>("all");
   
   // Bourbon-specific filters
   const [bottleTypeFilter, setBottleTypeFilter] = useState<string>("all");
@@ -88,6 +89,13 @@ const Home = () => {
   
   const openReviewModal = (whiskey: Whiskey) => {
     setCurrentWhiskey(whiskey);
+    // If whiskey has existing reviews, open in edit mode with the most recent review
+    if (whiskey.notes && Array.isArray(whiskey.notes) && whiskey.notes.length > 0) {
+      // Get the most recent review (last in array)
+      setExistingReview(whiskey.notes[whiskey.notes.length - 1] as ReviewNote);
+    } else {
+      setExistingReview(undefined);
+    }
     setIsReviewModalOpen(true);
     setIsDetailModalOpen(false);
   };
@@ -233,10 +241,14 @@ const Home = () => {
       
       {currentWhiskey && (
         <>
-          <ReviewModal 
-            isOpen={isReviewModalOpen} 
-            onClose={() => setIsReviewModalOpen(false)} 
-            whiskey={currentWhiskey} 
+          <ReviewModal
+            isOpen={isReviewModalOpen}
+            onClose={() => {
+              setIsReviewModalOpen(false);
+              setExistingReview(undefined);
+            }}
+            whiskey={currentWhiskey}
+            existingReview={existingReview}
           />
           
           <EditWhiskeyModal

@@ -175,8 +175,9 @@ const WhiskeyCard = ({ whiskey, onViewDetails, onReview, onEdit }: WhiskeyCardPr
           </div>
 
           {/* Action buttons */}
-          <div className="flex items-center gap-2 mt-4 pt-3 border-t border-border/30">
+          <div className="flex items-center gap-2 mt-4 pt-3 border-t border-border/30 relative z-10">
             <Button
+              type="button"
               onClick={() => onEdit(whiskey)}
               variant="ghost"
               size="icon"
@@ -186,6 +187,7 @@ const WhiskeyCard = ({ whiskey, onViewDetails, onReview, onEdit }: WhiskeyCardPr
               <PencilIcon className="h-4 w-4" />
             </Button>
             <Button
+              type="button"
               onClick={() => onViewDetails(whiskey)}
               variant="outline"
               size="sm"
@@ -194,6 +196,7 @@ const WhiskeyCard = ({ whiskey, onViewDetails, onReview, onEdit }: WhiskeyCardPr
               Details
             </Button>
             <Button
+              type="button"
               onClick={() => onReview(whiskey)}
               size="sm"
               className="flex-1 h-9"

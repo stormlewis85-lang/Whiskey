@@ -79,14 +79,14 @@ const useWhiskeyCollection = ({
       console.log("After search query filter:", result.length);
     }
     
-    // Apply type filter
-    if (typeFilter) {
+    // Apply type filter (skip if empty or 'all')
+    if (typeFilter && typeFilter !== 'all') {
       result = result.filter(whiskey => whiskey.type === typeFilter);
       console.log("After type filter:", result.length);
     }
-    
-    // Apply rating filter
-    if (ratingFilter) {
+
+    // Apply rating filter (skip if empty or 'all')
+    if (ratingFilter && ratingFilter !== 'all') {
       const minRating = parseInt(ratingFilter);
       result = result.filter(
         whiskey => whiskey.rating !== null && whiskey.rating >= minRating
@@ -127,27 +127,43 @@ const useWhiskeyCollection = ({
     result.sort((a, b) => {
       switch (sortBy) {
         case "name":
+          // Sort by name (A-Z)
           return a.name.localeCompare(b.name);
+        case "nameDesc":
+          // Sort by name (Z-A)
+          return b.name.localeCompare(a.name);
         case "rating":
-          // Sort by rating (highest first), handling null values
+          // Sort by rating (low-high), handling null values
+          if (a.rating === null && b.rating === null) return 0;
+          if (a.rating === null) return 1;
+          if (b.rating === null) return -1;
+          return a.rating - b.rating;
+        case "ratingDesc":
+          // Sort by rating (high-low), handling null values
           if (a.rating === null && b.rating === null) return 0;
           if (a.rating === null) return 1;
           if (b.rating === null) return -1;
           return b.rating - a.rating;
         case "price":
-          // Sort by price (lowest first), handling null values
+          // Sort by price (low-high), handling null values
           if (a.price === null && b.price === null) return 0;
           if (a.price === null) return 1;
           if (b.price === null) return -1;
           return a.price - b.price;
-        case "price-high":
-          // Sort by price (highest first), handling null values
+        case "priceDesc":
+          // Sort by price (high-low), handling null values
           if (a.price === null && b.price === null) return 0;
           if (a.price === null) return 1;
           if (b.price === null) return -1;
           return b.price - a.price;
         case "age":
-          // Sort by age (oldest first), handling null values
+          // Sort by age (low-high), handling null values
+          if (a.age === null && b.age === null) return 0;
+          if (a.age === null) return 1;
+          if (b.age === null) return -1;
+          return a.age - b.age;
+        case "ageDesc":
+          // Sort by age (high-low), handling null values
           if (a.age === null && b.age === null) return 0;
           if (a.age === null) return 1;
           if (b.age === null) return -1;

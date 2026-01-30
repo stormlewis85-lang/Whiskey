@@ -37,6 +37,7 @@ interface ReviewModalProps {
   isOpen: boolean;
   onClose: () => void;
   whiskey: Whiskey;
+  existingReview?: ReviewNote; // Optional: if provided, modal opens in edit mode
 }
 
 // Define the review steps
@@ -50,16 +51,26 @@ const STEPS = [
   { id: "summary", title: "Summary", icon: Star, description: "Final thoughts" },
 ];
 
-const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
+const ReviewModal = ({ isOpen, onClose, whiskey, existingReview }: ReviewModalProps) => {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
   const [rating, setRating] = useState(0);
   const isMobile = useIsMobile();
 
+  // Determine if we're in edit mode
+  const isEditMode = !!existingReview;
+
   // State for multi-select fields
   const [selectedNoseAromas, setSelectedNoseAromas] = useState<string[]>([]);
   const [selectedTasteFlavors, setSelectedTasteFlavors] = useState<string[]>([]);
   const [selectedFinishFlavors, setSelectedFinishFlavors] = useState<string[]>([]);
+
+  // State for score fields (using local state for reliable updates)
+  const [noseScore, setNoseScore] = useState<number | undefined>(undefined);
+  const [mouthfeelScore, setMouthfeelScore] = useState<number | undefined>(undefined);
+  const [tasteScore, setTasteScore] = useState<number | undefined>(undefined);
+  const [finishScore, setFinishScore] = useState<number | undefined>(undefined);
+  const [valueScore, setValueScore] = useState<number | undefined>(undefined);
 
   // AI Assist modals state
   const [showAiSuggestModal, setShowAiSuggestModal] = useState(false);
@@ -67,7 +78,13 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
 
   const form = useForm<ReviewNote>({
     resolver: zodResolver(reviewNoteSchema),
-    defaultValues: {
+    defaultValues: existingReview ? {
+      ...existingReview,
+      // Ensure arrays are arrays
+      noseAromas: existingReview.noseAromas || [],
+      tasteFlavors: existingReview.tasteFlavors || [],
+      finishFlavors: existingReview.finishFlavors || [],
+    } : {
       rating: 0,
       date: new Date().toISOString().split('T')[0],
       text: "",
@@ -117,6 +134,134 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
     },
   });
 
+  // Pre-populate all form values when editing existing review
+  useEffect(() => {
+    if (isOpen && existingReview) {
+      // Debug: Log existing review data to see what's available
+      console.log('=== EDIT REVIEW DEBUG ===');
+      console.log('Existing review:', existingReview);
+      console.log('noseScore:', existingReview.noseScore, typeof existingReview.noseScore);
+      console.log('mouthfeelScore:', existingReview.mouthfeelScore, typeof existingReview.mouthfeelScore);
+      console.log('tasteScore:', existingReview.tasteScore, typeof existingReview.tasteScore);
+      console.log('finishScore:', existingReview.finishScore, typeof existingReview.finishScore);
+      console.log('valueScore:', existingReview.valueScore, typeof existingReview.valueScore);
+      console.log('=========================');
+
+      // Reset form first, then explicitly set each field to ensure scores are populated
+      form.reset();
+
+      // Explicitly set all fields from existing review
+      Object.entries(existingReview).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          form.setValue(key as any, value);
+        }
+      });
+
+      // Ensure arrays are properly set
+      form.setValue('noseAromas', existingReview.noseAromas || []);
+      form.setValue('tasteFlavors', existingReview.tasteFlavors || []);
+      form.setValue('finishFlavors', existingReview.finishFlavors || []);
+
+      // Explicitly set score values (handle both number and string formats)
+      if (existingReview.noseScore !== undefined && existingReview.noseScore !== null) {
+        form.setValue('noseScore', Number(existingReview.noseScore));
+      }
+      if (existingReview.mouthfeelScore !== undefined && existingReview.mouthfeelScore !== null) {
+        form.setValue('mouthfeelScore', Number(existingReview.mouthfeelScore));
+      }
+      if (existingReview.tasteScore !== undefined && existingReview.tasteScore !== null) {
+        form.setValue('tasteScore', Number(existingReview.tasteScore));
+      }
+      if (existingReview.finishScore !== undefined && existingReview.finishScore !== null) {
+        form.setValue('finishScore', Number(existingReview.finishScore));
+      }
+      if (existingReview.valueScore !== undefined && existingReview.valueScore !== null) {
+        form.setValue('valueScore', Number(existingReview.valueScore));
+      }
+
+      // Also update the local state for multi-select components
+      setSelectedNoseAromas(existingReview.noseAromas || []);
+      setSelectedTasteFlavors(existingReview.tasteFlavors || []);
+      setSelectedFinishFlavors(existingReview.finishFlavors || []);
+      setRating(existingReview.rating || 0);
+
+      // Update score states from existing review
+      setNoseScore(existingReview.noseScore !== undefined && existingReview.noseScore !== null
+        ? Number(existingReview.noseScore) : undefined);
+      setMouthfeelScore(existingReview.mouthfeelScore !== undefined && existingReview.mouthfeelScore !== null
+        ? Number(existingReview.mouthfeelScore) : undefined);
+      setTasteScore(existingReview.tasteScore !== undefined && existingReview.tasteScore !== null
+        ? Number(existingReview.tasteScore) : undefined);
+      setFinishScore(existingReview.finishScore !== undefined && existingReview.finishScore !== null
+        ? Number(existingReview.finishScore) : undefined);
+      setValueScore(existingReview.valueScore !== undefined && existingReview.valueScore !== null
+        ? Number(existingReview.valueScore) : undefined);
+
+      setCurrentStep(0);
+    } else if (isOpen && !existingReview) {
+      // Reset to empty values for new review
+      form.reset({
+        rating: 0,
+        date: new Date().toISOString().split('T')[0],
+        text: "",
+        flavor: "",
+        id: nanoid(),
+        visual: "",
+        nose: "",
+        mouthfeel: "",
+        taste: "",
+        finish: "",
+        value: "",
+        visualColor: "",
+        visualViscosity: "",
+        visualClarity: "",
+        visualNotes: "",
+        noseAromas: [],
+        noseScore: undefined,
+        noseNotes: "",
+        mouthfeelAlcohol: "",
+        mouthfeelViscosity: "",
+        mouthfeelPleasantness: "",
+        mouthfeelScore: undefined,
+        mouthfeelNotes: "",
+        tasteFlavors: [],
+        tasteCorrelation: undefined,
+        tasteScore: undefined,
+        tasteNotes: "",
+        finishFlavors: [],
+        finishCorrelation: undefined,
+        finishLength: "",
+        finishPleasantness: "",
+        finishScore: undefined,
+        finishNotes: "",
+        valueAvailability: "",
+        valueBuyAgain: "",
+        valueOccasion: "",
+        valueScore: undefined,
+        valueNotes: "",
+        flavorProfileFruitFloral: 0,
+        flavorProfileSweet: 0,
+        flavorProfileSpice: 0,
+        flavorProfileHerbal: 0,
+        flavorProfileGrain: 0,
+        flavorProfileOak: 0,
+        isPublic: false,
+        shareId: undefined
+      });
+      setSelectedNoseAromas([]);
+      setSelectedTasteFlavors([]);
+      setSelectedFinishFlavors([]);
+      setRating(0);
+      // Reset scores for new review
+      setNoseScore(undefined);
+      setMouthfeelScore(undefined);
+      setTasteScore(undefined);
+      setFinishScore(undefined);
+      setValueScore(undefined);
+      setCurrentStep(0);
+    }
+  }, [isOpen, existingReview, form]);
+
   // Sync flavor selections with form
   useEffect(() => {
     form.setValue('noseAromas', selectedNoseAromas);
@@ -129,6 +274,37 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
   useEffect(() => {
     form.setValue('finishFlavors', selectedFinishFlavors);
   }, [selectedFinishFlavors, form]);
+
+  // Sync score selections with form
+  useEffect(() => {
+    if (noseScore !== undefined) {
+      form.setValue('noseScore', noseScore);
+    }
+  }, [noseScore, form]);
+
+  useEffect(() => {
+    if (mouthfeelScore !== undefined) {
+      form.setValue('mouthfeelScore', mouthfeelScore);
+    }
+  }, [mouthfeelScore, form]);
+
+  useEffect(() => {
+    if (tasteScore !== undefined) {
+      form.setValue('tasteScore', tasteScore);
+    }
+  }, [tasteScore, form]);
+
+  useEffect(() => {
+    if (finishScore !== undefined) {
+      form.setValue('finishScore', finishScore);
+    }
+  }, [finishScore, form]);
+
+  useEffect(() => {
+    if (valueScore !== undefined) {
+      form.setValue('valueScore', valueScore);
+    }
+  }, [valueScore, form]);
 
   const toggleAroma = (value: string) => {
     setSelectedNoseAromas(prev =>
@@ -150,11 +326,21 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
 
   const resetForm = () => {
     setCurrentStep(0);
-    setRating(0);
-    setSelectedNoseAromas([]);
-    setSelectedTasteFlavors([]);
-    setSelectedFinishFlavors([]);
-    form.reset();
+    if (existingReview) {
+      // Reset to existing review values when in edit mode
+      setRating(existingReview.rating || 0);
+      setSelectedNoseAromas(existingReview.noseAromas || []);
+      setSelectedTasteFlavors(existingReview.tasteFlavors || []);
+      setSelectedFinishFlavors(existingReview.finishFlavors || []);
+      form.reset(existingReview);
+    } else {
+      // Reset to empty values for new review
+      setRating(0);
+      setSelectedNoseAromas([]);
+      setSelectedTasteFlavors([]);
+      setSelectedFinishFlavors([]);
+      form.reset();
+    }
   };
 
   const handleClose = () => {
@@ -162,15 +348,15 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
     onClose();
   };
 
-  // Calculate weighted score
+  // Calculate weighted score (using local state values)
   const calculateWeightedScore = () => {
-    const noseScore = Number(form.getValues('noseScore')) || 0;
-    const mouthfeelScore = Number(form.getValues('mouthfeelScore')) || 0;
-    const tasteScore = Number(form.getValues('tasteScore')) || 0;
-    const finishScore = Number(form.getValues('finishScore')) || 0;
-    const valueScore = Number(form.getValues('valueScore')) || 0;
+    const ns = Number(noseScore) || 0;
+    const ms = Number(mouthfeelScore) || 0;
+    const ts = Number(tasteScore) || 0;
+    const fs = Number(finishScore) || 0;
+    const vs = Number(valueScore) || 0;
 
-    const weighted = (noseScore * 1.5) + (mouthfeelScore * 2.0) + (tasteScore * 3.0) + (finishScore * 2.5) + (valueScore * 1.0);
+    const weighted = (ns * 1.5) + (ms * 2.0) + (ts * 3.0) + (fs * 2.5) + (vs * 1.0);
     return weighted / 10;
   };
 
@@ -199,11 +385,13 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
 
       reviewData.text = sections.join('\n\n');
 
-      const response = await apiRequest(
-        "POST",
-        `/api/whiskeys/${whiskey.id}/reviews`,
-        reviewData
-      );
+      // Use PUT for editing, POST for creating new review
+      const method = isEditMode ? "PUT" : "POST";
+      const url = isEditMode
+        ? `/api/whiskeys/${whiskey.id}/reviews/${existingReview!.id}`
+        : `/api/whiskeys/${whiskey.id}/reviews`;
+
+      const response = await apiRequest(method, url, reviewData);
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -215,20 +403,23 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/whiskeys"] });
       toast({
-        title: "Review Added",
+        title: isEditMode ? "Review Updated" : "Review Added",
         description: "Your tasting notes have been saved.",
       });
       handleClose();
 
       if (data && Array.isArray(data.notes) && data.notes.length > 0) {
-        const newReview = data.notes[data.notes.length - 1];
-        window.location.href = `/whiskey/${data.id}/review/${newReview.id}`;
+        // For edit mode, find the updated review; for new, get the last one
+        const reviewToShow = isEditMode
+          ? data.notes.find((n: ReviewNote) => n.id === existingReview!.id) || data.notes[data.notes.length - 1]
+          : data.notes[data.notes.length - 1];
+        window.location.href = `/whiskey/${data.id}/review/${reviewToShow.id}`;
       }
     },
     onError: (error) => {
       toast({
         title: "Error",
-        description: `Failed to add review: ${error.message}`,
+        description: `Failed to ${isEditMode ? 'update' : 'add'} review: ${error.message}`,
         variant: "destructive",
       });
     },
@@ -250,6 +441,20 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
     const formData = form.getValues();
     const weightedScore = calculateWeightedScore();
     formData.rating = Math.round(weightedScore * 10) / 10;
+
+    // Explicitly include local state scores to ensure they're submitted
+    // (useEffect syncs may not have run yet due to React batching)
+    if (noseScore !== undefined) formData.noseScore = noseScore;
+    if (mouthfeelScore !== undefined) formData.mouthfeelScore = mouthfeelScore;
+    if (tasteScore !== undefined) formData.tasteScore = tasteScore;
+    if (finishScore !== undefined) formData.finishScore = finishScore;
+    if (valueScore !== undefined) formData.valueScore = valueScore;
+
+    // Also ensure array selections are included
+    formData.noseAromas = selectedNoseAromas;
+    formData.tasteFlavors = selectedTasteFlavors;
+    formData.finishFlavors = selectedFinishFlavors;
+
     addReviewMutation.mutate(formData);
   };
 
@@ -353,8 +558,8 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
               <FormLabel className="text-base font-medium mb-3 block">Nose Score</FormLabel>
               <SingleFlavorChipGroup
                 options={SCORE_OPTIONS.map(s => ({ value: String(s.value), label: s.label }))}
-                selected={form.watch('noseScore')?.toString()}
-                onSelect={(value) => form.setValue('noseScore', Number(value))}
+                selected={noseScore?.toString()}
+                onSelect={(value) => setNoseScore(Number(value))}
               />
             </div>
 
@@ -411,8 +616,8 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
               <FormLabel className="text-base font-medium mb-3 block">Mouthfeel Score</FormLabel>
               <SingleFlavorChipGroup
                 options={SCORE_OPTIONS.map(s => ({ value: String(s.value), label: s.label }))}
-                selected={form.watch('mouthfeelScore')?.toString()}
-                onSelect={(value) => form.setValue('mouthfeelScore', Number(value))}
+                selected={mouthfeelScore?.toString()}
+                onSelect={(value) => setMouthfeelScore(Number(value))}
               />
             </div>
 
@@ -479,8 +684,8 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
               <FormLabel className="text-base font-medium mb-3 block">Taste Score</FormLabel>
               <SingleFlavorChipGroup
                 options={SCORE_OPTIONS.map(s => ({ value: String(s.value), label: s.label }))}
-                selected={form.watch('tasteScore')?.toString()}
-                onSelect={(value) => form.setValue('tasteScore', Number(value))}
+                selected={tasteScore?.toString()}
+                onSelect={(value) => setTasteScore(Number(value))}
               />
             </div>
 
@@ -543,8 +748,8 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
               <FormLabel className="text-base font-medium mb-3 block">Finish Score</FormLabel>
               <SingleFlavorChipGroup
                 options={SCORE_OPTIONS.map(s => ({ value: String(s.value), label: s.label }))}
-                selected={form.watch('finishScore')?.toString()}
-                onSelect={(value) => form.setValue('finishScore', Number(value))}
+                selected={finishScore?.toString()}
+                onSelect={(value) => setFinishScore(Number(value))}
               />
             </div>
 
@@ -608,8 +813,8 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
               <FormLabel className="text-base font-medium mb-3 block">Value Score</FormLabel>
               <SingleFlavorChipGroup
                 options={SCORE_OPTIONS.map(s => ({ value: String(s.value), label: s.label }))}
-                selected={form.watch('valueScore')?.toString()}
-                onSelect={(value) => form.setValue('valueScore', Number(value))}
+                selected={valueScore?.toString()}
+                onSelect={(value) => setValueScore(Number(value))}
               />
             </div>
 
@@ -726,7 +931,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey }: ReviewModalProps) => {
           <div className="px-6 py-4">
             <div className="flex items-center justify-between mb-3">
               <DialogTitle className="text-lg font-semibold text-foreground">
-                Review: {whiskey.name}
+                {isEditMode ? 'Edit Review' : 'Review'}: {whiskey.name}
               </DialogTitle>
               <button
                 onClick={handleClose}
