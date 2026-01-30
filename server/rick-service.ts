@@ -93,9 +93,23 @@ function buildPrompt(
 - Top Finish Notes: ${communityNotes.topFlavors.finish.map(f => f.flavor).join(', ') || 'None recorded'}
 `;
   } else {
+    // Zero reviews case - guide Rick to use whiskey metadata
+    const typeHint = whiskey.type ? `As a ${whiskey.type}, expect typical characteristics of that style.` : '';
+    const ageHint = whiskey.age ? `At ${whiskey.age} years, expect appropriate oak influence and maturity.` : '';
+    const abvHint = whiskey.abv ? `At ${whiskey.abv}% ABV, ${whiskey.abv > 50 ? 'expect some heat and intensity' : 'should be approachable'}.` : '';
+    const distilleryHint = whiskey.distillery ? `${whiskey.distillery} is known for their house style - use that as a reference.` : '';
+
     communitySection = `
 ## Community Notes
-No community reviews available for this whiskey yet. Use the distillery profile and whiskey characteristics to set expectations.
+No community reviews available for this whiskey yet.
+
+Use the whiskey's characteristics to set educated expectations:
+${typeHint}
+${ageHint}
+${abvHint}
+${distilleryHint}
+
+Be honest that you haven't heard much chatter about this one, but share what you'd expect based on the specs.
 `;
   }
 
