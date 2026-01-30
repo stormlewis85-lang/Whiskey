@@ -4,6 +4,12 @@
  */
 
 import { getRickConfig } from './rick-config';
+import { writeFileSync, existsSync, mkdirSync } from 'fs';
+import { join } from 'path';
+import { createHash } from 'crypto';
+
+// Audio storage directory
+const AUDIO_DIR = join(process.cwd(), 'uploads', 'audio');
 
 export interface TextToSpeechInput {
   text: string;
@@ -110,4 +116,60 @@ export async function generatePhaseAudio(
   text: string
 ): Promise<TextToSpeechResult> {
   return generateSpeech({ text });
+}
+
+/**
+ * Ensure audio directory exists
+ */
+function ensureAudioDir(): void {
+  if (!existsSync(AUDIO_DIR)) {
+    mkdirSync(AUDIO_DIR, { recursive: true });
+  }
+}
+
+/**
+ * Generate a hash for audio caching
+ */
+export function generateAudioHash(text: string): string {
+  return createHash('md5').update(text).digest('hex').substring(0, 12);
+}
+
+/**
+ * Save audio to file and return URL
+ */
+export async function saveAudioFile(
+  audioBase64: string,
+  sessionId: number,
+  phase?: string
+): Promise<string> {
+  ensureAudioDir();
+
+  const timestamp = Date.now();
+  const phaseSuffix = phase ? `-${phase}` : '';
+  const filename = `rick-${sessionId}${phaseSuffix}-${timestamp}.mp3`;
+  const filepath = join(AUDIO_DIR, filename);
+
+  // Decode base64 and save
+  const buffer = Buffer.from(audioBase64, 'base64');
+  writeFileSync(filepath, buffer);
+
+  // Return URL path (will be served by express static)
+  return `/uploads/audio/${filename}`;
+}
+
+/**
+ * Generate and save audio, returning the URL
+ */
+export async function generateAndSaveAudio(
+  text: string,
+  sessionId: number,
+  phase?: string
+): Promise<{ audioUrl: string; durationEstimate: number }> {
+  const result = await generateSpeech({ text });
+  const audioUrl = await saveAudioFile(result.audioBase64, sessionId, phase);
+
+  return {
+    audioUrl,
+    durationEstimate: result.durationEstimate || 0
+  };
 }
