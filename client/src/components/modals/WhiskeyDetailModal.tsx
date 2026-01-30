@@ -16,7 +16,7 @@ import {
   BookOpen, PenIcon, XIcon, AlertTriangle, Loader2,
   DollarSign, BarChart2, Eye, Calendar, MapPin, Droplets, Clock,
   Heart, Package, PackageOpen, Gift, CheckCircle2, Plus, Minus, ArrowRight,
-  Image
+  Image, Mic
 } from "lucide-react";
 import { useLocation } from 'wouter';
 import { Separator } from "@/components/ui/separator";
@@ -38,9 +38,10 @@ interface WhiskeyDetailModalProps {
   whiskey: Whiskey;
   onReview: (whiskey: Whiskey) => void;
   onEdit: (whiskey: Whiskey) => void;
+  onTasteWithRick?: (whiskey: Whiskey) => void;
 }
 
-const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit }: WhiskeyDetailModalProps) => {
+const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit, onTasteWithRick }: WhiskeyDetailModalProps) => {
   const [isUploading, setIsUploading] = useState(false);
   const [selectedReview, setSelectedReview] = useState<ReviewNote | null>(null);
   const [isEditReviewModalOpen, setIsEditReviewModalOpen] = useState(false);
@@ -378,6 +379,17 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit }: Whis
                 <Image className="h-4 w-4 mr-1.5" />
                 Share
               </Button>
+              {onTasteWithRick && !isWishlist && (
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="bg-amber-600 hover:bg-amber-700 text-white"
+                  onClick={() => onTasteWithRick(whiskey)}
+                >
+                  <Mic className="h-4 w-4 mr-1.5" />
+                  Taste with Rick
+                </Button>
+              )}
             </div>
           </DialogHeader>
 

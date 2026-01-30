@@ -132,7 +132,7 @@ This is what lets Ralph run unattended overnight.
 
 | ID | Task | Success Criteria | Status |
 |----|------|------------------|--------|
-| R029 | Add "Taste with Rick" button to bottle detail page | Button visible on whiskeys in user's collection | ⬜ |
+| R029 | Add "Taste with Rick" button to bottle detail page | Button visible on whiskeys in user's collection | ✅ |
 | R030 | Create mode selection modal | User picks "Guide Me" or "Just the Notes" before session starts | ⬜ |
 | R031 | Create TastingSession component shell | Container for the guided tasting experience | ⬜ |
 | R032 | Build phase progress indicator | Shows: Visual → Nose → Palate → Finish → Rick's Take. Highlights current phase | ⬜ |

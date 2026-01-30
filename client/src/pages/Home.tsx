@@ -29,6 +29,7 @@ const Home = () => {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isBarcodeScannerOpen, setIsBarcodeScannerOpen] = useState(false);
+  const [isTastingModeModalOpen, setIsTastingModeModalOpen] = useState(false);
   const [currentWhiskey, setCurrentWhiskey] = useState<Whiskey | null>(null);
   const [existingReview, setExistingReview] = useState<ReviewNote | undefined>(undefined);
   
@@ -108,6 +109,12 @@ const Home = () => {
   const openEditWhiskeyModal = (whiskey: Whiskey) => {
     setCurrentWhiskey(whiskey);
     setIsEditWhiskeyModalOpen(true);
+    setIsDetailModalOpen(false);
+  };
+
+  const openTastingModeModal = (whiskey: Whiskey) => {
+    setCurrentWhiskey(whiskey);
+    setIsTastingModeModalOpen(true);
     setIsDetailModalOpen(false);
   };
 
@@ -257,12 +264,13 @@ const Home = () => {
             whiskey={currentWhiskey}
           />
           
-          <WhiskeyDetailModal 
-            isOpen={isDetailModalOpen} 
-            onClose={() => setIsDetailModalOpen(false)} 
+          <WhiskeyDetailModal
+            isOpen={isDetailModalOpen}
+            onClose={() => setIsDetailModalOpen(false)}
             whiskey={currentWhiskey}
             onReview={openReviewModal}
             onEdit={openEditWhiskeyModal}
+            onTasteWithRick={openTastingModeModal}
           />
         </>
       )}
