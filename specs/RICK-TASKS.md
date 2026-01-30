@@ -76,8 +76,8 @@ This is what lets Ralph run unattended overnight.
 
 | ID | Task | Success Criteria | Status |
 |----|------|------------------|--------|
-| R001 | Add ELEVENLABS_API_KEY to server config | Config reads from .env, validated on startup | ⬜ |
-| R002 | Add ELEVENLABS_VOICE_ID to server config | Config reads from .env, validated on startup | ⬜ |
+| R001 | Add ELEVENLABS_API_KEY to server config | Config reads from .env, validated on startup | ✅ |
+| R002 | Add ELEVENLABS_VOICE_ID to server config | Config reads from .env, validated on startup | ✅ |
 | R003 | Create tasting_sessions table | Migration creates: id, user_id, whiskey_id, mode (guided/notes), script_json, audio_url, started_at, completed_at, created_at | ⬜ |
 | R004 | Create generated_scripts cache table | Migration creates: id, whiskey_id, script_json, review_count_at_generation, generated_at, expires_at | ⬜ |
 | R005 | Add relations to existing models | TastingSession belongs to User and Whiskey, scripts cached by Whiskey | ⬜ |
