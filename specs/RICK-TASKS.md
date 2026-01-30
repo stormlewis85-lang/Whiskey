@@ -140,7 +140,7 @@ This is what lets Ralph run unattended overnight.
 | R034 | Build audio player component | Play/pause, progress bar, phase skip buttons | ✅ |
 | R035 | Implement phase-by-phase playback | Audio plays for current phase, waits for user to advance | ✅ |
 | R036 | Add "I'm ready" / "Next" button | User controls pacing between phases | ✅ |
-| R037 | Create "Just Notes" view | Simpler view: all notes at once, single audio play, Rick's take | ⬜ |
+| R037 | Create "Just Notes" view | Simpler view: all notes at once, single audio play, Rick's take | ✅ |
 | R038 | Build session complete screen | Summary, option to write review, Rick's closing thought | ⬜ |
 | R039 | Connect to review flow | "Write your review" button pre-populates whiskey, links session | ⬜ |
 | R040 | Add loading states | Skeleton UI while script generates, audio buffers | ⬜ |

@@ -258,135 +258,203 @@ const TastingSession = ({ whiskey, mode, onClose, onComplete }: TastingSessionPr
           </div>
         </div>
 
-        {/* Phase Progress Indicator */}
-        <div className="px-4 pb-3">
-          <div className="flex items-center justify-between max-w-xl mx-auto">
-            {PHASES.map((phase, index) => (
-              <div
-                key={phase}
-                className="flex items-center"
-              >
+        {/* Phase Progress Indicator - Only show in guided mode */}
+        {mode === 'guided' && (
+          <div className="px-4 pb-3">
+            <div className="flex items-center justify-between max-w-xl mx-auto">
+              {PHASES.map((phase, index) => (
                 <div
-                  className={cn(
-                    "flex flex-col items-center cursor-pointer transition-all",
-                    index <= currentPhaseIndex ? "opacity-100" : "opacity-50"
-                  )}
-                  onClick={() => index <= currentPhaseIndex && setCurrentPhaseIndex(index)}
+                  key={phase}
+                  className="flex items-center"
                 >
                   <div
                     className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-all",
-                      index === currentPhaseIndex
-                        ? "bg-amber-500 text-white scale-110"
-                        : index < currentPhaseIndex
-                          ? "bg-amber-600/60 text-white"
-                          : "bg-amber-900/50 text-amber-300/50"
+                      "flex flex-col items-center cursor-pointer transition-all",
+                      index <= currentPhaseIndex ? "opacity-100" : "opacity-50"
                     )}
+                    onClick={() => index <= currentPhaseIndex && setCurrentPhaseIndex(index)}
                   >
-                    {index + 1}
+                    <div
+                      className={cn(
+                        "w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-all",
+                        index === currentPhaseIndex
+                          ? "bg-amber-500 text-white scale-110"
+                          : index < currentPhaseIndex
+                            ? "bg-amber-600/60 text-white"
+                            : "bg-amber-900/50 text-amber-300/50"
+                      )}
+                    >
+                      {index + 1}
+                    </div>
+                    <span
+                      className={cn(
+                        "text-[10px] mt-1 hidden sm:block",
+                        index === currentPhaseIndex
+                          ? "text-amber-200"
+                          : "text-amber-400/50"
+                      )}
+                    >
+                      {PHASE_LABELS[phase]}
+                    </span>
                   </div>
-                  <span
-                    className={cn(
-                      "text-[10px] mt-1 hidden sm:block",
-                      index === currentPhaseIndex
-                        ? "text-amber-200"
-                        : "text-amber-400/50"
-                    )}
-                  >
-                    {PHASE_LABELS[phase]}
-                  </span>
+                  {index < PHASES.length - 1 && (
+                    <div
+                      className={cn(
+                        "w-8 sm:w-12 h-0.5 mx-1",
+                        index < currentPhaseIndex
+                          ? "bg-amber-500/60"
+                          : "bg-amber-900/50"
+                      )}
+                    />
+                  )}
                 </div>
-                {index < PHASES.length - 1 && (
-                  <div
-                    className={cn(
-                      "w-8 sm:w-12 h-0.5 mx-1",
-                      index < currentPhaseIndex
-                        ? "bg-amber-500/60"
-                        : "bg-amber-900/50"
-                    )}
-                  />
-                )}
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </header>
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6 max-w-2xl">
-        <Card className="border-border/50 shadow-warm-lg">
-          <CardContent className="p-6">
-            {/* Phase Title */}
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-foreground">
-                {PHASE_LABELS[currentPhase]}
-              </h2>
-              {script.quip && currentPhaseIndex === PHASES.length - 1 && (
-                <p className="text-sm text-amber-600 dark:text-amber-400 italic mt-1">
-                  "{script.quip}"
-                </p>
-              )}
+        {mode === 'notes' ? (
+          /* Just Notes View - All sections at once */
+          <div className="space-y-6">
+            <Card className="border-border/50 shadow-warm-lg">
+              <CardContent className="p-6 space-y-6">
+                {/* Quick Notes Header */}
+                <div>
+                  <h2 className="text-2xl font-bold text-foreground mb-2">Quick Tasting Notes</h2>
+                  {script.quip && (
+                    <p className="text-sm text-amber-600 dark:text-amber-400 italic">
+                      "{script.quip}"
+                    </p>
+                  )}
+                </div>
+
+                {/* All Sections */}
+                {PHASES.map((phase) => (
+                  <div key={phase} className="border-b border-border/30 pb-4 last:border-0 last:pb-0">
+                    <h3 className="font-semibold text-foreground text-lg mb-2">
+                      {PHASE_LABELS[phase]}
+                    </h3>
+                    <p className="text-muted-foreground whitespace-pre-line">
+                      {script[phase]}
+                    </p>
+                  </div>
+                ))}
+
+                {/* Single Audio Player for full script */}
+                {isAudioEnabled && (
+                  <AudioPlayer
+                    audioBase64={phaseAudio.visual?.audio}
+                    contentType={phaseAudio.visual?.contentType || 'audio/mpeg'}
+                    isLoading={isLoadingAudio}
+                    textOnly={phaseAudio.visual?.textOnly}
+                    error={phaseAudio.visual?.error}
+                    showSkipButtons={false}
+                    autoPlay={false}
+                    className="mt-4"
+                  />
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Complete Button */}
+            <div className="flex justify-center">
+              <Button
+                onClick={() => completeSessionMutation.mutate()}
+                className="bg-amber-600 hover:bg-amber-700 text-white px-8"
+                disabled={completeSessionMutation.isPending}
+              >
+                {completeSessionMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Completing...
+                  </>
+                ) : (
+                  "Complete Tasting"
+                )}
+              </Button>
             </div>
+          </div>
+        ) : (
+          /* Guided View - Phase by phase */
+          <>
+            <Card className="border-border/50 shadow-warm-lg">
+              <CardContent className="p-6">
+                {/* Phase Title */}
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold text-foreground">
+                    {PHASE_LABELS[currentPhase]}
+                  </h2>
+                  {script.quip && currentPhaseIndex === PHASES.length - 1 && (
+                    <p className="text-sm text-amber-600 dark:text-amber-400 italic mt-1">
+                      "{script.quip}"
+                    </p>
+                  )}
+                </div>
 
-            {/* Script Content */}
-            <div className="prose prose-amber dark:prose-invert max-w-none">
-              <p className="text-lg text-foreground leading-relaxed whitespace-pre-line">
-                {script[currentPhase]}
-              </p>
+                {/* Script Content */}
+                <div className="prose prose-amber dark:prose-invert max-w-none">
+                  <p className="text-lg text-foreground leading-relaxed whitespace-pre-line">
+                    {script[currentPhase]}
+                  </p>
+                </div>
+
+                {/* Audio Player */}
+                {isAudioEnabled && (
+                  <AudioPlayer
+                    audioBase64={phaseAudio[currentPhase]?.audio}
+                    contentType={phaseAudio[currentPhase]?.contentType || 'audio/mpeg'}
+                    isLoading={isLoadingAudio && !phaseAudio[currentPhase]}
+                    textOnly={phaseAudio[currentPhase]?.textOnly}
+                    error={phaseAudio[currentPhase]?.error}
+                    onEnded={() => {
+                      // Optionally auto-advance after audio ends
+                    }}
+                    onSkipBack={currentPhaseIndex > 0 ? handlePrevious : undefined}
+                    onSkipForward={currentPhaseIndex < PHASES.length - 1 ? handleNext : undefined}
+                    showSkipButtons={true}
+                    autoPlay={true}
+                    className="mt-6"
+                  />
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Navigation Buttons */}
+            <div className="mt-6 flex items-center justify-between">
+              <Button
+                variant="outline"
+                onClick={handlePrevious}
+                disabled={currentPhaseIndex === 0}
+              >
+                Previous
+              </Button>
+
+              <span className="text-sm text-muted-foreground">
+                {currentPhaseIndex + 1} of {PHASES.length}
+              </span>
+
+              <Button
+                onClick={handleNext}
+                className="bg-amber-600 hover:bg-amber-700 text-white"
+                disabled={completeSessionMutation.isPending}
+              >
+                {completeSessionMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Completing...
+                  </>
+                ) : currentPhaseIndex === PHASES.length - 1 ? (
+                  "Complete Tasting"
+                ) : (
+                  "Next"
+                )}
+              </Button>
             </div>
-
-            {/* Audio Player */}
-            {isAudioEnabled && (
-              <AudioPlayer
-                audioBase64={phaseAudio[currentPhase]?.audio}
-                contentType={phaseAudio[currentPhase]?.contentType || 'audio/mpeg'}
-                isLoading={isLoadingAudio && !phaseAudio[currentPhase]}
-                textOnly={phaseAudio[currentPhase]?.textOnly}
-                error={phaseAudio[currentPhase]?.error}
-                onEnded={() => {
-                  // Optionally auto-advance after audio ends
-                }}
-                onSkipBack={currentPhaseIndex > 0 ? handlePrevious : undefined}
-                onSkipForward={currentPhaseIndex < PHASES.length - 1 ? handleNext : undefined}
-                showSkipButtons={true}
-                autoPlay={mode === 'guided'}
-                className="mt-6"
-              />
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Navigation Buttons */}
-        <div className="mt-6 flex items-center justify-between">
-          <Button
-            variant="outline"
-            onClick={handlePrevious}
-            disabled={currentPhaseIndex === 0}
-          >
-            Previous
-          </Button>
-
-          <span className="text-sm text-muted-foreground">
-            {currentPhaseIndex + 1} of {PHASES.length}
-          </span>
-
-          <Button
-            onClick={handleNext}
-            className="bg-amber-600 hover:bg-amber-700 text-white"
-            disabled={completeSessionMutation.isPending}
-          >
-            {completeSessionMutation.isPending ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Completing...
-              </>
-            ) : currentPhaseIndex === PHASES.length - 1 ? (
-              "Complete Tasting"
-            ) : (
-              "Next"
-            )}
-          </Button>
-        </div>
+          </>
+        )}
       </main>
     </div>
   );
