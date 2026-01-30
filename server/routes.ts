@@ -1498,6 +1498,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user's tasting session history
+  app.get("/api/rick/sessions", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = getUserId(req);
+      const sessions = await storage.getUserTastingSessions(userId);
+
+      // Get whiskey names for each session
+      const sessionsWithWhiskey = await Promise.all(
+        sessions.map(async (session) => {
+          const whiskey = await storage.getWhiskey(session.whiskeyId, userId);
+          return {
+            id: session.id,
+            whiskeyId: session.whiskeyId,
+            whiskeyName: whiskey?.name || 'Unknown',
+            mode: session.mode,
+            startedAt: session.startedAt,
+            completedAt: session.completedAt,
+            createdAt: session.createdAt
+          };
+        })
+      );
+
+      res.json(sessionsWithWhiskey);
+    } catch (error) {
+      console.error('Get sessions error:', error);
+      res.status(500).json({
+        message: "Failed to get session history",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
   // ==================== RECOMMENDATION ROUTES ====================
 
   // Get recommendations for the user

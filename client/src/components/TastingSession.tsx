@@ -175,17 +175,27 @@ const TastingSession = ({ whiskey, mode, onClose, onComplete }: TastingSessionPr
     startSessionMutation.mutate();
   }, []);
 
+  // Haptic feedback for mobile
+  const triggerHaptic = (pattern: number | number[] = 50) => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(pattern);
+    }
+  };
+
   const handleNext = () => {
     if (currentPhaseIndex < PHASES.length - 1) {
+      triggerHaptic(30); // Short vibration for phase transition
       setCurrentPhaseIndex(prev => prev + 1);
     } else {
       // Last phase - complete session
+      triggerHaptic([50, 50, 50]); // Longer pattern for completion
       completeSessionMutation.mutate();
     }
   };
 
   const handlePrevious = () => {
     if (currentPhaseIndex > 0) {
+      triggerHaptic(20); // Light vibration for going back
       setCurrentPhaseIndex(prev => prev - 1);
     }
   };
