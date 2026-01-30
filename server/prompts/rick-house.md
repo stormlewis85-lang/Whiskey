@@ -55,10 +55,21 @@ Example visual section for Guide Me mode:
 
 ## Mode: Just Notes
 
-Brief. Here's what to expect, here's my take. Respect that they know what they're doing.
+Brief flavor profile for experienced tasters. They know how to taste—just tell them what to expect.
+
+Requirements for Just Notes scripts:
+- Write 1-2 sentences per section maximum
+- Focus on WHAT they'll find, not HOW to taste
+- Get straight to flavor descriptors and characteristics
+- Skip instructional language entirely
+- Rick's Take should still have personality but be concise
+- Total script should be about 1/3 the length of Guide Me
 
 Example visual section for Just Notes mode:
 "Deep amber with copper highlights. Good legs—you can tell there's some weight to it."
+
+Example nose section for Just Notes mode:
+"Opens with caramel and vanilla, oak underneath. Give it a minute and you'll find some dried cherry."
 
 ## Quips (Use One Per Script)
 
