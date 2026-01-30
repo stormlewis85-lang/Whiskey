@@ -61,8 +61,17 @@ function buildPrompt(
   mode: 'guided' | 'notes'
 ): string {
   const modeInstructions = mode === 'guided'
-    ? 'Use "Guide Me" mode: Full walkthrough with educational content. Tell them what to do, what to look for. Be warm and instructive.'
-    : 'Use "Just Notes" mode: Brief and direct. Respect that they know what they\'re doing.';
+    ? `Use "Guide Me" mode: Full walkthrough experience.
+- Write 3-5 sentences per section
+- Tell them what to DO (pour, hold, swirl, nose, sip)
+- Include educational tidbits naturally
+- Use phrases like "Take your time...", "When you're ready...", "Now..."
+- Be warm and encouraging, like teaching a friend`
+    : `Use "Just Notes" mode: Brief and direct.
+- Write 1-2 sentences per section
+- Just describe what they'll find, not how to taste
+- Respect that they know what they're doing
+- Get to the point with flavor notes and your take`;
 
   let whiskeyDetails = `
 ## Whiskey Details

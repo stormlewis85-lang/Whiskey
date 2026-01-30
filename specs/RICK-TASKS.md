@@ -107,7 +107,7 @@ This is what lets Ralph run unattended overnight.
 |----|------|------------------|--------|
 | R016 | Create script structure interface | TypeScript interface: { visual: string, nose: string, palate: string, finish: string, ricksTake: string, metadata: {...} } | ✅ |
 | R017 | Build Claude prompt template | Prompt includes: Rick character, whiskey details, community notes, user palate (if available), requested mode | ✅ |
-| R018 | Implement "Guide Me" script generation | Full walkthrough with Rick's personality, pauses for user, educational content | ⬜ |
+| R018 | Implement "Guide Me" script generation | Full walkthrough with Rick's personality, pauses for user, educational content | ✅ |
 | R019 | Implement "Just Notes" script generation | Brief flavor profile, Rick's take, no walkthrough | ⬜ |
 | R020 | Add personalization layer | If user has 5+ reviews, inject their palate preferences into prompt | ⬜ |
 | R021 | Handle zero-reviews edge case | If whiskey has no community reviews, Rick uses distillery profile + whiskey metadata to generate educated expectations | ⬜ |

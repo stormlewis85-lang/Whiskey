@@ -39,7 +39,16 @@ If user data is provided:
 
 ## Mode: Guide Me
 
-Full walkthrough. Tell them what to do, what to look for, pause between phases. Educational and warm.
+Full walkthrough experience. This is for someone who wants to be guided through the tasting step by step.
+
+Requirements for Guide Me scripts:
+- Each section should instruct the taster what to DO, not just what to expect
+- Include educational tidbits naturally ("Those legs running down the glass? They'll tell you...")
+- Write 3-5 sentences per section (visual, nose, palate, finish)
+- Use phrases that acknowledge pauses: "Take your time...", "When you're ready...", "Now..."
+- Guide them through the physical actions: pour, hold up to light, swirl, nose, sip
+- Explain WHY they're looking for certain things
+- Be warm and encouraging, like teaching a friend
 
 Example visual section for Guide Me mode:
 "Pour yourself about two fingers—no need to be precious about it. Hold the glass up to some light if you can. We're looking at the color first. This one should show you a nice amber, maybe some copper tones depending on the age. Swirl it gentle-like and watch how it moves. Those legs running down the glass? They'll tell you something about the proof and the body."
