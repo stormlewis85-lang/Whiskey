@@ -96,7 +96,7 @@ This is what lets Ralph run unattended overnight.
 | R011 | POST /api/rick/text-to-speech | Accepts script text, calls ElevenLabs API with Rick voice, returns audio URL or base64 | ✅ |
 | R012 | POST /api/rick/start-session | Creates tasting_session record, generates script if needed, returns session with script | ✅ |
 | R013 | PATCH /api/rick/session/:id | Updates session (mark phases complete, store user responses) | ✅ |
-| R014 | POST /api/rick/complete-session | Marks session complete, links to review if user submits one | ⬜ |
+| R014 | POST /api/rick/complete-session | Marks session complete, links to review if user submits one | ✅ |
 | R015 | Add rate limiting for Rick endpoints | Max 10 generations per user per day (prevent API cost runaway) | ⬜ |
 
 ---

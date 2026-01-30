@@ -1380,6 +1380,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Complete a tasting session and optionally link to a review
+  app.post("/api/rick/complete-session", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const { sessionId, reviewId } = req.body;
+      const userId = getUserId(req);
+
+      if (!sessionId || typeof sessionId !== 'number') {
+        return res.status(400).json({ message: "sessionId is required and must be a number" });
+      }
+
+      // Verify session exists and belongs to user
+      const existingSession = await storage.getTastingSession(sessionId, userId);
+      if (!existingSession) {
+        return res.status(404).json({ message: "Session not found" });
+      }
+
+      if (existingSession.completedAt) {
+        return res.status(400).json({ message: "Session already completed" });
+      }
+
+      // Build update with completion time and optional review link
+      const currentScript = existingSession.scriptJson as Record<string, unknown> || {};
+      const updateData: Record<string, unknown> = {
+        completedAt: new Date(),
+        scriptJson: {
+          ...currentScript,
+          linkedReviewId: reviewId || null,
+        }
+      };
+
+      const completed = await storage.updateTastingSession(sessionId, userId, updateData);
+
+      if (!completed) {
+        return res.status(500).json({ message: "Failed to complete session" });
+      }
+
+      res.json({
+        id: completed.id,
+        whiskeyId: completed.whiskeyId,
+        mode: completed.mode,
+        startedAt: completed.startedAt,
+        completedAt: completed.completedAt,
+        linkedReviewId: reviewId || null,
+        message: "Session completed successfully"
+      });
+    } catch (error) {
+      console.error('Complete session error:', error);
+      res.status(500).json({
+        message: "Failed to complete session",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
   // ==================== RECOMMENDATION ROUTES ====================
 
   // Get recommendations for the user
