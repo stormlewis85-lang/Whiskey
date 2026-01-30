@@ -625,6 +625,51 @@ export const aiUsageLogsRelations = relations(aiUsageLogs, ({ one }) => ({
 export type AiUsageLog = typeof aiUsageLogs.$inferSelect;
 export type InsertAiUsageLog = typeof aiUsageLogs.$inferInsert;
 
+// ==================== RICK HOUSE TABLES ====================
+
+// Tasting session mode enum
+export const tastingSessionModeEnum = pgEnum('tasting_session_mode', ['guided', 'notes']);
+
+// Tasting Sessions table - tracks user's guided tasting experiences with Rick
+export const tastingSessions = pgTable("tasting_sessions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  whiskeyId: integer("whiskey_id").notNull().references(() => whiskeys.id, { onDelete: 'cascade' }),
+  mode: tastingSessionModeEnum("mode").notNull().default('guided'),
+  scriptJson: jsonb("script_json"), // The generated Rick script
+  audioUrl: text("audio_url"), // URL to generated audio file
+  startedAt: timestamp("started_at").defaultNow(),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Tasting Sessions relations
+export const tastingSessionsRelations = relations(tastingSessions, ({ one }) => ({
+  user: one(users, {
+    fields: [tastingSessions.userId],
+    references: [users.id],
+  }),
+  whiskey: one(whiskeys, {
+    fields: [tastingSessions.whiskeyId],
+    references: [whiskeys.id],
+  }),
+}));
+
+// Tasting Sessions schemas
+export const insertTastingSessionSchema = createInsertSchema(tastingSessions)
+  .omit({ id: true, createdAt: true, startedAt: true });
+
+export const updateTastingSessionSchema = insertTastingSessionSchema.partial();
+
+// Tasting Sessions types
+export type TastingSession = typeof tastingSessions.$inferSelect;
+export type InsertTastingSession = z.infer<typeof insertTastingSessionSchema>;
+export type UpdateTastingSession = z.infer<typeof updateTastingSessionSchema>;
+
+// Tasting session mode type
+export const tastingSessionModeValues = ['guided', 'notes'] as const;
+export type TastingSessionMode = typeof tastingSessionModeValues[number];
+
 // Flavor tag constants for search/filter
 export const FLAVOR_TAGS = {
   nose: [
