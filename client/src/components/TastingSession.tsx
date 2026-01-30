@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, X, Mic, Volume2, VolumeX } from "lucide-react";
 import { cn } from "@/lib/utils";
+import AudioPlayer from "./AudioPlayer";
 
 // Rick Script interface matching the backend
 interface RickScript {
@@ -54,13 +55,28 @@ interface TastingSessionProps {
   onComplete: () => void;
 }
 
+// Audio data for a phase
+interface PhaseAudio {
+  audio: string | null;
+  contentType: string | null;
+  textOnly: boolean;
+  error?: string;
+}
+
 const TastingSession = ({ whiskey, mode, onClose, onComplete }: TastingSessionProps) => {
   const { toast } = useToast();
   const [session, setSession] = useState<TastingSessionData | null>(null);
   const [script, setScript] = useState<RickScript | null>(null);
   const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
-  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const [phaseAudio, setPhaseAudio] = useState<Record<TastingPhase, PhaseAudio | null>>({
+    visual: null,
+    nose: null,
+    palate: null,
+    finish: null,
+    ricksTake: null
+  });
+  const [isLoadingAudio, setIsLoadingAudio] = useState(false);
 
   const currentPhase = PHASES[currentPhaseIndex];
 
@@ -85,6 +101,51 @@ const TastingSession = ({ whiskey, mode, onClose, onComplete }: TastingSessionPr
       });
     }
   });
+
+  // Load audio for current phase
+  const loadPhaseAudio = async (phase: TastingPhase, text: string) => {
+    if (!isAudioEnabled) return;
+    if (phaseAudio[phase]) return; // Already loaded
+
+    setIsLoadingAudio(true);
+    try {
+      const response = await apiRequest("POST", "/api/rick/text-to-speech", {
+        text,
+        phase
+      });
+      const data = await response.json();
+
+      setPhaseAudio(prev => ({
+        ...prev,
+        [phase]: {
+          audio: data.audio,
+          contentType: data.contentType,
+          textOnly: data.textOnly || false,
+          error: data.error
+        }
+      }));
+    } catch (error) {
+      console.error('Failed to load audio:', error);
+      setPhaseAudio(prev => ({
+        ...prev,
+        [phase]: {
+          audio: null,
+          contentType: null,
+          textOnly: true,
+          error: error instanceof Error ? error.message : 'Failed to load audio'
+        }
+      }));
+    } finally {
+      setIsLoadingAudio(false);
+    }
+  };
+
+  // Load audio when phase changes or script loads
+  useEffect(() => {
+    if (script && isAudioEnabled) {
+      loadPhaseAudio(currentPhase, script[currentPhase]);
+    }
+  }, [currentPhase, script, isAudioEnabled]);
 
   // Complete session mutation
   const completeSessionMutation = useMutation({
@@ -274,14 +335,23 @@ const TastingSession = ({ whiskey, mode, onClose, onComplete }: TastingSessionPr
               </p>
             </div>
 
-            {/* Audio Player Placeholder - R034 */}
+            {/* Audio Player */}
             {isAudioEnabled && (
-              <div className="mt-6 p-4 bg-accent/30 rounded-lg border border-border/30">
-                <div className="flex items-center gap-3 text-muted-foreground">
-                  <Mic className="h-5 w-5 text-amber-500" />
-                  <span className="text-sm">Audio playback coming soon...</span>
-                </div>
-              </div>
+              <AudioPlayer
+                audioBase64={phaseAudio[currentPhase]?.audio}
+                contentType={phaseAudio[currentPhase]?.contentType || 'audio/mpeg'}
+                isLoading={isLoadingAudio && !phaseAudio[currentPhase]}
+                textOnly={phaseAudio[currentPhase]?.textOnly}
+                error={phaseAudio[currentPhase]?.error}
+                onEnded={() => {
+                  // Optionally auto-advance after audio ends
+                }}
+                onSkipBack={currentPhaseIndex > 0 ? handlePrevious : undefined}
+                onSkipForward={currentPhaseIndex < PHASES.length - 1 ? handleNext : undefined}
+                showSkipButtons={true}
+                autoPlay={mode === 'guided'}
+                className="mt-6"
+              />
             )}
           </CardContent>
         </Card>
