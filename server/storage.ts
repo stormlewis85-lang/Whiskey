@@ -2190,6 +2190,28 @@ export class DatabaseStorage implements IStorage {
       completedAt: new Date()
     });
   }
+
+  /**
+   * Get recently used quips for a user (from last 5 sessions)
+   */
+  async getRecentQuips(userId: number, limit: number = 5): Promise<string[]> {
+    const recentSessions = await db
+      .select()
+      .from(tastingSessions)
+      .where(eq(tastingSessions.userId, userId))
+      .orderBy(desc(tastingSessions.createdAt))
+      .limit(limit);
+
+    const quips: string[] = [];
+    for (const session of recentSessions) {
+      const script = session.scriptJson as { quip?: string } | null;
+      if (script?.quip) {
+        quips.push(script.quip);
+      }
+    }
+
+    return quips;
+  }
 }
 
 export const storage = new DatabaseStorage();

@@ -111,7 +111,7 @@ This is what lets Ralph run unattended overnight.
 | R019 | Implement "Just Notes" script generation | Brief flavor profile, Rick's take, no walkthrough | ✅ |
 | R020 | Add personalization layer | If user has 5+ reviews, inject their palate preferences into prompt | ✅ |
 | R021 | Handle zero-reviews edge case | If whiskey has no community reviews, Rick uses distillery profile + whiskey metadata to generate educated expectations | ✅ |
-| R022 | Add Rick's quips rotation | Store 20+ quips, randomly select 1-2 per script, ensure no repeats in recent sessions | ⬜ |
+| R022 | Add Rick's quips rotation | Store 20+ quips, randomly select 1-2 per script, ensure no repeats in recent sessions | ✅ |
 
 ---
 

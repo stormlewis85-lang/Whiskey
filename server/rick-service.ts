@@ -58,7 +58,8 @@ function buildPrompt(
   whiskey: { name: string; distillery?: string | null; type?: string | null; age?: number | null; abv?: number | null; price?: number | null },
   communityNotes: Awaited<ReturnType<typeof storage.getCommunityNotes>>,
   palateProfile: Awaited<ReturnType<typeof storage.getPalateProfile>> | null,
-  mode: 'guided' | 'notes'
+  mode: 'guided' | 'notes',
+  recentQuips: string[] = []
 ): string {
   const modeInstructions = mode === 'guided'
     ? `Use "Guide Me" mode: Full walkthrough experience.
@@ -126,6 +127,16 @@ Be honest that you haven't heard much chatter about this one, but share what you
 `;
   }
 
+  // Build quips avoidance section
+  let quipsSection = '';
+  if (recentQuips.length > 0) {
+    quipsSection = `
+## Quips to Avoid (recently used)
+Do NOT use these quips - pick a different one from the list:
+${recentQuips.map(q => `- "${q}"`).join('\n')}
+`;
+  }
+
   return `${rickCharacter}
 
 ---
@@ -137,7 +148,7 @@ ${modeInstructions}
 ${whiskeyDetails}
 ${communitySection}
 ${personalizationSection}
-
+${quipsSection}
 Generate a tasting script for this whiskey in Rick House's voice. Return ONLY valid JSON matching this structure:
 
 {
@@ -230,8 +241,11 @@ export async function generateRickScript(input: GenerateScriptInput): Promise<Ge
   // Load Rick's character prompt
   const rickCharacter = loadRickPrompt();
 
+  // Get recent quips to avoid repetition
+  const recentQuips = await storage.getRecentQuips(input.userId, 5);
+
   // Build the full prompt
-  const prompt = buildPrompt(rickCharacter, whiskey, communityNotes, palateProfile, input.mode);
+  const prompt = buildPrompt(rickCharacter, whiskey, communityNotes, palateProfile, input.mode, recentQuips);
 
   // Call Claude API
   const Anthropic = (await import("@anthropic-ai/sdk")).default;
