@@ -1323,6 +1323,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update a tasting session (mark phases complete, store responses)
+  app.patch("/api/rick/session/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const sessionId = parseInt(req.params.id);
+      const userId = getUserId(req);
+
+      if (isNaN(sessionId)) {
+        return res.status(400).json({ message: "Invalid session ID" });
+      }
+
+      // Verify session exists and belongs to user
+      const existingSession = await storage.getTastingSession(sessionId, userId);
+      if (!existingSession) {
+        return res.status(404).json({ message: "Session not found" });
+      }
+
+      // Extract allowed update fields
+      const { currentPhase, phaseResponses, audioUrl } = req.body;
+
+      // Build update object - store phase data in scriptJson
+      const currentScript = existingSession.scriptJson as Record<string, unknown> || {};
+      const updateData: Record<string, unknown> = {
+        scriptJson: {
+          ...currentScript,
+          currentPhase: currentPhase || currentScript.currentPhase,
+          phaseResponses: phaseResponses || currentScript.phaseResponses || {},
+        }
+      };
+
+      if (audioUrl) {
+        updateData.audioUrl = audioUrl;
+      }
+
+      const updated = await storage.updateTastingSession(sessionId, userId, updateData);
+
+      if (!updated) {
+        return res.status(500).json({ message: "Failed to update session" });
+      }
+
+      res.json({
+        id: updated.id,
+        whiskeyId: updated.whiskeyId,
+        mode: updated.mode,
+        scriptJson: updated.scriptJson,
+        audioUrl: updated.audioUrl,
+        startedAt: updated.startedAt,
+        completedAt: updated.completedAt,
+      });
+    } catch (error) {
+      console.error('Update session error:', error);
+      res.status(500).json({
+        message: "Failed to update session",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
   // ==================== RECOMMENDATION ROUTES ====================
 
   // Get recommendations for the user
