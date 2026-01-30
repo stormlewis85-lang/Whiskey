@@ -13,6 +13,7 @@ import ReviewModal from "@/components/modals/ReviewModal";
 import WhiskeyDetailModal from "@/components/modals/WhiskeyDetailModal";
 import ExportModal from "@/components/modals/ExportModal";
 import TastingModeModal from "@/components/modals/TastingModeModal";
+import TastingSession from "@/components/TastingSession";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
 import { Button } from "@/components/ui/button";
 import { PlusIcon, UploadIcon, DownloadIcon, Scan } from "lucide-react";
@@ -31,6 +32,8 @@ const Home = () => {
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isBarcodeScannerOpen, setIsBarcodeScannerOpen] = useState(false);
   const [isTastingModeModalOpen, setIsTastingModeModalOpen] = useState(false);
+  const [isTastingSessionActive, setIsTastingSessionActive] = useState(false);
+  const [tastingMode, setTastingMode] = useState<'guided' | 'notes'>('guided');
   const [currentWhiskey, setCurrentWhiskey] = useState<Whiskey | null>(null);
   const [existingReview, setExistingReview] = useState<ReviewNote | undefined>(undefined);
   
@@ -279,11 +282,24 @@ const Home = () => {
             onClose={() => setIsTastingModeModalOpen(false)}
             whiskey={currentWhiskey}
             onSelectMode={(mode) => {
-              // TODO: R031 - This will open the TastingSession component
-              console.log(`Starting tasting session for ${currentWhiskey.name} in ${mode} mode`);
+              setTastingMode(mode);
               setIsTastingModeModalOpen(false);
+              setIsTastingSessionActive(true);
             }}
           />
+
+          {isTastingSessionActive && (
+            <TastingSession
+              whiskey={currentWhiskey}
+              mode={tastingMode}
+              onClose={() => setIsTastingSessionActive(false)}
+              onComplete={() => {
+                setIsTastingSessionActive(false);
+                // Optionally open review modal
+                openReviewModal(currentWhiskey);
+              }}
+            />
+          )}
         </>
       )}
     </div>
