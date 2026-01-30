@@ -1198,6 +1198,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ==================== RICK HOUSE ROUTES ====================
+
+  // Generate a tasting script with Rick House AI
+  app.post("/api/rick/generate-script", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const { whiskeyId, mode } = req.body;
+
+      // Validate input
+      if (!whiskeyId || typeof whiskeyId !== 'number') {
+        return res.status(400).json({ message: "whiskeyId is required and must be a number" });
+      }
+
+      if (!mode || !['guided', 'notes'].includes(mode)) {
+        return res.status(400).json({ message: "mode is required and must be 'guided' or 'notes'" });
+      }
+
+      const userId = getUserId(req);
+
+      // Import and call the Rick service
+      const { generateRickScript } = await import('./rick-service');
+
+      const result = await generateRickScript({
+        whiskeyId,
+        userId,
+        mode
+      });
+
+      res.json(result);
+    } catch (error) {
+      console.error('Rick script generation error:', error);
+      res.status(500).json({
+        message: "Failed to generate tasting script",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
   // ==================== RECOMMENDATION ROUTES ====================
 
   // Get recommendations for the user

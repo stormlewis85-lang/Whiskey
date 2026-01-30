@@ -91,7 +91,7 @@ This is what lets Ralph run unattended overnight.
 |----|------|------------------|--------|
 | R007 | GET /api/whiskeys/:id/community-notes | Returns aggregated flavor tags, common notes, avg scores from all reviews of this whiskey | ✅ |
 | R008 | GET /api/users/:id/palate-profile | Returns user's most-used flavor tags, scoring tendencies, review count | ✅ |
-| R009 | POST /api/rick/generate-script | Accepts whiskey_id, mode, user_id. Calls Claude API with Rick prompt + whiskey data + community notes. Returns structured script JSON | ⬜ |
+| R009 | POST /api/rick/generate-script | Accepts whiskey_id, mode, user_id. Calls Claude API with Rick prompt + whiskey data + community notes. Returns structured script JSON | ✅ |
 | R010 | Implement script caching logic | Check cache before generating. Cache valid if <7 days old AND review count unchanged. Return cached if valid | ⬜ |
 | R011 | POST /api/rick/text-to-speech | Accepts script text, calls ElevenLabs API with Rick voice, returns audio URL or base64 | ⬜ |
 | R012 | POST /api/rick/start-session | Creates tasting_session record, generates script if needed, returns session with script | ⬜ |
