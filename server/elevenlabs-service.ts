@@ -4,12 +4,15 @@
  */
 
 import { getRickConfig } from './rick-config';
-import { writeFileSync, existsSync, mkdirSync } from 'fs';
+import { writeFileSync, existsSync, mkdirSync, readdirSync } from 'fs';
 import { join } from 'path';
 import { createHash } from 'crypto';
 
 // Audio storage directory
 const AUDIO_DIR = join(process.cwd(), 'uploads', 'audio');
+
+// In-memory cache of hash -> URL mappings
+const audioCache = new Map<string, string>();
 
 export interface TextToSpeechInput {
   text: string;
@@ -158,18 +161,82 @@ export async function saveAudioFile(
 }
 
 /**
- * Generate and save audio, returning the URL
+ * Check if cached audio exists for a given hash
+ */
+export function getCachedAudio(hash: string): string | null {
+  // Check in-memory cache first
+  if (audioCache.has(hash)) {
+    const url = audioCache.get(hash)!;
+    // Verify file still exists
+    const filename = url.split('/').pop();
+    if (filename && existsSync(join(AUDIO_DIR, filename))) {
+      return url;
+    }
+    // File doesn't exist, remove from cache
+    audioCache.delete(hash);
+  }
+
+  // Check filesystem for existing cached file
+  ensureAudioDir();
+  const files = readdirSync(AUDIO_DIR);
+  const cachedFile = files.find(f => f.includes(`-${hash}-`) || f.includes(`-${hash}.`));
+
+  if (cachedFile) {
+    const url = `/uploads/audio/${cachedFile}`;
+    audioCache.set(hash, url);
+    return url;
+  }
+
+  return null;
+}
+
+/**
+ * Generate and save audio with caching support
  */
 export async function generateAndSaveAudio(
   text: string,
   sessionId: number,
   phase?: string
-): Promise<{ audioUrl: string; durationEstimate: number }> {
+): Promise<{ audioUrl: string; durationEstimate: number; cached: boolean }> {
+  // Generate hash for caching
+  const hash = generateAudioHash(text);
+
+  // Check cache first
+  const cachedUrl = getCachedAudio(hash);
+  if (cachedUrl) {
+    console.log(`Using cached audio for hash ${hash}`);
+    // Estimate duration from text
+    const wordCount = text.split(/\s+/).length;
+    const durationEstimate = Math.ceil((wordCount / 150) * 60);
+    return {
+      audioUrl: cachedUrl,
+      durationEstimate,
+      cached: true
+    };
+  }
+
+  // Generate new audio
+  console.log(`Generating new audio for hash ${hash}`);
   const result = await generateSpeech({ text });
-  const audioUrl = await saveAudioFile(result.audioBase64, sessionId, phase);
+
+  // Save with hash in filename for future caching
+  ensureAudioDir();
+  const timestamp = Date.now();
+  const phaseSuffix = phase ? `-${phase}` : '';
+  const filename = `rick-${sessionId}${phaseSuffix}-${hash}-${timestamp}.mp3`;
+  const filepath = join(AUDIO_DIR, filename);
+
+  const buffer = Buffer.from(result.audioBase64, 'base64');
+  writeFileSync(filepath, buffer);
+
+  const audioUrl = `/uploads/audio/${filename}`;
+
+  // Update cache
+  audioCache.set(hash, audioUrl);
 
   return {
     audioUrl,
-    durationEstimate: result.durationEstimate || 0
+    durationEstimate: result.durationEstimate || 0,
+    cached: false
   };
 }

@@ -123,7 +123,7 @@ This is what lets Ralph run unattended overnight.
 | R024 | Implement text-to-speech for full script | Generate audio for entire script, return as single file | ✅ |
 | R025 | Implement chunked audio generation | Generate separate audio per phase (visual, nose, palate, finish, take) for better UX control | ✅ |
 | R026 | Add audio file storage | Store generated audio (local filesystem or cloud). Return accessible URL | ✅ |
-| R027 | Implement audio caching | Cache audio by script hash. Don't regenerate if script unchanged | ⬜ |
+| R027 | Implement audio caching | Cache audio by script hash. Don't regenerate if script unchanged | ✅ |
 | R028 | Add ElevenLabs error handling | Graceful fallback if API fails (return text-only mode) | ⬜ |
 
 ---
