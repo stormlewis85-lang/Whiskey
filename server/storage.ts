@@ -373,29 +373,28 @@ export class DatabaseStorage implements IStorage {
   
   // Whiskey CRUD operations
   async getWhiskeys(userId?: number): Promise<Whiskey[]> {
-    // Build the base query
-    const query = db.select().from(whiskeys);
-    
     // If userId is provided, filter by user
     if (userId !== undefined) {
       if (userId === 1) {
         // For Admin (userId 1), show both their own whiskeys and legacy whiskeys with no userId
-        query.where(
-          or(
-            eq(whiskeys.userId, userId),
-            // Include whiskeys with null userId (legacy data) only for Admin
-            // Using SQL for null check
-            sql`${whiskeys.userId} IS NULL`
+        return db.select().from(whiskeys)
+          .where(
+            or(
+              eq(whiskeys.userId, userId),
+              sql`${whiskeys.userId} IS NULL`
+            )
           )
-        );
+          .orderBy(asc(whiskeys.name));
       } else {
         // For other users, show only their own whiskeys
-        query.where(eq(whiskeys.userId, userId));
+        return db.select().from(whiskeys)
+          .where(eq(whiskeys.userId, userId))
+          .orderBy(asc(whiskeys.name));
       }
     }
-    
-    // Execute the query with ordering
-    return query.orderBy(asc(whiskeys.name));
+
+    // No userId - return all whiskeys (should not happen in normal use)
+    return db.select().from(whiskeys).orderBy(asc(whiskeys.name));
   }
   
   async getWhiskey(id: number, userId?: number): Promise<Whiskey | undefined> {

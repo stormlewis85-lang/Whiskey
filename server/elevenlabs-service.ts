@@ -93,11 +93,11 @@ export async function generateSpeech(input: TextToSpeechInput): Promise<TextToSp
     },
     body: JSON.stringify({
       text: input.text,
-      model_id: 'eleven_monolingual_v1',
+      model_id: 'eleven_v3',
       voice_settings: {
-        stability: 0.5,
-        similarity_boost: 0.75,
-        style: 0.0,
+        stability: 0.5,           // Balanced stability
+        similarity_boost: 0.80,   // Higher = closer to original voice
+        style: 0.45,              // Higher = more stylistic/character
         use_speaker_boost: true
       }
     }),

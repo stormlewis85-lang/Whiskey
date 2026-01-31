@@ -4,9 +4,14 @@
  */
 
 import { readFileSync } from 'fs';
-import { join } from 'path';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import { storage } from './storage';
 import { getRickConfig } from './rick-config';
+
+// ESM-compatible __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // TypeScript interface for Rick's tasting script
 export interface RickScript {
