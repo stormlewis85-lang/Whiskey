@@ -2,6 +2,7 @@ import express, { type Express, type Request, type Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import multer from "multer";
+import sharp from "sharp";
 import * as XLSX from "xlsx";
 import { z } from "zod";
 import {
@@ -61,21 +62,21 @@ const excelUpload = multer({
   },
 });
 
-// Setup multer for image file uploads (on disk)
+// Setup multer for image file uploads (on disk) - stores original temporarily
 const imageUpload = multer({
   storage: multer.diskStorage({
     destination: function (req, file, cb) {
       cb(null, uploadDir);
     },
     filename: function (req, file, cb) {
-      // Create a unique filename with timestamp and original extension
+      // Create a unique filename with timestamp - will be processed to WebP
       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
       const ext = path.extname(file.originalname);
-      cb(null, 'bottle-' + uniqueSuffix + ext);
+      cb(null, 'bottle-temp-' + uniqueSuffix + ext);
     }
   }),
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
+    fileSize: 2 * 1024 * 1024, // 2MB limit
   },
   fileFilter: function (req, file, cb) {
     // Accept only image files
@@ -88,64 +89,92 @@ const imageUpload = multer({
   }
 });
 
+// Process uploaded image: resize to max 800px wide, convert to WebP
+async function processImage(inputPath: string, outputPath: string): Promise<{ width: number; height: number }> {
+  const image = sharp(inputPath);
+  const metadata = await image.metadata();
+
+  // Don't upscale small images
+  const maxWidth = 800;
+  const shouldResize = metadata.width && metadata.width > maxWidth;
+
+  let processedImage = image;
+
+  if (shouldResize) {
+    processedImage = processedImage.resize(maxWidth, null, {
+      fit: 'inside',
+      withoutEnlargement: true
+    });
+  }
+
+  // Convert to WebP with quality 80
+  await processedImage
+    .webp({ quality: 80 })
+    .toFile(outputPath);
+
+  // Get final dimensions
+  const finalMetadata = await sharp(outputPath).metadata();
+  return {
+    width: finalMetadata.width || metadata.width || 0,
+    height: finalMetadata.height || metadata.height || 0
+  };
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
   setupAuth(app);
   
-  // Get all whiskeys (filter by user if authenticated)
+  // Get all whiskeys (requires authentication - users only see their own bottles)
   app.get("/api/whiskeys", async (req: Request, res: Response) => {
     try {
-      // If user is authenticated, get only their whiskeys
-      if (req.session && req.session.userId) {
-        const userId = req.session.userId;
-        console.log(`Getting whiskeys for authenticated user ID: ${userId}`);
-        
-        const whiskeys = await storage.getWhiskeys(userId);
-        
-        console.log(`Retrieved ${whiskeys.length} whiskey(s) for user ID: ${userId}`);
-        if (whiskeys.length > 0) {
-          console.log('Sample whiskey data:', {
-            id: whiskeys[0].id,
-            name: whiskeys[0].name,
-            userId: whiskeys[0].userId
-          });
-        }
-        
-        return res.json(whiskeys);
+      // User must be authenticated to see their collection
+      if (!req.session || !req.session.userId) {
+        console.log('Unauthenticated request to /api/whiskeys - returning empty array');
+        return res.json([]);
       }
-      
-      // If no user, return all whiskeys (public or demo view)
-      console.log('Getting whiskeys for unauthenticated user (public view)');
-      const whiskeys = await storage.getWhiskeys();
-      console.log(`Retrieved ${whiskeys.length} whiskey(s) for public view`);
-      res.json(whiskeys);
+
+      const userId = req.session.userId;
+      console.log(`Getting whiskeys for authenticated user ID: ${userId}`);
+
+      const whiskeys = await storage.getWhiskeys(userId);
+
+      console.log(`Retrieved ${whiskeys.length} whiskey(s) for user ID: ${userId}`);
+      if (whiskeys.length > 0) {
+        console.log('Sample whiskey data:', {
+          id: whiskeys[0].id,
+          name: whiskeys[0].name,
+          userId: whiskeys[0].userId
+        });
+      }
+
+      return res.json(whiskeys);
     } catch (error) {
       console.error("Error retrieving whiskeys:", error);
       res.status(500).json({ message: "Failed to retrieve whiskeys", error: String(error) });
     }
   });
 
-  // Get a specific whiskey (filter by user if authenticated)
+  // Get a specific whiskey (requires authentication - users only see their own bottles)
   app.get("/api/whiskeys/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
-      
+
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid ID format" });
       }
-      
-      // If user is authenticated, get only their whiskey
-      let whiskey;
-      if (req.session && req.session.userId) {
-        whiskey = await storage.getWhiskey(id, getUserId(req));
-      } else {
-        whiskey = await storage.getWhiskey(id);
+
+      // User must be authenticated to access bottle details
+      if (!req.session || !req.session.userId) {
+        return res.status(401).json({ message: "Authentication required" });
       }
-      
+
+      // Only return the whiskey if it belongs to this user
+      const whiskey = await storage.getWhiskey(id, req.session.userId);
+
       if (!whiskey) {
         return res.status(404).json({ message: "Whiskey not found" });
       }
-      
+
       res.json(whiskey);
     } catch (error) {
       res.status(500).json({ message: "Failed to retrieve whiskey", error: String(error) });
@@ -210,51 +239,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Delete a whiskey (user must be authenticated)
+  // Delete a whiskey (user must be authenticated and own the bottle)
   app.delete("/api/whiskeys/:id", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       const userId = req.session?.userId;
-      
+
       console.log(`Delete whiskey request - ID: ${id}, User ID: ${userId}`);
-      console.log(`Session data:`, { sessionExists: !!req.session, sessionUserId: req.session?.userId });
-      
+
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid ID format" });
       }
-      
+
       if (!userId) {
         console.log("No userId found in session during delete operation");
         return res.status(401).json({ message: "Your login expired. Please log in again to continue." });
       }
-      
-      // In production, bypass the user check for now
-      const isProduction = process.env.NODE_ENV === 'production';
-      
-      if (isProduction) {
-        // In production - try first with user check, then without if that fails
-        // This helps with the deployed environment where some whiskeys might have userId issues
-        let success = await storage.deleteWhiskey(id, userId);
-        
-        if (!success) {
-          console.log(`First delete attempt failed, trying without userId check in production environment`);
-          // Try without userId check as fallback
-          success = await storage.deleteWhiskey(id);
-        }
-        
-        if (!success) {
-          console.log(`Whiskey with ID ${id} still not found or could not be deleted`);
-          return res.status(404).json({ message: "Whiskey not found" });
-        }
-      } else {
-        // In development, always check userId
-        const success = await storage.deleteWhiskey(id, userId);
-        if (!success) {
-          console.log(`Whiskey not found or not owned by user: ${userId}`);
-          return res.status(404).json({ message: "Whiskey not found or not owned by you" });
-        }
+
+      // Always verify ownership - user can only delete their own bottles
+      const success = await storage.deleteWhiskey(id, userId);
+
+      if (!success) {
+        console.log(`Whiskey not found or not owned by user: ${userId}`);
+        return res.status(404).json({ message: "Whiskey not found or not owned by you" });
       }
-      
+
       console.log(`Successfully deleted whiskey: ${id}`);
       res.status(204).send();
     } catch (error) {
@@ -342,37 +351,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/whiskeys/:id/image", isAuthenticated, imageUpload.single("image"), async (req: Request, res: Response) => {
     console.log("Image upload request received for whiskey ID:", req.params.id);
     console.log("Request files:", req.file ? `File: ${req.file.filename}, size: ${req.file.size}` : "No file");
-    console.log("Request body:", req.body);
-    console.log("User from session:", req.session.userId);
-    console.log("Auth header:", req.headers.authorization ? "Present" : "Not present");
-    
+
     try {
       const id = parseInt(req.params.id);
-      
+
       if (isNaN(id)) {
         console.log("Invalid ID format:", req.params.id);
         return res.status(400).json({ message: "Invalid ID format" });
       }
-      
+
       if (!req.file) {
         console.log("No image file found in request");
         return res.status(400).json({ message: "No image uploaded" });
       }
-      
+
       console.log("File uploaded successfully:", req.file.filename);
-      
-      // Verify file permissions for deployments
+
+      // Process the image: resize and convert to WebP
+      const tempPath = path.join(uploadDir, req.file.filename);
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      const processedFilename = `bottle-${uniqueSuffix}.webp`;
+      const processedPath = path.join(uploadDir, processedFilename);
+
       try {
-        const fullPath = path.join(uploadDir, req.file.filename);
-        fs.accessSync(fullPath, fs.constants.R_OK);
-        console.log("File exists and is readable:", fullPath);
+        const dimensions = await processImage(tempPath, processedPath);
+        console.log(`Image processed: ${dimensions.width}x${dimensions.height}`);
+
+        // Delete the temporary original file
+        fs.unlinkSync(tempPath);
+        console.log("Deleted temp file:", tempPath);
+      } catch (processError) {
+        console.error("Image processing error:", processError);
+        // Clean up temp file on error
+        try { fs.unlinkSync(tempPath); } catch (e) { /* ignore */ }
+        return res.status(500).json({ message: "Failed to process image", error: String(processError) });
+      }
+
+      // Verify processed file exists
+      try {
+        fs.accessSync(processedPath, fs.constants.R_OK);
+        console.log("Processed file exists and is readable:", processedPath);
       } catch (err) {
-        console.error("File permission error:", err);
+        console.error("Processed file permission error:", err);
         return res.status(500).json({ message: "File permission error", error: String(err) });
       }
-      
-      // Get the path to the uploaded image (must start with / for correct URL path)
-      const imagePath = `/uploads/${req.file.filename}`;
+
+      // Get the path to the processed image
+      const imagePath = `/uploads/${processedFilename}`;
       console.log("Image path:", imagePath);
       
       // Get userId from session or token
@@ -382,69 +407,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Not authenticated" });
       }
       
-      // Get whiskey first to check if it exists and is owned by the user
-      const whiskey = await storage.getWhiskey(id);
-      
+      // Get whiskey with ownership check - user can only upload images to their own bottles
+      const whiskey = await storage.getWhiskey(id, userId);
+
       if (!whiskey) {
-        console.log("Whiskey not found, deleting uploaded file");
+        console.log("Whiskey not found or not owned by user, deleting processed file");
         try {
-          fs.unlinkSync(path.join(uploadDir, req.file.filename));
+          fs.unlinkSync(processedPath);
         } catch (unlinkErr) {
           console.error("Error deleting file after whiskey not found:", unlinkErr);
         }
-        return res.status(404).json({ message: "Whiskey not found" });
+        return res.status(404).json({ message: "Whiskey not found or not owned by you" });
       }
-      
-      // Skip ownership check in production for now to fix deployment issue
-      const isProduction = process.env.NODE_ENV === 'production';
-      if (!isProduction && whiskey.userId !== userId) {
-        console.log(`Whiskey owned by user ${whiskey.userId}, not by current user ${userId}`);
-        try {
-          fs.unlinkSync(path.join(uploadDir, req.file.filename));
-        } catch (unlinkErr) {
-          console.error("Error deleting file after ownership check:", unlinkErr);
-        }
-        return res.status(403).json({ message: "You don't own this whiskey" });
-      }
-      
+
       // Update the whiskey with the new image path
       const updatedWhiskey = await storage.updateWhiskey(id, { image: imagePath }, userId);
       console.log("Whiskey updated with image path:", updatedWhiskey ? "success" : "failed");
-      
+
       if (!updatedWhiskey) {
-        console.log("Failed to update whiskey with image path, deleting uploaded file");
+        console.log("Failed to update whiskey with image path, deleting processed file");
         try {
-          fs.unlinkSync(path.join(uploadDir, req.file.filename));
+          fs.unlinkSync(processedPath);
         } catch (unlinkErr) {
           console.error("Error deleting file after update failure:", unlinkErr);
         }
         return res.status(500).json({ message: "Failed to update whiskey with image" });
       }
-      
+
       // Ensure the image is properly served
-      console.log("Full image file path:", path.join(uploadDir, req.file.filename));
-      console.log("File exists:", fs.existsSync(path.join(uploadDir, req.file.filename)));
-      
+      console.log("Full image file path:", processedPath);
+      console.log("File exists:", fs.existsSync(processedPath));
+
       console.log("Image upload successful, returning response");
-      res.json({ 
-        success: true, 
+      res.json({
+        success: true,
         whiskey: updatedWhiskey,
         image: imagePath
       });
     } catch (error) {
       console.error("Error in image upload:", error);
-      
-      // If there's an error, try to delete the uploaded file if it exists
-      if (req.file) {
-        try {
-          console.log("Deleting uploaded file due to error");
-          fs.unlinkSync(path.join(uploadDir, req.file.filename));
-        } catch (err) {
-          console.error("Error deleting file:", err);
-          // Ignore errors when cleaning up files
-        }
-      }
-      
       res.status(500).json({ message: "Failed to upload image", error: String(error) });
     }
   });
@@ -453,24 +454,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
   console.log("Serving uploads from:", path.join(process.cwd(), 'uploads'));
 
-  // Get a specific review by whiskey ID and review ID
+  // Get a specific review by whiskey ID and review ID (requires authentication)
   app.get("/api/whiskeys/:id/reviews/:reviewId", async (req: Request, res: Response) => {
     try {
       const whiskeyId = parseInt(req.params.id);
       const reviewId = req.params.reviewId;
-      
+
       if (isNaN(whiskeyId)) {
         return res.status(400).json({ message: "Invalid whiskey ID format" });
       }
-      
-      // Get the whiskey with user filtering if authenticated
-      let whiskey;
-      if (req.session && req.session.userId) {
-        whiskey = await storage.getWhiskey(whiskeyId, getUserId(req));
-      } else {
-        whiskey = await storage.getWhiskey(whiskeyId);
+
+      // User must be authenticated to access their reviews
+      if (!req.session || !req.session.userId) {
+        return res.status(401).json({ message: "Authentication required" });
       }
-      
+
+      // Only return whiskey if it belongs to this user
+      const whiskey = await storage.getWhiskey(whiskeyId, req.session.userId);
+
       if (!whiskey) {
         return res.status(404).json({ message: "Whiskey not found" });
       }
@@ -1130,7 +1131,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get top flavors for a specific whiskey
+  // Get top flavors for a specific whiskey (requires authentication)
   app.get("/api/whiskeys/:id/flavors", async (req: Request, res: Response) => {
     try {
       const whiskeyId = parseInt(req.params.id);
@@ -1138,9 +1139,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid whiskey ID format" });
       }
 
-      const whiskey = req.session?.userId
-        ? await storage.getWhiskey(whiskeyId, getUserId(req))
-        : await storage.getWhiskey(whiskeyId);
+      // User must be authenticated
+      if (!req.session || !req.session.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      // Only return whiskey if it belongs to this user
+      const whiskey = await storage.getWhiskey(whiskeyId, req.session.userId);
 
       if (!whiskey) {
         return res.status(404).json({ message: "Whiskey not found" });

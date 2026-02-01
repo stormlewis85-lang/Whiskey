@@ -50,7 +50,9 @@ const WhiskeyCard = ({ whiskey, onViewDetails, onReview, onEdit }: WhiskeyCardPr
               <img
                 src={whiskey.image}
                 alt={`Bottle of ${whiskey.name}`}
-                className="object-cover h-full w-full"
+                loading="lazy"
+                decoding="async"
+                className="object-contain h-full w-full bg-accent/20"
               />
             ) : (
               <div className="h-full w-full flex items-center justify-center p-4">

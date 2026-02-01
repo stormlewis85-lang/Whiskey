@@ -403,7 +403,9 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit, onTast
                   <img
                     src={whiskey.image}
                     alt={whiskey.name}
-                    className="h-full w-full object-cover"
+                    loading="lazy"
+                    decoding="async"
+                    className="h-full w-full object-contain bg-accent/20"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">

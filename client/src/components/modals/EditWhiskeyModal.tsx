@@ -140,6 +140,38 @@ const EditWhiskeyModal = ({ isOpen, onClose, whiskey }: EditWhiskeyModalProps) =
     },
   });
 
+  // Reset form when whiskey changes (fixes stale data when switching bottles)
+  useEffect(() => {
+    if (whiskey && isOpen) {
+      form.reset({
+        name: whiskey.name,
+        distillery: whiskey.distillery || "",
+        type: whiskey.type || "",
+        age: whiskey.age || undefined,
+        price: whiskey.price || undefined,
+        abv: whiskey.abv || undefined,
+        region: whiskey.region || "",
+        notes: whiskey.notes as any,
+        rating: whiskey.rating,
+        bottleType: whiskey.bottleType || "",
+        mashBill: whiskey.mashBill || "",
+        caskStrength: whiskey.caskStrength || "No",
+        finished: whiskey.finished || "No",
+        finishType: whiskey.finishType || "",
+        isWishlist: whiskey.isWishlist || false,
+        status: whiskey.status || "sealed",
+        quantity: whiskey.quantity || 1,
+        purchaseDate: whiskey.purchaseDate || undefined,
+        purchaseLocation: whiskey.purchaseLocation || "",
+        distilleryId: whiskey.distilleryId || undefined,
+      });
+      // Update conditional state
+      setIsBourbonSelected(whiskey.type === "Bourbon" || whiskey.type === "Tennessee Whiskey");
+      setIsFinishedSelected(whiskey.finished === "Yes");
+      setIsWishlistMode(whiskey.isWishlist === true);
+    }
+  }, [whiskey, isOpen, form]);
+
   // Monitor form changes to update conditional fields visibility
   useEffect(() => {
     const subscription = form.watch((value, { name }) => {

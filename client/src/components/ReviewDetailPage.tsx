@@ -289,6 +289,8 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
               <img
                 src={whiskey.image}
                 alt={whiskey.name}
+                loading="lazy"
+                decoding="async"
                 className="max-h-56 object-contain rounded-lg"
               />
             ) : (
