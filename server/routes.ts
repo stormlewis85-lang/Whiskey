@@ -1896,69 +1896,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/barcode/:code", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const barcode = req.params.code;
+      console.log(`Barcode lookup request: ${barcode}`);
 
-      // First, check if user already has a whiskey with this barcode in their collection
+      // Step 1: Check if user already has a whiskey with this barcode in their collection
       const userWhiskeys = await storage.getWhiskeys(req.session.userId);
       const existingWhiskey = userWhiskeys.find(w =>
         w.barcode === barcode || w.upc === barcode
       );
 
       if (existingWhiskey) {
+        console.log(`Found in user collection: ${existingWhiskey.name}`);
         return res.json({
           found: true,
           source: 'collection',
+          upc: barcode,
           whiskey: {
+            identified: true,
             name: existingWhiskey.name,
             distillery: existingWhiskey.distillery,
             type: existingWhiskey.type,
-            region: existingWhiskey.region,
-            age: existingWhiskey.age,
-            abv: existingWhiskey.abv,
-            bottleType: existingWhiskey.bottleType,
+            proof: existingWhiskey.proof || (existingWhiskey.abv ? existingWhiskey.abv * 2 : null),
+            age: existingWhiskey.age ? `${existingWhiskey.age} years` : null,
             mashBill: existingWhiskey.mashBill,
-            caskStrength: existingWhiskey.caskStrength,
-            finished: existingWhiskey.finished,
-            finishType: existingWhiskey.finishType,
+            description: null,
+            tastingNotes: []
           },
           message: 'Found in your collection'
         });
       }
 
-      // Check all whiskeys in the database for a match
+      // Step 2: Check all whiskeys in the database for a match (shared product data)
       const allWhiskeys = await storage.getWhiskeys();
       const matchedWhiskey = allWhiskeys.find(w =>
         w.barcode === barcode || w.upc === barcode
       );
 
       if (matchedWhiskey) {
+        console.log(`Found in database: ${matchedWhiskey.name}`);
         return res.json({
           found: true,
           source: 'database',
+          upc: barcode,
           whiskey: {
+            identified: true,
             name: matchedWhiskey.name,
             distillery: matchedWhiskey.distillery,
             type: matchedWhiskey.type,
-            region: matchedWhiskey.region,
-            age: matchedWhiskey.age,
-            abv: matchedWhiskey.abv,
-            bottleType: matchedWhiskey.bottleType,
+            proof: matchedWhiskey.proof || (matchedWhiskey.abv ? matchedWhiskey.abv * 2 : null),
+            age: matchedWhiskey.age ? `${matchedWhiskey.age} years` : null,
             mashBill: matchedWhiskey.mashBill,
-            caskStrength: matchedWhiskey.caskStrength,
-            finished: matchedWhiskey.finished,
-            finishType: matchedWhiskey.finishType,
+            description: null,
+            tastingNotes: []
           },
           message: 'Found in database'
         });
       }
 
-      // Not found - return empty result
-      // Future: integrate with external whiskey database API (e.g., Distiller, WhiskyBase)
-      res.json({
-        found: false,
-        barcode,
-        message: 'No whiskey found for this barcode. You can still add it manually.'
-      });
+      // Step 3: Not in local DB - use UPC lookup service with Claude enrichment
+      console.log('Not found locally, using UPC lookup service...');
+      const { lookupWhiskeyByUPC } = await import('./upc-lookup-service');
+      const lookupResult = await lookupWhiskeyByUPC(barcode);
+
+      res.json(lookupResult);
     } catch (error) {
+      console.error('Barcode lookup error:', error);
       res.status(500).json({ message: "Failed to lookup barcode", error: String(error) });
     }
   });

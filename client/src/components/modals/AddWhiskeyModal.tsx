@@ -102,15 +102,29 @@ const AddWhiskeyModal = ({ isOpen, onClose }: AddWhiskeyModalProps) => {
       const response = await apiRequest("GET", `/api/barcode/${encodeURIComponent(code)}`);
       const data = await response.json();
 
-      if (data.found) {
+      if (data.found && data.whiskey) {
         // Pre-populate form with found whiskey data
         const w = data.whiskey;
         form.setValue("name", w.name || "");
         form.setValue("distillery", w.distillery || "");
         form.setValue("type", w.type || "");
-        form.setValue("age", w.age || undefined);
-        form.setValue("price", w.price || undefined);
-        form.setValue("abv", w.abv || undefined);
+
+        // Handle age - might be a string like "12 years" or a number
+        if (w.age) {
+          const ageNum = typeof w.age === 'string' ? parseInt(w.age) : w.age;
+          if (!isNaN(ageNum)) {
+            form.setValue("age", ageNum);
+          }
+        }
+
+        // Handle proof - convert to ABV if present
+        if (w.proof) {
+          form.setValue("abv", w.proof / 2);
+          form.setValue("proof", w.proof);
+        } else if (w.abv) {
+          form.setValue("abv", w.abv);
+        }
+
         form.setValue("region", w.region || "");
         form.setValue("bottleType", w.bottleType || "");
         form.setValue("mashBill", w.mashBill || "");
@@ -118,20 +132,43 @@ const AddWhiskeyModal = ({ isOpen, onClose }: AddWhiskeyModalProps) => {
         form.setValue("finished", w.finished || "No");
         form.setValue("finishType", w.finishType || "");
 
+        // Store UPC
+        form.setValue("upc", data.upc || code);
+
+        // Show appropriate message based on source
+        let description = "";
+        if (data.source === 'collection') {
+          description = `Found "${w.name}" in your collection. Details pre-filled.`;
+        } else if (data.source === 'database') {
+          description = `Found "${w.name}" in the database. Details pre-filled.`;
+        } else if (data.source === 'enriched') {
+          description = `Identified "${w.name}" via AI lookup. Please verify details.`;
+        }
+
         toast({
           title: "Whiskey Found!",
-          description: data.source === 'collection'
-            ? `Found "${w.name}" in your collection. Details pre-filled.`
-            : `Found "${w.name}" in the database. Details pre-filled.`,
+          description,
+        });
+      } else if (data.whiskey?.name) {
+        // Partial match - just set the name as a suggestion
+        form.setValue("name", data.whiskey.name);
+        form.setValue("upc", data.upc || code);
+        toast({
+          title: "Partial Match",
+          description: data.message || "Could not fully identify. Name suggested, please complete other details.",
         });
       } else {
+        // Store UPC even if not found
+        form.setValue("upc", code);
         toast({
-          title: "Barcode Not Found",
-          description: `No whiskey found for barcode ${code}. Please enter details manually.`,
+          title: "Barcode Scanned",
+          description: data.message || "Product not identified. Please enter details manually.",
         });
       }
     } catch (error) {
       console.error("Barcode lookup error:", error);
+      // Still save the barcode
+      form.setValue("upc", code);
       toast({
         title: "Lookup Failed",
         description: "Could not look up barcode. Please enter details manually.",
