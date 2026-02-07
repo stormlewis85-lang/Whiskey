@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { InsertWhiskey, insertWhiskeySchema, bottleStatusValues } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -22,12 +22,28 @@ interface AddWhiskeyModalProps {
   onClose: () => void;
 }
 
+interface Distillery {
+  id: number;
+  name: string;
+  location: string | null;
+}
+
 const AddWhiskeyModal = ({ isOpen, onClose }: AddWhiskeyModalProps) => {
   const { toast } = useToast();
   const [isBourbonSelected, setIsBourbonSelected] = useState(false);
   const [isFinishedSelected, setIsFinishedSelected] = useState(false);
   const [isWishlistMode, setIsWishlistMode] = useState(false);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [pendingDistilleryName, setPendingDistilleryName] = useState<string | null>(null);
+
+  // Fetch distilleries for matching
+  const { data: distilleries = [] } = useQuery<Distillery[]>({
+    queryKey: ["/api/distilleries"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/distilleries");
+      return response.json();
+    },
+  });
   const [isLookingUp, setIsLookingUp] = useState(false);
   const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);
   const [isAddDistilleryModalOpen, setIsAddDistilleryModalOpen] = useState(false);
@@ -83,6 +99,7 @@ const AddWhiskeyModal = ({ isOpen, onClose }: AddWhiskeyModalProps) => {
       form.reset();
       setIsWishlistMode(false);
       setScannedBarcode(null);
+      setPendingDistilleryName(null);
     },
     onError: (error) => {
       toast({
@@ -102,38 +119,86 @@ const AddWhiskeyModal = ({ isOpen, onClose }: AddWhiskeyModalProps) => {
       const response = await apiRequest("GET", `/api/barcode/${encodeURIComponent(code)}`);
       const data = await response.json();
 
+      console.log("UPC Lookup Response:", JSON.stringify(data, null, 2));
+
       if (data.found && data.whiskey) {
         // Pre-populate form with found whiskey data
         const w = data.whiskey;
-        form.setValue("name", w.name || "");
-        form.setValue("distillery", w.distillery || "");
-        form.setValue("type", w.type || "");
+        console.log("=== POPULATING FORM FROM LOOKUP ===");
+        console.log("Raw whiskey data:", JSON.stringify(w, null, 2));
+
+        // Use shouldDirty to ensure form recognizes changes
+        const opts = { shouldDirty: true, shouldTouch: true };
+
+        form.setValue("name", w.name || "", opts);
+
+        // Try to match distillery by name
+        if (w.distillery) {
+          const normalizedLookup = w.distillery.toLowerCase().trim();
+          const matchedDistillery = distilleries.find(d =>
+            d.name.toLowerCase().trim() === normalizedLookup ||
+            d.name.toLowerCase().includes(normalizedLookup) ||
+            normalizedLookup.includes(d.name.toLowerCase())
+          );
+          if (matchedDistillery) {
+            form.setValue("distilleryId", matchedDistillery.id, opts);
+            form.setValue("distillery", matchedDistillery.name, opts);
+            console.log(`Distillery matched: "${w.distillery}" -> ID ${matchedDistillery.id} (${matchedDistillery.name})`);
+          } else {
+            // Store pending distillery name for display
+            form.setValue("distillery", w.distillery, opts);
+            setPendingDistilleryName(w.distillery);
+            console.log(`Distillery not found in DB: "${w.distillery}" - user needs to add it`);
+          }
+        }
+
+        // Map type to valid Select values
+        const typeMapping: Record<string, string> = {
+          "bourbon": "Bourbon",
+          "tennessee whiskey": "Tennessee Whiskey",
+          "scotch": "Scotch",
+          "rye": "Rye",
+          "irish": "Irish",
+          "japanese": "Japanese",
+          "whiskey": "Other",
+          "whisky": "Other",
+        };
+        const normalizedType = w.type?.toLowerCase() || "";
+        // Use mapped type, or "Other" if the type exists but doesn't match known types
+        const mappedType = typeMapping[normalizedType] || (w.type ? "Other" : "");
+        form.setValue("type", mappedType, opts);
+        console.log(`Type: "${w.type}" -> "${mappedType}"`);
 
         // Handle age - might be a string like "12 years" or a number
         if (w.age) {
           const ageNum = typeof w.age === 'string' ? parseInt(w.age) : w.age;
           if (!isNaN(ageNum)) {
-            form.setValue("age", ageNum);
+            form.setValue("age", ageNum, opts);
+            console.log(`Age: "${w.age}" -> ${ageNum}`);
           }
         }
 
         // Handle proof - convert to ABV if present
         if (w.proof) {
-          form.setValue("abv", w.proof / 2);
-          form.setValue("proof", w.proof);
+          form.setValue("abv", w.proof / 2, opts);
+          console.log(`Proof: ${w.proof} -> ABV: ${w.proof / 2}`);
         } else if (w.abv) {
-          form.setValue("abv", w.abv);
+          form.setValue("abv", w.abv, opts);
         }
 
-        form.setValue("region", w.region || "");
-        form.setValue("bottleType", w.bottleType || "");
-        form.setValue("mashBill", w.mashBill || "");
-        form.setValue("caskStrength", w.caskStrength || "No");
-        form.setValue("finished", w.finished || "No");
-        form.setValue("finishType", w.finishType || "");
+        form.setValue("region", w.region || "", opts);
+        form.setValue("bottleType", w.bottleType || "", opts);
+        form.setValue("mashBill", w.mashBill || "", opts);
+        form.setValue("caskStrength", w.caskStrength || "No", opts);
+        form.setValue("finished", w.finished || "No", opts);
+        form.setValue("finishType", w.finishType || "", opts);
 
         // Store UPC
-        form.setValue("upc", data.upc || code);
+        form.setValue("upc", data.upc || code, opts);
+
+        // Log final form state
+        console.log("Form values after population:", form.getValues());
+        console.log("=== END FORM POPULATION ===");
 
         // Show appropriate message based on source
         let description = "";
@@ -149,13 +214,59 @@ const AddWhiskeyModal = ({ isOpen, onClose }: AddWhiskeyModalProps) => {
           title: "Whiskey Found!",
           description,
         });
-      } else if (data.whiskey?.name) {
-        // Partial match - just set the name as a suggestion
-        form.setValue("name", data.whiskey.name);
+      } else if (data.whiskey) {
+        // Partial match - populate ALL available fields, not just name
+        const w = data.whiskey;
+        console.log("Partial match whiskey data:", w);
+
+        const opts = { shouldDirty: true, shouldTouch: true };
+        form.setValue("name", w.name || "", opts);
+
+        // Try to match distillery by name
+        if (w.distillery) {
+          const normalizedLookup = w.distillery.toLowerCase().trim();
+          const matchedDistillery = distilleries.find(d =>
+            d.name.toLowerCase().trim() === normalizedLookup ||
+            d.name.toLowerCase().includes(normalizedLookup) ||
+            normalizedLookup.includes(d.name.toLowerCase())
+          );
+          if (matchedDistillery) {
+            form.setValue("distilleryId", matchedDistillery.id, opts);
+            form.setValue("distillery", matchedDistillery.name, opts);
+          } else {
+            form.setValue("distillery", w.distillery, opts);
+            setPendingDistilleryName(w.distillery);
+          }
+        }
+        if (w.type) {
+          const typeMapping: Record<string, string> = {
+            "bourbon": "Bourbon",
+            "tennessee whiskey": "Tennessee Whiskey",
+            "scotch": "Scotch",
+            "rye": "Rye",
+            "irish": "Irish",
+            "japanese": "Japanese",
+            "whiskey": "Other",
+            "whisky": "Other",
+          };
+          const normalizedType = w.type.toLowerCase();
+          const mappedType = typeMapping[normalizedType] || "Other";
+          form.setValue("type", mappedType, opts);
+          console.log(`Partial match type mapping: "${w.type}" -> "${mappedType}"`);
+        }
+        if (w.age) {
+          const ageNum = typeof w.age === 'string' ? parseInt(w.age) : w.age;
+          if (!isNaN(ageNum)) form.setValue("age", ageNum, opts);
+        }
+        if (w.proof) {
+          form.setValue("abv", w.proof / 2, opts);
+        }
+        if (w.mashBill) form.setValue("mashBill", w.mashBill, opts);
+
         form.setValue("upc", data.upc || code);
         toast({
           title: "Partial Match",
-          description: data.message || "Could not fully identify. Name suggested, please complete other details.",
+          description: data.message || "Product identified. Please verify and complete details.",
         });
       } else {
         // Store UPC even if not found
@@ -284,10 +395,16 @@ const AddWhiskeyModal = ({ isOpen, onClose }: AddWhiskeyModalProps) => {
                         onValueChange={(id, distillery) => {
                           form.setValue("distilleryId", id);
                           form.setValue("distillery", distillery?.name || "");
+                          setPendingDistilleryName(null); // Clear pending when user selects
                         }}
                         onAddNew={() => setIsAddDistilleryModalOpen(true)}
                       />
                     </FormControl>
+                    {pendingDistilleryName && !form.watch("distilleryId") && (
+                      <FormDescription className="text-amber-500 text-xs">
+                        Suggested: "{pendingDistilleryName}" - Click "+ Add new distillery" to create it
+                      </FormDescription>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -299,8 +416,9 @@ const AddWhiskeyModal = ({ isOpen, onClose }: AddWhiskeyModalProps) => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Type</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value || ""}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -422,8 +540,9 @@ const AddWhiskeyModal = ({ isOpen, onClose }: AddWhiskeyModalProps) => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Bottle Type</FormLabel>
-                        <Select 
+                        <Select
                           onValueChange={field.onChange}
+                          value={field.value || ""}
                         >
                           <FormControl>
                             <SelectTrigger>
@@ -450,8 +569,9 @@ const AddWhiskeyModal = ({ isOpen, onClose }: AddWhiskeyModalProps) => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Mash Bill</FormLabel>
-                        <Select 
+                        <Select
                           onValueChange={field.onChange}
+                          value={field.value || ""}
                         >
                           <FormControl>
                             <SelectTrigger>

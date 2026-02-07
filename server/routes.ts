@@ -76,7 +76,7 @@ const imageUpload = multer({
     }
   }),
   limits: {
-    fileSize: 2 * 1024 * 1024, // 2MB limit
+    fileSize: 10 * 1024 * 1024, // 10MB limit (images will be resized/compressed)
   },
   fileFilter: function (req, file, cb) {
     // Accept only image files
@@ -348,7 +348,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Upload bottle image (user must be authenticated)
-  app.post("/api/whiskeys/:id/image", isAuthenticated, imageUpload.single("image"), async (req: Request, res: Response) => {
+  // Wrap multer to handle errors gracefully
+  app.post("/api/whiskeys/:id/image", isAuthenticated, (req: Request, res: Response, next) => {
+    imageUpload.single("image")(req, res, (err: any) => {
+      if (err) {
+        console.error("Multer error:", err.message);
+        if (err.code === 'LIMIT_FILE_SIZE') {
+          return res.status(413).json({ message: "File too large. Maximum size is 10MB." });
+        }
+        return res.status(400).json({ message: err.message || "File upload error" });
+      }
+      next();
+    });
+  }, async (req: Request, res: Response) => {
     console.log("Image upload request received for whiskey ID:", req.params.id);
     console.log("Request files:", req.file ? `File: ${req.file.filename}, size: ${req.file.size}` : "No file");
 

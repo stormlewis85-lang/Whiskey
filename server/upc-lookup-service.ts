@@ -8,7 +8,22 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 
-const anthropic = new Anthropic();
+// Create client lazily to ensure env vars are loaded
+let anthropicClient: Anthropic | null = null;
+
+function getAnthropicClient(): Anthropic {
+  if (!anthropicClient) {
+    let apiKey = process.env.ANTHROPIC_API_KEY;
+    console.log('UPC Service - API Key check:', apiKey ? `${apiKey.substring(0, 10)}...${apiKey.substring(apiKey.length - 4)} (length: ${apiKey.length})` : 'NOT SET');
+    if (!apiKey) {
+      throw new Error('ANTHROPIC_API_KEY not configured');
+    }
+    // Trim any whitespace
+    apiKey = apiKey.trim();
+    anthropicClient = new Anthropic({ apiKey });
+  }
+  return anthropicClient;
+}
 
 export interface WhiskeyLookupResult {
   found: boolean;
@@ -71,7 +86,6 @@ async function fetchFromOpenFoodFacts(upc: string): Promise<string | null> {
     const data: OpenFoodFactsResponse = await response.json();
 
     if (data.status === 1 && data.product?.product_name) {
-      // Combine brand and product name if available
       const brand = data.product.brands || '';
       const name = data.product.product_name;
 
@@ -89,33 +103,212 @@ async function fetchFromOpenFoodFacts(upc: string): Promise<string | null> {
 }
 
 /**
- * Use Claude to enrich whiskey information
+ * Fetch product info from UPCitemdb.com API
  */
-async function enrichWithClaude(productInfo: string, upc: string): Promise<ClaudeWhiskeyResponse | null> {
+async function fetchFromUPCitemdb(upc: string): Promise<string | null> {
   try {
-    const prompt = `You are a whiskey database expert. Given this product info, return ONLY valid JSON (no markdown, no explanation, no code blocks):
+    const response = await fetch(
+      `https://api.upcitemdb.com/prod/trial/lookup?upc=${upc}`,
+      {
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'WhiskeyPedia/1.0'
+        }
+      }
+    );
 
-Product: ${productInfo}
-UPC: ${upc}
+    if (!response.ok) {
+      console.log(`UPCitemdb returned ${response.status} for UPC ${upc}`);
+      return null;
+    }
 
-Return this exact JSON structure:
-{
-  "identified": true or false,
-  "name": "full product name",
-  "distillery": "distillery name or null",
-  "type": "Bourbon/Rye/Scotch/Irish/Japanese/Canadian/Tennessee Whiskey/Other or null",
-  "proof": number or null,
-  "age": "age statement like '12 years' or null",
-  "mashbill": "High Rye/High Corn/Wheated/etc or null",
-  "description": "brief 1-2 sentence description or null",
-  "tastingNotes": ["note1", "note2", "note3"] or []
+    const data = await response.json();
+
+    if (data.items && data.items.length > 0) {
+      const item = data.items[0];
+      const title = item.title || item.brand || null;
+      if (title) {
+        console.log(`UPCitemdb found: ${title}`);
+        return title;
+      }
+    }
+
+    return null;
+  } catch (error) {
+    console.error('UPCitemdb API error:', error);
+    return null;
+  }
 }
 
-If you cannot identify this as a whiskey product or don't have enough information, set "identified": false and provide your best guess for the name field only, leaving other fields as null or empty.
+/**
+ * Fetch product info from Go-UPC API
+ */
+async function fetchFromGoUPC(upc: string): Promise<string | null> {
+  try {
+    const response = await fetch(
+      `https://go-upc.com/api/v1/code/${upc}`,
+      {
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'WhiskeyPedia/1.0'
+        }
+      }
+    );
 
-Important: Return ONLY the JSON object, nothing else.`;
+    if (!response.ok) {
+      console.log(`Go-UPC returned ${response.status} for UPC ${upc}`);
+      return null;
+    }
 
-    const message = await anthropic.messages.create({
+    const data = await response.json();
+
+    if (data.product && data.product.name) {
+      console.log(`Go-UPC found: ${data.product.name}`);
+      return data.product.name;
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Go-UPC API error:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetch product info from UPC Database (upcdatabase.org)
+ */
+async function fetchFromUPCDatabase(upc: string): Promise<string | null> {
+  try {
+    const response = await fetch(
+      `https://api.upcdatabase.org/product/${upc}`,
+      {
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'WhiskeyPedia/1.0'
+        }
+      }
+    );
+
+    if (!response.ok) {
+      console.log(`UPC Database returned ${response.status} for UPC ${upc}`);
+      return null;
+    }
+
+    const data = await response.json();
+
+    if (data.title) {
+      console.log(`UPC Database found: ${data.title}`);
+      return data.title;
+    }
+
+    return null;
+  } catch (error) {
+    console.error('UPC Database API error:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetch from Barcode Spider (free, no key needed)
+ */
+async function fetchFromBarcodeSpider(upc: string): Promise<string | null> {
+  try {
+    const response = await fetch(
+      `https://www.barcodespider.com/api/free/${upc}`,
+      {
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'WhiskeyPedia/1.0'
+        }
+      }
+    );
+
+    if (!response.ok) {
+      console.log(`Barcode Spider returned ${response.status} for UPC ${upc}`);
+      return null;
+    }
+
+    const data = await response.json();
+
+    if (data.item_attributes && data.item_attributes.title) {
+      console.log(`Barcode Spider found: ${data.item_attributes.title}`);
+      return data.item_attributes.title;
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Barcode Spider API error:', error);
+    return null;
+  }
+}
+
+/**
+ * Use Claude to enrich whiskey information
+ */
+async function enrichWithClaude(productInfo: string, upc: string, hasRealProductName: boolean): Promise<ClaudeWhiskeyResponse | null> {
+  try {
+    const prompt = hasRealProductName
+      ? `You are a whiskey database expert. A UPC database found this product:
+
+Product Name: ${productInfo}
+UPC: ${upc}
+
+Enrich this whiskey with accurate details. Return ONLY valid JSON:
+{
+  "identified": true,
+  "name": "${productInfo}",
+  "distillery": "distillery name",
+  "type": "Bourbon/Rye/Scotch/Irish/Japanese/Canadian/Tennessee Whiskey",
+  "proof": number or null,
+  "age": "age statement or null",
+  "mashbill": "High Rye/Wheated/Traditional/etc or null",
+  "description": "brief accurate description",
+  "tastingNotes": ["note1", "note2", "note3"]
+}
+
+Use real, accurate information for this specific product. Return ONLY JSON.`
+
+      : `You are a whiskey and spirits database expert. We have a UPC barcode that was not found in any product database.
+
+UPC/Barcode: ${upc}
+
+Use your knowledge to identify this specific product. Many whiskeys, beers, and spirits have well-known UPCs. For example:
+- 614036107093 = Dragon's Milk Origin Bonded by New Holland Brewing
+- Search your knowledge for this exact UPC code
+
+If you can identify the SPECIFIC product from this UPC, return:
+{
+  "identified": true,
+  "name": "exact product name",
+  "distillery": "manufacturer/distillery name",
+  "type": "Bourbon/Whiskey/Beer/Spirit type",
+  "proof": number or null,
+  "age": "age statement or null",
+  "mashbill": "mashbill info or null",
+  "description": "accurate product description",
+  "tastingNotes": ["note1", "note2", "note3"]
+}
+
+If you cannot identify this specific UPC, return:
+{
+  "identified": false,
+  "name": "Unknown Product",
+  "distillery": null,
+  "type": null,
+  "proof": null,
+  "age": null,
+  "mashbill": null,
+  "description": "UPC not recognized. Please enter product details manually.",
+  "tastingNotes": []
+}
+
+Return ONLY valid JSON.`;
+
+    console.log('Calling Claude API...');
+    console.log('UPC BEING SENT:', upc);
+    console.log('HAS REAL PRODUCT NAME:', hasRealProductName);
+    console.log('PRODUCT INFO:', productInfo);
+    const message = await getAnthropicClient().messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 500,
       messages: [
@@ -126,6 +319,8 @@ Important: Return ONLY the JSON object, nothing else.`;
       ]
     });
 
+    console.log('Claude response received:', JSON.stringify(message.content).substring(0, 500));
+
     // Extract text content
     const textContent = message.content.find(block => block.type === 'text');
     if (!textContent || textContent.type !== 'text') {
@@ -135,6 +330,7 @@ Important: Return ONLY the JSON object, nothing else.`;
 
     // Parse JSON response - handle potential markdown code blocks
     let jsonText = textContent.text.trim();
+    console.log('Raw Claude text:', jsonText.substring(0, 300));
 
     // Remove markdown code blocks if present
     if (jsonText.startsWith('```')) {
@@ -142,6 +338,7 @@ Important: Return ONLY the JSON object, nothing else.`;
     }
 
     const result: ClaudeWhiskeyResponse = JSON.parse(jsonText);
+    console.log('Parsed result:', JSON.stringify(result));
     return result;
 
   } catch (error) {
@@ -156,16 +353,45 @@ Important: Return ONLY the JSON object, nothing else.`;
 export async function lookupWhiskeyByUPC(upc: string): Promise<WhiskeyLookupResult> {
   console.log(`Looking up UPC: ${upc}`);
 
-  // Step 1: Try Open Food Facts for product name
-  console.log('Checking Open Food Facts...');
-  const productName = await fetchFromOpenFoodFacts(upc);
+  // Try multiple UPC databases to find product name
+  let productName: string | null = null;
 
-  const productInfo = productName || `Unknown product with UPC: ${upc}`;
+  // 1. Open Food Facts
+  console.log('Checking Open Food Facts...');
+  productName = await fetchFromOpenFoodFacts(upc);
+
+  // 2. UPCitemdb
+  if (!productName) {
+    console.log('Checking UPCitemdb...');
+    productName = await fetchFromUPCitemdb(upc);
+  }
+
+  // 3. Go-UPC
+  if (!productName) {
+    console.log('Checking Go-UPC...');
+    productName = await fetchFromGoUPC(upc);
+  }
+
+  // 4. UPC Database
+  if (!productName) {
+    console.log('Checking UPC Database...');
+    productName = await fetchFromUPCDatabase(upc);
+  }
+
+  // 5. Barcode Spider
+  if (!productName) {
+    console.log('Checking Barcode Spider...');
+    productName = await fetchFromBarcodeSpider(upc);
+  }
+
+  const hasRealProductName = productName !== null;
+  const productInfo = productName || `UPC: ${upc}`;
+  console.log(`Final product info: ${productInfo} (from database: ${hasRealProductName})`);
   console.log(`Product info: ${productInfo}`);
 
   // Step 2: Enrich with Claude
   console.log('Enriching with Claude...');
-  const enrichedData = await enrichWithClaude(productInfo, upc);
+  const enrichedData = await enrichWithClaude(productInfo, upc, hasRealProductName);
 
   if (!enrichedData) {
     return {

@@ -42,10 +42,11 @@ const WhiskeyCard = ({ whiskey, onViewDetails, onReview, onEdit }: WhiskeyCardPr
       "group overflow-hidden bg-card border-border/50 shadow-warm-sm hover:shadow-warm transition-all duration-300 hover:border-primary/30",
       isWishlist && "border-l-4 border-l-pink-500/50"
     )}>
-      <div className="flex flex-col sm:flex-row h-full">
-        {/* Left side: Image with 3:4 aspect ratio */}
-        <div className="sm:w-1/3 relative bg-accent/30">
-          <div className="aspect-[3/4] sm:h-full">
+      {/* Mobile: horizontal layout with small image; Desktop: vertical or larger horizontal */}
+      <div className="flex flex-row h-full">
+        {/* Left side: Image - smaller on mobile, larger on desktop */}
+        <div className="w-24 sm:w-1/3 shrink-0 relative bg-accent/30">
+          <div className="aspect-[3/4] h-full">
             {whiskey.image ? (
               <img
                 src={whiskey.image}
@@ -62,12 +63,12 @@ const WhiskeyCard = ({ whiskey, onViewDetails, onReview, onEdit }: WhiskeyCardPr
                 </div>
               </div>
             )}
-            {/* Top badges: type, wishlist indicator */}
-            <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
+            {/* Top badges: type (hidden on mobile), wishlist indicator */}
+            <div className="absolute top-1 sm:top-2 right-1 sm:right-2 flex flex-col gap-0.5 sm:gap-1 items-end">
               {whiskey.type && (
                 <Badge
                   variant="secondary"
-                  className="bg-background/90 backdrop-blur-sm text-foreground border-border/50 text-xs font-medium"
+                  className="bg-background/90 backdrop-blur-sm text-foreground border-border/50 text-[10px] sm:text-xs font-medium px-1.5 py-0.5 sm:px-2 sm:py-0.5 hidden sm:flex"
                 >
                   {whiskey.type}
                 </Badge>
@@ -75,20 +76,20 @@ const WhiskeyCard = ({ whiskey, onViewDetails, onReview, onEdit }: WhiskeyCardPr
               {isWishlist && (
                 <Badge
                   variant="outline"
-                  className="bg-pink-500/10 text-pink-600 dark:text-pink-400 border-pink-500/20 text-xs"
+                  className="bg-pink-500/10 text-pink-600 dark:text-pink-400 border-pink-500/20 text-[10px] sm:text-xs px-1 py-0.5 sm:px-2"
                 >
-                  <Heart className="h-3 w-3 mr-1 fill-current" />
-                  Wishlist
+                  <Heart className="h-2.5 w-2.5 sm:h-3 sm:w-3 fill-current" />
+                  <span className="hidden sm:inline ml-1">Wishlist</span>
                 </Badge>
               )}
             </div>
 
-            {/* Bottom badges: quantity, status */}
-            <div className="absolute bottom-2 left-2 flex gap-1">
+            {/* Bottom badges: quantity, status - compact on mobile */}
+            <div className="absolute bottom-1 sm:bottom-2 left-1 sm:left-2 flex gap-0.5 sm:gap-1">
               {quantity > 1 && (
                 <Badge
                   variant="secondary"
-                  className="bg-background/90 backdrop-blur-sm text-foreground border-border/50 text-xs font-bold"
+                  className="bg-background/90 backdrop-blur-sm text-foreground border-border/50 text-[10px] sm:text-xs font-bold px-1 py-0.5 sm:px-2"
                 >
                   x{quantity}
                 </Badge>
@@ -96,10 +97,10 @@ const WhiskeyCard = ({ whiskey, onViewDetails, onReview, onEdit }: WhiskeyCardPr
               {statusConfig && !isWishlist && (
                 <Badge
                   variant="outline"
-                  className={cn("text-xs", statusConfig.className)}
+                  className={cn("text-[10px] sm:text-xs px-1 py-0.5 sm:px-2", statusConfig.className)}
                 >
-                  <statusConfig.icon className="h-3 w-3 mr-1" />
-                  {statusConfig.label}
+                  <statusConfig.icon className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                  <span className="hidden sm:inline ml-1">{statusConfig.label}</span>
                 </Badge>
               )}
             </div>
@@ -107,25 +108,25 @@ const WhiskeyCard = ({ whiskey, onViewDetails, onReview, onEdit }: WhiskeyCardPr
         </div>
 
         {/* Right side: Whiskey details */}
-        <CardContent className="p-4 sm:w-2/3 flex flex-col">
-          <div className="flex-1">
-            <h3 className="font-semibold text-lg text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+        <CardContent className="p-3 sm:p-4 flex-1 flex flex-col min-w-0">
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-base sm:text-lg text-foreground line-clamp-2 group-hover:text-primary transition-colors">
               {whiskey.name}
             </h3>
-            <div className="flex justify-between items-center mt-1.5">
-              <p className="text-sm text-muted-foreground truncate">
+            <div className="flex justify-between items-center mt-1">
+              <p className="text-xs sm:text-sm text-muted-foreground truncate">
                 {whiskey.distillery || 'Unknown Distillery'}
               </p>
               {whiskey.price && (
-                <p className="text-sm font-semibold text-primary shrink-0 ml-2">
+                <p className="text-xs sm:text-sm font-semibold text-primary shrink-0 ml-2">
                   ${whiskey.price}
                 </p>
               )}
             </div>
 
-            {/* Bourbon badges */}
+            {/* Bourbon badges - hidden on mobile for compactness, shown on sm+ */}
             {whiskey.type === "Bourbon" && (
-              <div className="flex flex-wrap gap-1.5 mt-3">
+              <div className="hidden sm:flex flex-wrap gap-1.5 mt-2">
                 {whiskey.bottleType && whiskey.bottleType !== "none" && (
                   <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 text-xs">
                     {whiskey.bottleType}
@@ -152,16 +153,16 @@ const WhiskeyCard = ({ whiskey, onViewDetails, onReview, onEdit }: WhiskeyCardPr
               </div>
             )}
 
-            {/* Flavor Tags */}
-            {hasNotes && <FlavorTags whiskey={whiskey} maxTags={3} className="mt-2" />}
+            {/* Flavor Tags - hidden on mobile */}
+            {hasNotes && <FlavorTags whiskey={whiskey} maxTags={3} className="mt-2 hidden sm:flex" />}
 
             {/* Rating */}
-            <div className="flex items-center mt-3 gap-1">
+            <div className="flex items-center mt-2 gap-0.5 sm:gap-1">
               {[1, 2, 3, 4, 5].map((star) => (
                 <Star
                   key={star}
                   className={cn(
-                    "w-4 h-4 transition-colors",
+                    "w-3 h-3 sm:w-4 sm:h-4 transition-colors",
                     star <= rating
                       ? "text-amber-400 fill-amber-400"
                       : "text-muted-foreground/30"
@@ -169,31 +170,31 @@ const WhiskeyCard = ({ whiskey, onViewDetails, onReview, onEdit }: WhiskeyCardPr
                 />
               ))}
               {hasNotes && (
-                <span className="text-xs text-muted-foreground ml-1.5">
+                <span className="text-xs text-muted-foreground ml-1 hidden sm:inline">
                   ({(whiskey.notes as any[]).length} {(whiskey.notes as any[]).length === 1 ? 'note' : 'notes'})
                 </span>
               )}
             </div>
           </div>
 
-          {/* Action buttons */}
-          <div className="flex items-center gap-2 mt-4 pt-3 border-t border-border/30 relative z-10">
+          {/* Action buttons - more compact on mobile */}
+          <div className="flex items-center gap-1.5 sm:gap-2 mt-2 sm:mt-4 pt-2 sm:pt-3 border-t border-border/30 relative z-10">
             <Button
               type="button"
               onClick={() => onEdit(whiskey)}
               variant="ghost"
               size="icon"
-              className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-accent shrink-0"
+              className="h-8 w-8 sm:h-9 sm:w-9 text-muted-foreground hover:text-foreground hover:bg-accent shrink-0"
               title="Edit whiskey"
             >
-              <PencilIcon className="h-4 w-4" />
+              <PencilIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </Button>
             <Button
               type="button"
               onClick={() => onViewDetails(whiskey)}
               variant="outline"
               size="sm"
-              className="flex-1 h-9 border-border/50 hover:bg-accent/50"
+              className="flex-1 h-8 sm:h-9 text-xs sm:text-sm border-border/50 hover:bg-accent/50 px-2 sm:px-3"
             >
               Details
             </Button>
@@ -201,7 +202,7 @@ const WhiskeyCard = ({ whiskey, onViewDetails, onReview, onEdit }: WhiskeyCardPr
               type="button"
               onClick={() => onReview(whiskey)}
               size="sm"
-              className="flex-1 h-9"
+              className="flex-1 h-8 sm:h-9 text-xs sm:text-sm px-2 sm:px-3"
             >
               Review
             </Button>
