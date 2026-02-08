@@ -4,14 +4,9 @@
  */
 
 import { readFileSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { join } from 'path';
 import { storage } from './storage';
 import { getRickConfig } from './rick-config';
-
-// ESM-compatible __dirname
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 // TypeScript interface for Rick's tasting script
 export interface RickScript {
@@ -63,7 +58,7 @@ export interface GenerateScriptResult {
 // Load the Rick character prompt
 function loadRickPrompt(): string {
   try {
-    const promptPath = join(__dirname, 'prompts', 'rick-house.md');
+    const promptPath = join(process.cwd(), 'server', 'prompts', 'rick-house.md');
     return readFileSync(promptPath, 'utf-8');
   } catch (error) {
     console.error('Failed to load Rick prompt:', error);
@@ -74,7 +69,7 @@ function loadRickPrompt(): string {
 // Load the Rick review guide prompt
 function loadRickReviewPrompt(): string {
   try {
-    const promptPath = join(__dirname, 'prompts', 'rick-review-guide.md');
+    const promptPath = join(process.cwd(), 'server', 'prompts', 'rick-review-guide.md');
     return readFileSync(promptPath, 'utf-8');
   } catch (error) {
     console.error('Failed to load Rick review guide prompt:', error);
