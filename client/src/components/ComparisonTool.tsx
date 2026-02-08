@@ -53,9 +53,99 @@ const ComparisonTool = ({ whiskeys, className = "" }: ComparisonToolProps) => {
     return whiskey.notes[whiskey.notes.length - 1];
   };
   
-  // Style for sticky cells
-  const stickyCellClass = "sticky left-0 bg-white z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]";
+  // Style for sticky cells (with dark mode support)
+  const stickyCellClass = "sticky left-0 bg-card z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]";
   
+  // Get attributes as data for mobile cards
+  const getAttributeData = () => {
+    const attrs: { label: string; values: (string | number | null)[] }[] = [];
+
+    if (selectedAspect === "basic" || selectedAspect === "all") {
+      attrs.push(
+        { label: "Type", values: comparisonWhiskeys.map(w => w.type || "N/A") },
+        { label: "Region", values: comparisonWhiskeys.map(w => w.region || "N/A") },
+        { label: "Age", values: comparisonWhiskeys.map(w => w.age ? `${w.age} yrs` : "N/A") },
+        { label: "ABV", values: comparisonWhiskeys.map(w => w.abv ? `${w.abv}%` : "N/A") }
+      );
+    }
+
+    if (selectedAspect === "ratings" || selectedAspect === "all") {
+      attrs.push(
+        { label: "Overall", values: comparisonWhiskeys.map(w => { const r = getLatestReview(w); return r?.rating?.toFixed(1) || "N/A"; }) },
+        { label: "Nose", values: comparisonWhiskeys.map(w => { const r = getLatestReview(w); return r?.noseScore || "N/A"; }) },
+        { label: "Taste", values: comparisonWhiskeys.map(w => { const r = getLatestReview(w); return r?.tasteScore || "N/A"; }) },
+        { label: "Finish", values: comparisonWhiskeys.map(w => { const r = getLatestReview(w); return r?.finishScore || "N/A"; }) },
+        { label: "Value", values: comparisonWhiskeys.map(w => { const r = getLatestReview(w); return r?.valueScore || "N/A"; }) }
+      );
+    }
+
+    if (selectedAspect === "value" || selectedAspect === "all") {
+      attrs.push(
+        { label: "Price", values: comparisonWhiskeys.map(w => w.price ? `$${w.price.toFixed(2)}` : "N/A") },
+        { label: "Availability", values: comparisonWhiskeys.map(w => { const r = getLatestReview(w); return r?.valueAvailability || "N/A"; }) },
+        { label: "Buy Again", values: comparisonWhiskeys.map(w => { const r = getLatestReview(w); return r?.valueBuyAgain || "N/A"; }) }
+      );
+    }
+
+    return attrs;
+  };
+
+  // Mobile card layout
+  const renderMobileComparison = () => {
+    if (comparisonWhiskeys.length === 0) {
+      return (
+        <div className="text-center py-8 text-muted-foreground">
+          Select up to 3 whiskeys to compare
+        </div>
+      );
+    }
+
+    const attrs = getAttributeData();
+
+    return (
+      <div className="space-y-4">
+        {/* Whiskey name cards with remove buttons */}
+        <div className="grid grid-cols-1 gap-2">
+          {comparisonWhiskeys.map((whiskey, idx) => (
+            <div key={whiskey.id} className="flex items-center justify-between p-3 bg-accent/30 rounded-lg border border-border/30">
+              <div className="flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-primary/20 text-primary text-sm flex items-center justify-center font-bold">
+                  {idx + 1}
+                </span>
+                <span className="font-medium text-foreground truncate">{whiskey.name}</span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleRemoveWhiskey(whiskey.id)}
+                className="text-muted-foreground hover:text-destructive h-8 px-2"
+              >
+                Remove
+              </Button>
+            </div>
+          ))}
+        </div>
+
+        {/* Attribute comparison rows */}
+        <div className="space-y-2">
+          {attrs.map((attr, attrIdx) => (
+            <div key={attrIdx} className="bg-card border border-border/30 rounded-lg p-3">
+              <div className="text-xs font-medium text-muted-foreground mb-2">{attr.label}</div>
+              <div className={`grid gap-2 ${comparisonWhiskeys.length === 1 ? 'grid-cols-1' : comparisonWhiskeys.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+                {attr.values.map((val, valIdx) => (
+                  <div key={valIdx} className="text-center">
+                    <span className="text-xs text-muted-foreground block mb-0.5">{valIdx + 1}</span>
+                    <span className="font-medium text-foreground text-sm">{val}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   const renderComparisonTable = () => {
     if (comparisonWhiskeys.length === 0) {
       return (
@@ -64,19 +154,19 @@ const ComparisonTool = ({ whiskeys, className = "" }: ComparisonToolProps) => {
         </div>
       );
     }
-    
+
     return (
-      <Table className="min-w-[700px]">
+      <Table className="min-w-[600px]">
         <TableHeader>
           <TableRow>
-            <TableHead className={`w-[200px] min-w-[180px] ${stickyCellClass}`}>Attribute</TableHead>
+            <TableHead className={`w-[150px] ${stickyCellClass}`}>Attribute</TableHead>
             {comparisonWhiskeys.map(whiskey => (
-              <TableHead key={whiskey.id} className="min-w-[250px]">
+              <TableHead key={whiskey.id} className="min-w-[180px]">
                 <div className="flex flex-col">
-                  <span className="font-bold text-[#794e2f]">{whiskey.name}</span>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
+                  <span className="font-bold text-primary">{whiskey.name}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => handleRemoveWhiskey(whiskey.id)}
                     className="text-xs text-muted-foreground mt-1 h-6 px-2"
                   >
@@ -355,9 +445,15 @@ const ComparisonTool = ({ whiskeys, className = "" }: ComparisonToolProps) => {
         </div>
         
         <ScrollArea className="h-[calc(100%-140px)] overflow-auto">
-          <div className="overflow-x-auto max-h-full">
-            {renderComparisonTable()}
-          </div>
+          {isMobile ? (
+            <div className="pr-2">
+              {renderMobileComparison()}
+            </div>
+          ) : (
+            <div className="overflow-x-auto max-h-full">
+              {renderComparisonTable()}
+            </div>
+          )}
         </ScrollArea>
       </SheetContent>
     </Sheet>

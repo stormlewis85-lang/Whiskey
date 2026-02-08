@@ -327,69 +327,47 @@ const Flights = () => {
                 </div>
               ) : (
                 <>
-                  {/* Comparison Grid */}
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b">
-                          <th className="text-left py-2 px-3 text-sm font-medium text-muted-foreground">Whiskey</th>
-                          <th className="text-center py-2 px-3 text-sm font-medium text-muted-foreground">Age</th>
-                          <th className="text-center py-2 px-3 text-sm font-medium text-muted-foreground">ABV</th>
-                          <th className="text-center py-2 px-3 text-sm font-medium text-muted-foreground">Price</th>
-                          <th className="text-center py-2 px-3 text-sm font-medium text-muted-foreground">Rating</th>
-                          <th className="text-right py-2 px-3"></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {selectedFlight.whiskeys.map((fw, index) => (
-                          <tr key={fw.id} className="border-b last:border-0">
-                            <td className="py-3 px-3">
-                              <div className="flex items-center gap-3">
-                                <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold">
-                                  {index + 1}
-                                </div>
-                                <div>
-                                  <div className="font-medium text-foreground">{fw.whiskey.name}</div>
-                                  {fw.whiskey.distillery && (
-                                    <div className="text-xs text-muted-foreground">{fw.whiskey.distillery}</div>
-                                  )}
-                                </div>
+                  {/* Whiskey Cards - Mobile friendly */}
+                  <div className="space-y-3">
+                    {selectedFlight.whiskeys.map((fw, index) => (
+                      <div key={fw.id} className="p-3 rounded-lg border border-border/50 bg-accent/20">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-start gap-3 flex-1 min-w-0">
+                            <div className="flex items-center justify-center w-7 h-7 rounded-full bg-primary/10 text-primary text-sm font-bold shrink-0">
+                              {index + 1}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="font-medium text-foreground truncate">{fw.whiskey.name}</div>
+                              {fw.whiskey.distillery && (
+                                <div className="text-xs text-muted-foreground truncate">{fw.whiskey.distillery}</div>
+                              )}
+                              <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 text-xs text-muted-foreground">
+                                {fw.whiskey.age && <span>{fw.whiskey.age}yr</span>}
+                                {fw.whiskey.abv && <span>{fw.whiskey.abv}%</span>}
+                                {fw.whiskey.price && <span>${fw.whiskey.price}</span>}
+                                {fw.whiskey.rating && (
+                                  <span className="flex items-center gap-0.5">
+                                    <Star className="h-3 w-3 text-amber-400 fill-amber-400" />
+                                    {fw.whiskey.rating.toFixed(1)}
+                                  </span>
+                                )}
                               </div>
-                            </td>
-                            <td className="text-center py-3 px-3">
-                              {fw.whiskey.age ? `${fw.whiskey.age}yr` : '-'}
-                            </td>
-                            <td className="text-center py-3 px-3">
-                              {fw.whiskey.abv ? `${fw.whiskey.abv}%` : '-'}
-                            </td>
-                            <td className="text-center py-3 px-3">
-                              {fw.whiskey.price ? `$${fw.whiskey.price}` : '-'}
-                            </td>
-                            <td className="text-center py-3 px-3">
-                              {fw.whiskey.rating ? (
-                                <div className="flex items-center justify-center gap-1">
-                                  <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
-                                  <span>{fw.whiskey.rating.toFixed(1)}</span>
-                                </div>
-                              ) : '-'}
-                            </td>
-                            <td className="text-right py-3 px-3">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-destructive hover:text-destructive"
-                                onClick={() => removeWhiskeyMutation.mutate({
-                                  flightId: selectedFlight.flight.id,
-                                  flightWhiskeyId: fw.id
-                                })}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:text-destructive shrink-0"
+                            onClick={() => removeWhiskeyMutation.mutate({
+                              flightId: selectedFlight.flight.id,
+                              flightWhiskeyId: fw.id
+                            })}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
 
                   {/* Tasting Notes */}
