@@ -28,6 +28,7 @@ import { fromZodError } from "zod-validation-error";
 import path from "path";
 import fs from "fs";
 import { setupAuth, isAuthenticated } from "./auth";
+import { uploadToSpaces, isSpacesConfigured, deleteFromSpaces, getKeyFromUrl } from "./spaces";
 
 // Helper to get userId with type safety (throws if not authenticated)
 function getUserId(req: Request): number {
@@ -409,8 +410,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ message: "File permission error", error: String(err) });
       }
 
-      // Get the path to the processed image
-      const imagePath = `/uploads/${processedFilename}`;
+      // Upload to Spaces if configured, otherwise keep locally
+      let imagePath: string;
+      if (isSpacesConfigured()) {
+        try {
+          console.log("Uploading to DigitalOcean Spaces...");
+          imagePath = await uploadToSpaces(processedPath, `bottles/${processedFilename}`, 'image/webp');
+          console.log("Uploaded to Spaces:", imagePath);
+
+          // Delete local processed file after successful upload
+          try {
+            fs.unlinkSync(processedPath);
+            console.log("Deleted local processed file after Spaces upload");
+          } catch (e) {
+            console.warn("Could not delete local file after Spaces upload:", e);
+          }
+        } catch (spacesError) {
+          console.error("Spaces upload failed, falling back to local storage:", spacesError);
+          imagePath = `/uploads/${processedFilename}`;
+        }
+      } else {
+        imagePath = `/uploads/${processedFilename}`;
+        console.log("Spaces not configured, using local storage");
+      }
       console.log("Image path:", imagePath);
       
       // Get userId from session or token
@@ -424,11 +446,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const whiskey = await storage.getWhiskey(id, userId);
 
       if (!whiskey) {
-        console.log("Whiskey not found or not owned by user, deleting processed file");
-        try {
-          fs.unlinkSync(processedPath);
-        } catch (unlinkErr) {
-          console.error("Error deleting file after whiskey not found:", unlinkErr);
+        console.log("Whiskey not found or not owned by user, cleaning up image");
+        // Clean up the uploaded image
+        if (imagePath.startsWith('http')) {
+          // Delete from Spaces
+          const key = getKeyFromUrl(imagePath);
+          if (key) {
+            try {
+              await deleteFromSpaces(key);
+              console.log("Deleted from Spaces:", key);
+            } catch (e) {
+              console.error("Error deleting from Spaces:", e);
+            }
+          }
+        } else {
+          // Delete local file
+          try {
+            fs.unlinkSync(processedPath);
+          } catch (unlinkErr) {
+            console.error("Error deleting local file:", unlinkErr);
+          }
         }
         return res.status(404).json({ message: "Whiskey not found or not owned by you" });
       }
@@ -438,11 +475,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Whiskey updated with image path:", updatedWhiskey ? "success" : "failed");
 
       if (!updatedWhiskey) {
-        console.log("Failed to update whiskey with image path, deleting processed file");
-        try {
-          fs.unlinkSync(processedPath);
-        } catch (unlinkErr) {
-          console.error("Error deleting file after update failure:", unlinkErr);
+        console.log("Failed to update whiskey with image path, cleaning up image");
+        // Clean up the uploaded image
+        if (imagePath.startsWith('http')) {
+          const key = getKeyFromUrl(imagePath);
+          if (key) {
+            try {
+              await deleteFromSpaces(key);
+              console.log("Deleted from Spaces after update failure:", key);
+            } catch (e) {
+              console.error("Error deleting from Spaces:", e);
+            }
+          }
+        } else {
+          try {
+            fs.unlinkSync(processedPath);
+          } catch (unlinkErr) {
+            console.error("Error deleting local file after update failure:", unlinkErr);
+          }
         }
         return res.status(500).json({ message: "Failed to update whiskey with image" });
       }
