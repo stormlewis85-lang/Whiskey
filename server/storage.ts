@@ -59,6 +59,7 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   getUserByToken(token: string): Promise<User | undefined>;
   updateUser(id: number, userData: UpdateUser): Promise<User | undefined>;
   validateUserCredentials(username: string, password: string): Promise<User | undefined>;
@@ -119,7 +120,16 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(users)
       .where(eq(users.username, username));
-    
+
+    return user || undefined;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, email));
+
     return user || undefined;
   }
   
@@ -142,7 +152,10 @@ export class DatabaseStorage implements IStorage {
   async validateUserCredentials(username: string, password: string): Promise<User | undefined> {
     const user = await this.getUserByUsername(username);
     if (!user) return undefined;
-    
+
+    // OAuth-only users have no password
+    if (!user.password) return undefined;
+
     const isValid = await comparePasswords(password, user.password);
     return isValid ? user : undefined;
   }

@@ -9,6 +9,8 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import Dashboard from "@/pages/Dashboard";
 import AuthPage from "@/pages/auth-page";
+import ForgotPasswordPage from "@/pages/forgot-password";
+import ResetPasswordPage from "@/pages/reset-password";
 import SharedReview from "@/pages/SharedReview";
 import Community from "@/pages/Community";
 import ReviewPage from "@/pages/ReviewPage";
@@ -26,6 +28,8 @@ function Router() {
       <ProtectedRoute path="/flights" component={Flights} />
       <ProtectedRoute path="/blind-tastings" component={BlindTastings} />
       <Route path="/auth" component={AuthPage} />
+      <Route path="/forgot-password" component={ForgotPasswordPage} />
+      <Route path="/reset-password" component={ResetPasswordPage} />
       <Route path="/shared/:shareId" component={SharedReview} />
       <Route path="/community" component={Community} />
       <Route path="/u/:slug" component={Profile} />

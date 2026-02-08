@@ -35,8 +35,9 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+// Increase JSON body limit for base64 image uploads
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 
 // Ensure uploads directory exists
 const uploadDir = path.join(process.cwd(), "uploads");

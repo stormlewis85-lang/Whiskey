@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Redirect } from "wouter";
+import { Redirect, Link, useSearch } from "wouter";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -17,16 +17,50 @@ import {
 import { Loader2, Wine, Check, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
+
+// Google icon component
+function GoogleIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24">
+      <path
+        fill="currentColor"
+        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+      />
+      <path
+        fill="currentColor"
+        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+      />
+      <path
+        fill="currentColor"
+        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+      />
+      <path
+        fill="currentColor"
+        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+      />
+    </svg>
+  );
+}
 
 const loginSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  password: z.string().min(1, "Password is required"),
 });
 
+// Stronger password requirements for registration
 const registerSchema = z.object({
-  username: z.string().min(3, "Username must be at least 3 characters"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  username: z.string()
+    .min(3, "Username must be at least 3 characters")
+    .max(30, "Username must be at most 30 characters")
+    .regex(/^[a-zA-Z0-9_-]+$/, "Username can only contain letters, numbers, underscores, and hyphens"),
+  password: z.string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/[A-Z]/, "Password must contain an uppercase letter")
+    .regex(/[a-z]/, "Password must contain a lowercase letter")
+    .regex(/[0-9]/, "Password must contain a number"),
   displayName: z.string().min(2, "Display name must be at least 2 characters"),
+  email: z.string().email("Invalid email address").optional().or(z.literal("")),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -35,6 +69,35 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
+  const [oauthError, setOauthError] = useState<string | null>(null);
+  const searchString = useSearch();
+
+  // Check for OAuth errors in URL
+  useEffect(() => {
+    const params = new URLSearchParams(searchString);
+    const error = params.get("error");
+    if (error) {
+      const errorMessages: Record<string, string> = {
+        oauth_denied: "Google sign-in was cancelled",
+        invalid_state: "Security validation failed. Please try again.",
+        oauth_failed: "Google sign-in failed. Please try again.",
+        token_exchange_failed: "Failed to complete sign-in. Please try again.",
+        session_failed: "Failed to create session. Please try again.",
+      };
+      setOauthError(errorMessages[error] || "Sign-in failed. Please try again.");
+      // Clear the error from URL
+      window.history.replaceState({}, "", "/auth");
+    }
+  }, [searchString]);
+
+  // Check if Google OAuth is configured
+  const { data: googleStatus } = useQuery({
+    queryKey: ["/api/auth/google/status"],
+    queryFn: async () => {
+      const res = await fetch("/api/auth/google/status");
+      return res.json() as Promise<{ configured: boolean }>;
+    },
+  });
 
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -50,15 +113,28 @@ export default function AuthPage() {
       username: "",
       password: "",
       displayName: "",
+      email: "",
     },
   });
 
   const onLogin = (data: LoginFormValues) => {
+    setOauthError(null);
     loginMutation.mutate(data);
   };
 
   const onRegister = (data: RegisterFormValues) => {
-    registerMutation.mutate(data);
+    setOauthError(null);
+    // Filter out empty email
+    const submitData = {
+      ...data,
+      email: data.email || undefined,
+    };
+    registerMutation.mutate(submitData);
+  };
+
+  const handleGoogleSignIn = () => {
+    setOauthError(null);
+    window.location.href = "/api/auth/google";
   };
 
   // If already logged in, redirect to home
@@ -181,6 +257,39 @@ export default function AuthPage() {
                     </p>
                   </div>
 
+                  {/* Google OAuth Button */}
+                  {googleStatus?.configured && (
+                    <>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full h-11 mb-4"
+                        onClick={handleGoogleSignIn}
+                      >
+                        <GoogleIcon className="mr-2 h-5 w-5" />
+                        Continue with Google
+                      </Button>
+
+                      <div className="relative my-4">
+                        <div className="absolute inset-0 flex items-center">
+                          <span className="w-full border-t" />
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                          <span className="bg-card px-2 text-muted-foreground">
+                            Or continue with username
+                          </span>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* OAuth error message */}
+                  {oauthError && (
+                    <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm mb-4">
+                      {oauthError}
+                    </div>
+                  )}
+
                   <Form {...loginForm}>
                     <form onSubmit={loginForm.handleSubmit(onLogin)} className="space-y-4">
                       <FormField
@@ -206,7 +315,15 @@ export default function AuthPage() {
                         name="password"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Password</FormLabel>
+                            <div className="flex items-center justify-between">
+                              <FormLabel>Password</FormLabel>
+                              <Link
+                                href="/forgot-password"
+                                className="text-sm text-primary hover:underline"
+                              >
+                                Forgot password?
+                              </Link>
+                            </div>
                             <FormControl>
                               <Input
                                 type="password"
@@ -222,7 +339,7 @@ export default function AuthPage() {
 
                       {loginMutation.isError && (
                         <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
-                          Invalid username or password. Please try again.
+                          {(loginMutation.error as any)?.message || "Invalid username or password. Please try again."}
                         </div>
                       )}
 
@@ -271,6 +388,39 @@ export default function AuthPage() {
                     </p>
                   </div>
 
+                  {/* Google OAuth Button */}
+                  {googleStatus?.configured && (
+                    <>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full h-11 mb-4"
+                        onClick={handleGoogleSignIn}
+                      >
+                        <GoogleIcon className="mr-2 h-5 w-5" />
+                        Continue with Google
+                      </Button>
+
+                      <div className="relative my-4">
+                        <div className="absolute inset-0 flex items-center">
+                          <span className="w-full border-t" />
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                          <span className="bg-card px-2 text-muted-foreground">
+                            Or create with username
+                          </span>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* OAuth error message */}
+                  {oauthError && (
+                    <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm mb-4">
+                      {oauthError}
+                    </div>
+                  )}
+
                   <Form {...registerForm}>
                     <form onSubmit={registerForm.handleSubmit(onRegister)} className="space-y-4">
                       <FormField
@@ -282,6 +432,25 @@ export default function AuthPage() {
                             <FormControl>
                               <Input
                                 placeholder="What should we call you?"
+                                className="h-11"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={registerForm.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email <span className="text-muted-foreground text-xs">(optional)</span></FormLabel>
+                            <FormControl>
+                              <Input
+                                type="email"
+                                placeholder="For password recovery"
                                 className="h-11"
                                 {...field}
                               />
@@ -318,7 +487,7 @@ export default function AuthPage() {
                             <FormControl>
                               <Input
                                 type="password"
-                                placeholder="Create a password (min 6 chars)"
+                                placeholder="Min 8 chars, upper/lower/number"
                                 className="h-11"
                                 {...field}
                               />
@@ -330,7 +499,7 @@ export default function AuthPage() {
 
                       {registerMutation.isError && (
                         <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
-                          Could not create account. Username may already be taken.
+                          {(registerMutation.error as any)?.message || "Could not create account. Username may already be taken."}
                         </div>
                       )}
 

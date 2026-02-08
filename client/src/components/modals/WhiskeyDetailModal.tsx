@@ -342,8 +342,8 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit, onTast
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden bg-card border-border/50">
-          <DialogHeader className="pb-0">
+        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col bg-card border-border/50">
+          <DialogHeader className="pb-0 shrink-0">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
                 <DialogTitle className="text-xl md:text-2xl font-bold text-foreground pr-8">
@@ -354,51 +354,56 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit, onTast
                 )}
               </div>
             </div>
-            <div className="flex items-center gap-2 mt-3 pb-2">
+            {/* Action buttons - icon-only on mobile, with text on larger screens */}
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-3 pb-2">
               <Button
                 variant="outline"
                 size="sm"
-                className="text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
+                className="text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30 h-8 px-2 sm:px-3"
                 onClick={confirmDeleteWhiskey}
+                title="Delete whiskey"
               >
-                <Trash2 className="h-4 w-4 mr-1.5" />
-                Delete
+                <Trash2 className="h-4 w-4 sm:mr-1.5" />
+                <span className="hidden sm:inline">Delete</span>
               </Button>
-              <Button variant="outline" size="sm" onClick={() => onEdit(whiskey)}>
-                <PencilIcon className="h-4 w-4 mr-1.5" />
-                Edit
+              <Button variant="outline" size="sm" onClick={() => onEdit(whiskey)} className="h-8 px-2 sm:px-3" title="Edit whiskey">
+                <PencilIcon className="h-4 w-4 sm:mr-1.5" />
+                <span className="hidden sm:inline">Edit</span>
               </Button>
               <Button
                 variant="outline"
                 size="sm"
+                className="h-8 px-2 sm:px-3"
                 onClick={() => {
                   setReviewForShare(sortedNotes[0]); // Use latest review if available
                   setIsShareImageModalOpen(true);
                 }}
+                title="Share as image"
               >
-                <Image className="h-4 w-4 mr-1.5" />
-                Share
+                <Image className="h-4 w-4 sm:mr-1.5" />
+                <span className="hidden sm:inline">Share</span>
               </Button>
               {onTasteWithRick && !isWishlist && (
                 <Button
                   variant="default"
                   size="sm"
-                  className="bg-amber-600 hover:bg-amber-700 text-white"
+                  className="bg-amber-600 hover:bg-amber-700 text-white h-8 px-2 sm:px-3"
                   onClick={() => onTasteWithRick(whiskey)}
+                  title="Taste with Rick"
                 >
-                  <Mic className="h-4 w-4 mr-1.5" />
-                  Taste with Rick
+                  <Mic className="h-4 w-4 sm:mr-1.5" />
+                  <span className="hidden sm:inline">Taste with Rick</span>
                 </Button>
               )}
             </div>
           </DialogHeader>
 
-          <Separator className="my-2" />
+          <Separator className="my-2 shrink-0" />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto pr-2 pb-4" style={{ maxHeight: "calc(90vh - 140px)" }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto pr-2 pb-8 flex-1 min-h-0">
             {/* Left column - Image & details */}
-            <div className="space-y-4">
-              <div className="aspect-square overflow-hidden rounded-xl bg-accent/30 relative group border border-border/30">
+            <div className="space-y-3 sm:space-y-4">
+              <div className="aspect-[4/3] sm:aspect-square overflow-hidden rounded-xl bg-accent/30 relative group border border-border/30">
                 {whiskey.image ? (
                   <img
                     src={whiskey.image}
@@ -457,47 +462,47 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit, onTast
                 </div>
               </div>
 
-              {/* Details grid */}
-              <div className="grid grid-cols-2 gap-3">
+              {/* Details grid - 2 columns with compact spacing on mobile */}
+              <div className="grid grid-cols-2 gap-2 sm:gap-3">
                 {whiskey.type && (
-                  <div className="p-3 bg-accent/20 rounded-lg border border-border/20">
-                    <div className="text-xs text-muted-foreground mb-1">Type</div>
-                    <div className="font-medium text-foreground">{whiskey.type}</div>
+                  <div className="p-2 sm:p-3 bg-accent/20 rounded-lg border border-border/20">
+                    <div className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">Type</div>
+                    <div className="font-medium text-foreground text-sm sm:text-base truncate">{whiskey.type}</div>
                   </div>
                 )}
 
                 {whiskey.region && (
-                  <div className="p-3 bg-accent/20 rounded-lg border border-border/20">
-                    <div className="text-xs text-muted-foreground mb-1">Region</div>
-                    <div className="font-medium text-foreground">{whiskey.region}</div>
+                  <div className="p-2 sm:p-3 bg-accent/20 rounded-lg border border-border/20">
+                    <div className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">Region</div>
+                    <div className="font-medium text-foreground text-sm sm:text-base truncate">{whiskey.region}</div>
                   </div>
                 )}
 
                 {whiskey.age !== null && (
-                  <div className="p-3 bg-accent/20 rounded-lg border border-border/20">
-                    <div className="text-xs text-muted-foreground mb-1">Age</div>
-                    <div className="font-medium text-foreground">{whiskey.age} {whiskey.age === 1 ? 'year' : 'years'}</div>
+                  <div className="p-2 sm:p-3 bg-accent/20 rounded-lg border border-border/20">
+                    <div className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">Age</div>
+                    <div className="font-medium text-foreground text-sm sm:text-base">{whiskey.age} {whiskey.age === 1 ? 'yr' : 'yrs'}</div>
                   </div>
                 )}
 
                 {whiskey.abv !== null && (
-                  <div className="p-3 bg-accent/20 rounded-lg border border-border/20">
-                    <div className="text-xs text-muted-foreground mb-1">ABV</div>
-                    <div className="font-medium text-foreground">{whiskey.abv}%</div>
+                  <div className="p-2 sm:p-3 bg-accent/20 rounded-lg border border-border/20">
+                    <div className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">ABV</div>
+                    <div className="font-medium text-foreground text-sm sm:text-base">{whiskey.abv}%</div>
                   </div>
                 )}
 
                 {whiskey.price !== null && (
-                  <div className="p-3 bg-accent/20 rounded-lg border border-border/20">
-                    <div className="text-xs text-muted-foreground mb-1">Price</div>
-                    <div className="font-medium text-primary">${whiskey.price.toFixed(2)}</div>
+                  <div className="p-2 sm:p-3 bg-accent/20 rounded-lg border border-border/20">
+                    <div className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">Price</div>
+                    <div className="font-medium text-primary text-sm sm:text-base">${whiskey.price.toFixed(2)}</div>
                   </div>
                 )}
 
                 {whiskey.dateAdded && (
-                  <div className="p-3 bg-accent/20 rounded-lg border border-border/20">
-                    <div className="text-xs text-muted-foreground mb-1">Added</div>
-                    <div className="font-medium text-foreground">{new Date(whiskey.dateAdded).toLocaleDateString()}</div>
+                  <div className="p-2 sm:p-3 bg-accent/20 rounded-lg border border-border/20">
+                    <div className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">Added</div>
+                    <div className="font-medium text-foreground text-sm sm:text-base">{new Date(whiskey.dateAdded).toLocaleDateString()}</div>
                   </div>
                 )}
 
@@ -505,37 +510,37 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit, onTast
                 {whiskey.type === 'Bourbon' && (
                   <>
                     {whiskey.bottleType && (
-                      <div className="p-3 bg-accent/20 rounded-lg border border-border/20">
-                        <div className="text-xs text-muted-foreground mb-1">Bottle Type</div>
-                        <div className="font-medium text-foreground">{whiskey.bottleType}</div>
+                      <div className="p-2 sm:p-3 bg-accent/20 rounded-lg border border-border/20">
+                        <div className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">Bottle Type</div>
+                        <div className="font-medium text-foreground text-sm sm:text-base truncate">{whiskey.bottleType}</div>
                       </div>
                     )}
 
                     {whiskey.mashBill && (
-                      <div className="p-3 bg-accent/20 rounded-lg border border-border/20">
-                        <div className="text-xs text-muted-foreground mb-1">Mash Bill</div>
-                        <div className="font-medium text-foreground">{whiskey.mashBill}</div>
+                      <div className="p-2 sm:p-3 bg-accent/20 rounded-lg border border-border/20">
+                        <div className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">Mash Bill</div>
+                        <div className="font-medium text-foreground text-sm sm:text-base truncate">{whiskey.mashBill}</div>
                       </div>
                     )}
 
                     {whiskey.caskStrength && (
-                      <div className="p-3 bg-accent/20 rounded-lg border border-border/20">
-                        <div className="text-xs text-muted-foreground mb-1">Cask Strength</div>
-                        <div className="font-medium text-foreground">{whiskey.caskStrength}</div>
+                      <div className="p-2 sm:p-3 bg-accent/20 rounded-lg border border-border/20">
+                        <div className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">Cask Strength</div>
+                        <div className="font-medium text-foreground text-sm sm:text-base">{whiskey.caskStrength}</div>
                       </div>
                     )}
 
                     {whiskey.finished && (
-                      <div className="p-3 bg-accent/20 rounded-lg border border-border/20">
-                        <div className="text-xs text-muted-foreground mb-1">Finished</div>
-                        <div className="font-medium text-foreground">{whiskey.finished}</div>
+                      <div className="p-2 sm:p-3 bg-accent/20 rounded-lg border border-border/20">
+                        <div className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">Finished</div>
+                        <div className="font-medium text-foreground text-sm sm:text-base">{whiskey.finished}</div>
                       </div>
                     )}
 
                     {whiskey.finishType && (
-                      <div className="p-3 bg-accent/20 rounded-lg border border-border/20">
-                        <div className="text-xs text-muted-foreground mb-1">Finish Type</div>
-                        <div className="font-medium text-foreground">{whiskey.finishType}</div>
+                      <div className="p-2 sm:p-3 bg-accent/20 rounded-lg border border-border/20">
+                        <div className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">Finish Type</div>
+                        <div className="font-medium text-foreground text-sm sm:text-base truncate">{whiskey.finishType}</div>
                       </div>
                     )}
                   </>

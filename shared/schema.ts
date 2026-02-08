@@ -30,7 +30,7 @@ export const distilleries = pgTable("distilleries", {
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull(),
-  password: text("password").notNull(),
+  password: text("password"), // Nullable for OAuth-only users
   displayName: text("display_name"),
   email: text("email"),
   firstName: text("first_name"),
@@ -43,6 +43,11 @@ export const users = pgTable("users", {
   profileSlug: text("profile_slug"),
   isPublic: boolean("is_public").default(false),
   showWishlistOnProfile: boolean("show_wishlist_on_profile").default(false),
+  // Security fields
+  emailVerified: boolean("email_verified").default(false),
+  failedLoginAttempts: integer("failed_login_attempts").default(0),
+  accountLockedUntil: timestamp("account_locked_until"),
+  lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => {
@@ -51,6 +56,39 @@ export const users = pgTable("users", {
     emailUnique: unique("email_unique").on(table.email),
     profileSlugUnique: unique("profile_slug_unique").on(table.profileSlug),
   };
+});
+
+// OAuth Providers - linked social accounts
+export const oauthProviders = pgTable("oauth_providers", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  provider: text("provider").notNull(), // 'google'
+  providerUserId: text("provider_user_id").notNull(),
+  providerEmail: text("provider_email"),
+  accessToken: text("access_token"),
+  refreshToken: text("refresh_token"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  uniqueProvider: unique("unique_oauth_provider").on(table.provider, table.providerUserId),
+}));
+
+// Password Reset Tokens
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  token: text("token").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Login Attempts - for rate limiting
+export const loginAttempts = pgTable("login_attempts", {
+  id: serial("id").primaryKey(),
+  identifier: text("identifier").notNull(), // username or IP
+  success: boolean("success").notNull().default(false),
+  ipAddress: text("ip_address"),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // Whiskey to Users Relations will be defined after whiskeys is defined
@@ -328,6 +366,25 @@ export const usersRelations = relations(users, ({ many }) => ({
   following: many(follows, { relationName: 'following' }),
   // Rick House relations
   tastingSessions: many(tastingSessions),
+  // Auth relations
+  oauthProviders: many(oauthProviders),
+  passwordResetTokens: many(passwordResetTokens),
+}));
+
+// OAuth Providers relations
+export const oauthProvidersRelations = relations(oauthProviders, ({ one }) => ({
+  user: one(users, {
+    fields: [oauthProviders.userId],
+    references: [users.id],
+  }),
+}));
+
+// Password Reset Tokens relations
+export const passwordResetTokensRelations = relations(passwordResetTokens, ({ one }) => ({
+  user: one(users, {
+    fields: [passwordResetTokens.userId],
+    references: [users.id],
+  }),
 }));
 
 // Distilleries relations
@@ -391,13 +448,38 @@ export const reviewLikesRelations = relations(reviewLikes, ({ one }) => ({
   }),
 }));
 
+// Password validation schema with security requirements
+export const passwordSchema = z.string()
+  .min(8, 'Password must be at least 8 characters')
+  .regex(/[A-Z]/, 'Password must contain an uppercase letter')
+  .regex(/[a-z]/, 'Password must contain a lowercase letter')
+  .regex(/[0-9]/, 'Password must contain a number');
+
 // Create User Schemas
 export const insertUserSchema = createInsertSchema(users)
-  .omit({ id: true, createdAt: true, updatedAt: true });
+  .omit({ id: true, createdAt: true, updatedAt: true, emailVerified: true, failedLoginAttempts: true, accountLockedUntil: true, lastLoginAt: true });
+
+// Registration schema with strong password requirements
+export const registerUserSchema = z.object({
+  username: z.string().min(3, "Username must be at least 3 characters").max(30).regex(/^[a-zA-Z0-9_-]+$/, "Username can only contain letters, numbers, underscores, and hyphens"),
+  password: passwordSchema.optional(), // Optional for OAuth users
+  email: z.string().email("Invalid email address").optional(),
+  displayName: z.string().min(2, "Display name must be at least 2 characters").max(50),
+});
 
 export const loginUserSchema = z.object({
   username: z.string().min(1, "Username is required"),
   password: z.string().min(1, "Password is required"),
+});
+
+// Password reset schemas
+export const forgotPasswordSchema = z.object({
+  email: z.string().email("Invalid email address"),
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1, "Token is required"),
+  password: passwordSchema,
 });
 
 export const updateUserSchema = createInsertSchema(users)
@@ -703,6 +785,18 @@ export const updateGeneratedScriptSchema = insertGeneratedScriptSchema.partial()
 export type GeneratedScript = typeof generatedScripts.$inferSelect;
 export type InsertGeneratedScript = z.infer<typeof insertGeneratedScriptSchema>;
 export type UpdateGeneratedScript = z.infer<typeof updateGeneratedScriptSchema>;
+
+// OAuth Provider types
+export type OAuthProvider = typeof oauthProviders.$inferSelect;
+export type InsertOAuthProvider = typeof oauthProviders.$inferInsert;
+
+// Password Reset Token types
+export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
+export type InsertPasswordResetToken = typeof passwordResetTokens.$inferInsert;
+
+// Login Attempt types
+export type LoginAttempt = typeof loginAttempts.$inferSelect;
+export type InsertLoginAttempt = typeof loginAttempts.$inferInsert;
 
 // Flavor tag constants for search/filter
 export const FLAVOR_TAGS = {

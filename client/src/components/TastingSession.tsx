@@ -312,9 +312,9 @@ const TastingSession = ({ whiskey, mode, onClose, onComplete }: TastingSessionPr
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-background">
+    <div className="fixed inset-0 z-50 bg-background flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-gradient-to-r from-amber-950 via-amber-900 to-amber-950 text-white border-b border-amber-800/30">
+      <header className="shrink-0 bg-gradient-to-r from-amber-950 via-amber-900 to-amber-950 text-white border-b border-amber-800/30">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Mic className="h-5 w-5 text-amber-400" />
@@ -405,8 +405,9 @@ const TastingSession = ({ whiskey, mode, onClose, onComplete }: TastingSessionPr
         )}
       </header>
 
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-6 max-w-2xl">
+      {/* Main Content - Scrollable area */}
+      <main className="flex-1 overflow-y-auto">
+        <div className="container mx-auto px-4 py-6 max-w-2xl pb-24 sm:pb-6">
         {mode === 'notes' ? (
           /* Just Notes View - All sections at once */
           <div className="space-y-6">
@@ -513,40 +514,47 @@ const TastingSession = ({ whiskey, mode, onClose, onComplete }: TastingSessionPr
               </CardContent>
             </Card>
 
-            {/* Navigation Buttons */}
-            <div className="mt-6 flex items-center justify-between">
-              <Button
-                variant="outline"
-                onClick={handlePrevious}
-                disabled={currentPhaseIndex === 0}
-              >
-                Previous
-              </Button>
-
-              <span className="text-sm text-muted-foreground">
-                {currentPhaseIndex + 1} of {PHASES.length}
-              </span>
-
-              <Button
-                onClick={handleNext}
-                className="bg-amber-600 hover:bg-amber-700 text-white"
-                disabled={completeSessionMutation.isPending}
-              >
-                {completeSessionMutation.isPending ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Completing...
-                  </>
-                ) : currentPhaseIndex === PHASES.length - 1 ? (
-                  "Complete Tasting"
-                ) : (
-                  "Next"
-                )}
-              </Button>
-            </div>
           </>
         )}
+        </div>
       </main>
+
+      {/* Fixed Navigation Footer - Only for guided mode */}
+      {mode === 'guided' && (
+        <footer className="shrink-0 bg-background/95 backdrop-blur-sm border-t border-border/50 p-4 sm:p-6">
+          <div className="container mx-auto max-w-2xl flex items-center justify-between gap-4">
+            <Button
+              variant="outline"
+              onClick={handlePrevious}
+              disabled={currentPhaseIndex === 0}
+              className="flex-1 sm:flex-none"
+            >
+              Previous
+            </Button>
+
+            <span className="text-sm text-muted-foreground hidden sm:block">
+              {currentPhaseIndex + 1} of {PHASES.length}
+            </span>
+
+            <Button
+              onClick={handleNext}
+              className="bg-amber-600 hover:bg-amber-700 text-white flex-1 sm:flex-none"
+              disabled={completeSessionMutation.isPending}
+            >
+              {completeSessionMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Completing...
+                </>
+              ) : currentPhaseIndex === PHASES.length - 1 ? (
+                "Complete"
+              ) : (
+                "Next"
+              )}
+            </Button>
+          </div>
+        </footer>
+      )}
     </div>
   );
 };

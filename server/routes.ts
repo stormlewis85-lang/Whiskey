@@ -98,7 +98,8 @@ async function processImage(inputPath: string, outputPath: string): Promise<{ wi
   const maxWidth = 800;
   const shouldResize = metadata.width && metadata.width > maxWidth;
 
-  let processedImage = image;
+  // Auto-rotate based on EXIF orientation (fixes sideways mobile photos)
+  let processedImage = image.rotate();
 
   if (shouldResize) {
     processedImage = processedImage.resize(maxWidth, null, {
@@ -1547,6 +1548,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Generate a review guide script with Rick
+  app.post("/api/rick/review-guide", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const { whiskeyId } = req.body;
+      const userId = getUserId(req);
+
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      if (!whiskeyId) {
+        return res.status(400).json({ message: "whiskeyId is required" });
+      }
+
+      // Import the review guide generator
+      const { generateRickReviewGuide } = await import('./rick-service');
+
+      const result = await generateRickReviewGuide({
+        whiskeyId: parseInt(whiskeyId),
+        userId
+      });
+
+      res.json({
+        success: true,
+        script: result.script,
+        whiskeyName: result.whiskeyName
+      });
+    } catch (error) {
+      console.error('Review guide generation error:', error);
+      res.status(500).json({
+        message: "Failed to generate review guide",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
   // ==================== RECOMMENDATION ROUTES ====================
 
   // Get recommendations for the user
@@ -1973,6 +2010,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Barcode lookup error:', error);
       res.status(500).json({ message: "Failed to lookup barcode", error: String(error) });
+    }
+  });
+
+  // Identify whiskey from image using Claude Vision
+  app.post("/api/identify-image", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const { image, mediaType } = req.body;
+
+      if (!image) {
+        return res.status(400).json({ message: "No image provided" });
+      }
+
+      if (!mediaType || !['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(mediaType)) {
+        return res.status(400).json({ message: "Invalid media type. Must be image/jpeg, image/png, image/gif, or image/webp" });
+      }
+
+      console.log('Image identification request received');
+      console.log('Media type:', mediaType);
+
+      // Remove data URL prefix if present
+      let base64Data = image;
+      if (image.includes(',')) {
+        base64Data = image.split(',')[1];
+      }
+
+      const { identifyWhiskeyFromImage } = await import('./image-identify-service');
+      const result = await identifyWhiskeyFromImage(base64Data, mediaType);
+
+      res.json(result);
+    } catch (error) {
+      console.error('Image identification error:', error);
+      res.status(500).json({ message: "Failed to identify whiskey from image", error: String(error) });
     }
   });
 

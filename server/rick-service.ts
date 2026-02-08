@@ -24,6 +24,20 @@ export interface RickScript {
   metadata?: RickScriptMetadata;
 }
 
+// TypeScript interface for Rick's review guide script
+export interface RickReviewScript {
+  intro: string;
+  visual: string;
+  nose: string;
+  mouthfeel: string;
+  taste: string;
+  finish: string;
+  value: string;
+  closing: string;
+  quip: string;
+  metadata?: RickScriptMetadata;
+}
+
 export interface RickScriptMetadata {
   whiskeyId: number;
   whiskeyName: string;
@@ -54,6 +68,17 @@ function loadRickPrompt(): string {
   } catch (error) {
     console.error('Failed to load Rick prompt:', error);
     throw new Error('Rick House configuration error: prompt file not found');
+  }
+}
+
+// Load the Rick review guide prompt
+function loadRickReviewPrompt(): string {
+  try {
+    const promptPath = join(__dirname, 'prompts', 'rick-review-guide.md');
+    return readFileSync(promptPath, 'utf-8');
+  } catch (error) {
+    console.error('Failed to load Rick review guide prompt:', error);
+    throw new Error('Rick House configuration error: review guide prompt file not found');
   }
 }
 
@@ -293,5 +318,162 @@ export async function generateRickScript(input: GenerateScriptInput): Promise<Ge
     cached: false,
     whiskeyName: whiskey.name,
     mode: input.mode
+  };
+}
+
+// Build the review guide prompt for Claude
+function buildReviewGuidePrompt(
+  rickCharacter: string,
+  whiskey: { name: string; distillery?: string | null; type?: string | null; age?: number | null; abv?: number | null; price?: number | null },
+  recentQuips: string[] = []
+): string {
+  let whiskeyDetails = `
+## Whiskey Being Reviewed
+- Name: ${whiskey.name}
+- Distillery: ${whiskey.distillery || 'Unknown'}
+- Type: ${whiskey.type || 'Whiskey'}
+- Age: ${whiskey.age ? `${whiskey.age} years` : 'No Age Statement'}
+- ABV: ${whiskey.abv ? `${whiskey.abv}%` : 'Unknown'}
+- Price: ${whiskey.price ? `$${whiskey.price}` : 'Unknown'}
+`;
+
+  // Build quips avoidance section
+  let quipsSection = '';
+  if (recentQuips.length > 0) {
+    quipsSection = `
+## Quips to Avoid (recently used)
+Do NOT use these quips - pick a different one:
+${recentQuips.map(q => `- "${q}"`).join('\n')}
+`;
+  }
+
+  return `${rickCharacter}
+
+---
+
+# Current Task
+
+Generate a REVIEW GUIDE script for this whiskey. You're helping someone score and document their tasting.
+
+${whiskeyDetails}
+${quipsSection}
+
+Mix generic evaluation guidance with whiskey-specific expectations. Help them think about scoring without being prescriptive about what score to give.
+
+Return ONLY valid JSON matching this structure:
+
+{
+  "intro": "1-2 sentences - Welcome, mention the whiskey, set the tone",
+  "visual": "2-3 sentences - Guide them on observing color, clarity, legs",
+  "nose": "3-4 sentences - Nosing guidance with what makes a good nose score",
+  "mouthfeel": "2-3 sentences - Texture evaluation, what to consider for scoring",
+  "taste": "3-4 sentences - Flavor evaluation, complexity, balance considerations",
+  "finish": "2-3 sentences - Aftertaste quality, length, scoring thoughts",
+  "value": "2-3 sentences - Worth assessment based on price point",
+  "closing": "2 sentences - Encourage them to write their summary",
+  "quip": "One of Rick's wisdom lines"
+}
+
+Remember: No markdown, no code blocks, just the raw JSON object.`;
+}
+
+// Parse review guide response
+function parseReviewGuideResponse(responseText: string): RickReviewScript {
+  let jsonStr = responseText.trim();
+
+  // Remove markdown code blocks if present
+  const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+  if (jsonMatch) {
+    jsonStr = jsonMatch[0];
+  }
+
+  try {
+    const parsed = JSON.parse(jsonStr);
+
+    // Validate required fields
+    const requiredFields: (keyof RickReviewScript)[] = [
+      'intro', 'visual', 'nose', 'mouthfeel', 'taste', 'finish', 'value', 'closing', 'quip'
+    ];
+    for (const field of requiredFields) {
+      if (typeof parsed[field] !== 'string') {
+        throw new Error(`Missing or invalid field: ${field}`);
+      }
+    }
+
+    return parsed as RickReviewScript;
+  } catch (error) {
+    console.error('Failed to parse Rick review guide script:', error);
+    console.error('Raw response:', responseText);
+    throw new Error('Failed to parse AI response as valid review guide script');
+  }
+}
+
+export interface GenerateReviewGuideInput {
+  whiskeyId: number;
+  userId: number;
+}
+
+export interface GenerateReviewGuideResult {
+  script: RickReviewScript;
+  whiskeyName: string;
+}
+
+/**
+ * Generate a review guide script using Claude API with Rick's persona
+ * This guides users through scoring each aspect of their review
+ */
+export async function generateRickReviewGuide(input: GenerateReviewGuideInput): Promise<GenerateReviewGuideResult> {
+  const config = getRickConfig();
+
+  if (!config.anthropicApiKey) {
+    throw new Error('Anthropic API key not configured');
+  }
+
+  // Get whiskey details
+  const whiskey = await storage.getWhiskey(input.whiskeyId, input.userId);
+  if (!whiskey) {
+    throw new Error('Whiskey not found or not accessible');
+  }
+
+  console.log(`Generating review guide for whiskey ${input.whiskeyId}: ${whiskey.name}`);
+
+  // Load Rick's review guide prompt
+  const rickCharacter = loadRickReviewPrompt();
+
+  // Get recent quips to avoid repetition
+  const recentQuips = await storage.getRecentQuips(input.userId, 5);
+
+  // Build the prompt
+  const prompt = buildReviewGuidePrompt(rickCharacter, whiskey, recentQuips);
+
+  // Call Claude API
+  const Anthropic = (await import("@anthropic-ai/sdk")).default;
+  const anthropic = new Anthropic({ apiKey: config.anthropicApiKey });
+
+  const message = await anthropic.messages.create({
+    model: "claude-sonnet-4-20250514",
+    max_tokens: 2048,
+    messages: [{ role: "user", content: prompt }]
+  });
+
+  // Extract text from response
+  const responseText = message.content[0].type === 'text' ? message.content[0].text : '';
+
+  // Parse the script
+  const script = parseReviewGuideResponse(responseText);
+
+  // Add metadata
+  script.metadata = {
+    whiskeyId: input.whiskeyId,
+    whiskeyName: whiskey.name,
+    mode: 'guided',
+    generatedAt: new Date().toISOString(),
+    personalized: false,
+    communityReviewCount: 0,
+  };
+
+  return {
+    script,
+    whiskeyName: whiskey.name
   };
 }

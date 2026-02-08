@@ -12,13 +12,14 @@ import { useToast } from "@/hooks/use-toast";
 import { nanoid } from "nanoid";
 import { Progress } from "@/components/ui/progress";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { ArrowLeft, ArrowRight, Check, Loader2, X, Eye, Droplets, Wind, Utensils, Clock, DollarSign, Star, Sparkles, Wand2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Loader2, X, Eye, Droplets, Wind, Utensils, Clock, DollarSign, Star, Sparkles, Wand2, Mic, PencilLine } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { StarRating } from "@/components/StarRating";
 import { FlavorChipGroup, SingleFlavorChipGroup } from "@/components/ui/flavor-chip";
 import { StandardFlavorAccordion } from "@/components/ui/flavor-accordion";
 import { cn } from "@/lib/utils";
 import { AiSuggestModal, AiEnhanceModal } from "@/components/modals/AiTastingModal";
+import RickReviewSession from "@/components/RickReviewSession";
 import {
   COLOR_OPTIONS,
   VISCOSITY_OPTIONS,
@@ -51,11 +52,17 @@ const STEPS = [
   { id: "summary", title: "Summary", icon: Star, description: "Final thoughts" },
 ];
 
+type ReviewMode = 'select' | 'regular' | 'rick';
+
 const ReviewModal = ({ isOpen, onClose, whiskey, existingReview }: ReviewModalProps) => {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
   const [rating, setRating] = useState(0);
   const isMobile = useIsMobile();
+
+  // Review mode: select between regular or Rick-guided
+  const [reviewMode, setReviewMode] = useState<ReviewMode>('select');
+  const [showRickSession, setShowRickSession] = useState(false);
 
   // Determine if we're in edit mode
   const isEditMode = !!existingReview;
@@ -259,6 +266,9 @@ const ReviewModal = ({ isOpen, onClose, whiskey, existingReview }: ReviewModalPr
       setFinishScore(undefined);
       setValueScore(undefined);
       setCurrentStep(0);
+      // Reset review mode to selection screen for new reviews
+      setReviewMode('select');
+      setShowRickSession(false);
     }
   }, [isOpen, existingReview, form]);
 
@@ -906,6 +916,45 @@ const ReviewModal = ({ isOpen, onClose, whiskey, existingReview }: ReviewModalPr
     }
   };
 
+  // Handle Rick review session completion
+  const handleRickReviewComplete = (rickScores: { nose: number; mouthfeel: number; taste: number; finish: number; value: number; summary: string }) => {
+    // Populate scores from Rick session
+    setNoseScore(rickScores.nose);
+    setMouthfeelScore(rickScores.mouthfeel);
+    setTasteScore(rickScores.taste);
+    setFinishScore(rickScores.finish);
+    setValueScore(rickScores.value);
+
+    // Set summary if provided
+    if (rickScores.summary) {
+      form.setValue('text', rickScores.summary);
+    }
+
+    // Close Rick session and go to regular review at summary step
+    setShowRickSession(false);
+    setReviewMode('regular');
+    setCurrentStep(STEPS.length - 1); // Jump to summary
+
+    toast({
+      title: "Scores Applied",
+      description: "Your Rick-guided scores have been added. Review and save!",
+    });
+  };
+
+  // Show Rick Review Session
+  if (showRickSession) {
+    return (
+      <RickReviewSession
+        whiskey={whiskey}
+        onClose={() => {
+          setShowRickSession(false);
+          setReviewMode('select');
+        }}
+        onComplete={handleRickReviewComplete}
+      />
+    );
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent
@@ -917,105 +966,160 @@ const ReviewModal = ({ isOpen, onClose, whiskey, existingReview }: ReviewModalPr
             : "max-w-2xl max-h-[90vh]"
         )}
       >
-        {/* Sticky Header */}
-        <div className="sticky top-0 z-10 bg-card border-b border-border">
-          {/* Progress bar */}
-          <div className="h-1 bg-muted">
-            <div
-              className="h-full bg-primary transition-all duration-300 ease-out"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-
-          {/* Title and whiskey info */}
-          <div className="px-6 py-4">
-            <div className="flex items-center justify-between mb-3">
-              <DialogTitle className="text-lg font-semibold text-foreground">
-                {isEditMode ? 'Edit Review' : 'Review'}: {whiskey.name}
-              </DialogTitle>
-              <button
-                onClick={handleClose}
-                className="p-1 rounded-md hover:bg-accent transition-colors"
-              >
-                <X className="w-5 h-5 text-muted-foreground" />
-              </button>
-            </div>
-
-            {/* Step indicator */}
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <StepIcon className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <p className="font-medium text-foreground">
-                  {currentStepData.title}
-                  <span className="text-muted-foreground font-normal ml-2">
-                    {currentStep + 1}/{STEPS.length}
-                  </span>
-                </p>
-                <p className="text-sm text-muted-foreground">{currentStepData.description}</p>
+        {/* Mode Selection Screen (for new reviews only) */}
+        {reviewMode === 'select' && !isEditMode ? (
+          <>
+            <div className="sticky top-0 z-10 bg-card border-b border-border px-6 py-4">
+              <div className="flex items-center justify-between">
+                <DialogTitle className="text-lg font-semibold text-foreground">
+                  Review: {whiskey.name}
+                </DialogTitle>
+                <button
+                  onClick={handleClose}
+                  className="p-1 rounded-md hover:bg-accent transition-colors"
+                >
+                  <X className="w-5 h-5 text-muted-foreground" />
+                </button>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Scrollable Content Area */}
-        <div className={cn(
-          "overflow-y-auto",
-          isMobile ? "flex-1" : "max-h-[calc(90vh-200px)]"
-        )}>
-          <Form {...form}>
-            <form className="p-6">
-              {renderStepContent()}
-            </form>
-          </Form>
-        </div>
+            <div className="p-6 space-y-4">
+              <p className="text-muted-foreground">How would you like to review this whiskey?</p>
 
-        {/* Sticky Footer */}
-        <div className="sticky bottom-0 z-10 bg-card border-t border-border px-6 py-4">
-          <div className="flex items-center justify-between">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={handlePrevious}
-              disabled={currentStep === 0}
-              className="gap-2"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Back
-            </Button>
-
-            {currentStep === STEPS.length - 1 ? (
               <Button
-                type="button"
-                onClick={handleSubmit}
-                disabled={addReviewMutation.isPending}
-                className="gap-2"
+                variant="outline"
+                className="w-full h-20 justify-start gap-4 text-left"
+                onClick={() => {
+                  setShowRickSession(true);
+                }}
               >
-                {addReviewMutation.isPending ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Saving...
-                  </>
+                <div className="h-12 w-12 rounded-full bg-amber-500/10 flex items-center justify-center shrink-0">
+                  <Mic className="h-6 w-6 text-amber-600" />
+                </div>
+                <div>
+                  <div className="font-medium text-base">Review with Rick</div>
+                  <div className="text-sm text-muted-foreground">Rick guides you through scoring each aspect</div>
+                </div>
+              </Button>
+
+              <Button
+                variant="outline"
+                className="w-full h-20 justify-start gap-4 text-left"
+                onClick={() => setReviewMode('regular')}
+              >
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <PencilLine className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <div className="font-medium text-base">Regular Review</div>
+                  <div className="text-sm text-muted-foreground">Fill in the review form yourself</div>
+                </div>
+              </Button>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Sticky Header */}
+            <div className="sticky top-0 z-10 bg-card border-b border-border">
+              {/* Progress bar */}
+              <div className="h-1 bg-muted">
+                <div
+                  className="h-full bg-primary transition-all duration-300 ease-out"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+
+              {/* Title and whiskey info */}
+              <div className="px-6 py-4">
+                <div className="flex items-center justify-between mb-3">
+                  <DialogTitle className="text-lg font-semibold text-foreground">
+                    {isEditMode ? 'Edit Review' : 'Review'}: {whiskey.name}
+                  </DialogTitle>
+                  <button
+                    onClick={handleClose}
+                    className="p-1 rounded-md hover:bg-accent transition-colors"
+                  >
+                    <X className="w-5 h-5 text-muted-foreground" />
+                  </button>
+                </div>
+
+                {/* Step indicator */}
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <StepIcon className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-foreground">
+                      {currentStepData.title}
+                      <span className="text-muted-foreground font-normal ml-2">
+                        {currentStep + 1}/{STEPS.length}
+                      </span>
+                    </p>
+                    <p className="text-sm text-muted-foreground">{currentStepData.description}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Scrollable Content Area */}
+            <div className={cn(
+              "overflow-y-auto",
+              isMobile ? "flex-1" : "max-h-[calc(90vh-200px)]"
+            )}>
+              <Form {...form}>
+                <form className="p-6">
+                  {renderStepContent()}
+                </form>
+              </Form>
+            </div>
+
+            {/* Sticky Footer */}
+            <div className="sticky bottom-0 z-10 bg-card border-t border-border px-6 py-4">
+              <div className="flex items-center justify-between">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={handlePrevious}
+                  disabled={currentStep === 0}
+                  className="gap-2"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Back
+                </Button>
+
+                {currentStep === STEPS.length - 1 ? (
+                  <Button
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={addReviewMutation.isPending}
+                    className="gap-2"
+                  >
+                    {addReviewMutation.isPending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Check className="w-4 h-4" />
+                        Save Review
+                      </>
+                    )}
+                  </Button>
                 ) : (
-                  <>
-                    <Check className="w-4 h-4" />
-                    Save Review
-                  </>
+                  <Button
+                    type="button"
+                    onClick={handleNext}
+                    className="gap-2"
+                  >
+                    Next
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
                 )}
-              </Button>
-            ) : (
-              <Button
-                type="button"
-                onClick={handleNext}
-                className="gap-2"
-              >
-                Next
-                <ArrowRight className="w-4 h-4" />
-              </Button>
-            )}
-          </div>
-        </div>
+              </div>
+            </div>
+          </>
+        )}
       </DialogContent>
 
       {/* AI Suggest Flavors Modal */}

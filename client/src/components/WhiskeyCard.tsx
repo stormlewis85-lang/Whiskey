@@ -42,24 +42,24 @@ const WhiskeyCard = ({ whiskey, onViewDetails, onReview, onEdit }: WhiskeyCardPr
       "group overflow-hidden bg-card border-border/50 shadow-warm-sm hover:shadow-warm transition-all duration-300 hover:border-primary/30",
       isWishlist && "border-l-4 border-l-pink-500/50"
     )}>
-      {/* Mobile: horizontal layout with small image; Desktop: vertical or larger horizontal */}
-      <div className="flex flex-row h-full">
-        {/* Left side: Image - smaller on mobile, larger on desktop */}
-        <div className="w-24 sm:w-1/3 shrink-0 relative bg-accent/30">
-          <div className="aspect-[3/4] h-full">
+      {/* Mobile: horizontal layout with fixed image size; Desktop: larger horizontal */}
+      <div className="flex flex-row">
+        {/* Left side: Image - fixed height on mobile for consistency, proportional on desktop */}
+        <div className="w-28 sm:w-36 md:w-40 shrink-0 relative bg-accent/30">
+          <div className="h-36 sm:h-44 md:h-48 w-full">
             {whiskey.image ? (
               <img
                 src={whiskey.image}
                 alt={`Bottle of ${whiskey.name}`}
                 loading="lazy"
                 decoding="async"
-                className="object-contain h-full w-full bg-accent/20"
+                className="object-cover h-full w-full bg-accent/20"
               />
             ) : (
-              <div className="h-full w-full flex items-center justify-center p-4">
-                <div className="border-2 border-dashed border-border/50 rounded-lg p-4 flex flex-col items-center justify-center h-[80%] w-[80%]">
-                  <Wine className="h-10 w-10 text-muted-foreground/50 mb-2" />
-                  <span className="text-xs text-muted-foreground/70">No Image</span>
+              <div className="h-full w-full flex items-center justify-center p-2 sm:p-4">
+                <div className="border-2 border-dashed border-border/50 rounded-lg p-2 sm:p-4 flex flex-col items-center justify-center h-[80%] w-[80%]">
+                  <Wine className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground/50 mb-1 sm:mb-2" />
+                  <span className="text-[10px] sm:text-xs text-muted-foreground/70">No Image</span>
                 </div>
               </div>
             )}

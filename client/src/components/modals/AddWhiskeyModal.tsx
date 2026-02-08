@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -12,10 +12,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Heart, Package, PackageOpen, Gift, CheckCircle2, ScanBarcode, Loader2 } from "lucide-react";
+import { Heart, Package, PackageOpen, Gift, CheckCircle2, ScanBarcode, Loader2, Camera, PencilLine, ArrowLeft } from "lucide-react";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
+import { PhotoCapture } from "@/components/PhotoCapture";
 import { DistilleryCombobox } from "@/components/DistilleryCombobox";
 import AddDistilleryModal from "@/components/modals/AddDistilleryModal";
+
+type AddMethod = 'select' | 'barcode' | 'photo' | 'manual';
 
 interface AddWhiskeyModalProps {
   isOpen: boolean;
@@ -30,11 +33,14 @@ interface Distillery {
 
 const AddWhiskeyModal = ({ isOpen, onClose }: AddWhiskeyModalProps) => {
   const { toast } = useToast();
+  const [addMethod, setAddMethod] = useState<AddMethod>('select');
   const [isBourbonSelected, setIsBourbonSelected] = useState(false);
   const [isFinishedSelected, setIsFinishedSelected] = useState(false);
   const [isWishlistMode, setIsWishlistMode] = useState(false);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [isPhotoCaptureOpen, setIsPhotoCaptureOpen] = useState(false);
   const [pendingDistilleryName, setPendingDistilleryName] = useState<string | null>(null);
+  const [isIdentifying, setIsIdentifying] = useState(false);
 
   // Fetch distilleries for matching
   const { data: distilleries = [] } = useQuery<Distillery[]>({
@@ -47,6 +53,10 @@ const AddWhiskeyModal = ({ isOpen, onClose }: AddWhiskeyModalProps) => {
   const [isLookingUp, setIsLookingUp] = useState(false);
   const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);
   const [isAddDistilleryModalOpen, setIsAddDistilleryModalOpen] = useState(false);
+
+  // Refs to track successful scan/capture (synchronous, avoids state batching issues)
+  const justScannedRef = useRef(false);
+  const justCapturedPhotoRef = useRef(false);
 
   const form = useForm<InsertWhiskey>({
     resolver: zodResolver(insertWhiskeySchema),
@@ -97,6 +107,7 @@ const AddWhiskeyModal = ({ isOpen, onClose }: AddWhiskeyModalProps) => {
       });
       onClose();
       form.reset();
+      setAddMethod('select');
       setIsWishlistMode(false);
       setScannedBarcode(null);
       setPendingDistilleryName(null);
@@ -290,6 +301,101 @@ const AddWhiskeyModal = ({ isOpen, onClose }: AddWhiskeyModalProps) => {
     }
   };
 
+  // Handle photo capture and identification
+  // Note: setAddMethod('manual') and setIsIdentifying(true) are set by the caller
+  const handlePhotoCapture = async (imageData: string, mediaType: string) => {
+    try {
+      const response = await apiRequest("POST", "/api/identify-image", {
+        image: imageData,
+        mediaType: mediaType,
+      });
+      const data = await response.json();
+
+      console.log("Image identification response:", JSON.stringify(data, null, 2));
+
+      if (data.success && data.whiskey) {
+        const w = data.whiskey;
+        const opts = { shouldDirty: true, shouldTouch: true };
+
+        // Populate form with identified whiskey data
+        form.setValue("name", w.name || "", opts);
+
+        // Match distillery
+        if (w.distillery) {
+          const normalizedLookup = w.distillery.toLowerCase().trim();
+          const matchedDistillery = distilleries.find(d =>
+            d.name.toLowerCase().trim() === normalizedLookup ||
+            d.name.toLowerCase().includes(normalizedLookup) ||
+            normalizedLookup.includes(d.name.toLowerCase())
+          );
+          if (matchedDistillery) {
+            form.setValue("distilleryId", matchedDistillery.id, opts);
+            form.setValue("distillery", matchedDistillery.name, opts);
+          } else {
+            form.setValue("distillery", w.distillery, opts);
+            setPendingDistilleryName(w.distillery);
+          }
+        }
+
+        // Map type
+        if (w.type) {
+          const typeMapping: Record<string, string> = {
+            "bourbon": "Bourbon",
+            "tennessee whiskey": "Tennessee Whiskey",
+            "scotch": "Scotch",
+            "rye": "Rye",
+            "irish": "Irish",
+            "japanese": "Japanese",
+            "canadian": "Other",
+            "whiskey": "Other",
+            "whisky": "Other",
+          };
+          const normalizedType = w.type.toLowerCase();
+          const mappedType = typeMapping[normalizedType] || "Other";
+          form.setValue("type", mappedType, opts);
+        }
+
+        // Handle age
+        if (w.age) {
+          const ageNum = typeof w.age === 'string' ? parseInt(w.age) : w.age;
+          if (!isNaN(ageNum)) {
+            form.setValue("age", ageNum, opts);
+          }
+        }
+
+        // Handle proof
+        if (w.proof) {
+          form.setValue("abv", w.proof / 2, opts);
+        }
+
+        // Handle mashBill
+        if (w.mashBill) {
+          form.setValue("mashBill", w.mashBill, opts);
+        }
+
+        toast({
+          title: w.identified ? "Whiskey Identified!" : "Partial Match",
+          description: `${w.name} (${w.confidence} confidence). Please verify details.`,
+        });
+      } else {
+        toast({
+          title: "Could Not Identify",
+          description: data.message || "Please enter the whiskey details manually.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Photo identification error:", error);
+      toast({
+        title: "Identification Failed",
+        description: "Could not identify whiskey from photo. Please enter details manually.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsIdentifying(false);
+    }
+  };
+
   // Watch for changes to whiskey type, finished selection, and wishlist mode
   useEffect(() => {
     // Get the current type value
@@ -317,34 +423,116 @@ const AddWhiskeyModal = ({ isOpen, onClose }: AddWhiskeyModalProps) => {
     addWhiskeyMutation.mutate(submitData);
   };
 
+  // Reset to selection screen when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setAddMethod('select');
+      justScannedRef.current = false;
+      justCapturedPhotoRef.current = false;
+    }
+  }, [isOpen]);
+
+  const handleClose = () => {
+    setAddMethod('select');
+    form.reset();
+    setScannedBarcode(null);
+    setPendingDistilleryName(null);
+    justScannedRef.current = false;
+    justCapturedPhotoRef.current = false;
+    onClose();
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-hidden">
-        <DialogHeader className="flex flex-row items-center justify-between">
-          <DialogTitle className="text-lg font-medium text-[#F5F5F0]">Add New Whiskey</DialogTitle>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setIsScannerOpen(true)}
-            disabled={isLookingUp}
-            className="mr-8"
-          >
-            {isLookingUp ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-                Looking up...
-              </>
-            ) : (
-              <>
-                <ScanBarcode className="h-4 w-4 mr-1.5" />
-                Scan Barcode
-              </>
-            )}
-          </Button>
-        </DialogHeader>
-        
-        <Form {...form}>
+        {/* Method Selection Screen */}
+        {addMethod === 'select' && (
+          <>
+            <DialogHeader>
+              <DialogTitle className="text-lg font-medium text-[#F5F5F0]">Add New Whiskey</DialogTitle>
+            </DialogHeader>
+            <div className="py-6 space-y-3">
+              <p className="text-sm text-muted-foreground mb-4">How would you like to add your whiskey?</p>
+
+              <Button
+                variant="outline"
+                className="w-full h-16 justify-start gap-4 text-left"
+                onClick={() => {
+                  setAddMethod('barcode');
+                  setIsScannerOpen(true);
+                }}
+              >
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <ScanBarcode className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <div className="font-medium">Scan Barcode</div>
+                  <div className="text-xs text-muted-foreground">Scan the UPC code on the bottle</div>
+                </div>
+              </Button>
+
+              <Button
+                variant="outline"
+                className="w-full h-16 justify-start gap-4 text-left"
+                onClick={() => {
+                  setAddMethod('photo');
+                  setIsPhotoCaptureOpen(true);
+                }}
+              >
+                <div className="h-10 w-10 rounded-full bg-amber-500/10 flex items-center justify-center shrink-0">
+                  <Camera className="h-5 w-5 text-amber-600" />
+                </div>
+                <div>
+                  <div className="font-medium">Take Photo</div>
+                  <div className="text-xs text-muted-foreground">Snap a picture of the bottle label</div>
+                </div>
+              </Button>
+
+              <Button
+                variant="outline"
+                className="w-full h-16 justify-start gap-4 text-left"
+                onClick={() => setAddMethod('manual')}
+              >
+                <div className="h-10 w-10 rounded-full bg-slate-500/10 flex items-center justify-center shrink-0">
+                  <PencilLine className="h-5 w-5 text-slate-600" />
+                </div>
+                <div>
+                  <div className="font-medium">Add Manually</div>
+                  <div className="text-xs text-muted-foreground">Enter all the details yourself</div>
+                </div>
+              </Button>
+            </div>
+          </>
+        )}
+
+        {/* Form Screen (manual entry or after scan/photo) */}
+        {addMethod === 'manual' && (
+          <>
+            <DialogHeader className="flex flex-row items-center gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0"
+                onClick={() => {
+                  setAddMethod('select');
+                  form.reset();
+                  setScannedBarcode(null);
+                  setPendingDistilleryName(null);
+                }}
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <DialogTitle className="text-lg font-medium text-[#F5F5F0]">Add New Whiskey</DialogTitle>
+              {(isLookingUp || isIdentifying) && (
+                <div className="ml-auto mr-8 flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {isIdentifying ? "Identifying..." : "Looking up..."}
+                </div>
+              )}
+            </DialogHeader>
+
+            <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 overflow-y-auto pr-2 max-h-[calc(85vh-120px)]">
             {/* Show scanned barcode indicator */}
             {scannedBarcode && (
@@ -812,7 +1000,7 @@ const AddWhiskeyModal = ({ isOpen, onClose }: AddWhiskeyModalProps) => {
               <Button
                 type="button"
                 variant="outline"
-                onClick={onClose}
+                onClick={handleClose}
               >
                 Cancel
               </Button>
@@ -822,7 +1010,7 @@ const AddWhiskeyModal = ({ isOpen, onClose }: AddWhiskeyModalProps) => {
                   ? "bg-pink-600 hover:bg-pink-500 text-white"
                   : "bg-primary hover:bg-primary/90 text-primary-foreground"
                 }
-                disabled={addWhiskeyMutation.isPending}
+                disabled={addWhiskeyMutation.isPending || isIdentifying}
               >
                 {addWhiskeyMutation.isPending
                   ? "Adding..."
@@ -834,12 +1022,52 @@ const AddWhiskeyModal = ({ isOpen, onClose }: AddWhiskeyModalProps) => {
             </div>
           </form>
         </Form>
+          </>
+        )}
 
         {/* Barcode Scanner Modal */}
         <BarcodeScanner
           open={isScannerOpen}
-          onOpenChange={setIsScannerOpen}
-          onCodeScanned={handleBarcodeScan}
+          onOpenChange={(open) => {
+            setIsScannerOpen(open);
+            if (!open && addMethod === 'barcode') {
+              // If scanner closed without scanning, go back to selection
+              // Use ref to check if we just scanned (synchronous, avoids state batching)
+              if (!justScannedRef.current) {
+                setAddMethod('select');
+              }
+              justScannedRef.current = false; // Reset for next time
+            }
+          }}
+          onCodeScanned={(code) => {
+            justScannedRef.current = true; // Mark as scanned before closing
+            setIsScannerOpen(false);
+            setAddMethod('manual');
+            handleBarcodeScan(code);
+          }}
+        />
+
+        {/* Photo Capture Modal */}
+        <PhotoCapture
+          open={isPhotoCaptureOpen}
+          onOpenChange={(open) => {
+            setIsPhotoCaptureOpen(open);
+            // Only go back to selection if closed WITHOUT taking a photo
+            // Use ref to check if we just captured (synchronous, avoids state batching)
+            if (!open && addMethod === 'photo') {
+              if (!justCapturedPhotoRef.current) {
+                setAddMethod('select');
+              }
+              justCapturedPhotoRef.current = false; // Reset for next time
+            }
+          }}
+          onPhotoTaken={(imageData, mediaType) => {
+            justCapturedPhotoRef.current = true; // Mark as captured before closing
+            setAddMethod('manual');
+            setIsIdentifying(true);
+            setIsPhotoCaptureOpen(false);
+            handlePhotoCapture(imageData, mediaType);
+          }}
         />
 
         {/* Add Distillery Modal */}
@@ -849,6 +1077,7 @@ const AddWhiskeyModal = ({ isOpen, onClose }: AddWhiskeyModalProps) => {
           onDistilleryCreated={(distillery) => {
             form.setValue("distilleryId", distillery.id);
             form.setValue("distillery", distillery.name);
+            setPendingDistilleryName(null);
           }}
         />
       </DialogContent>
