@@ -45,7 +45,7 @@ export async function uploadToSpaces(
     Key: key,
     Body: fileContent,
     ContentType: contentType,
-    // ACL handled by Space/CDN settings
+    ACL: 'public-read',
   });
 
   await s3Client.send(command);
