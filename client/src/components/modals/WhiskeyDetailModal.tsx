@@ -702,7 +702,7 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit, onTast
               {sortedNotes && sortedNotes.length > 0 ? (
                 <div className="space-y-3">
                   {sortedNotes.map((note, index) => (
-                    <div key={note.id} className="border border-border/50 rounded-lg p-4 bg-card shadow-warm-sm">
+                    <div key={note.id} className="border border-border/50 rounded-lg p-5 sm:p-6 bg-card shadow-warm-sm">
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
                           <span className="font-medium text-foreground text-sm">{formatDate(new Date(note.date))}</span>
@@ -740,10 +740,10 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit, onTast
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 mb-3">
-                        <StarRating score={note.overallRating || 0} size="md" />
+                      <div className="flex items-center gap-2 mt-1 mb-4">
+                        <StarRating score={note.rating || 0} size="md" />
                         <span className="font-bold text-primary">
-                          {note.overallRating?.toFixed(1)} / 5
+                          {note.rating?.toFixed(1)} / 5
                         </span>
                       </div>
 
@@ -753,7 +753,7 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit, onTast
                             View Details
                           </AccordionTrigger>
                           <AccordionContent>
-                            <div className="space-y-3 pt-2">
+                            <div className="space-y-4 pt-3">
                               {note.summary && (
                                 <div className="p-3 bg-accent/30 rounded-lg">
                                   <div className="text-xs font-medium text-muted-foreground mb-1">Summary</div>
@@ -761,7 +761,7 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit, onTast
                                 </div>
                               )}
 
-                              <div className="grid grid-cols-2 gap-3">
+                              <div className="grid grid-cols-2 gap-x-4 gap-y-3">
                                 {[
                                   { label: "Nose", score: note.noseScore },
                                   { label: "Mouthfeel", score: note.mouthfeelScore },
@@ -769,11 +769,11 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit, onTast
                                   { label: "Finish", score: note.finishScore },
                                   { label: "Value", score: note.valueScore },
                                 ].map(({ label, score }) => (
-                                  <div key={label} className="flex items-center justify-between p-2 bg-accent/20 rounded-lg">
+                                  <div key={label} className="flex items-center justify-between p-2.5 bg-accent/20 rounded-lg">
                                     <span className="text-xs text-muted-foreground">{label}</span>
-                                    <div className="flex items-center gap-1">
+                                    <div className="flex items-center gap-1.5">
                                       <StarRating score={score || 0} size="sm" />
-                                      <span className="text-xs font-medium text-foreground ml-1">{score || 0}</span>
+                                      <span className="text-xs font-medium text-foreground">{score || 0}</span>
                                     </div>
                                   </div>
                                 ))}
