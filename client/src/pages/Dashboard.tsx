@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Whiskey, ReviewNote } from "@shared/schema";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, Label } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
@@ -330,82 +330,95 @@ export default function Dashboard() {
 
         {/* Charts Row 1 */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <Card className="bg-card border-border/50 shadow-warm-sm">
+          <Card className="bg-card border-border/50 shadow-warm-sm overflow-hidden">
             <CardHeader className="pb-2">
               <CardTitle className="text-foreground text-lg">Collection by Type</CardTitle>
               <CardDescription>Distribution of whiskey types</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="h-[250px]">
+            <CardContent className="px-2 sm:px-6">
+              <div className="h-[280px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={typeDistribution}
                       cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      outerRadius={80}
+                      cy="45%"
+                      outerRadius={70}
                       fill="#8884d8"
                       dataKey="value"
                       nameKey="name"
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                     >
                       {typeDistribution.map((_, index) => (
                         <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                       ))}
                     </Pie>
                     <Tooltip content={<CustomTooltip />} />
+                    <Legend
+                      verticalAlign="bottom"
+                      iconSize={10}
+                      wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-card border-border/50 shadow-warm-sm">
+          <Card className="bg-card border-border/50 shadow-warm-sm overflow-hidden">
             <CardHeader className="pb-2">
               <CardTitle className="text-foreground text-lg">Collection by Region</CardTitle>
               <CardDescription>Distribution of whiskey regions</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="h-[250px]">
+            <CardContent className="px-2 sm:px-6">
+              <div className="h-[280px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={regionDistribution}
                       cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      outerRadius={80}
+                      cy="45%"
+                      outerRadius={70}
                       fill="#8884d8"
                       dataKey="value"
                       nameKey="name"
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                     >
                       {regionDistribution.map((_, index) => (
                         <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                       ))}
                     </Pie>
                     <Tooltip content={<CustomTooltip />} />
+                    <Legend
+                      verticalAlign="bottom"
+                      iconSize={10}
+                      wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-card border-border/50 shadow-warm-sm">
+          <Card className="bg-card border-border/50 shadow-warm-sm overflow-hidden">
             <CardHeader className="pb-2">
               <CardTitle className="text-foreground text-lg">Price Distribution</CardTitle>
               <CardDescription>Whiskeys by price range</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-2 sm:px-6">
               <div className="h-[250px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={priceDistribution}
-                    margin={{ top: 5, right: 10, left: -10, bottom: 5 }}
+                    margin={{ top: 5, right: 5, left: -20, bottom: 5 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
-                    <XAxis dataKey="name" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
+                    <XAxis
+                      dataKey="name"
+                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+                      interval={0}
+                      angle={-35}
+                      textAnchor="end"
+                      height={45}
+                    />
                     <YAxis tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
                     <Tooltip content={<CustomTooltip />} />
                     <Bar dataKey="value" fill="hsl(36, 90%, 54%)" radius={[4, 4, 0, 0]} />
@@ -418,20 +431,27 @@ export default function Dashboard() {
 
         {/* Charts Row 2 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="bg-card border-border/50 shadow-warm-sm">
+          <Card className="bg-card border-border/50 shadow-warm-sm overflow-hidden">
             <CardHeader className="pb-2">
               <CardTitle className="text-foreground text-lg">Reviews Over Time</CardTitle>
               <CardDescription>Number of reviews by month</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-2 sm:px-6">
               <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={reviewsByMonth}
-                    margin={{ top: 20, right: 20, left: -10, bottom: 5 }}
+                    margin={{ top: 10, right: 5, left: -20, bottom: 5 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
-                    <XAxis dataKey="name" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
+                    <XAxis
+                      dataKey="name"
+                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+                      interval={0}
+                      angle={-35}
+                      textAnchor="end"
+                      height={45}
+                    />
                     <YAxis tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
                     <Tooltip content={<CustomTooltip />} />
                     <Bar dataKey="count" fill="hsl(30, 80%, 45%)" radius={[4, 4, 0, 0]} />
@@ -441,17 +461,17 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card className="bg-card border-border/50 shadow-warm-sm">
+          <Card className="bg-card border-border/50 shadow-warm-sm overflow-hidden">
             <CardHeader className="pb-2">
               <CardTitle className="text-foreground text-lg">Rating Distribution</CardTitle>
               <CardDescription>Number of whiskeys by rating</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-2 sm:px-6">
               <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={scoreDistribution}
-                    margin={{ top: 5, right: 20, left: -10, bottom: 5 }}
+                    margin={{ top: 5, right: 5, left: -20, bottom: 5 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
                     <XAxis dataKey="name" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
