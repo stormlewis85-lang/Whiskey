@@ -988,7 +988,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey, existingReview }: ReviewModalPr
 
               <Button
                 variant="outline"
-                className="w-full h-20 justify-start gap-4 text-left"
+                className="w-full min-h-20 py-4 justify-start gap-4 text-left"
                 onClick={() => {
                   setShowRickSession(true);
                 }}
@@ -996,7 +996,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey, existingReview }: ReviewModalPr
                 <div className="h-12 w-12 rounded-full bg-amber-500/10 flex items-center justify-center shrink-0">
                   <Mic className="h-6 w-6 text-amber-600" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <div className="font-medium text-base">Review with Rick</div>
                   <div className="text-sm text-muted-foreground">Rick guides you through scoring each aspect</div>
                 </div>
@@ -1004,13 +1004,13 @@ const ReviewModal = ({ isOpen, onClose, whiskey, existingReview }: ReviewModalPr
 
               <Button
                 variant="outline"
-                className="w-full h-20 justify-start gap-4 text-left"
+                className="w-full min-h-20 py-4 justify-start gap-4 text-left"
                 onClick={() => setReviewMode('regular')}
               >
                 <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                   <PencilLine className="h-6 w-6 text-primary" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <div className="font-medium text-base">Regular Review</div>
                   <div className="text-sm text-muted-foreground">Fill in the review form yourself</div>
                 </div>
