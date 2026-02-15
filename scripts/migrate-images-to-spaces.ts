@@ -1,140 +1,87 @@
 /**
- * Migration script to upload existing images to DigitalOcean Spaces
- * and update the database paths.
+ * Migration script to update database image paths from local /uploads/
+ * to DigitalOcean Spaces CDN URLs.
+ *
+ * Prerequisites: Images must already exist in DO Spaces under bottles/ prefix.
+ * This script ONLY rewrites database paths — it does not upload files.
  *
  * Usage: npx tsx scripts/migrate-images-to-spaces.ts
+ *
+ * Required env vars: DATABASE_URL
+ * Optional env vars: SPACES_REGION, SPACES_BUCKET, SPACES_CDN_ENDPOINT
  */
 
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import 'dotenv/config';
 import { Pool } from '@neondatabase/serverless';
-import fs from 'fs';
-import path from 'path';
 
-// Configuration - update these values
-const SPACES_REGION = 'sfo3'; // San Francisco
-const SPACES_BUCKET = 'whiskeypedia-uploads';
-const SPACES_ACCESS_KEY = 'DO801EWVRQC6U33HFE9A';
-const SPACES_SECRET_KEY = 'papHaViYnmLx6xFKglJnck6m9gNTn0zpS6QBmPosKeo';
-const DATABASE_URL = 'postgresql://neondb_owner:npg_5Pz4MkrhaqGl@ep-still-snow-a5vhmgtk.us-east-2.aws.neon.tech/neondb?sslmode=require';
-
-const SPACES_ENDPOINT = `https://${SPACES_REGION}.digitaloceanspaces.com`;
-const SPACES_CDN_ENDPOINT = `https://${SPACES_BUCKET}.${SPACES_REGION}.cdn.digitaloceanspaces.com`;
-
-const s3Client = new S3Client({
-  endpoint: SPACES_ENDPOINT,
-  region: SPACES_REGION,
-  credentials: {
-    accessKeyId: SPACES_ACCESS_KEY,
-    secretAccessKey: SPACES_SECRET_KEY,
-  },
-  forcePathStyle: false,
-});
-
-async function uploadFile(filePath: string, key: string): Promise<string> {
-  const fileContent = fs.readFileSync(filePath);
-
-  // Determine content type
-  const ext = filePath.toLowerCase().split('.').pop();
-  const contentType = ext === 'webp' ? 'image/webp' :
-                      ext === 'png' ? 'image/png' :
-                      'image/jpeg';
-
-  const command = new PutObjectCommand({
-    Bucket: SPACES_BUCKET,
-    Key: key,
-    Body: fileContent,
-    ContentType: contentType,
-    // Note: ACL removed - make sure Space is set to public or configure CDN
-  });
-
-  await s3Client.send(command);
-  return `${SPACES_CDN_ENDPOINT}/${key}`;
-}
+const SPACES_REGION = process.env.SPACES_REGION || 'sfo3';
+const SPACES_BUCKET = process.env.SPACES_BUCKET || 'whiskeypedia-uploads';
+const SPACES_CDN_ENDPOINT = process.env.SPACES_CDN_ENDPOINT ||
+  `https://${SPACES_BUCKET}.${SPACES_REGION}.cdn.digitaloceanspaces.com`;
 
 async function migrate() {
-  const uploadsDir = path.join(process.cwd(), 'uploads');
-
-  // Check if uploads directory exists
-  if (!fs.existsSync(uploadsDir)) {
-    console.log('No uploads directory found. Nothing to migrate.');
-    return;
+  if (!process.env.DATABASE_URL) {
+    console.error('DATABASE_URL env var is required');
+    process.exit(1);
   }
 
-  // Get all image files
-  const files = fs.readdirSync(uploadsDir).filter(f =>
-    f.endsWith('.webp') || f.endsWith('.jpg') || f.endsWith('.jpeg') || f.endsWith('.png')
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+
+  console.log('=== Migrate Image Paths to DO Spaces CDN ===');
+  console.log(`CDN Endpoint: ${SPACES_CDN_ENDPOINT}`);
+
+  // First, show what will be updated
+  const preview = await pool.query(
+    "SELECT id, name, image FROM whiskeys WHERE image IS NOT NULL AND image LIKE '/uploads/%'"
   );
 
-  if (files.length === 0) {
-    console.log('No image files found in uploads directory.');
+  if (preview.rowCount === 0) {
+    console.log('\nNo local /uploads/ paths found in database. Nothing to migrate.');
+    await pool.end();
     return;
   }
 
-  console.log(`Found ${files.length} images to migrate.`);
-
-  // Connect to database
-  const pool = new Pool({ connectionString: DATABASE_URL });
-
-  const uploadedMap: Record<string, string> = {};
-
-  // Upload each file to Spaces
-  for (const file of files) {
-    const localPath = path.join(uploadsDir, file);
-    const spacesKey = `bottles/${file}`;
-
-    try {
-      console.log(`Uploading: ${file}...`);
-      const spacesUrl = await uploadFile(localPath, spacesKey);
-      uploadedMap[`/uploads/${file}`] = spacesUrl;
-      console.log(`  ✓ Uploaded to: ${spacesUrl}`);
-    } catch (error) {
-      console.error(`  ✗ Failed to upload ${file}:`, error);
-    }
+  console.log(`\nFound ${preview.rowCount} whiskeys with local image paths:\n`);
+  for (const row of preview.rows) {
+    const filename = row.image.replace('/uploads/', '');
+    const newUrl = `${SPACES_CDN_ENDPOINT}/bottles/${filename}`;
+    console.log(`  #${row.id} ${row.name}`);
+    console.log(`    old: ${row.image}`);
+    console.log(`    new: ${newUrl}`);
   }
 
-  // Update database records
-  console.log('\nUpdating database records...');
+  // Update whiskey image paths: /uploads/bottle-xxx.webp → CDN_URL/bottles/bottle-xxx.webp
+  const result = await pool.query(
+    `UPDATE whiskeys
+     SET image = $1 || '/bottles/' || substring(image from '/uploads/(.*)$')
+     WHERE image LIKE '/uploads/%'
+     RETURNING id, name, image`,
+    [SPACES_CDN_ENDPOINT]
+  );
 
-  for (const [oldPath, newUrl] of Object.entries(uploadedMap)) {
-    try {
-      const result = await pool.query(
-        'UPDATE whiskeys SET image = $1 WHERE image = $2 RETURNING id, name',
-        [newUrl, oldPath]
-      );
-
-      if (result.rowCount && result.rowCount > 0) {
-        for (const row of result.rows) {
-          console.log(`  ✓ Updated whiskey #${row.id}: ${row.name}`);
-        }
-      }
-    } catch (error) {
-      console.error(`  ✗ Failed to update database for ${oldPath}:`, error);
-    }
+  console.log(`\nUpdated ${result.rowCount} whiskey image paths:`);
+  for (const row of result.rows) {
+    console.log(`  ✓ #${row.id} ${row.name} → ${row.image}`);
   }
 
-  // Also update profile images
-  for (const [oldPath, newUrl] of Object.entries(uploadedMap)) {
-    try {
-      const result = await pool.query(
-        'UPDATE users SET profile_image = $1 WHERE profile_image = $2 RETURNING id, username',
-        [newUrl, oldPath]
-      );
+  // Also update user profile images if any use local paths
+  const profileResult = await pool.query(
+    `UPDATE users
+     SET profile_image = $1 || '/bottles/' || substring(profile_image from '/uploads/(.*)$')
+     WHERE profile_image LIKE '/uploads/%'
+     RETURNING id, username, profile_image`,
+    [SPACES_CDN_ENDPOINT]
+  );
 
-      if (result.rowCount && result.rowCount > 0) {
-        for (const row of result.rows) {
-          console.log(`  ✓ Updated user profile #${row.id}: ${row.username}`);
-        }
-      }
-    } catch (error) {
-      console.error(`  ✗ Failed to update profile image for ${oldPath}:`, error);
+  if (profileResult.rowCount && profileResult.rowCount > 0) {
+    console.log(`\nUpdated ${profileResult.rowCount} user profile images:`);
+    for (const row of profileResult.rows) {
+      console.log(`  ✓ #${row.id} ${row.username} → ${row.profile_image}`);
     }
   }
 
   await pool.end();
-
   console.log('\n=== Migration Complete ===');
-  console.log(`Uploaded ${Object.keys(uploadedMap).length} images to DigitalOcean Spaces.`);
-  console.log('\nYou can now delete the local uploads folder if everything looks good.');
 }
 
 migrate().catch(console.error);
