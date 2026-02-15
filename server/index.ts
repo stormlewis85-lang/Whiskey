@@ -11,10 +11,14 @@ const app = express();
 
 // Security headers
 const isProduction = process.env.NODE_ENV === 'production';
-// Build CSP entries for DO Spaces that handle multi-level subdomain URLs
-// e.g. https://whiskeypedia-uploads.sfo3.cdn.digitaloceanspaces.com/...
+// Build CSP entries for DO Spaces — include the exact CDN endpoint
+// plus wildcard fallbacks for multi-level subdomain URLs
 const spacesRegion = process.env.SPACES_REGION || 'sfo3';
+const spacesBucket = process.env.SPACES_BUCKET || 'whiskeypedia-uploads';
+const spacesCdnEndpoint = process.env.SPACES_CDN_ENDPOINT ||
+  `https://${spacesBucket}.${spacesRegion}.cdn.digitaloceanspaces.com`;
 const spacesCspSources = [
+  spacesCdnEndpoint,
   "https://*.digitaloceanspaces.com",
   "https://*.cdn.digitaloceanspaces.com",
   `https://*.${spacesRegion}.digitaloceanspaces.com`,
