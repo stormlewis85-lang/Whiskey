@@ -99,21 +99,9 @@ export default {
         },
       },
       fontFamily: {
-        sans: [
-          "Inter",
-          "system-ui",
-          "-apple-system",
-          "BlinkMacSystemFont",
-          "Segoe UI",
-          "Roboto",
-          "sans-serif",
-        ],
-        display: [
-          "Cal Sans",
-          "Inter",
-          "system-ui",
-          "sans-serif",
-        ],
+        display: ['Playfair Display', 'Georgia', 'serif'],
+        heading: ['DM Serif Display', 'Georgia', 'serif'],
+        sans: ['DM Sans', 'system-ui', 'sans-serif'],
       },
       keyframes: {
         "accordion-down": {
