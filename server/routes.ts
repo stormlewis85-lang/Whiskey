@@ -90,13 +90,13 @@ const imageUpload = multer({
   }
 });
 
-// Process uploaded image: resize to max 800px wide, convert to WebP
+// Process uploaded image: resize to max 1600px wide, convert to WebP
 async function processImage(inputPath: string, outputPath: string): Promise<{ width: number; height: number }> {
   const image = sharp(inputPath);
   const metadata = await image.metadata();
 
   // Don't upscale small images
-  const maxWidth = 800;
+  const maxWidth = 1600;
   const shouldResize = metadata.width && metadata.width > maxWidth;
 
   // Auto-rotate based on EXIF orientation (fixes sideways mobile photos)
@@ -109,9 +109,9 @@ async function processImage(inputPath: string, outputPath: string): Promise<{ wi
     });
   }
 
-  // Convert to WebP with quality 80
+  // Convert to WebP with good quality
   await processedImage
-    .webp({ quality: 80 })
+    .webp({ quality: 90 })
     .toFile(outputPath);
 
   // Get final dimensions
