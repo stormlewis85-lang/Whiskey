@@ -344,15 +344,15 @@ const Community = () => {
         <Header />
 
         {/* Page Header */}
-        <header className="bg-gradient-to-r from-amber-950 via-amber-900 to-amber-950 text-white border-b border-amber-800/30">
-          <div className="container mx-auto px-4 py-5">
+        <header className="bg-gradient-to-r from-primary/5 via-transparent to-primary/5 border-b border-border/30">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-amber-500/20 rounded-xl backdrop-blur-sm border border-amber-500/20">
-                <Users className="w-6 h-6 text-amber-400" />
+              <div className="p-2.5 bg-primary/10 rounded-xl border border-primary/20">
+                <Users className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-amber-50">Community</h1>
-                <p className="text-amber-200/70 text-sm mt-0.5">
+                <h1 className="font-display text-3xl sm:text-4xl font-semibold text-foreground">Community</h1>
+                <p className="text-muted-foreground text-sm mt-0.5">
                   Discover what other enthusiasts are enjoying
                 </p>
               </div>
@@ -360,7 +360,7 @@ const Community = () => {
           </div>
         </header>
 
-        <main className="container mx-auto px-4 py-6">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="max-w-6xl mx-auto">
             {user && !authLoading ? (
               // Logged in: Show tabs for Discover and Following

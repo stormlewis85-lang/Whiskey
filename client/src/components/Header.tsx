@@ -41,9 +41,9 @@ export function Header() {
       <Link href="/">
         <button
           onClick={() => setIsSheetOpen(false)}
-          className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+          className={`relative flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
             isActive('/')
-              ? 'text-primary bg-accent'
+              ? 'text-primary bg-accent after:absolute after:bottom-0 after:left-2 after:right-2 after:h-0.5 after:bg-primary after:rounded-full'
               : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
           }`}
         >
@@ -54,9 +54,9 @@ export function Header() {
       <Link href="/dashboard">
         <button
           onClick={() => setIsSheetOpen(false)}
-          className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+          className={`relative flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
             isActive('/dashboard')
-              ? 'text-primary bg-accent'
+              ? 'text-primary bg-accent after:absolute after:bottom-0 after:left-2 after:right-2 after:h-0.5 after:bg-primary after:rounded-full'
               : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
           }`}
         >
@@ -67,9 +67,9 @@ export function Header() {
       <Link href="/community">
         <button
           onClick={() => setIsSheetOpen(false)}
-          className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+          className={`relative flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
             isActive('/community')
-              ? 'text-primary bg-accent'
+              ? 'text-primary bg-accent after:absolute after:bottom-0 after:left-2 after:right-2 after:h-0.5 after:bg-primary after:rounded-full'
               : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
           }`}
         >
@@ -80,9 +80,9 @@ export function Header() {
       <Link href="/flights">
         <button
           onClick={() => setIsSheetOpen(false)}
-          className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+          className={`relative flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
             isActive('/flights')
-              ? 'text-primary bg-accent'
+              ? 'text-primary bg-accent after:absolute after:bottom-0 after:left-2 after:right-2 after:h-0.5 after:bg-primary after:rounded-full'
               : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
           }`}
         >
@@ -93,9 +93,9 @@ export function Header() {
       <Link href="/blind-tastings">
         <button
           onClick={() => setIsSheetOpen(false)}
-          className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+          className={`relative flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
             isActive('/blind-tastings')
-              ? 'text-primary bg-accent'
+              ? 'text-primary bg-accent after:absolute after:bottom-0 after:left-2 after:right-2 after:h-0.5 after:bg-primary after:rounded-full'
               : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
           }`}
         >
@@ -107,7 +107,7 @@ export function Header() {
   );
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 glass-warm">
       <div className="container mx-auto px-4 h-14 flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center gap-2">
@@ -185,8 +185,8 @@ export function Header() {
           )}
 
           <Link href="/">
-            <span className="text-xl font-bold tracking-tight cursor-pointer">
-              <span className="text-gradient">WhiskeyPedia</span>
+            <span className="font-display text-2xl font-bold tracking-wide cursor-pointer">
+              <span className="text-gradient-brand">WhiskeyPedia</span>
             </span>
           </Link>
         </div>

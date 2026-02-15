@@ -178,15 +178,15 @@ const Profile = () => {
         <Header />
 
         {/* Profile Header */}
-        <header className="bg-gradient-to-r from-amber-950 via-amber-900 to-amber-950 text-white border-b border-amber-800/30">
-          <div className="container mx-auto px-4 py-8">
+        <header className="bg-gradient-to-r from-primary/5 via-transparent to-primary/5 border-b border-border/30">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
               {/* Avatar */}
-              <Avatar className="h-24 w-24 border-4 border-amber-500/30 shadow-xl">
+              <Avatar className="h-24 w-24 border-4 border-primary/30 shadow-warm-lg">
                 {profile.user.profileImage ? (
                   <AvatarImage src={profile.user.profileImage} alt={displayName} />
                 ) : (
-                  <AvatarFallback className="bg-amber-800 text-amber-100 text-2xl font-bold">
+                  <AvatarFallback className="bg-primary/20 text-primary text-2xl font-bold">
                     {initials}
                   </AvatarFallback>
                 )}
@@ -194,32 +194,32 @@ const Profile = () => {
 
               {/* User Info */}
               <div className="flex-1 text-center sm:text-left">
-                <h1 className="text-2xl md:text-3xl font-bold text-amber-50">{displayName}</h1>
-                <p className="text-amber-200/70 text-sm mt-1 flex items-center justify-center sm:justify-start gap-2">
+                <h1 className="font-display text-3xl sm:text-4xl font-semibold text-foreground">{displayName}</h1>
+                <p className="text-muted-foreground text-sm mt-1 flex items-center justify-center sm:justify-start gap-2">
                   <Calendar className="h-4 w-4" />
                   Member since {memberSince}
                 </p>
                 {profile.user.bio && (
-                  <p className="text-amber-100/90 mt-3 max-w-xl">{profile.user.bio}</p>
+                  <p className="text-foreground/80 mt-3 max-w-xl">{profile.user.bio}</p>
                 )}
 
                 {/* Stats */}
                 <div className="flex flex-wrap gap-4 mt-4 justify-center sm:justify-start">
                   <div className="text-center">
-                    <div className="text-xl font-bold text-amber-50">{profile.stats.whiskeyCount}</div>
-                    <div className="text-xs text-amber-200/60">Whiskeys</div>
+                    <div className="font-sans text-xl font-semibold tabular-nums text-foreground">{profile.stats.whiskeyCount}</div>
+                    <div className="text-xs font-medium tracking-wide uppercase text-muted-foreground">Whiskeys</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-xl font-bold text-amber-50">{profile.stats.reviewCount}</div>
-                    <div className="text-xs text-amber-200/60">Reviews</div>
+                    <div className="font-sans text-xl font-semibold tabular-nums text-foreground">{profile.stats.reviewCount}</div>
+                    <div className="text-xs font-medium tracking-wide uppercase text-muted-foreground">Reviews</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-xl font-bold text-amber-50">{profile.stats.followersCount}</div>
-                    <div className="text-xs text-amber-200/60">Followers</div>
+                    <div className="font-sans text-xl font-semibold tabular-nums text-foreground">{profile.stats.followersCount}</div>
+                    <div className="text-xs font-medium tracking-wide uppercase text-muted-foreground">Followers</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-xl font-bold text-amber-50">{profile.stats.followingCount}</div>
-                    <div className="text-xs text-amber-200/60">Following</div>
+                    <div className="font-sans text-xl font-semibold tabular-nums text-foreground">{profile.stats.followingCount}</div>
+                    <div className="text-xs font-medium tracking-wide uppercase text-muted-foreground">Following</div>
                   </div>
                 </div>
               </div>
@@ -231,10 +231,10 @@ const Profile = () => {
                   disabled={isFollowLoading}
                   variant={isFollowing ? "outline" : "default"}
                   className={cn(
-                    "gap-2",
+                    "gap-2 shadow-warm-sm",
                     isFollowing
-                      ? "bg-transparent border-amber-500/30 text-amber-100 hover:bg-amber-800/50"
-                      : "bg-amber-600 hover:bg-amber-700"
+                      ? "border-primary/30 text-foreground hover:bg-accent/50"
+                      : ""
                   )}
                 >
                   {isFollowLoading ? (

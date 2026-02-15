@@ -161,11 +161,11 @@ const Flights = () => {
       <Header />
 
       {/* Page Header */}
-      <header className="bg-gradient-to-r from-amber-950 via-amber-900 to-amber-950 text-white shadow-warm-lg border-b border-amber-800/30">
-        <div className="container mx-auto px-4 py-5 flex justify-between items-center">
+      <header className="bg-gradient-to-r from-primary/5 via-transparent to-primary/5 border-b border-border/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex justify-between items-center">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-amber-50">Tasting Flights</h1>
-            <p className="text-amber-200/70 text-sm mt-0.5 hidden sm:block">
+            <h1 className="font-display text-3xl sm:text-4xl font-semibold text-foreground">Tasting Flights</h1>
+            <p className="text-muted-foreground text-sm mt-0.5 hidden sm:block">
               Create side-by-side comparison sessions
             </p>
           </div>
@@ -180,7 +180,7 @@ const Flights = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-6">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {isLoading ? (
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>

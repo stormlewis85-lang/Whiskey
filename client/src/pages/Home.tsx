@@ -130,13 +130,13 @@ const Home = () => {
       <Header />
 
       {/* App Header */}
-      <header className="bg-gradient-to-r from-amber-950 via-amber-900 to-amber-950 text-white shadow-warm-lg border-b border-amber-800/30">
-        <div className="container mx-auto px-4 py-5 flex justify-between items-center">
+      <header className="bg-gradient-to-r from-primary/5 via-transparent to-primary/5 border-b border-border/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex justify-between items-center">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-amber-50">
+            <h1 className="font-display text-3xl sm:text-4xl font-semibold text-foreground">
               {user?.displayName || user?.username}'s Collection
             </h1>
-            <p className="text-amber-200/70 text-sm mt-0.5 hidden sm:block">
+            <p className="text-muted-foreground text-sm mt-0.5 hidden sm:block">
               Manage and explore your whiskey vault
             </p>
           </div>
@@ -145,7 +145,7 @@ const Home = () => {
               onClick={openBarcodeScanner}
               variant="ghost"
               size="icon"
-              className="text-amber-200 hover:text-white hover:bg-amber-700/40 h-10 w-10"
+              className="text-muted-foreground hover:text-foreground hover:bg-accent/50 h-10 w-10"
             >
               <Scan className="h-5 w-5" />
             </Button>
@@ -162,7 +162,7 @@ const Home = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-6 space-y-6">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         {/* Filters */}
         <FilterBar
           searchQuery={searchQuery}

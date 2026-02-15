@@ -254,17 +254,17 @@ export default function Dashboard() {
       <Header />
 
       {/* Page Header */}
-      <header className="bg-gradient-to-r from-amber-950 via-amber-900 to-amber-950 text-white border-b border-amber-800/30">
-        <div className="container mx-auto px-4 py-5">
+      <header className="bg-gradient-to-r from-primary/5 via-transparent to-primary/5 border-b border-border/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-amber-50">Collection Dashboard</h1>
-              <p className="text-amber-200/70 text-sm mt-0.5">
+              <h1 className="font-display text-3xl sm:text-4xl font-semibold text-foreground">Collection Dashboard</h1>
+              <p className="text-muted-foreground text-sm mt-0.5">
                 {whiskeys.length} {whiskeys.length === 1 ? 'whiskey' : 'whiskeys'} in your collection
               </p>
             </div>
             <Link href="/">
-              <Button variant="outline" className="bg-transparent border-amber-600/50 text-amber-100 hover:bg-amber-800/30 hover:text-white">
+              <Button variant="outline" className="shadow-warm-sm">
                 <Home className="h-4 w-4 mr-2" />
                 Back to Collection
               </Button>
@@ -273,7 +273,7 @@ export default function Dashboard() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-6 space-y-6">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         {/* Quick Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[

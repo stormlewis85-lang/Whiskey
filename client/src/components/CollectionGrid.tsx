@@ -1,7 +1,11 @@
+import { useState, useEffect } from "react";
 import { Whiskey } from "@shared/schema";
 import WhiskeyCard from "./WhiskeyCard";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, PlusIcon, Wine, Loader2 } from "lucide-react";
+
+const INITIAL_COUNT = 30;
+const LOAD_MORE_COUNT = 30;
 
 interface CollectionGridProps {
   whiskeys: Whiskey[];
@@ -62,17 +66,20 @@ const CollectionGrid = ({
   if (whiskeys.length === 0) {
     return (
       <div className="bg-card border border-border/50 rounded-xl shadow-warm-sm p-10 text-center">
-        <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-6">
-          <Wine className="h-10 w-10 text-primary" />
+        <div className="relative inline-flex items-center justify-center mb-6">
+          <div className="absolute w-28 h-28 bg-primary/10 rounded-full blur-3xl" />
+          <div className="relative rounded-full bg-card border border-border/40 shadow-warm w-20 h-20 flex items-center justify-center">
+            <Wine className="h-10 w-10 text-primary" />
+          </div>
         </div>
-        <h3 className="text-xl font-semibold text-foreground">Your collection is empty</h3>
+        <h3 className="font-heading text-xl text-foreground">Your collection is empty</h3>
         <p className="mt-2 text-muted-foreground max-w-md mx-auto">
           Start building your whiskey collection. Add your first bottle or import an existing collection.
         </p>
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
           <Button
             onClick={onAddNew}
-            className="w-full sm:w-auto"
+            className="w-full sm:w-auto shadow-warm-sm"
           >
             <PlusIcon className="h-4 w-4 mr-2" />
             Add Your First Whiskey
@@ -87,19 +94,43 @@ const CollectionGrid = ({
     );
   }
 
+  // Progressive rendering
+  const [visibleCount, setVisibleCount] = useState(INITIAL_COUNT);
+
+  // Reset when the filtered list changes (e.g. new search/filter)
+  useEffect(() => {
+    setVisibleCount(INITIAL_COUNT);
+  }, [whiskeys.length]);
+
+  const visibleWhiskeys = whiskeys.slice(0, visibleCount);
+  const remaining = whiskeys.length - visibleCount;
+
   // Collection grid
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
-      {whiskeys.map((whiskey) => (
-        <WhiskeyCard
-          key={whiskey.id}
-          whiskey={whiskey}
-          onViewDetails={onViewDetails}
-          onReview={onReview}
-          onEdit={onEdit}
-        />
-      ))}
-    </div>
+    <>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+        {visibleWhiskeys.map((whiskey) => (
+          <WhiskeyCard
+            key={whiskey.id}
+            whiskey={whiskey}
+            onViewDetails={onViewDetails}
+            onReview={onReview}
+            onEdit={onEdit}
+          />
+        ))}
+      </div>
+      {remaining > 0 && (
+        <div className="flex justify-center mt-6">
+          <Button
+            variant="outline"
+            className="border-border/50"
+            onClick={() => setVisibleCount(prev => prev + LOAD_MORE_COUNT)}
+          >
+            Show More ({remaining} remaining)
+          </Button>
+        </div>
+      )}
+    </>
   );
 };
 

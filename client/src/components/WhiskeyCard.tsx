@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Whiskey } from "@shared/schema";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,15 +32,17 @@ const getStatusConfig = (status: string | null | undefined) => {
 };
 
 const WhiskeyCard = ({ whiskey, onViewDetails, onReview, onEdit }: WhiskeyCardProps) => {
+  const [imageError, setImageError] = useState(false);
   const rating = whiskey.rating || 0;
   const hasNotes = Array.isArray(whiskey.notes) && whiskey.notes.length > 0;
   const statusConfig = getStatusConfig(whiskey.status);
   const isWishlist = whiskey.isWishlist === true;
   const quantity = whiskey.quantity || 1;
+  const showImage = whiskey.image && !imageError;
 
   return (
     <Card className={cn(
-      "group overflow-hidden bg-card border-border/50 shadow-warm-sm hover:shadow-warm transition-all duration-300 hover:border-primary/30",
+      "group overflow-hidden rounded-xl bg-card border-border/50 hover-lift shadow-warm-sm hover:shadow-warm-md transition-all duration-300 hover:border-primary/30",
       isWishlist && "border-l-4 border-l-pink-500/50"
     )}>
       {/* Mobile: horizontal layout with fixed image size; Desktop: larger horizontal */}
@@ -47,13 +50,14 @@ const WhiskeyCard = ({ whiskey, onViewDetails, onReview, onEdit }: WhiskeyCardPr
         {/* Left side: Image - fixed height on mobile for consistency, proportional on desktop */}
         <div className="w-28 sm:w-36 md:w-40 shrink-0 relative bg-accent/30">
           <div className="h-36 sm:h-44 md:h-48 w-full">
-            {whiskey.image ? (
+            {showImage ? (
               <img
-                src={whiskey.image}
+                src={whiskey.image!}
                 alt={`Bottle of ${whiskey.name}`}
                 loading="lazy"
                 decoding="async"
                 className="object-cover h-full w-full bg-accent/20"
+                onError={() => setImageError(true)}
               />
             ) : (
               <div className="h-full w-full flex items-center justify-center p-2 sm:p-4">
@@ -68,7 +72,7 @@ const WhiskeyCard = ({ whiskey, onViewDetails, onReview, onEdit }: WhiskeyCardPr
               {whiskey.type && (
                 <Badge
                   variant="secondary"
-                  className="bg-background/90 backdrop-blur-sm text-foreground border-border/50 text-[10px] sm:text-xs font-medium px-1.5 py-0.5 sm:px-2 sm:py-0.5 hidden sm:flex"
+                  className="bg-black/60 backdrop-blur-sm text-white/90 border-transparent text-[10px] sm:text-xs font-medium px-1.5 py-0.5 sm:px-2 sm:py-0.5 hidden sm:flex"
                 >
                   {whiskey.type}
                 </Badge>
@@ -110,7 +114,7 @@ const WhiskeyCard = ({ whiskey, onViewDetails, onReview, onEdit }: WhiskeyCardPr
         {/* Right side: Whiskey details */}
         <CardContent className="p-3 sm:p-4 flex-1 flex flex-col min-w-0">
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-base sm:text-lg text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+            <h3 className="font-heading font-normal text-base sm:text-lg text-foreground line-clamp-2 group-hover:text-primary transition-colors">
               {whiskey.name}
             </h3>
             <div className="flex justify-between items-center mt-1">

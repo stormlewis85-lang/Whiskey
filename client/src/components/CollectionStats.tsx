@@ -80,9 +80,9 @@ const CollectionStats = ({ whiskeys }: CollectionStatsProps) => {
   ];
 
   return (
-    <Card className="bg-card border-border/50 shadow-warm-sm">
+    <Card className="rounded-xl bg-card border border-border/40 shadow-warm-xs">
       <div className="flex justify-between items-center px-4 pt-4 pb-2">
-        <h2 className="text-lg font-semibold text-foreground">Collection Summary</h2>
+        <h2 className="font-heading text-xl text-foreground">Collection Summary</h2>
         <ExportButton />
       </div>
       <CardContent className="pt-2 space-y-4">
@@ -91,13 +91,14 @@ const CollectionStats = ({ whiskeys }: CollectionStatsProps) => {
           {primaryStats.map((stat) => (
             <div
               key={stat.label}
-              className="flex flex-col items-center p-3 rounded-lg bg-accent/30 border border-border/30 transition-all hover:bg-accent/50"
+              className="relative flex flex-col items-center p-3 rounded-xl bg-card border border-border/40 shadow-warm-xs transition-all hover:bg-accent/50 overflow-hidden"
             >
-              <div className={`p-2 rounded-full ${stat.bgColor} mb-2`}>
+              <div className="absolute -top-10 -right-10 w-24 h-24 bg-primary/5 rounded-full blur-2xl" />
+              <div className={`w-10 h-10 rounded-lg ${stat.bgColor} flex items-center justify-center mb-2`}>
                 <stat.icon className={`h-4 w-4 ${stat.color}`} />
               </div>
-              <p className="text-xs text-muted-foreground text-center">{stat.label}</p>
-              <p className="text-xl font-bold text-foreground mt-0.5">{stat.value}</p>
+              <p className="text-xs font-medium tracking-wide uppercase text-muted-foreground text-center">{stat.label}</p>
+              <p className="font-sans text-2xl font-semibold tabular-nums text-foreground mt-0.5">{stat.value}</p>
               {stat.subValue && (
                 <p className="text-xs text-muted-foreground">{stat.subValue}</p>
               )}
