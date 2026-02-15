@@ -113,14 +113,35 @@ const SharedReview = () => {
   const { whiskey, review, user } = data;
   const overallRating = review.rating;
 
-  // Function to format review text for display
+  // Function to format review text for display (safe — no dangerouslySetInnerHTML)
   const formatReviewText = (text: string) => {
-    const formattedText = text
-      .replace(/## (.*?) ##/g, '<h3 class="text-lg font-semibold mt-4 mb-2 text-foreground">$1</h3>')
-      .replace(/\n\n/g, '<br><br>')
-      .replace(/\n/g, '<br>');
+    const parts = text.split(/(## .*? ##)/g);
 
-    return <div dangerouslySetInnerHTML={{ __html: formattedText }} />;
+    return (
+      <div>
+        {parts.map((part, index) => {
+          const headingMatch = part.match(/^## (.*?) ##$/);
+          if (headingMatch) {
+            return (
+              <h3 key={index} className="text-lg font-semibold mt-4 mb-2 text-foreground">
+                {headingMatch[1]}
+              </h3>
+            );
+          }
+          const lines = part.split('\n');
+          return (
+            <span key={index}>
+              {lines.map((line, lineIndex) => (
+                <span key={lineIndex}>
+                  {line}
+                  {lineIndex < lines.length - 1 && <br />}
+                </span>
+              ))}
+            </span>
+          );
+        })}
+      </div>
+    );
   };
 
   return (

@@ -94,3 +94,9 @@ export const passwordResetRateLimiter = createRateLimiter({
   maxAttempts: 3,
   identifier: (req) => req.body.email || req.ip || 'unknown'
 });
+
+export const registerRateLimiter = createRateLimiter({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  maxAttempts: 5,            // 5 registration attempts per hour per IP
+  identifier: (req) => req.ip || 'unknown'
+});

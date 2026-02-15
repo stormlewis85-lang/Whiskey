@@ -397,17 +397,19 @@ export class DatabaseStorage implements IStorage {
               sql`${whiskeys.userId} IS NULL`
             )
           )
-          .orderBy(asc(whiskeys.name));
+          .orderBy(asc(whiskeys.name))
+          .limit(500);
       } else {
         // For other users, show only their own whiskeys
         return db.select().from(whiskeys)
           .where(eq(whiskeys.userId, userId))
-          .orderBy(asc(whiskeys.name));
+          .orderBy(asc(whiskeys.name))
+          .limit(500);
       }
     }
 
     // No userId - return all whiskeys (should not happen in normal use)
-    return db.select().from(whiskeys).orderBy(asc(whiskeys.name));
+    return db.select().from(whiskeys).orderBy(asc(whiskeys.name)).limit(500);
   }
   
   async getWhiskey(id: number, userId?: number): Promise<Whiskey | undefined> {

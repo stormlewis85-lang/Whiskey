@@ -43,6 +43,7 @@ interface WhiskeyDetailModalProps {
 
 const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit, onTasteWithRick }: WhiskeyDetailModalProps) => {
   const [isUploading, setIsUploading] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const [selectedReview, setSelectedReview] = useState<ReviewNote | null>(null);
   const [isEditReviewModalOpen, setIsEditReviewModalOpen] = useState(false);
   const [isPriceTrackingModalOpen, setIsPriceTrackingModalOpen] = useState(false);
@@ -404,13 +405,14 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit, onTast
             {/* Left column - Image & details */}
             <div className="space-y-3 sm:space-y-4">
               <div className="aspect-[4/3] sm:aspect-square overflow-hidden rounded-xl bg-accent/30 relative group border border-border/30">
-                {whiskey.image ? (
+                {whiskey.image && !imageError ? (
                   <img
                     src={whiskey.image}
                     alt={whiskey.name}
                     loading="lazy"
                     decoding="async"
                     className="h-full w-full object-contain bg-accent/20"
+                    onError={() => setImageError(true)}
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">

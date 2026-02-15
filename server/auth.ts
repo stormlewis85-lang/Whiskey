@@ -7,7 +7,7 @@ import session from "express-session";
 import { nanoid } from "nanoid";
 import connectPgSimple from "connect-pg-simple";
 import { pool } from "./db";
-import { loginRateLimiter, passwordResetRateLimiter, recordLoginAttempt } from "./auth/rate-limiter";
+import { loginRateLimiter, passwordResetRateLimiter, registerRateLimiter, recordLoginAttempt } from "./auth/rate-limiter";
 import { isAccountLocked, handleFailedLogin, handleSuccessfulLogin, getLockoutRemainingSeconds } from "./auth/account-security";
 import { requestPasswordReset, validateResetToken, completePasswordReset } from "./auth/password-reset";
 import { forgotPasswordSchema, resetPasswordSchema } from "@shared/schema";
@@ -148,7 +148,7 @@ export function setupAuth(app: express.Express) {
   }
 
   // User Registration (with password strength validation)
-  app.post("/api/register", async (req: Request, res: Response) => {
+  app.post("/api/register", registerRateLimiter, async (req: Request, res: Response) => {
     try {
       console.log("Registration attempt:", req.body.username);
 
