@@ -312,15 +312,16 @@ export default function Dashboard() {
               bgColor: "bg-blue-500/10",
             },
           ].map((stat) => (
-            <Card key={stat.label} className="bg-card border-border/50 shadow-warm-sm">
+            <Card key={stat.label} className="relative rounded-xl bg-card border border-border/40 shadow-warm-xs overflow-hidden">
+              <div className="absolute -top-10 -right-10 w-24 h-24 bg-primary/5 rounded-full blur-2xl" />
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-full ${stat.bgColor}`}>
+                  <div className={`w-10 h-10 rounded-lg ${stat.bgColor} flex items-center justify-center`}>
                     <stat.icon className={`h-5 w-5 ${stat.color}`} />
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">{stat.label}</p>
-                    <p className="text-xl font-bold text-foreground">{stat.value}</p>
+                    <p className="text-xs font-medium tracking-wide uppercase text-muted-foreground">{stat.label}</p>
+                    <p className="font-sans text-2xl font-semibold tabular-nums text-foreground">{stat.value}</p>
                   </div>
                 </div>
               </CardContent>

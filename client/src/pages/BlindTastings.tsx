@@ -254,15 +254,20 @@ const BlindTastings = () => {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         ) : !blindTastings || blindTastings.length === 0 ? (
-          <Card className="border-dashed">
+          <Card className="border-dashed rounded-xl">
             <CardContent className="flex flex-col items-center justify-center py-12">
-              <EyeOff className="h-12 w-12 text-muted-foreground/40 mb-4" />
-              <h3 className="text-lg font-medium text-foreground mb-2">No blind tastings yet</h3>
+              <div className="relative inline-flex items-center justify-center mb-4">
+                <div className="absolute w-24 h-24 bg-primary/10 rounded-full blur-3xl" />
+                <div className="relative rounded-full bg-card border border-border/40 shadow-warm w-16 h-16 flex items-center justify-center">
+                  <EyeOff className="h-8 w-8 text-primary" />
+                </div>
+              </div>
+              <h3 className="font-heading text-xl text-foreground mb-2">No blind tastings yet</h3>
               <p className="text-muted-foreground text-center mb-4 max-w-md">
                 Create a blind tasting to evaluate whiskeys without seeing their labels.
                 Perfect for unbiased comparisons!
               </p>
-              <Button onClick={() => setIsCreateModalOpen(true)}>
+              <Button onClick={() => setIsCreateModalOpen(true)} className="shadow-warm-sm">
                 <Plus className="h-4 w-4 mr-2" />
                 Create Your First Blind Tasting
               </Button>
@@ -273,7 +278,7 @@ const BlindTastings = () => {
             {blindTastings.map((tasting) => (
               <Card
                 key={tasting.id}
-                className="cursor-pointer hover:border-primary/50 transition-colors"
+                className="cursor-pointer rounded-xl hover-lift shadow-warm-sm hover:shadow-warm-md hover:border-primary/50 transition-all duration-300"
                 onClick={() => fetchTastingDetails(tasting.id)}
               >
                 <CardHeader className="pb-3">

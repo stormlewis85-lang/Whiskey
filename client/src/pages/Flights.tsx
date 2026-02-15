@@ -186,15 +186,20 @@ const Flights = () => {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         ) : !flights || flights.length === 0 ? (
-          <Card className="border-dashed">
+          <Card className="border-dashed rounded-xl">
             <CardContent className="flex flex-col items-center justify-center py-12">
-              <Wine className="h-12 w-12 text-muted-foreground/40 mb-4" />
-              <h3 className="text-lg font-medium text-foreground mb-2">No flights yet</h3>
+              <div className="relative inline-flex items-center justify-center mb-4">
+                <div className="absolute w-24 h-24 bg-primary/10 rounded-full blur-3xl" />
+                <div className="relative rounded-full bg-card border border-border/40 shadow-warm w-16 h-16 flex items-center justify-center">
+                  <Wine className="h-8 w-8 text-primary" />
+                </div>
+              </div>
+              <h3 className="font-heading text-xl text-foreground mb-2">No flights yet</h3>
               <p className="text-muted-foreground text-center mb-4 max-w-md">
                 Create a tasting flight to compare whiskeys side by side. Perfect for exploring
                 different expressions or hosting a tasting session.
               </p>
-              <Button onClick={() => setIsCreateModalOpen(true)}>
+              <Button onClick={() => setIsCreateModalOpen(true)} className="shadow-warm-sm">
                 <Plus className="h-4 w-4 mr-2" />
                 Create Your First Flight
               </Button>
@@ -205,7 +210,7 @@ const Flights = () => {
             {flights.map((flight) => (
               <Card
                 key={flight.id}
-                className="cursor-pointer hover:border-primary/50 transition-colors"
+                className="cursor-pointer rounded-xl hover-lift shadow-warm-sm hover:shadow-warm-md hover:border-primary/50 transition-all duration-300"
                 onClick={() => fetchFlightDetails(flight.id)}
               >
                 <CardHeader className="pb-3">

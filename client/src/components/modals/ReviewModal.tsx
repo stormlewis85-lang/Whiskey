@@ -1022,9 +1022,9 @@ const ReviewModal = ({ isOpen, onClose, whiskey, existingReview }: ReviewModalPr
             {/* Sticky Header */}
             <div className="sticky top-0 z-10 bg-card border-b border-border">
               {/* Progress bar */}
-              <div className="h-1 bg-muted">
+              <div className="h-1.5 bg-muted">
                 <div
-                  className="h-full bg-primary transition-all duration-300 ease-out"
+                  className="h-full bg-primary transition-all duration-500 ease-out rounded-full"
                   style={{ width: `${progress}%` }}
                 />
               </div>
@@ -1032,7 +1032,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey, existingReview }: ReviewModalPr
               {/* Title and whiskey info */}
               <div className="px-6 py-4">
                 <div className="flex items-center justify-between mb-3">
-                  <DialogTitle className="text-lg font-semibold text-foreground">
+                  <DialogTitle className="font-heading text-xl text-foreground">
                     {isEditMode ? 'Edit Review' : 'Review'}: {whiskey.name}
                   </DialogTitle>
                   <button
@@ -1043,15 +1043,18 @@ const ReviewModal = ({ isOpen, onClose, whiskey, existingReview }: ReviewModalPr
                   </button>
                 </div>
 
-                {/* Step indicator */}
+                {/* Step indicator with circles */}
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <StepIcon className="w-5 h-5 text-primary" />
+                  <div className={cn(
+                    "w-8 h-8 rounded-full flex items-center justify-center",
+                    "bg-primary text-primary-foreground ring-4 ring-primary/20"
+                  )}>
+                    <StepIcon className="w-4 h-4" />
                   </div>
                   <div>
-                    <p className="font-medium text-foreground">
+                    <p className="font-heading text-lg text-foreground">
                       {currentStepData.title}
-                      <span className="text-muted-foreground font-normal ml-2">
+                      <span className="text-muted-foreground font-sans text-sm font-normal ml-2">
                         {currentStep + 1}/{STEPS.length}
                       </span>
                     </p>
