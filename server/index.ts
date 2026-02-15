@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
+import helmet from "helmet";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { validateRickConfig } from "./rick-config";
@@ -8,30 +9,67 @@ import fs from "fs";
 
 const app = express();
 
-// Add CORS headers for cross-origin requests in production
+// Security headers
+const isProduction = process.env.NODE_ENV === 'production';
+// Build CSP entries for DO Spaces that handle multi-level subdomain URLs
+// e.g. https://whiskeypedia-uploads.sfo3.cdn.digitaloceanspaces.com/...
+const spacesRegion = process.env.SPACES_REGION || 'sfo3';
+const spacesCspSources = [
+  "https://*.digitaloceanspaces.com",
+  "https://*.cdn.digitaloceanspaces.com",
+  `https://*.${spacesRegion}.digitaloceanspaces.com`,
+  `https://*.${spacesRegion}.cdn.digitaloceanspaces.com`,
+];
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: [
+        "'self'",
+        "data:",
+        "blob:",
+        ...spacesCspSources,
+      ],
+      connectSrc: [
+        "'self'",
+        ...spacesCspSources,
+      ],
+      fontSrc: ["'self'", "data:"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'", "blob:"],
+      frameSrc: ["'none'"],
+    },
+  },
+  crossOriginEmbedderPolicy: false,
+}));
+
+// CORS with origin whitelist
+const ALLOWED_ORIGINS = new Set([
+  'https://mywhiskeypedia.com',
+  'https://www.mywhiskeypedia.com',
+]);
+if (!isProduction) {
+  ALLOWED_ORIGINS.add('http://localhost:5000');
+  ALLOWED_ORIGINS.add('http://localhost:5173');
+  ALLOWED_ORIGINS.add('http://localhost:3000');
+}
+
 app.use((req, res, next) => {
-  // Get the origin from the request headers
   const origin = req.headers.origin;
-  
-  // Allow the specific origin or all origins in development
-  if (origin) {
+
+  if (origin && ALLOWED_ORIGINS.has(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
   }
-  
-  // Important for credentials (cookies, authorization headers, etc.)
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  
-  // Allow common headers and custom headers
-  res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  
-  // Allow common HTTP methods
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-  
-  // Handle preflight requests
+
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
-  
+
   next();
 });
 
