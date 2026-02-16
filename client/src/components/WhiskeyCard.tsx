@@ -1,12 +1,8 @@
 import { useState } from "react";
 import { Whiskey } from "@shared/schema";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { formatDate } from "@/lib/utils/calculations";
 import { PencilIcon, Star, Wine, Heart, Package, PackageOpen, Gift, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { FlavorTags } from "@/components/FlavorTags";
 
 interface WhiskeyCardProps {
   whiskey: Whiskey;
@@ -15,205 +11,148 @@ interface WhiskeyCardProps {
   onEdit: (whiskey: Whiskey) => void;
 }
 
-// Helper function to get status badge config
-const getStatusConfig = (status: string | null | undefined) => {
+// Status dot color
+const getStatusColor = (status: string | null | undefined) => {
   switch (status) {
-    case 'sealed':
-      return { icon: Package, label: 'Sealed', className: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20' };
-    case 'open':
-      return { icon: PackageOpen, label: 'Open', className: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' };
-    case 'finished':
-      return { icon: CheckCircle2, label: 'Finished', className: 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20' };
-    case 'gifted':
-      return { icon: Gift, label: 'Gifted', className: 'bg-pink-500/10 text-pink-600 dark:text-pink-400 border-pink-500/20' };
-    default:
-      return null;
+    case 'sealed': return 'bg-primary';
+    case 'open': return 'bg-emerald-500';
+    case 'finished': return 'bg-muted-foreground';
+    case 'gifted': return 'bg-pink-500';
+    default: return '';
   }
 };
 
 const WhiskeyCard = ({ whiskey, onViewDetails, onReview, onEdit }: WhiskeyCardProps) => {
   const [imageError, setImageError] = useState(false);
   const rating = whiskey.rating || 0;
-  const hasNotes = Array.isArray(whiskey.notes) && whiskey.notes.length > 0;
-  const statusConfig = getStatusConfig(whiskey.status);
   const isWishlist = whiskey.isWishlist === true;
-  const quantity = whiskey.quantity || 1;
   const showImage = whiskey.image && !imageError;
 
   return (
-    <Card className={cn(
-      "group overflow-hidden rounded-xl bg-card border-border/50 hover-lift shadow-warm-sm hover:shadow-warm-md transition-all duration-300 hover:border-primary/30",
-      isWishlist && "border-l-4 border-l-pink-500/50"
-    )}>
-      {/* Mobile: horizontal layout with fixed image size; Desktop: larger horizontal */}
-      <div className="flex flex-row">
-        {/* Left side: Image - fixed height on mobile for consistency, proportional on desktop */}
-        <div className="w-28 sm:w-36 md:w-40 shrink-0 relative bg-accent/30">
-          <div className="h-36 sm:h-44 md:h-48 w-full">
-            {showImage ? (
-              <img
-                src={whiskey.image!}
-                alt={`Bottle of ${whiskey.name}`}
-                loading="lazy"
-                decoding="async"
-                className="object-cover h-full w-full bg-accent/20"
-                onError={() => setImageError(true)}
-              />
-            ) : (
-              <div className="h-full w-full flex items-center justify-center p-2 sm:p-4">
-                <div className="border-2 border-dashed border-border/50 rounded-lg p-2 sm:p-4 flex flex-col items-center justify-center h-[80%] w-[80%]">
-                  <Wine className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground/50 mb-1 sm:mb-2" />
-                  <span className="text-[10px] sm:text-xs text-muted-foreground/70">No Image</span>
-                </div>
-              </div>
-            )}
-            {/* Top badges: type (hidden on mobile), wishlist indicator */}
-            <div className="absolute top-1 sm:top-2 right-1 sm:right-2 flex flex-col gap-0.5 sm:gap-1 items-end">
-              {whiskey.type && (
-                <Badge
-                  variant="secondary"
-                  className="bg-black/60 backdrop-blur-sm text-white/90 border-transparent text-[10px] sm:text-xs font-medium px-1.5 py-0.5 sm:px-2 sm:py-0.5 hidden sm:flex"
-                >
-                  {whiskey.type}
-                </Badge>
-              )}
-              {isWishlist && (
-                <Badge
-                  variant="outline"
-                  className="bg-pink-500/10 text-pink-600 dark:text-pink-400 border-pink-500/20 text-[10px] sm:text-xs px-1 py-0.5 sm:px-2"
-                >
-                  <Heart className="h-2.5 w-2.5 sm:h-3 sm:w-3 fill-current" />
-                  <span className="hidden sm:inline ml-1">Wishlist</span>
-                </Badge>
-              )}
-            </div>
+    <article
+      className="group relative card-elevated card-interactive p-0 overflow-hidden cursor-pointer"
+      onClick={() => onViewDetails(whiskey)}
+    >
+      {/* Image container - editorial aspect ratio */}
+      <div className="relative aspect-[4/5] bg-gradient-to-b from-muted/30 to-background overflow-hidden">
 
-            {/* Bottom badges: quantity, status - compact on mobile */}
-            <div className="absolute bottom-1 sm:bottom-2 left-1 sm:left-2 flex gap-0.5 sm:gap-1">
-              {quantity > 1 && (
-                <Badge
-                  variant="secondary"
-                  className="bg-background/90 backdrop-blur-sm text-foreground border-border/50 text-[10px] sm:text-xs font-bold px-1 py-0.5 sm:px-2"
-                >
-                  x{quantity}
-                </Badge>
-              )}
-              {statusConfig && !isWishlist && (
-                <Badge
-                  variant="outline"
-                  className={cn("text-[10px] sm:text-xs px-1 py-0.5 sm:px-2", statusConfig.className)}
-                >
-                  <statusConfig.icon className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                  <span className="hidden sm:inline ml-1">{statusConfig.label}</span>
-                </Badge>
-              )}
-            </div>
+        {/* Ambient glow on hover */}
+        <div className="absolute inset-0 bg-gradient-radial from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+        {showImage ? (
+          <img
+            src={whiskey.image!}
+            alt={`Bottle of ${whiskey.name}`}
+            loading="lazy"
+            decoding="async"
+            className="absolute inset-0 w-full h-full object-contain p-6 transition-transform duration-500 group-hover:scale-105"
+            onError={() => setImageError(true)}
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Wine className="w-20 h-32 text-muted-foreground/20" />
           </div>
-        </div>
+        )}
 
-        {/* Right side: Whiskey details */}
-        <CardContent className="p-3 sm:p-4 flex-1 flex flex-col min-w-0">
-          <div className="flex-1 min-w-0">
-            <h3 className="font-heading font-normal text-base sm:text-lg text-foreground line-clamp-2 group-hover:text-primary transition-colors">
-              {whiskey.name}
-            </h3>
-            <div className="flex justify-between items-center mt-1">
-              <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                {whiskey.distillery || 'Unknown Distillery'}
-              </p>
-              {whiskey.price && (
-                <p className="text-xs sm:text-sm font-semibold text-primary shrink-0 ml-2">
-                  ${whiskey.price}
-                </p>
-              )}
-            </div>
+        {/* Type badge - top left, minimal */}
+        {whiskey.type && (
+          <span className="absolute top-4 left-4 px-2 py-1 text-label-caps bg-background/80 backdrop-blur-sm rounded text-xs">
+            {whiskey.type}
+          </span>
+        )}
 
-            {/* Bourbon badges - hidden on mobile for compactness, shown on sm+ */}
-            {whiskey.type === "Bourbon" && (
-              <div className="hidden sm:flex flex-wrap gap-1.5 mt-2">
-                {whiskey.bottleType && whiskey.bottleType !== "none" && (
-                  <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 text-xs">
-                    {whiskey.bottleType}
-                  </Badge>
-                )}
+        {/* Status dot - top right */}
+        {whiskey.status && !isWishlist && (
+          <div className={cn(
+            "absolute top-4 right-4 w-2.5 h-2.5 rounded-full",
+            getStatusColor(whiskey.status)
+          )} />
+        )}
 
-                {whiskey.mashBill && whiskey.mashBill !== "none" && (
-                  <Badge variant="outline" className="bg-amber-500/5 text-amber-600 dark:text-amber-400 border-amber-500/20 text-xs">
-                    {whiskey.mashBill}
-                  </Badge>
-                )}
-
-                {whiskey.caskStrength === "Yes" && (
-                  <Badge variant="outline" className="bg-red-500/5 text-red-600 dark:text-red-400 border-red-500/20 text-xs">
-                    Cask Strength
-                  </Badge>
-                )}
-
-                {whiskey.finished === "Yes" && (
-                  <Badge variant="outline" className="bg-purple-500/5 text-purple-600 dark:text-purple-400 border-purple-500/20 text-xs">
-                    {whiskey.finishType ? `${whiskey.finishType} Finish` : 'Finished'}
-                  </Badge>
-                )}
-              </div>
-            )}
-
-            {/* Flavor Tags - hidden on mobile */}
-            {hasNotes && <FlavorTags whiskey={whiskey} maxTags={3} className="mt-2 hidden sm:flex" />}
-
-            {/* Rating */}
-            <div className="flex items-center mt-2 gap-0.5 sm:gap-1">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <Star
-                  key={star}
-                  className={cn(
-                    "w-3 h-3 sm:w-4 sm:h-4 transition-colors",
-                    star <= rating
-                      ? "text-amber-400 fill-amber-400"
-                      : "text-muted-foreground/30"
-                  )}
-                />
-              ))}
-              {hasNotes && (
-                <span className="text-xs text-muted-foreground ml-1 hidden sm:inline">
-                  ({(whiskey.notes as any[]).length} {(whiskey.notes as any[]).length === 1 ? 'note' : 'notes'})
-                </span>
-              )}
-            </div>
+        {/* Wishlist indicator */}
+        {isWishlist && (
+          <div className="absolute top-4 right-4">
+            <Heart className="w-4 h-4 text-pink-500 fill-pink-500" />
           </div>
+        )}
 
-          {/* Action buttons - more compact on mobile */}
-          <div className="flex items-center gap-1.5 sm:gap-2 mt-2 sm:mt-4 pt-2 sm:pt-3 border-t border-border/30 relative z-10">
-            <Button
-              type="button"
-              onClick={() => onEdit(whiskey)}
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 sm:h-9 sm:w-9 text-muted-foreground hover:text-foreground hover:bg-accent shrink-0"
-              title="Edit whiskey"
-            >
-              <PencilIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            </Button>
-            <Button
-              type="button"
-              onClick={() => onViewDetails(whiskey)}
-              variant="outline"
-              size="sm"
-              className="flex-1 h-8 sm:h-9 text-xs sm:text-sm border-border/50 hover:bg-accent/50 px-2 sm:px-3"
-            >
-              Details
-            </Button>
-            <Button
-              type="button"
-              onClick={() => onReview(whiskey)}
-              size="sm"
-              className="flex-1 h-8 sm:h-9 text-xs sm:text-sm px-2 sm:px-3"
-            >
-              Review
-            </Button>
-          </div>
-        </CardContent>
+        {/* Quantity badge */}
+        {(whiskey.quantity || 1) > 1 && (
+          <span className="absolute bottom-4 left-4 px-2 py-0.5 text-xs font-bold bg-background/80 backdrop-blur-sm rounded text-foreground">
+            x{whiskey.quantity}
+          </span>
+        )}
       </div>
-    </Card>
+
+      {/* Content - generous padding */}
+      <div className="p-5 space-y-3">
+        {/* Whiskey name - serif, prominent */}
+        <h3 className="text-whiskey-name text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+          {whiskey.name}
+        </h3>
+
+        {/* Distillery */}
+        <p className="text-sm text-muted-foreground">
+          {whiskey.distillery || 'Unknown Distillery'}
+        </p>
+
+        {/* Rating and price row */}
+        <div className="flex items-center justify-between pt-3 border-t border-border/50">
+          {/* Rating - gold stars */}
+          <div className="flex items-center gap-1.5">
+            {rating > 0 ? (
+              <>
+                <Star className="w-4 h-4 fill-primary text-primary" />
+                <span className="text-sm font-medium text-foreground">{rating.toFixed(1)}</span>
+              </>
+            ) : (
+              <span className="text-sm text-muted-foreground">No rating</span>
+            )}
+          </div>
+
+          {/* Price - gold text */}
+          {whiskey.price && (
+            <span className="text-sm font-semibold text-primary">${whiskey.price}</span>
+          )}
+        </div>
+      </div>
+
+      {/* Hover actions - slide up from bottom */}
+      <div
+        className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-card via-card to-transparent translate-y-full group-hover:translate-y-0 transition-transform duration-300"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            onClick={() => onEdit(whiskey)}
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 text-muted-foreground hover:text-foreground shrink-0"
+            title="Edit whiskey"
+          >
+            <PencilIcon className="h-4 w-4" />
+          </Button>
+          <Button
+            type="button"
+            onClick={() => onViewDetails(whiskey)}
+            variant="outline"
+            size="sm"
+            className="flex-1 h-9 text-sm border-border/50"
+          >
+            Details
+          </Button>
+          <Button
+            type="button"
+            onClick={() => onReview(whiskey)}
+            size="sm"
+            className="flex-1 h-9 text-sm bg-primary hover:bg-primary/90"
+          >
+            Review
+          </Button>
+        </div>
+      </div>
+    </article>
   );
 };
 

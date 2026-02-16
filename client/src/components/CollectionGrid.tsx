@@ -65,31 +65,32 @@ const CollectionGrid = ({
   // Empty state
   if (whiskeys.length === 0) {
     return (
-      <div className="bg-card border border-border/50 rounded-xl shadow-warm-sm p-10 text-center">
-        <div className="relative inline-flex items-center justify-center mb-6">
-          <div className="absolute w-28 h-28 bg-primary/10 rounded-full blur-3xl" />
-          <div className="relative rounded-full bg-card border border-border/40 shadow-warm w-20 h-20 flex items-center justify-center">
-            <Wine className="h-10 w-10 text-primary" />
+      <div className="flex flex-col items-center justify-center py-24 px-4">
+        {/* Dramatic icon with gold glow */}
+        <div className="relative mb-8">
+          <div className="absolute inset-0 bg-primary/20 rounded-full blur-3xl scale-150" />
+          <div className="relative w-24 h-24 rounded-full bg-card border border-primary/20 flex items-center justify-center">
+            <Wine className="w-10 h-10 text-primary" />
           </div>
         </div>
-        <h3 className="font-heading text-xl text-foreground">Your collection is empty</h3>
-        <p className="mt-2 text-muted-foreground max-w-md mx-auto">
+
+        <h3 className="font-display text-2xl md:text-3xl text-foreground text-center">
+          Your collection is empty
+        </h3>
+        <p className="mt-4 text-muted-foreground text-center max-w-md text-lg">
           Start building your whiskey collection. Add your first bottle or import an existing collection.
         </p>
-        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
-          <Button
-            onClick={onAddNew}
-            className="w-full sm:w-auto shadow-warm-sm"
-          >
-            <PlusIcon className="h-4 w-4 mr-2" />
-            Add Your First Whiskey
-          </Button>
-        </div>
-        <div className="mt-8 pt-6 border-t border-border/30">
-          <p className="text-sm text-muted-foreground">
-            Pro tip: You can also scan barcodes or import from a CSV file.
-          </p>
-        </div>
+        <Button
+          onClick={onAddNew}
+          size="lg"
+          className="mt-8 bg-primary hover:bg-primary/90"
+        >
+          <PlusIcon className="h-5 w-5 mr-2" />
+          Add Your First Whiskey
+        </Button>
+        <p className="mt-6 text-sm text-muted-foreground">
+          Pro tip: You can also scan barcodes or import from a CSV file.
+        </p>
       </div>
     );
   }
@@ -108,7 +109,7 @@ const CollectionGrid = ({
   // Collection grid
   return (
     <>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
         {visibleWhiskeys.map((whiskey) => (
           <WhiskeyCard
             key={whiskey.id}
