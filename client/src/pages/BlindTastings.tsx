@@ -229,11 +229,13 @@ const BlindTastings = () => {
       <Header />
 
       {/* Page Header */}
-      <header className="bg-gradient-to-r from-primary/5 via-transparent to-primary/5 border-b border-border/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex justify-between items-center">
+      <header className="relative py-12 md:py-16">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-transparent" />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
           <div>
-            <h1 className="font-display text-3xl sm:text-4xl font-semibold text-foreground">Blind Tastings</h1>
-            <p className="text-muted-foreground text-sm mt-0.5 hidden sm:block">
+            <p className="text-label-caps text-primary mb-3">Unbiased Evaluation</p>
+            <h1 className="text-display-hero text-foreground">Blind Tastings</h1>
+            <p className="mt-4 text-lg text-muted-foreground hidden sm:block">
               Evaluate whiskeys without bias
             </p>
           </div>

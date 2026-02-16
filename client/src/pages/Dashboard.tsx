@@ -254,17 +254,19 @@ export default function Dashboard() {
       <Header />
 
       {/* Page Header */}
-      <header className="bg-gradient-to-r from-primary/5 via-transparent to-primary/5 border-b border-border/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+      <header className="relative py-12 md:py-16">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-transparent" />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="font-display text-3xl sm:text-4xl font-semibold text-foreground">Collection Dashboard</h1>
-              <p className="text-muted-foreground text-sm mt-0.5">
+              <p className="text-label-caps text-primary mb-3">Analytics</p>
+              <h1 className="text-display-hero text-foreground">Dashboard</h1>
+              <p className="mt-4 text-lg text-muted-foreground">
                 {whiskeys.length} {whiskeys.length === 1 ? 'whiskey' : 'whiskeys'} in your collection
               </p>
             </div>
             <Link href="/">
-              <Button variant="outline" className="shadow-warm-sm">
+              <Button variant="outline">
                 <Home className="h-4 w-4 mr-2" />
                 Back to Collection
               </Button>

@@ -107,8 +107,8 @@ export function Header() {
   );
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 glass-warm">
-      <div className="container mx-auto px-4 h-14 flex items-center justify-between">
+    <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-xl">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center gap-2">
           {/* Mobile menu button */}
@@ -185,7 +185,7 @@ export function Header() {
           )}
 
           <Link href="/">
-            <span className="font-display text-2xl font-bold tracking-wide cursor-pointer">
+            <span className="font-display text-3xl md:text-4xl font-bold tracking-wide cursor-pointer">
               <span className="text-gradient-brand">WhiskeyPedia</span>
             </span>
           </Link>
@@ -193,7 +193,7 @@ export function Header() {
 
         {/* Desktop Navigation */}
         {user && !isMobile && (
-          <nav className="flex items-center gap-1">
+          <nav className="flex items-center gap-6">
             <NavLinks />
           </nav>
         )}

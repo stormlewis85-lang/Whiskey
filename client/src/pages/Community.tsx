@@ -344,19 +344,14 @@ const Community = () => {
         <Header />
 
         {/* Page Header */}
-        <header className="bg-gradient-to-r from-primary/5 via-transparent to-primary/5 border-b border-border/30">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-primary/10 rounded-xl border border-primary/20">
-                <Users className="w-6 h-6 text-primary" />
-              </div>
-              <div>
-                <h1 className="font-display text-3xl sm:text-4xl font-semibold text-foreground">Community</h1>
-                <p className="text-muted-foreground text-sm mt-0.5">
-                  Discover what other enthusiasts are enjoying
-                </p>
-              </div>
-            </div>
+        <header className="relative py-12 md:py-16">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-transparent" />
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <p className="text-label-caps text-primary mb-3">Enthusiasts</p>
+            <h1 className="text-display-hero text-foreground">Community</h1>
+            <p className="mt-4 text-lg text-muted-foreground">
+              Discover what other enthusiasts are enjoying
+            </p>
           </div>
         </header>
 

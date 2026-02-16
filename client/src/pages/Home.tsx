@@ -130,13 +130,15 @@ const Home = () => {
       <Header />
 
       {/* App Header */}
-      <header className="bg-gradient-to-r from-primary/5 via-transparent to-primary/5 border-b border-border/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex justify-between items-center">
+      <header className="relative py-12 md:py-16">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-transparent" />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
           <div>
-            <h1 className="font-display text-3xl sm:text-4xl font-semibold text-foreground">
+            <p className="text-label-caps text-primary mb-3">Your Collection</p>
+            <h1 className="text-display-hero text-foreground">
               {user?.displayName || user?.username}'s Collection
             </h1>
-            <p className="text-muted-foreground text-sm mt-0.5 hidden sm:block">
+            <p className="mt-4 text-lg text-muted-foreground hidden sm:block">
               Manage and explore your whiskey vault
             </p>
           </div>
@@ -162,7 +164,7 @@ const Home = () => {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* Filters */}
         <FilterBar
           searchQuery={searchQuery}

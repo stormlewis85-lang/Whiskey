@@ -178,8 +178,9 @@ const Profile = () => {
         <Header />
 
         {/* Profile Header */}
-        <header className="bg-gradient-to-r from-primary/5 via-transparent to-primary/5 border-b border-border/30">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <header className="relative py-12 md:py-16">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-transparent" />
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
               {/* Avatar */}
               <Avatar className="h-24 w-24 border-4 border-primary/30 shadow-warm-lg">
