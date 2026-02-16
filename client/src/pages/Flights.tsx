@@ -188,25 +188,22 @@ const Flights = () => {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         ) : !flights || flights.length === 0 ? (
-          <Card className="border-dashed rounded-xl">
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <div className="relative inline-flex items-center justify-center mb-4">
-                <div className="absolute w-24 h-24 bg-primary/10 rounded-full blur-3xl" />
-                <div className="relative rounded-full bg-card border border-border/40 shadow-warm w-16 h-16 flex items-center justify-center">
-                  <Wine className="h-8 w-8 text-primary" />
-                </div>
+          <div className="flex flex-col items-center justify-center py-24 px-4">
+            <div className="relative mb-8">
+              <div className="absolute inset-0 bg-primary/20 rounded-full blur-3xl scale-150" />
+              <div className="relative w-24 h-24 rounded-full bg-card border border-primary/20 flex items-center justify-center">
+                <Wine className="w-10 h-10 text-primary" />
               </div>
-              <h3 className="font-heading text-xl text-foreground mb-2">No flights yet</h3>
-              <p className="text-muted-foreground text-center mb-4 max-w-md">
-                Create a tasting flight to compare whiskeys side by side. Perfect for exploring
-                different expressions or hosting a tasting session.
-              </p>
-              <Button onClick={() => setIsCreateModalOpen(true)} className="shadow-warm-sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Create Your First Flight
-              </Button>
-            </CardContent>
-          </Card>
+            </div>
+            <h3 className="font-display text-2xl md:text-3xl text-foreground text-center">No flights yet</h3>
+            <p className="mt-4 text-muted-foreground text-center max-w-md text-lg">
+              Create a tasting flight to compare whiskeys side by side.
+            </p>
+            <Button onClick={() => setIsCreateModalOpen(true)} size="lg" className="mt-8 bg-primary hover:bg-primary/90">
+              <Plus className="h-5 w-5 mr-2" />
+              Create Your First Flight
+            </Button>
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {flights.map((flight) => (
