@@ -3,8 +3,9 @@
 @tailwind utilities;
 
 /*
- * WhiskeyPedia Design System — "Speakeasy Refined"
- * A warm, sophisticated palette inspired by bourbon and whiskey culture
+ * WhiskeyPedia Design System V2 — "Black & Gold"
+ * Inspired by Glenfiddich, Linear, The Macallan
+ * Near-black canvas, precious gold accents, editorial luxury
  */
 
 /* ============================================
@@ -17,126 +18,120 @@
 }
 
 /* ============================================
-   LIGHT MODE (Warm parchment/cream)
+   LIGHT MODE (Warm parchment)
    ============================================ */
 :root {
-  /* Backgrounds - warm parchment/cream */
-  --background: 40 40% 96%;
-  --foreground: 20 35% 12%;
+  --background: 40 30% 96%;
+  --foreground: 25 30% 12%;
 
-  /* Cards */
-  --card: 42 50% 98%;
-  --card-foreground: 20 35% 12%;
+  --card: 40 40% 98%;
+  --card-foreground: 25 30% 12%;
 
-  --popover: 42 50% 98%;
-  --popover-foreground: 20 35% 12%;
+  --popover: 40 40% 98%;
+  --popover-foreground: 25 30% 12%;
 
-  /* Primary - deeper amber for light backgrounds */
-  --primary: 28 75% 38%;
-  --primary-foreground: 42 50% 98%;
+  /* Deeper, richer gold for light mode */
+  --primary: 32 70% 35%;
+  --primary-foreground: 40 40% 98%;
 
-  --secondary: 35 30% 90%;
-  --secondary-foreground: 20 30% 20%;
+  --secondary: 35 20% 90%;
+  --secondary-foreground: 25 25% 20%;
 
-  --muted: 38 25% 92%;
-  --muted-foreground: 20 15% 40%;
+  --muted: 38 20% 92%;
+  --muted-foreground: 25 15% 40%;
 
-  --accent: 38 40% 88%;
-  --accent-foreground: 20 35% 15%;
+  --accent: 38 30% 88%;
+  --accent-foreground: 25 30% 15%;
 
-  --destructive: 0 72% 51%;
+  --destructive: 0 70% 50%;
   --destructive-foreground: 0 0% 100%;
-  --success: 145 55% 35%;
+  --success: 150 55% 35%;
   --success-foreground: 0 0% 100%;
-  --warning: 38 90% 50%;
-  --warning-foreground: 20 35% 12%;
+  --warning: 38 85% 50%;
+  --warning-foreground: 25 30% 12%;
 
-  --border: 35 25% 85%;
-  --input: 35 25% 85%;
-  --ring: 28 75% 38%;
+  --border: 35 20% 85%;
+  --input: 35 20% 85%;
+  --ring: 32 70% 35%;
 
-  /* Radius */
   --radius: 0.625rem;
 
-  /* Chart colors - amber/copper gradient */
-  --chart-1: 28 75% 38%;
-  --chart-2: 18 60% 35%;
-  --chart-3: 38 70% 50%;
-  --chart-4: 22 50% 45%;
-  --chart-5: 30 45% 42%;
+  --chart-1: 32 70% 35%;
+  --chart-2: 22 55% 30%;
+  --chart-3: 42 65% 45%;
+  --chart-4: 18 45% 40%;
+  --chart-5: 30 35% 38%;
 
-  /* Sidebar */
-  --sidebar-background: 38 35% 94%;
-  --sidebar-foreground: 20 35% 12%;
-  --sidebar-primary: 28 75% 38%;
-  --sidebar-primary-foreground: 42 50% 98%;
-  --sidebar-accent: 38 40% 88%;
-  --sidebar-accent-foreground: 20 35% 15%;
-  --sidebar-border: 35 25% 85%;
-  --sidebar-ring: 28 75% 38%;
+  --sidebar-background: 38 25% 94%;
+  --sidebar-foreground: 25 30% 12%;
+  --sidebar-primary: 32 70% 35%;
+  --sidebar-primary-foreground: 40 40% 98%;
+  --sidebar-accent: 38 30% 88%;
+  --sidebar-accent-foreground: 25 30% 15%;
+  --sidebar-border: 35 20% 85%;
+  --sidebar-ring: 32 70% 35%;
 }
 
 /* ============================================
-   DARK MODE (Deeper, richer browns)
+   DARK MODE — Near-black, layered depth
    ============================================ */
 .dark {
-  /* Backgrounds - deeper, richer browns */
-  --background: 15 20% 6%;
-  --foreground: 38 25% 90%;
+  /* ===== BACKGROUNDS - LAYERED BLACKS ===== */
+  --background: 0 0% 4%;              /* #0A0A0A - deepest black */
+  --foreground: 40 20% 92%;           /* #EDE9E3 - warm cream white */
 
-  /* Cards - subtle elevation through warmth */
-  --card: 18 18% 10%;
-  --card-foreground: 38 25% 90%;
+  /* Cards use slightly elevated tones for depth */
+  --card: 0 0% 7%;                    /* #121212 - elevated surface */
+  --card-foreground: 40 20% 92%;
 
-  /* Popovers */
-  --popover: 18 18% 12%;
-  --popover-foreground: 38 25% 90%;
+  --popover: 0 0% 9%;                 /* #171717 - highest elevation */
+  --popover-foreground: 40 20% 92%;
 
-  /* Primary - rich liquid amber */
-  --primary: 32 85% 52%;
-  --primary-foreground: 15 20% 6%;
+  /* ===== PRIMARY - THE PRECIOUS GOLD ===== */
+  --primary: 38 80% 50%;              /* #D4A44C - rich whiskey gold */
+  --primary-foreground: 0 0% 4%;
 
-  /* Secondary - muted copper */
-  --secondary: 25 15% 18%;
-  --secondary-foreground: 38 20% 85%;
+  /* ===== SECONDARY - DARK WARM GRAY ===== */
+  --secondary: 30 5% 12%;             /* #1F1D1B */
+  --secondary-foreground: 40 15% 75%;
 
-  /* Muted */
-  --muted: 20 12% 16%;
-  --muted-foreground: 30 12% 55%;
+  /* ===== MUTED - FOR TERTIARY INFO ===== */
+  --muted: 30 5% 15%;                 /* #272422 */
+  --muted-foreground: 35 10% 50%;     /* #8A8078 - muted but readable */
 
-  /* Accent */
-  --accent: 28 25% 20%;
-  --accent-foreground: 36 80% 65%;
+  /* ===== ACCENT - SUBTLE WARM HIGHLIGHT ===== */
+  --accent: 30 8% 14%;                /* #252220 */
+  --accent-foreground: 38 70% 60%;
 
-  /* Status colors */
-  --destructive: 0 65% 50%;
+  /* ===== STATUS COLORS ===== */
+  --destructive: 0 60% 50%;
   --destructive-foreground: 0 0% 100%;
-  --success: 145 50% 40%;
+  --success: 150 50% 40%;
   --success-foreground: 0 0% 100%;
   --warning: 38 90% 55%;
-  --warning-foreground: 15 20% 6%;
+  --warning-foreground: 0 0% 4%;
 
-  /* Borders */
-  --border: 25 15% 18%;
-  --input: 25 15% 20%;
-  --ring: 32 85% 52%;
+  /* ===== BORDERS - SUBTLE, LINEAR-STYLE ===== */
+  --border: 30 5% 15%;
+  --input: 30 5% 18%;
+  --ring: 38 80% 50%;
 
-  /* Chart colors - amber/copper gradient */
-  --chart-1: 32 85% 52%;
-  --chart-2: 22 70% 45%;
-  --chart-3: 42 80% 60%;
-  --chart-4: 15 60% 40%;
-  --chart-5: 28 50% 50%;
+  /* ===== CHARTS - GOLD GRADIENT ===== */
+  --chart-1: 38 80% 50%;
+  --chart-2: 28 60% 40%;
+  --chart-3: 45 70% 55%;
+  --chart-4: 20 50% 35%;
+  --chart-5: 35 40% 45%;
 
-  /* Sidebar */
-  --sidebar-background: 15 18% 8%;
-  --sidebar-foreground: 38 25% 90%;
-  --sidebar-primary: 32 85% 52%;
-  --sidebar-primary-foreground: 15 20% 6%;
-  --sidebar-accent: 28 25% 18%;
-  --sidebar-accent-foreground: 36 80% 65%;
-  --sidebar-border: 25 15% 16%;
-  --sidebar-ring: 32 85% 52%;
+  /* ===== SIDEBAR ===== */
+  --sidebar-background: 0 0% 5%;
+  --sidebar-foreground: 40 20% 92%;
+  --sidebar-primary: 38 80% 50%;
+  --sidebar-primary-foreground: 0 0% 4%;
+  --sidebar-accent: 30 8% 14%;
+  --sidebar-accent-foreground: 38 70% 60%;
+  --sidebar-border: 30 5% 12%;
+  --sidebar-ring: 38 80% 50%;
 }
 
 /* ============================================
@@ -162,7 +157,7 @@
   }
 
   h1 {
-    @apply text-3xl md:text-4xl;
+    @apply text-4xl md:text-5xl;
   }
 
   h2 {
@@ -189,42 +184,53 @@
 }
 
 /* ============================================
-   SCROLLBAR STYLING
+   TYPOGRAPHY CLASSES — EDITORIAL LUXURY
    ============================================ */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+
+/* Hero-scale display text - Glenfiddich inspired */
+.text-display-hero {
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 8vw, 5rem);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
 }
 
-::-webkit-scrollbar-track {
-  background: hsl(var(--muted) / 0.3);
-  border-radius: 4px;
+/* Section titles */
+.text-display-section {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 600;
+  line-height: 1.2;
 }
 
-::-webkit-scrollbar-thumb {
-  background: hsl(var(--primary) / 0.4);
-  border-radius: 4px;
+/* Whiskey names - elegant serif */
+.text-whiskey-name {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  font-weight: 400;
+  line-height: 1.3;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--primary) / 0.6);
-}
-
-/* Firefox */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: hsl(var(--primary) / 0.4) hsl(var(--muted) / 0.3);
+/* Small caps labels - The Macallan style */
+.text-label-caps {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
 }
 
 /* ============================================
-   GRADIENTS
+   BRAND GRADIENT — GOLD
    ============================================ */
 .text-gradient-brand {
   background: linear-gradient(
     135deg,
-    hsl(32 85% 52%) 0%,
-    hsl(42 90% 60%) 50%,
-    hsl(28 80% 48%) 100%
+    hsl(38 80% 50%) 0%,
+    hsl(45 85% 60%) 50%,
+    hsl(32 75% 45%) 100%
   );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -232,45 +238,62 @@
 }
 
 /* ============================================
-   SHADOWS
+   RADIAL GRADIENT FOR BOTTLE GLOW
    ============================================ */
-.shadow-warm-xs {
-  box-shadow: 0 1px 2px hsl(25 50% 20% / 0.08);
+.bg-gradient-radial {
+  background: radial-gradient(ellipse at center, var(--tw-gradient-stops));
 }
 
-.shadow-warm-sm {
-  box-shadow:
-    0 1px 3px hsl(25 50% 20% / 0.1),
-    0 1px 2px hsl(25 50% 20% / 0.06);
+/* ============================================
+   CARD SYSTEM — LINEAR-INSPIRED DEPTH
+   ============================================ */
+
+/* Base card - Linear style */
+.card-elevated {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: 12px;
+  transition: all 0.2s ease;
 }
 
-.shadow-warm {
-  box-shadow:
-    0 4px 6px -1px hsl(25 50% 20% / 0.12),
-    0 2px 4px -2px hsl(25 50% 20% / 0.08);
+/* Hover state - subtle glow, not lift */
+.card-elevated:hover {
+  border-color: hsl(var(--primary) / 0.3);
+  background: hsl(0 0% 8%);
 }
 
-.shadow-warm-md {
-  box-shadow:
-    0 10px 15px -3px hsl(25 50% 20% / 0.12),
-    0 4px 6px -4px hsl(25 50% 20% / 0.08);
+/* Interactive card with gold accent line */
+.card-interactive {
+  position: relative;
+  overflow: hidden;
 }
 
-.shadow-warm-lg {
-  box-shadow:
-    0 20px 25px -5px hsl(25 50% 20% / 0.15),
-    0 8px 10px -6px hsl(25 50% 20% / 0.1);
+.card-interactive::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, hsl(var(--primary)), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 10;
 }
 
-.shadow-glow-amber {
-  box-shadow:
-    0 0 20px hsl(32 85% 52% / 0.25),
-    0 0 40px hsl(32 85% 52% / 0.1);
+.card-interactive:hover::before {
+  opacity: 1;
 }
 
 /* ============================================
    GLASS EFFECT
    ============================================ */
+.glass-dark {
+  background: hsl(var(--background) / 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
 .glass-warm {
   background: hsl(var(--card) / 0.8);
   backdrop-filter: blur(12px);
@@ -279,66 +302,73 @@
 }
 
 /* ============================================
+   GOLD GLOW — USE SPARINGLY
+   ============================================ */
+.glow-gold {
+  box-shadow: 0 0 40px hsl(38 80% 50% / 0.15);
+}
+
+.glow-gold-sm {
+  box-shadow: 0 0 20px hsl(38 80% 50% / 0.1);
+}
+
+/* Legacy warm shadows (still used in some components) */
+.shadow-warm-xs {
+  box-shadow: 0 1px 2px hsl(0 0% 0% / 0.1);
+}
+
+.shadow-warm-sm {
+  box-shadow:
+    0 1px 3px hsl(0 0% 0% / 0.12),
+    0 1px 2px hsl(0 0% 0% / 0.08);
+}
+
+.shadow-warm-md {
+  box-shadow:
+    0 10px 15px -3px hsl(0 0% 0% / 0.15),
+    0 4px 6px -4px hsl(0 0% 0% / 0.1);
+}
+
+.shadow-warm-lg {
+  box-shadow:
+    0 20px 25px -5px hsl(0 0% 0% / 0.2),
+    0 8px 10px -6px hsl(0 0% 0% / 0.15);
+}
+
+/* ============================================
    COMPONENT UTILITIES
    ============================================ */
 @layer components {
-  /* Glass effect card (legacy) */
   .glass {
     @apply bg-card/80 backdrop-blur-md border border-border/50;
   }
 
-  .glass-dark {
-    @apply bg-card/60 backdrop-blur-md border border-white/10;
-  }
-
-  /* Warm glow effect for highlights */
   .glow-amber {
     box-shadow: 0 0 20px hsl(var(--primary) / 0.3),
                 0 0 40px hsl(var(--primary) / 0.1);
   }
 
-  /* Gradient text (legacy) */
   .text-gradient {
     @apply bg-gradient-to-r from-primary via-amber-500 to-primary bg-clip-text text-transparent;
   }
 
-  /* Primary button style */
   .btn-primary {
     @apply bg-primary text-primary-foreground hover:bg-primary/90
            transition-all duration-200;
   }
 
-  /* Ghost button with warm hover */
   .btn-ghost {
     @apply hover:bg-accent hover:text-accent-foreground transition-colors;
   }
 
-  /* Card with hover effect */
   .card-hover {
     @apply transition-all duration-300 hover:-translate-y-1;
   }
 
-  /* Subtle texture overlay (optional) */
-  .texture-noise {
-    position: relative;
-  }
-
-  .texture-noise::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-    opacity: 0.03;
-    pointer-events: none;
-    z-index: 1;
-  }
-
-  /* Section divider */
   .divider {
     @apply h-px bg-gradient-to-r from-transparent via-border to-transparent;
   }
 
-  /* Input focus ring */
   .input-focus {
     @apply focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all;
   }
@@ -350,7 +380,7 @@
 @keyframes fade-up {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
@@ -359,51 +389,32 @@
 }
 
 .animate-fade-up {
-  animation: fade-up 0.4s ease-out forwards;
+  animation: fade-up 0.5s ease-out forwards;
 }
 
+/* Stagger - longer delays for more drama */
 .stagger-children > * {
   opacity: 0;
-  animation: fade-up 0.4s ease-out forwards;
+  animation: fade-up 0.5s ease-out forwards;
 }
 
 .stagger-children > *:nth-child(1) { animation-delay: 0ms; }
-.stagger-children > *:nth-child(2) { animation-delay: 50ms; }
-.stagger-children > *:nth-child(3) { animation-delay: 100ms; }
-.stagger-children > *:nth-child(4) { animation-delay: 150ms; }
-.stagger-children > *:nth-child(5) { animation-delay: 200ms; }
-.stagger-children > *:nth-child(6) { animation-delay: 250ms; }
-.stagger-children > *:nth-child(7) { animation-delay: 300ms; }
-.stagger-children > *:nth-child(8) { animation-delay: 350ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 75ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 150ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 225ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 300ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 375ms; }
 
 @keyframes slide-left {
-  0% {
-    transform: translateX(0);
-    opacity: 1;
-  }
-  50% {
-    transform: translateX(-20px);
-    opacity: 0.2;
-  }
-  100% {
-    transform: translateX(0);
-    opacity: 1;
-  }
+  0% { transform: translateX(0); opacity: 1; }
+  50% { transform: translateX(-20px); opacity: 0.2; }
+  100% { transform: translateX(0); opacity: 1; }
 }
 
 @keyframes slide-right {
-  0% {
-    transform: translateX(0);
-    opacity: 1;
-  }
-  50% {
-    transform: translateX(20px);
-    opacity: 0.2;
-  }
-  100% {
-    transform: translateX(0);
-    opacity: 1;
-  }
+  0% { transform: translateX(0); opacity: 1; }
+  50% { transform: translateX(20px); opacity: 0.2; }
+  100% { transform: translateX(0); opacity: 1; }
 }
 
 .animate-slide-left {
@@ -428,6 +439,13 @@
 /* ============================================
    FOCUS STATES
    ============================================ */
+.focus-ring:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px hsl(var(--background)),
+    0 0 0 4px hsl(var(--primary));
+}
+
 .focus-ring-amber:focus-visible {
   outline: none;
   box-shadow:
@@ -436,10 +454,36 @@
 }
 
 /* ============================================
+   SCROLLBAR — NEAR INVISIBLE
+   ============================================ */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--border)) transparent;
+}
+
+/* ============================================
    UTILITY CLASSES
    ============================================ */
 @layer utilities {
-  /* Hide scrollbar but keep functionality */
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -449,17 +493,14 @@
     display: none;
   }
 
-  /* Smooth transitions */
   .transition-theme {
     @apply transition-colors duration-300;
   }
 
-  /* Text balance for headings */
   .text-balance {
     text-wrap: balance;
   }
 
-  /* Subtle shimmer animation for loading states */
   .shimmer {
     background: linear-gradient(
       90deg,
@@ -489,10 +530,9 @@
 
 /* ============================================
    LEGACY CLASS SUPPORT
-   (For gradual migration - can be removed later)
    ============================================ */
 .collection-header {
-  @apply text-3xl md:text-4xl font-bold text-foreground;
+  @apply text-4xl md:text-5xl font-bold text-foreground;
 }
 
 .section-header {
@@ -534,7 +574,6 @@
    MOBILE RESPONSIVENESS (375px minimum)
    ============================================ */
 @layer utilities {
-  /* Safe area padding for mobile devices */
   .safe-area-top {
     padding-top: env(safe-area-inset-top);
   }
@@ -543,12 +582,10 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
 
-  /* Touch-friendly tap targets (minimum 44px) */
   .touch-target {
     @apply min-h-[44px] min-w-[44px];
   }
 
-  /* Mobile-optimized text sizes */
   .text-mobile-sm {
     @apply text-sm;
   }
@@ -559,12 +596,10 @@
     }
   }
 
-  /* Mobile full-screen container */
   .mobile-full {
     @apply w-screen h-screen fixed inset-0;
   }
 
-  /* Hide on very small screens */
   .hide-on-tiny {
     @media (max-width: 375px) {
       display: none;
@@ -572,37 +607,29 @@
   }
 }
 
-/* Mobile-specific base adjustments */
 @media (max-width: 640px) {
-  /* Increase base tap target size */
   button, a, input, select, textarea {
     min-height: 44px;
   }
 
-  /* Prevent horizontal scroll */
   body {
     overflow-x: hidden;
   }
 
-  /* Adjust container padding */
   .container {
     @apply px-4;
   }
 }
 
-/* Very small screens (375px and below) */
 @media (max-width: 375px) {
-  /* Reduce base font size slightly */
   html {
     font-size: 14px;
   }
 
-  /* Tighter spacing */
   .container {
     @apply px-3;
   }
 
-  /* Smaller gaps */
   .gap-4 {
     gap: 0.75rem;
   }
