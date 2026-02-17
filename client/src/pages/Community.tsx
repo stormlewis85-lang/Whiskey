@@ -344,7 +344,7 @@ const Community = () => {
         <Header />
 
         {/* Page Header */}
-        <header className="relative py-12 md:py-16">
+        <header className="relative py-8 md:py-12 lg:py-16">
           <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-transparent" />
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <p className="text-label-caps text-primary mb-3">Enthusiasts</p>

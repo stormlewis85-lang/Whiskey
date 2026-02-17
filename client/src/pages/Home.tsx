@@ -130,9 +130,9 @@ const Home = () => {
       <Header />
 
       {/* App Header */}
-      <header className="relative py-12 md:py-16">
+      <header className="relative py-8 md:py-12 lg:py-16">
         <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-transparent" />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div>
             <p className="text-label-caps text-primary mb-3">Your Collection</p>
             <h1 className="text-display-hero text-foreground">

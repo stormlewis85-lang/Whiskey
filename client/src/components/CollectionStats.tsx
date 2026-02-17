@@ -49,10 +49,10 @@ const CollectionStats = ({ whiskeys }: CollectionStatsProps) => {
         {stats.map((stat) => (
           <div
             key={stat.label}
-            className="card-elevated p-6"
+            className="card-elevated p-4 md:p-6"
           >
             <p className="text-label-caps mb-2">{stat.label}</p>
-            <p className="text-3xl font-semibold tabular-nums text-foreground">
+            <p className="text-2xl md:text-3xl font-semibold tabular-nums text-foreground truncate">
               {stat.value}
             </p>
             {stat.context && (

@@ -119,7 +119,7 @@ const WhiskeyCard = ({ whiskey, onViewDetails, onReview, onEdit }: WhiskeyCardPr
 
       {/* Hover actions - slide up from bottom */}
       <div
-        className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-card via-card to-transparent translate-y-full group-hover:translate-y-0 transition-transform duration-300"
+        className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-card via-card to-transparent translate-y-0 md:translate-y-full md:group-hover:translate-y-0 transition-transform duration-300"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex gap-2">
