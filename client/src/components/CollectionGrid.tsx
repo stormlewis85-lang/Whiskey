@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { Whiskey } from "@shared/schema";
 import WhiskeyCard from "./WhiskeyCard";
+import WhiskeyListView from "./WhiskeyListView";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, PlusIcon, Wine, Loader2 } from "lucide-react";
+import { AlertCircle, PlusIcon, Wine, Loader2, LayoutGrid, List } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const INITIAL_COUNT = 30;
 const LOAD_MORE_COUNT = 30;
@@ -26,6 +28,8 @@ const CollectionGrid = ({
   onEdit,
   onAddNew
 }: CollectionGridProps) => {
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
   // Loading state
   if (isLoading) {
     return (
@@ -109,17 +113,60 @@ const CollectionGrid = ({
   // Collection grid
   return (
     <>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-        {visibleWhiskeys.map((whiskey) => (
-          <WhiskeyCard
-            key={whiskey.id}
-            whiskey={whiskey}
-            onViewDetails={onViewDetails}
-            onReview={onReview}
-            onEdit={onEdit}
-          />
-        ))}
+      {/* View toggle */}
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-sm text-muted-foreground">
+          {whiskeys.length} {whiskeys.length === 1 ? 'bottle' : 'bottles'}
+        </p>
+        <div className="flex items-center gap-1 border border-border rounded-lg p-1">
+          <button
+            onClick={() => setViewMode('grid')}
+            className={cn(
+              "p-1.5 rounded-md transition-colors",
+              viewMode === 'grid'
+                ? "bg-accent text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+            aria-label="Grid view"
+          >
+            <LayoutGrid className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => setViewMode('list')}
+            className={cn(
+              "p-1.5 rounded-md transition-colors",
+              viewMode === 'list'
+                ? "bg-accent text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+            aria-label="List view"
+          >
+            <List className="w-4 h-4" />
+          </button>
+        </div>
       </div>
+
+      {viewMode === 'grid' ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+          {visibleWhiskeys.map((whiskey) => (
+            <WhiskeyCard
+              key={whiskey.id}
+              whiskey={whiskey}
+              onViewDetails={onViewDetails}
+              onReview={onReview}
+              onEdit={onEdit}
+            />
+          ))}
+        </div>
+      ) : (
+        <WhiskeyListView
+          whiskeys={visibleWhiskeys}
+          onViewDetails={onViewDetails}
+          onReview={onReview}
+          onEdit={onEdit}
+        />
+      )}
+
       {remaining > 0 && (
         <div className="flex justify-center mt-6">
           <Button
