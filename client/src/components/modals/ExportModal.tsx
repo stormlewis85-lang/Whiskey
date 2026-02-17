@@ -42,7 +42,7 @@ const ExportModal = ({ isOpen, onClose }: ExportModalProps) => {
     try {
       switch (exportFormat) {
         case "excel":
-          exportToExcel(whiskeys);
+          await exportToExcel(whiskeys);
           break;
         case "csv":
           exportToCSV(whiskeys);

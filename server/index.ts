@@ -1,8 +1,11 @@
 import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { cleanupOldAttempts } from "./auth/rate-limiter";
+import { cleanupExpiredTokens } from "./auth/password-reset";
 import { validateRickConfig } from "./rick-config";
 import path from "path";
 import fs from "fs";
@@ -47,7 +50,22 @@ app.use(helmet({
     },
   },
   crossOriginEmbedderPolicy: false,
+  strictTransportSecurity: {
+    maxAge: 31536000, // 1 year in seconds
+    includeSubDomains: true,
+  },
 }));
+
+// Global API rate limiter — 100 requests/minute per IP
+const globalApiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many requests, please try again later." },
+  skip: (req) => !req.path.startsWith('/api'), // Only limit API routes
+});
+app.use(globalApiLimiter);
 
 // CORS with origin whitelist
 const ALLOWED_ORIGINS = new Set([
@@ -151,5 +169,15 @@ app.use((req, res, next) => {
   const port = 5000;
   server.listen(port, "0.0.0.0", () => {
     log(`serving on port ${port}`);
+
+    // Cleanup stale rate limit attempts and expired tokens every hour
+    setInterval(async () => {
+      try {
+        await cleanupOldAttempts();
+        await cleanupExpiredTokens();
+      } catch (e) {
+        console.error("Cleanup job failed:", e);
+      }
+    }, 60 * 60 * 1000);
   });
 })();

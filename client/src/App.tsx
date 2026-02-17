@@ -17,6 +17,7 @@ import ReviewPage from "@/pages/ReviewPage";
 import Flights from "@/pages/Flights";
 import BlindTastings from "@/pages/BlindTastings";
 import Profile from "@/pages/Profile";
+import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import { Toaster } from "@/components/ui/toaster";
 
 function Router() {
@@ -33,6 +34,7 @@ function Router() {
       <Route path="/shared/:shareId" component={SharedReview} />
       <Route path="/community" component={Community} />
       <Route path="/u/:slug" component={Profile} />
+      <Route path="/privacy" component={PrivacyPolicy} />
       <Route component={NotFound} />
     </Switch>
   );

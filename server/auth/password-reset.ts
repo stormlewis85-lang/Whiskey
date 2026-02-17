@@ -4,6 +4,7 @@ import { users, passwordResetTokens } from '@shared/schema';
 import { eq, and, gt, isNull } from 'drizzle-orm';
 import { hashPassword } from '../storage';
 import { sendPasswordResetEmail } from '../email/sender';
+import logger from '../lib/logger';
 
 const TOKEN_EXPIRY_HOURS = 1; // Token valid for 1 hour
 
@@ -20,7 +21,7 @@ export async function requestPasswordReset(email: string): Promise<void> {
 
   // Always return success to prevent email enumeration
   if (!user) {
-    console.log(`Password reset requested for unknown email: ${email}`);
+    logger.info(`Password reset requested for unknown email: ${email}`);
     return;
   }
 
@@ -45,7 +46,7 @@ export async function requestPasswordReset(email: string): Promise<void> {
     resetUrl,
   });
 
-  console.log(`Password reset token created for user: ${user.username}`);
+  logger.info(`Password reset token created for user: ${user.username}`);
 }
 
 /**
@@ -133,7 +134,7 @@ export async function completePasswordReset(
     })
     .where(eq(users.id, validation.userId));
 
-  console.log(`Password reset completed for user ID: ${validation.userId}`);
+  logger.info(`Password reset completed for user ID: ${validation.userId}`);
 
   return { success: true, message: 'Password reset successfully' };
 }
@@ -151,8 +152,8 @@ export async function cleanupExpiredTokens(): Promise<void> {
         gt(cutoff, passwordResetTokens.expiresAt)
       );
 
-    console.log('Cleaned up expired password reset tokens');
+    logger.info('Cleaned up expired password reset tokens');
   } catch (error) {
-    console.error('Failed to cleanup expired tokens:', error);
+    logger.error('Failed to cleanup expired tokens:', error);
   }
 }

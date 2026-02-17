@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { db } from '../db';
 import { loginAttempts } from '@shared/schema';
 import { and, gte, eq, sql } from 'drizzle-orm';
+import logger from '../lib/logger';
 
 interface RateLimitConfig {
   windowMs: number;      // Time window in milliseconds
@@ -42,7 +43,7 @@ export function createRateLimiter(config: RateLimitConfig) {
 
       next();
     } catch (error) {
-      console.error('Rate limiter error:', error);
+      logger.error('Rate limiter error:', error);
       // Don't block the request if rate limiting fails
       next();
     }
@@ -64,7 +65,7 @@ export async function recordLoginAttempt(
       ipAddress,
     });
   } catch (error) {
-    console.error('Failed to record login attempt:', error);
+    logger.error('Failed to record login attempt:', error);
   }
 }
 
@@ -78,7 +79,7 @@ export async function cleanupOldAttempts(maxAgeMs: number = 24 * 60 * 60 * 1000)
       sql`${loginAttempts.createdAt} < ${cutoff}`
     );
   } catch (error) {
-    console.error('Failed to cleanup old login attempts:', error);
+    logger.error('Failed to cleanup old login attempts:', error);
   }
 }
 

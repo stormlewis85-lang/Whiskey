@@ -5,7 +5,7 @@ import { storage } from "./storage";
 import { safeError } from "./lib/errors";
 import multer from "multer";
 import sharp from "sharp";
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import { z } from "zod";
 import {
   insertWhiskeySchema,
@@ -31,6 +31,16 @@ import path from "path";
 import fs from "fs";
 import { setupAuth, isAuthenticated } from "./auth";
 import { uploadToSpaces, isSpacesConfigured, deleteFromSpaces, getKeyFromUrl } from "./spaces";
+import rateLimit from "express-rate-limit";
+
+// Stricter rate limiter for AI endpoints — protects Anthropic API credits
+const aiRateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 20, // 20 requests per hour per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "AI rate limit exceeded. Please try again later." },
+});
 
 // Helper to get userId with type safety (throws if not authenticated)
 function getUserId(req: Request): number {
@@ -903,10 +913,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Read the Excel file
-      const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
-      const sheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[sheetName];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(req.file.buffer);
+      const worksheet = workbook.worksheets[0];
+
+      if (!worksheet) {
+        return res.status(400).json({ message: "No worksheet found in the Excel file" });
+      }
+
+      // Convert worksheet rows to JSON objects using header row
+      const headerRow = worksheet.getRow(1);
+      const headers: string[] = [];
+      headerRow.eachCell((cell, colNumber) => {
+        headers[colNumber] = String(cell.value || '');
+      });
+
+      const jsonData: Record<string, any>[] = [];
+      worksheet.eachRow((row, rowNumber) => {
+        if (rowNumber === 1) return; // Skip header row
+        const rowData: Record<string, any> = {};
+        row.eachCell((cell, colNumber) => {
+          const header = headers[colNumber];
+          if (header) {
+            rowData[header] = cell.value;
+          }
+        });
+        jsonData.push(rowData);
+      });
 
       // Validate and process the data
       const importedWhiskeys = [];
@@ -2437,7 +2470,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const AI_DAILY_LIMIT = 10; // Rate limit: 10 AI calls per user per day
 
   // Suggest tasting notes based on whiskey profile
-  app.post("/api/ai/suggest-notes", isAuthenticated, async (req: Request, res: Response) => {
+  app.post("/api/ai/suggest-notes", aiRateLimiter, isAuthenticated, async (req: Request, res: Response) => {
     try {
       const userId = getUserId(req);
 
@@ -2548,7 +2581,7 @@ Be specific and realistic for this style of whiskey. Use common tasting descript
   });
 
   // Enhance user's brief notes into polished tasting notes
-  app.post("/api/ai/enhance-notes", isAuthenticated, async (req: Request, res: Response) => {
+  app.post("/api/ai/enhance-notes", aiRateLimiter, isAuthenticated, async (req: Request, res: Response) => {
     try {
       const userId = getUserId(req);
 

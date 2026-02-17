@@ -3,6 +3,8 @@ import { db } from '../db';
 import { users, oauthProviders } from '@shared/schema';
 import { eq, and } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
+import logger from '../lib/logger';
+import { encrypt } from '../lib/crypto';
 
 const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
@@ -131,8 +133,8 @@ async function linkOAuthProvider(
     provider,
     providerUserId,
     providerEmail,
-    accessToken,
-    refreshToken,
+    accessToken: encrypt(accessToken),
+    refreshToken: refreshToken ? encrypt(refreshToken) : undefined,
   });
 }
 
@@ -199,7 +201,7 @@ export async function initiateGoogleAuth(req: Request, res: Response) {
   // Save session before redirect
   req.session.save((err) => {
     if (err) {
-      console.error('Failed to save session before OAuth redirect:', err);
+      logger.error('Failed to save session before OAuth redirect:', err);
       return res.status(500).json({ message: 'Failed to initiate OAuth' });
     }
 
@@ -216,13 +218,13 @@ export async function handleGoogleCallback(req: Request, res: Response) {
 
   // Handle OAuth errors
   if (error) {
-    console.error('Google OAuth error:', error);
+    logger.error('Google OAuth error:', error);
     return res.redirect('/auth?error=oauth_denied');
   }
 
   // Verify state to prevent CSRF
   if (!state || state !== req.session.oauthState) {
-    console.error('OAuth state mismatch');
+    logger.error('OAuth state mismatch');
     return res.redirect('/auth?error=invalid_state');
   }
 
@@ -249,7 +251,7 @@ export async function handleGoogleCallback(req: Request, res: Response) {
 
     if (!tokenResponse.ok) {
       const errorData = await tokenResponse.text();
-      console.error('Failed to exchange code for tokens:', errorData);
+      logger.error('Failed to exchange code for tokens:', errorData);
       return res.redirect('/auth?error=token_exchange_failed');
     }
 
@@ -261,12 +263,12 @@ export async function handleGoogleCallback(req: Request, res: Response) {
     });
 
     if (!userInfoResponse.ok) {
-      console.error('Failed to fetch user info from Google');
+      logger.error('Failed to fetch user info from Google');
       return res.redirect('/auth?error=userinfo_failed');
     }
 
     const googleUser: GoogleUserInfo = await userInfoResponse.json();
-    console.log(`Google OAuth: ${googleUser.email} (${googleUser.id})`);
+    logger.info(`Google OAuth: ${googleUser.email} (${googleUser.id})`);
 
     // Find or create user
     let user = await findUserByOAuth('google', googleUser.id);
@@ -295,7 +297,7 @@ export async function handleGoogleCallback(req: Request, res: Response) {
         }
 
         user = existingUser;
-        console.log(`Linked Google account to existing user: ${user.username}`);
+        logger.info(`Linked Google account to existing user: ${user.username}`);
       } else {
         // Create new user
         user = await createUserFromOAuth(
@@ -303,7 +305,7 @@ export async function handleGoogleCallback(req: Request, res: Response) {
           tokens.access_token,
           tokens.refresh_token
         );
-        console.log(`Created new user from Google OAuth: ${user.username}`);
+        logger.info(`Created new user from Google OAuth: ${user.username}`);
       }
     }
 
@@ -313,17 +315,17 @@ export async function handleGoogleCallback(req: Request, res: Response) {
     // Save session and redirect
     req.session.save((err) => {
       if (err) {
-        console.error('Failed to save session after OAuth:', err);
+        logger.error('Failed to save session after OAuth:', err);
         return res.redirect('/auth?error=session_failed');
       }
 
-      console.log(`Google OAuth login successful: ${user!.username} (ID: ${user!.id})`);
+      logger.info(`Google OAuth login successful: ${user!.username} (ID: ${user!.id})`);
 
       // Redirect to home or callback page
       res.redirect('/');
     });
   } catch (error) {
-    console.error('Google OAuth callback error:', error);
+    logger.error('Google OAuth callback error:', error);
     res.redirect('/auth?error=oauth_failed');
   }
 }

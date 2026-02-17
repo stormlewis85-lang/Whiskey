@@ -1,5 +1,5 @@
 import { Whiskey, ReviewNote } from "@shared/schema";
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -137,18 +137,48 @@ const prepareWhiskeyData = (whiskeys: Whiskey[]) => {
 };
 
 // Export to Excel
-export const exportToExcel = (whiskeys: Whiskey[]) => {
+export const exportToExcel = async (whiskeys: Whiskey[]) => {
   const formattedData = prepareWhiskeyData(whiskeys);
-  
-  // Create workbook and worksheet
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.json_to_sheet(formattedData);
-  
-  // Add worksheet to workbook
-  XLSX.utils.book_append_sheet(wb, ws, 'Whiskey Collection');
-  
-  // Create Excel file and trigger download
-  XLSX.writeFile(wb, 'whiskey_collection.xlsx');
+
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet('Whiskey Collection');
+
+  // Add header row from keys of first data item
+  if (formattedData.length > 0) {
+    const headers = Object.keys(formattedData[0]);
+    worksheet.addRow(headers);
+
+    // Style header row
+    const headerRow = worksheet.getRow(1);
+    headerRow.font = { bold: true };
+
+    // Add data rows
+    for (const item of formattedData) {
+      worksheet.addRow(Object.values(item));
+    }
+
+    // Auto-fit column widths
+    worksheet.columns.forEach((column) => {
+      let maxLength = 0;
+      column.eachCell?.({ includeEmpty: false }, (cell) => {
+        const cellLength = cell.value ? String(cell.value).length : 0;
+        maxLength = Math.max(maxLength, cellLength);
+      });
+      column.width = Math.min(maxLength + 2, 40);
+    });
+  }
+
+  // Generate buffer and trigger download
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'whiskey_collection.xlsx';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 };
 
 // Export to PDF
