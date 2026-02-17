@@ -1,13 +1,14 @@
 import express, { type Request, type Response, type NextFunction } from "express";
 import { storage, hashPassword, comparePasswords } from "./storage";
-import { loginUserSchema, insertUserSchema, updateUserSchema, registerUserSchema } from "@shared/schema";
+import { loginUserSchema, insertUserSchema, updateUserSchema, registerUserSchema, changePasswordSchema, users } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import { ZodError } from "zod";
 import { safeError } from "./lib/errors";
 import session from "express-session";
 import { nanoid } from "nanoid";
 import connectPgSimple from "connect-pg-simple";
-import { pool } from "./db";
+import { pool, db } from "./db";
+import { eq } from "drizzle-orm";
 import { loginRateLimiter, passwordResetRateLimiter, registerRateLimiter, recordLoginAttempt } from "./auth/rate-limiter";
 import { isAccountLocked, handleFailedLogin, handleSuccessfulLogin, getLockoutRemainingSeconds } from "./auth/account-security";
 import { requestPasswordReset, validateResetToken, completePasswordReset } from "./auth/password-reset";
@@ -326,6 +327,32 @@ export function setupAuth(app: express.Express) {
     try {
       const userData = updateUserSchema.parse(req.body);
 
+      // If email is being changed, require password confirmation
+      if (userData.email !== undefined) {
+        const { password } = req.body;
+        const user = await storage.getUser(req.session.userId!);
+        if (!user) {
+          return res.status(404).json({ message: "User not found" });
+        }
+
+        if (!user.password) {
+          return res.status(400).json({
+            message: "Cannot verify identity. Please set a password first."
+          });
+        }
+
+        if (!password) {
+          return res.status(400).json({
+            message: "Password confirmation required to change email"
+          });
+        }
+
+        const passwordValid = await comparePasswords(password, user.password);
+        if (!passwordValid) {
+          return res.status(401).json({ message: "Incorrect password" });
+        }
+      }
+
       const updatedUser = await storage.updateUser(req.session.userId!, userData);
       if (!updatedUser) {
         return res.status(404).json({ message: "User not found" });
@@ -340,6 +367,47 @@ export function setupAuth(app: express.Express) {
         return res.status(400).json({ message: "Validation error", error: validationError.message });
       }
       res.status(500).json(safeError(error, "Failed to update user"));
+    }
+  });
+
+  // Change password (authenticated users with existing password)
+  app.post("/api/user/change-password", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const { currentPassword, newPassword } = changePasswordSchema.parse(req.body);
+      const userId = req.session.userId!;
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (!user.password) {
+        return res.status(400).json({
+          message: "This account uses OAuth login and has no password set."
+        });
+      }
+
+      const isValid = await comparePasswords(currentPassword, user.password);
+      if (!isValid) {
+        return res.status(401).json({ message: "Current password is incorrect" });
+      }
+
+      const hashedPassword = await hashPassword(newPassword);
+      await db.update(users).set({
+        password: hashedPassword,
+        updatedAt: new Date(),
+        authToken: null,
+        tokenExpiry: null,
+      }).where(eq(users.id, userId));
+
+      logger.info(`Password changed for user ID: ${userId}`);
+      res.json({ message: "Password changed successfully" });
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        return res.status(400).json({ message: "Validation error", error: validationError.message });
+      }
+      res.status(500).json(safeError(error, "Failed to change password"));
     }
   });
 
@@ -442,6 +510,25 @@ export function setupAuth(app: express.Express) {
 
       if (provider !== 'google') {
         return res.status(400).json({ message: "Invalid provider" });
+      }
+
+      // Require password confirmation if user has a password
+      const user = await storage.getUser(req.session.userId!);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (user.password) {
+        const { password } = req.body;
+        if (!password) {
+          return res.status(400).json({
+            message: "Password confirmation required to unlink OAuth provider"
+          });
+        }
+        const passwordValid = await comparePasswords(password, user.password);
+        if (!passwordValid) {
+          return res.status(401).json({ message: "Incorrect password" });
+        }
       }
 
       const result = await unlinkOAuthProvider(req.session.userId!, provider);

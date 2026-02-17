@@ -482,6 +482,11 @@ export const resetPasswordSchema = z.object({
   password: passwordSchema,
 });
 
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, "Current password is required"),
+  newPassword: passwordSchema,
+});
+
 export const updateUserSchema = createInsertSchema(users)
   .omit({ id: true, password: true, createdAt: true, updatedAt: true })
   .partial();

@@ -28,6 +28,9 @@ import { eq, and, or, asc, desc, sql, ne, count, ilike } from "drizzle-orm";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 
+// Admin user ID — configurable via environment variable, defaults to 1
+const ADMIN_USER_ID = parseInt(process.env.ADMIN_USER_ID || '1', 10);
+
 // Password hashing utilities
 const scryptAsync = promisify(scrypt);
 
@@ -388,7 +391,7 @@ export class DatabaseStorage implements IStorage {
   async getWhiskeys(userId?: number): Promise<Whiskey[]> {
     // If userId is provided, filter by user
     if (userId !== undefined) {
-      if (userId === 1) {
+      if (userId === ADMIN_USER_ID) {
         // For Admin (userId 1), show both their own whiskeys and legacy whiskeys with no userId
         return db.select().from(whiskeys)
           .where(
@@ -414,7 +417,7 @@ export class DatabaseStorage implements IStorage {
   
   async getWhiskey(id: number, userId?: number): Promise<Whiskey | undefined> {
     // Special handling for Admin user (ID 1)
-    if (userId === 1) {
+    if (userId === ADMIN_USER_ID) {
       // For Admin, use a custom WHERE clause to handle NULL values properly
       const [whiskey] = await db
         .select()

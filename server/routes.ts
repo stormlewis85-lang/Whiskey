@@ -134,6 +134,33 @@ async function processImage(inputPath: string, outputPath: string): Promise<{ wi
   };
 }
 
+// Validate image file by checking magic bytes (defense in depth beyond MIME type)
+function validateImageMagicBytes(filePath: string): boolean {
+  const fd = fs.openSync(filePath, 'r');
+  try {
+    const buffer = Buffer.alloc(12);
+    fs.readSync(fd, buffer, 0, 12, 0);
+
+    // JPEG: FF D8 FF
+    if (buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF) return true;
+
+    // PNG: 89 50 4E 47 0D 0A 1A 0A
+    if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47 &&
+        buffer[4] === 0x0D && buffer[5] === 0x0A && buffer[6] === 0x1A && buffer[7] === 0x0A) return true;
+
+    // GIF: 47 49 46 38 (GIF8)
+    if (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x38) return true;
+
+    // WebP: RIFF....WEBP
+    if (buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46 &&
+        buffer[8] === 0x57 && buffer[9] === 0x45 && buffer[10] === 0x42 && buffer[11] === 0x50) return true;
+
+    return false;
+  } finally {
+    fs.closeSync(fd);
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
   setupAuth(app);
@@ -393,8 +420,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log("File uploaded successfully:", req.file.filename);
 
-      // Process the image: resize and convert to WebP
+      // Validate magic bytes before processing (defense in depth)
       const tempPath = path.join(uploadDir, req.file.filename);
+      if (!validateImageMagicBytes(tempPath)) {
+        try { fs.unlinkSync(tempPath); } catch (e) { /* ignore */ }
+        return res.status(400).json({
+          message: "Invalid image file. The file content does not match a supported image format."
+        });
+      }
+
+      // Process the image: resize and convert to WebP
       const uniqueSuffix = Date.now() + '-' + randomBytes(6).toString('hex');
       const processedFilename = `bottle-${uniqueSuffix}.webp`;
       const processedPath = path.join(uploadDir, processedFilename);

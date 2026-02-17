@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext, useEffect } from "react";
+import { createContext, ReactNode, useContext } from "react";
 import {
   useQuery,
   useMutation,
@@ -11,36 +11,6 @@ import {
 } from "@shared/schema";
 import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-
-// Interface for storing auth token
-interface AuthToken {
-  token: string;
-  userId: number;
-}
-
-// Local storage helpers
-const TOKEN_STORAGE_KEY = "whiskeypedia_auth_token";
-
-function saveAuthToken(token: string, userId: number) {
-  const authToken: AuthToken = { token, userId };
-  localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify(authToken));
-}
-
-function getAuthToken(): AuthToken | null {
-  const tokenData = localStorage.getItem(TOKEN_STORAGE_KEY);
-  if (!tokenData) return null;
-  
-  try {
-    return JSON.parse(tokenData) as AuthToken;
-  } catch (e) {
-    console.error("Error parsing auth token:", e);
-    return null;
-  }
-}
-
-function clearAuthToken() {
-  localStorage.removeItem(TOKEN_STORAGE_KEY);
-}
 
 type AuthContextType = {
   user: User | null;
@@ -55,11 +25,6 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
-  
-  // Check for existing token in localStorage on initialization
-  useEffect(() => {
-    const authToken = getAuthToken();
-  }, []);
   
   const {
     data: user,
@@ -85,11 +50,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return await res.json();
     },
     onSuccess: (response: User & { token?: string }) => {
-      // Save token to local storage if provided
-      if (response.token) {
-        saveAuthToken(response.token, response.id);
-      }
-
       // Remove token from user object before caching
       const { token, ...user } = response;
 
@@ -114,11 +74,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return await res.json();
     },
     onSuccess: (response: User & { token?: string }) => {
-      // Save token to local storage if provided
-      if (response.token) {
-        saveAuthToken(response.token, response.id);
-      }
-
       // Remove token from user object before caching
       const { token, ...user } = response;
 
@@ -142,9 +97,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await apiRequest("POST", "/api/logout");
     },
     onSuccess: () => {
-      // Clear the auth token from local storage
-      clearAuthToken();
-      
       queryClient.setQueryData(["/api/user"], null);
       // Also invalidate whiskeys to refresh the collection
       queryClient.invalidateQueries({ queryKey: ["/api/whiskeys"] });
