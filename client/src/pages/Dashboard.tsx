@@ -29,7 +29,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     return (
       <div className="bg-card border border-border/50 shadow-warm-lg rounded-lg px-3 py-2">
         <p className="text-sm font-medium text-foreground">{label}</p>
-        <p className="text-sm text-primary font-semibold">
+        <p className="text-sm text-foreground font-semibold">
           {payload[0].value} {payload[0].value === 1 ? 'whiskey' : 'whiskeys'}
         </p>
       </div>
@@ -190,8 +190,8 @@ export default function Dashboard() {
         <Header />
         <div className="flex flex-col items-center justify-center h-[60vh]">
           <div className="relative">
-            <div className="h-16 w-16 rounded-full border-4 border-primary/20" />
-            <div className="absolute inset-0 h-16 w-16 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+            <div className="h-16 w-16 rounded-full border-4 border-muted-foreground/20" />
+            <div className="absolute inset-0 h-16 w-16 rounded-full border-4 border-muted-foreground border-t-transparent animate-spin" />
           </div>
           <p className="mt-6 text-muted-foreground font-medium">Loading dashboard...</p>
         </div>
@@ -231,8 +231,8 @@ export default function Dashboard() {
         <Header />
         <div className="container mx-auto px-4 py-12">
           <div className="bg-card border border-border/50 rounded-xl shadow-warm-sm p-10 text-center max-w-md mx-auto">
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-6">
-              <BarChart3 className="h-10 w-10 text-primary" />
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-muted mb-6">
+              <BarChart3 className="h-10 w-10 text-muted-foreground" />
             </div>
             <h3 className="text-xl font-semibold text-foreground">No data yet</h3>
             <p className="mt-2 text-muted-foreground">
@@ -283,8 +283,8 @@ export default function Dashboard() {
               label: "Total Whiskeys",
               value: whiskeys.length.toString(),
               icon: Wine,
-              color: "text-primary",
-              bgColor: "bg-primary/10",
+              color: "text-muted-foreground",
+              bgColor: "bg-muted",
             },
             {
               label: "Reviews Written",
@@ -315,7 +315,7 @@ export default function Dashboard() {
             },
           ].map((stat) => (
             <Card key={stat.label} className="relative rounded-xl bg-card border border-border/40 shadow-warm-xs overflow-hidden">
-              <div className="absolute -top-10 -right-10 w-24 h-24 bg-primary/5 rounded-full blur-2xl" />
+              <div className="absolute -top-10 -right-10 w-24 h-24 bg-muted/50 rounded-full blur-2xl" />
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
                   <div className={`w-10 h-10 rounded-lg ${stat.bgColor} flex items-center justify-center`}>

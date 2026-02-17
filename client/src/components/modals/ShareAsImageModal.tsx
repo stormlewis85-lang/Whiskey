@@ -200,7 +200,7 @@ const ShareAsImageModal = ({ isOpen, onClose, whiskey, review }: ShareAsImageMod
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Image className="h-5 w-5 text-primary" />
+            <Image className="h-5 w-5 text-muted-foreground" />
             Share as Image
           </DialogTitle>
           <DialogDescription>

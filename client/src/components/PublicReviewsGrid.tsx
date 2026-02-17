@@ -50,12 +50,12 @@ const ReviewCard = ({
   };
 
   return (
-    <Card className="group h-full flex flex-col bg-card border-border/50 shadow-warm-sm hover:shadow-warm hover:border-primary/30 transition-all duration-300">
+    <Card className="group h-full flex flex-col bg-card border-border/50 shadow-warm-sm hover:shadow-warm hover:border-border transition-all duration-300">
       <CardHeader className="pb-3 pt-4">
         <div className="flex justify-between items-start mb-3">
           <div className="flex items-center gap-2.5">
-            <Avatar className="h-9 w-9 border-2 border-primary/20">
-              <AvatarFallback className="bg-primary/10 text-primary font-medium text-sm">
+            <Avatar className="h-9 w-9 border-2 border-border">
+              <AvatarFallback className="bg-muted text-muted-foreground font-medium text-sm">
                 {getInitials(user.username)}
               </AvatarFallback>
             </Avatar>
@@ -68,7 +68,7 @@ const ReviewCard = ({
             {whiskey.type}
           </Badge>
         </div>
-        <h3 className="text-lg font-semibold text-foreground line-clamp-1 group-hover:text-primary transition-colors">
+        <h3 className="text-lg font-semibold text-foreground line-clamp-1 transition-colors">
           {whiskey.name}
         </h3>
         <p className="text-sm text-muted-foreground line-clamp-1">
@@ -93,7 +93,7 @@ const ReviewCard = ({
           asChild
           variant="outline"
           size="sm"
-          className="h-8 px-3 text-xs border-border/50 hover:bg-accent/50 hover:border-primary/30"
+          className="h-8 px-3 text-xs border-border/50 hover:bg-accent/50 hover:border-border"
         >
           <Link to={`/shared/${review.shareId}`}>
             <Share2 className="h-3.5 w-3.5 mr-1.5" />
@@ -193,8 +193,8 @@ const PublicReviewsGrid = ({ limit = 6, className = '' }: PublicReviewsGridProps
         </div>
       ) : (
         <div className="bg-card border border-border/50 rounded-xl shadow-warm-sm p-10 text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-6">
-            <Wine className="h-8 w-8 text-primary" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-6">
+            <Wine className="h-8 w-8 text-muted-foreground" />
           </div>
           <h3 className="text-xl font-semibold text-foreground">No reviews yet</h3>
           <p className="mt-2 text-muted-foreground max-w-md mx-auto">

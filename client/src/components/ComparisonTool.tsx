@@ -109,7 +109,7 @@ const ComparisonTool = ({ whiskeys, className = "" }: ComparisonToolProps) => {
           {comparisonWhiskeys.map((whiskey, idx) => (
             <div key={whiskey.id} className="flex items-center justify-between p-3 bg-accent/30 rounded-lg border border-border/30">
               <div className="flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-primary/20 text-primary text-sm flex items-center justify-center font-bold">
+                <span className="w-6 h-6 rounded-full bg-muted text-muted-foreground text-sm flex items-center justify-center font-bold">
                   {idx + 1}
                 </span>
                 <span className="font-medium text-foreground truncate">{whiskey.name}</span>
@@ -163,7 +163,7 @@ const ComparisonTool = ({ whiskeys, className = "" }: ComparisonToolProps) => {
             {comparisonWhiskeys.map(whiskey => (
               <TableHead key={whiskey.id} className="min-w-[180px]">
                 <div className="flex flex-col">
-                  <span className="font-bold text-primary">{whiskey.name}</span>
+                  <span className="font-bold text-foreground">{whiskey.name}</span>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -400,12 +400,12 @@ const ComparisonTool = ({ whiskeys, className = "" }: ComparisonToolProps) => {
       </SheetTrigger>
       <SheetContent side={isMobile ? "bottom" : "right"} className={isMobile ? "h-[90%]" : "max-w-3xl"}>
         <SheetHeader>
-          <SheetTitle className="text-xl font-serif text-[#794e2f]">Whiskey Comparison</SheetTitle>
+          <SheetTitle className="text-xl font-serif text-foreground">Whiskey Comparison</SheetTitle>
         </SheetHeader>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-4">
           <div className="md:col-span-2">
-            <label className="text-sm font-medium text-[#986a44] mb-1 block">Select whiskeys to compare (max 3)</label>
+            <label className="text-sm font-medium text-muted-foreground mb-1 block">Select whiskeys to compare (max 3)</label>
             <Select 
               onValueChange={handleAddWhiskey} 
               disabled={selectedWhiskeys.length >= 3 || availableWhiskeys.length === 0}
@@ -425,7 +425,7 @@ const ComparisonTool = ({ whiskeys, className = "" }: ComparisonToolProps) => {
           </div>
           
           <div>
-            <label className="text-sm font-medium text-[#986a44] mb-1 block">Comparison aspect</label>
+            <label className="text-sm font-medium text-muted-foreground mb-1 block">Comparison aspect</label>
             <Select 
               onValueChange={setSelectedAspect} 
               defaultValue="basic"

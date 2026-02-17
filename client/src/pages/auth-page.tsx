@@ -207,7 +207,7 @@ export default function AuthPage() {
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-8">
             <div className="inline-flex items-center gap-2 mb-2">
-              <Wine className="w-6 h-6 text-primary" />
+              <Wine className="w-6 h-6 text-muted-foreground" />
               <span className="text-xl font-bold text-gradient">WhiskeyPedia</span>
             </div>
           </div>
@@ -319,7 +319,7 @@ export default function AuthPage() {
                               <FormLabel>Password</FormLabel>
                               <Link
                                 href="/forgot-password"
-                                className="text-sm text-primary hover:underline"
+                                className="text-sm text-foreground hover:underline"
                               >
                                 Forgot password?
                               </Link>
@@ -367,7 +367,7 @@ export default function AuthPage() {
                     Don't have an account?{" "}
                     <button
                       onClick={() => setIsLogin(false)}
-                      className="text-primary hover:underline font-medium"
+                      className="text-foreground hover:underline font-medium"
                     >
                       Create one
                     </button>
@@ -527,7 +527,7 @@ export default function AuthPage() {
                     Already have an account?{" "}
                     <button
                       onClick={() => setIsLogin(true)}
-                      className="text-primary hover:underline font-medium"
+                      className="text-foreground hover:underline font-medium"
                     >
                       Sign in
                     </button>

@@ -208,17 +208,17 @@ const Home = () => {
           <Button
             onClick={openImportModal}
             variant="outline"
-            className="border-border hover:border-primary/50 hover:bg-accent/50"
+            className="border-border hover:border-border hover:bg-accent/50"
           >
-            <UploadIcon className="h-4 w-4 mr-2 text-primary" />
+            <UploadIcon className="h-4 w-4 mr-2 text-muted-foreground" />
             Import Collection
           </Button>
           <Button
             onClick={openExportModal}
             variant="outline"
-            className="border-border hover:border-primary/50 hover:bg-accent/50"
+            className="border-border hover:border-border hover:bg-accent/50"
           >
-            <DownloadIcon className="h-4 w-4 mr-2 text-primary" />
+            <DownloadIcon className="h-4 w-4 mr-2 text-muted-foreground" />
             Export Collection
           </Button>
 
@@ -226,7 +226,7 @@ const Home = () => {
           {whiskeys && whiskeys.length > 1 && (
             <ComparisonTool
               whiskeys={whiskeys}
-              className="border-border hover:border-primary/50 hover:bg-accent/50"
+              className="border-border hover:border-border hover:bg-accent/50"
             />
           )}
         </div>
@@ -298,7 +298,7 @@ const Home = () => {
             <Suspense fallback={
               <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex items-center justify-center">
                 <div className="text-center">
-                  <div className="animate-pulse text-amber-500">Loading Rick House...</div>
+                  <div className="animate-pulse text-muted-foreground">Loading Rick House...</div>
                 </div>
               </div>
             }>

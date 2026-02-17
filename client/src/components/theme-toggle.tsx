@@ -50,7 +50,7 @@ export function ThemeToggle() {
           <Sun className="h-4 w-4" />
           <span>Light</span>
           {theme === "light" && (
-            <span className="ml-auto text-primary">*</span>
+            <span className="ml-auto text-foreground">*</span>
           )}
         </DropdownMenuItem>
         <DropdownMenuItem
@@ -60,7 +60,7 @@ export function ThemeToggle() {
           <Moon className="h-4 w-4" />
           <span>Dark</span>
           {theme === "dark" && (
-            <span className="ml-auto text-primary">*</span>
+            <span className="ml-auto text-foreground">*</span>
           )}
         </DropdownMenuItem>
         <DropdownMenuItem
@@ -70,7 +70,7 @@ export function ThemeToggle() {
           <Monitor className="h-4 w-4" />
           <span>System</span>
           {theme === "system" && (
-            <span className="ml-auto text-primary">*</span>
+            <span className="ml-auto text-foreground">*</span>
           )}
         </DropdownMenuItem>
       </DropdownMenuContent>

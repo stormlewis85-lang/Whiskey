@@ -31,8 +31,8 @@ const CollectionGrid = ({
     return (
       <div className="flex flex-col items-center justify-center py-20">
         <div className="relative">
-          <div className="h-16 w-16 rounded-full border-4 border-primary/20" />
-          <div className="absolute inset-0 h-16 w-16 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+          <div className="h-16 w-16 rounded-full border-4 border-muted-foreground/20" />
+          <div className="absolute inset-0 h-16 w-16 rounded-full border-4 border-muted-foreground border-t-transparent animate-spin" />
         </div>
         <p className="mt-6 text-muted-foreground font-medium">Loading your collection...</p>
         <p className="mt-1 text-sm text-muted-foreground/70">This won't take long</p>

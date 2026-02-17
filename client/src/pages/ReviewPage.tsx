@@ -42,8 +42,8 @@ export default function ReviewPage() {
         <Header />
         <div className="flex flex-col items-center justify-center h-[60vh]">
           <div className="relative">
-            <div className="h-16 w-16 rounded-full border-4 border-primary/20" />
-            <div className="absolute inset-0 h-16 w-16 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+            <div className="h-16 w-16 rounded-full border-4 border-muted-foreground/20" />
+            <div className="absolute inset-0 h-16 w-16 rounded-full border-4 border-muted-foreground border-t-transparent animate-spin" />
           </div>
           <p className="mt-6 text-muted-foreground font-medium">Loading review...</p>
         </div>

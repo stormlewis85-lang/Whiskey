@@ -136,7 +136,7 @@ const Profile = () => {
       <div className="min-h-screen bg-background">
         <Header />
         <div className="container mx-auto px-4 py-16 flex justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       </div>
     );
@@ -183,11 +183,11 @@ const Profile = () => {
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
               {/* Avatar */}
-              <Avatar className="h-24 w-24 border-4 border-primary/30 shadow-warm-lg">
+              <Avatar className="h-24 w-24 border-4 border-border shadow-warm-lg">
                 {profile.user.profileImage ? (
                   <AvatarImage src={profile.user.profileImage} alt={displayName} />
                 ) : (
-                  <AvatarFallback className="bg-primary/20 text-primary text-2xl font-bold">
+                  <AvatarFallback className="bg-muted text-muted-foreground text-2xl font-bold">
                     {initials}
                   </AvatarFallback>
                 )}
@@ -271,7 +271,7 @@ const Profile = () => {
               <TabsContent value="collection">
                 {whiskeysLoading ? (
                   <div className="flex justify-center py-12">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                   </div>
                 ) : whiskeys.length === 0 ? (
                   <Card className="border-dashed">

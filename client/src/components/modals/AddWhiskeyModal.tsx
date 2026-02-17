@@ -462,8 +462,8 @@ const AddWhiskeyModal = ({ isOpen, onClose }: AddWhiskeyModalProps) => {
                   setIsScannerOpen(true);
                 }}
               >
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <ScanBarcode className="h-5 w-5 text-primary" />
+                <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center shrink-0">
+                  <ScanBarcode className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <div>
                   <div className="font-medium">Scan Barcode</div>
@@ -479,8 +479,8 @@ const AddWhiskeyModal = ({ isOpen, onClose }: AddWhiskeyModalProps) => {
                   setIsPhotoCaptureOpen(true);
                 }}
               >
-                <div className="h-10 w-10 rounded-full bg-amber-500/10 flex items-center justify-center shrink-0">
-                  <Camera className="h-5 w-5 text-amber-600" />
+                <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center shrink-0">
+                  <Camera className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <div>
                   <div className="font-medium">Take Photo</div>

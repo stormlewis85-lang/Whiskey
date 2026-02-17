@@ -307,7 +307,7 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
 
       {/* Tasting Notes */}
       <div className="p-4">
-        <h2 className="text-xl font-bold mb-4 text-foreground border-b-2 border-primary pb-2">Tasting Notes</h2>
+        <h2 className="text-xl font-bold mb-4 text-foreground border-b-2 border-border pb-2">Tasting Notes</h2>
 
         <div className="space-y-4">
           <TastingSection

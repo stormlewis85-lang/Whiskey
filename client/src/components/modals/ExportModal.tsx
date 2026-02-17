@@ -86,7 +86,7 @@ const ExportModal = ({ isOpen, onClose }: ExportModalProps) => {
       <DialogContent className="sm:max-w-[450px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Download className="h-5 w-5 text-primary" />
+            <Download className="h-5 w-5 text-muted-foreground" />
             Export Collection
           </DialogTitle>
           <DialogDescription>

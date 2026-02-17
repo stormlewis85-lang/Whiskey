@@ -124,8 +124,8 @@ export function Header() {
                 <div className="flex flex-col h-full">
                   {/* User info */}
                   <div className="flex items-center gap-3 pb-6 pt-2 border-b border-border">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <CircleUser className="h-6 w-6 text-primary" />
+                    <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                      <CircleUser className="h-6 w-6 text-muted-foreground" />
                     </div>
                     <div>
                       <p className="font-medium text-foreground">

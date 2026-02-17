@@ -121,7 +121,7 @@ const ProfileSettingsModal = ({ isOpen, onClose }: ProfileSettingsModalProps) =>
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <User className="h-5 w-5 text-primary" />
+            <User className="h-5 w-5 text-muted-foreground" />
             Profile Settings
           </DialogTitle>
           <DialogDescription>
@@ -131,7 +131,7 @@ const ProfileSettingsModal = ({ isOpen, onClose }: ProfileSettingsModalProps) =>
 
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         ) : (
           <Form {...form}>

@@ -345,7 +345,7 @@ const FilterBar = ({
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs font-medium text-muted-foreground">Active:</span>
               {collectionView !== 'all' && (
-                <span className="px-2 py-0.5 text-xs bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-full border border-amber-500/20">
+                <span className="px-2 py-0.5 text-xs bg-muted text-muted-foreground rounded-full border border-border">
                   {collectionView === 'collection' ? 'Collection' : 'Wishlist'}
                 </span>
               )}
@@ -355,22 +355,22 @@ const FilterBar = ({
                 </span>
               )}
               {typeFilter !== 'all' && (
-                <span className="px-2 py-0.5 text-xs bg-primary/10 text-primary rounded-full border border-primary/20">
+                <span className="px-2 py-0.5 text-xs bg-muted text-muted-foreground rounded-full border border-border">
                   {typeFilter}
                 </span>
               )}
               {ratingFilter !== 'all' && (
-                <span className="px-2 py-0.5 text-xs bg-primary/10 text-primary rounded-full border border-primary/20">
+                <span className="px-2 py-0.5 text-xs bg-muted text-muted-foreground rounded-full border border-border">
                   {ratingFilter}+ Stars
                 </span>
               )}
               {isBourbonSelected && bottleTypeFilter !== 'all' && (
-                <span className="px-2 py-0.5 text-xs bg-primary/10 text-primary rounded-full border border-primary/20">
+                <span className="px-2 py-0.5 text-xs bg-muted text-muted-foreground rounded-full border border-border">
                   {bottleTypeFilter}
                 </span>
               )}
               {isBourbonSelected && mashBillFilter !== 'all' && (
-                <span className="px-2 py-0.5 text-xs bg-primary/10 text-primary rounded-full border border-primary/20">
+                <span className="px-2 py-0.5 text-xs bg-muted text-muted-foreground rounded-full border border-border">
                   {mashBillFilter}
                 </span>
               )}

@@ -1007,8 +1007,8 @@ const ReviewModal = ({ isOpen, onClose, whiskey, existingReview }: ReviewModalPr
                 className="w-full min-h-20 py-4 justify-start gap-4 text-left"
                 onClick={() => setReviewMode('regular')}
               >
-                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <PencilLine className="h-6 w-6 text-primary" />
+                <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center shrink-0">
+                  <PencilLine className="h-6 w-6 text-muted-foreground" />
                 </div>
                 <div className="min-w-0">
                   <div className="font-medium text-base">Regular Review</div>

@@ -91,7 +91,7 @@ export default function ResetPasswordPage() {
   if (validating) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -103,7 +103,7 @@ export default function ResetPasswordPage() {
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
             <Link href="/" className="inline-flex items-center gap-2 mb-2">
-              <Wine className="w-6 h-6 text-primary" />
+              <Wine className="w-6 h-6 text-muted-foreground" />
               <span className="text-xl font-bold">WhiskeyPedia</span>
             </Link>
           </div>
@@ -139,7 +139,7 @@ export default function ResetPasswordPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-2">
-            <Wine className="w-6 h-6 text-primary" />
+            <Wine className="w-6 h-6 text-muted-foreground" />
             <span className="text-xl font-bold">WhiskeyPedia</span>
           </Link>
         </div>

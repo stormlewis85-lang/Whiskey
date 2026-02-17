@@ -87,7 +87,7 @@ const ExportCollectionModal = ({ isOpen, onClose, whiskeys }: ExportCollectionMo
       <DialogContent className="sm:max-w-[450px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-primary" />
+            <FileText className="h-5 w-5 text-muted-foreground" />
             Export Collection as PDF
           </DialogTitle>
           <DialogDescription>

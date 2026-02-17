@@ -147,7 +147,7 @@ export function Combobox({
                   }}
                   className="cursor-pointer border-t"
                 >
-                  <span className="text-primary">{addNewText}</span>
+                  <span className="text-foreground">{addNewText}</span>
                 </CommandItem>
               )}
             </CommandGroup>
