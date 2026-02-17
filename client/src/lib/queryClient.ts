@@ -49,19 +49,10 @@ export async function apiRequest(
     ...options,
   };
   
-  // Console log for debugging
-  console.log(`Making ${method} request to ${url}`, { 
-    withData: !!data,
-    withOptions: !!options,
-    withToken: !!token
-  });
-  
   const res = await fetch(url, requestOptions);
 
   if (res.status === 401) {
     // Handle unauthorized errors (session expired)
-    console.warn("Session expired or authentication required");
-    
     // Try to refresh the user session by invalidating the cache
     queryClient.invalidateQueries({ queryKey: ['/api/user'] });
     
@@ -110,12 +101,10 @@ export const getQueryFn: <T>(options: {
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      console.log("Unauthorized request - returning null as requested");
       return null;
     }
 
     if (res.status === 401) {
-      console.warn("Session expired or unauthorized access");
       const errorText = await res.text();
       throw new Error(`401: ${errorText || 'Unauthorized - Please log in again'}`);
     }

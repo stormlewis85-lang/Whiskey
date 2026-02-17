@@ -130,13 +130,9 @@ const AddWhiskeyModal = ({ isOpen, onClose }: AddWhiskeyModalProps) => {
       const response = await apiRequest("GET", `/api/barcode/${encodeURIComponent(code)}`);
       const data = await response.json();
 
-      console.log("UPC Lookup Response:", JSON.stringify(data, null, 2));
-
       if (data.found && data.whiskey) {
         // Pre-populate form with found whiskey data
         const w = data.whiskey;
-        console.log("=== POPULATING FORM FROM LOOKUP ===");
-        console.log("Raw whiskey data:", JSON.stringify(w, null, 2));
 
         // Use shouldDirty to ensure form recognizes changes
         const opts = { shouldDirty: true, shouldTouch: true };
@@ -154,12 +150,10 @@ const AddWhiskeyModal = ({ isOpen, onClose }: AddWhiskeyModalProps) => {
           if (matchedDistillery) {
             form.setValue("distilleryId", matchedDistillery.id, opts);
             form.setValue("distillery", matchedDistillery.name, opts);
-            console.log(`Distillery matched: "${w.distillery}" -> ID ${matchedDistillery.id} (${matchedDistillery.name})`);
           } else {
             // Store pending distillery name for display
             form.setValue("distillery", w.distillery, opts);
             setPendingDistilleryName(w.distillery);
-            console.log(`Distillery not found in DB: "${w.distillery}" - user needs to add it`);
           }
         }
 
@@ -178,21 +172,18 @@ const AddWhiskeyModal = ({ isOpen, onClose }: AddWhiskeyModalProps) => {
         // Use mapped type, or "Other" if the type exists but doesn't match known types
         const mappedType = typeMapping[normalizedType] || (w.type ? "Other" : "");
         form.setValue("type", mappedType, opts);
-        console.log(`Type: "${w.type}" -> "${mappedType}"`);
 
         // Handle age - might be a string like "12 years" or a number
         if (w.age) {
           const ageNum = typeof w.age === 'string' ? parseInt(w.age) : w.age;
           if (!isNaN(ageNum)) {
             form.setValue("age", ageNum, opts);
-            console.log(`Age: "${w.age}" -> ${ageNum}`);
           }
         }
 
         // Handle proof - convert to ABV if present
         if (w.proof) {
           form.setValue("abv", w.proof / 2, opts);
-          console.log(`Proof: ${w.proof} -> ABV: ${w.proof / 2}`);
         } else if (w.abv) {
           form.setValue("abv", w.abv, opts);
         }
@@ -206,10 +197,6 @@ const AddWhiskeyModal = ({ isOpen, onClose }: AddWhiskeyModalProps) => {
 
         // Store UPC
         form.setValue("upc", data.upc || code, opts);
-
-        // Log final form state
-        console.log("Form values after population:", form.getValues());
-        console.log("=== END FORM POPULATION ===");
 
         // Show appropriate message based on source
         let description = "";
@@ -228,7 +215,6 @@ const AddWhiskeyModal = ({ isOpen, onClose }: AddWhiskeyModalProps) => {
       } else if (data.whiskey) {
         // Partial match - populate ALL available fields, not just name
         const w = data.whiskey;
-        console.log("Partial match whiskey data:", w);
 
         const opts = { shouldDirty: true, shouldTouch: true };
         form.setValue("name", w.name || "", opts);
@@ -263,7 +249,6 @@ const AddWhiskeyModal = ({ isOpen, onClose }: AddWhiskeyModalProps) => {
           const normalizedType = w.type.toLowerCase();
           const mappedType = typeMapping[normalizedType] || "Other";
           form.setValue("type", mappedType, opts);
-          console.log(`Partial match type mapping: "${w.type}" -> "${mappedType}"`);
         }
         if (w.age) {
           const ageNum = typeof w.age === 'string' ? parseInt(w.age) : w.age;
@@ -310,8 +295,6 @@ const AddWhiskeyModal = ({ isOpen, onClose }: AddWhiskeyModalProps) => {
         mediaType: mediaType,
       });
       const data = await response.json();
-
-      console.log("Image identification response:", JSON.stringify(data, null, 2));
 
       if (data.success && data.whiskey) {
         const w = data.whiskey;

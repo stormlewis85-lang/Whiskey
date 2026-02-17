@@ -17,10 +17,6 @@ const DEBUG_ANALYTICS = import.meta.env.DEV;
 export function trackEvent(event: string, properties?: Record<string, unknown>) {
   const analyticsEvent: AnalyticsEvent = { event, properties };
 
-  if (DEBUG_ANALYTICS) {
-    console.log('[Analytics]', event, properties);
-  }
-
   // TODO: Connect to actual analytics service
   // Example: window.gtag('event', event, properties);
   // Example: mixpanel.track(event, properties);

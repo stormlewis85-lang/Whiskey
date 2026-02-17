@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Whiskey, ReviewNote } from "@shared/schema";
 import { Header } from "@/components/Header";
 import CollectionStats from "@/components/CollectionStats";
+import { SkeletonStats } from "@/components/SkeletonCard";
 import FilterBar from "@/components/FilterBar";
 import CollectionGrid from "@/components/CollectionGrid";
 import ComparisonTool from "@/components/ComparisonTool";
@@ -75,12 +76,6 @@ const Home = () => {
     statusFilter
   });
   
-  // Debug logging
-  console.log("Home component - whiskeys:", whiskeys?.length || 0);
-  console.log("Home component - filteredWhiskeys:", filteredWhiskeys?.length || 0);
-  console.log("Home component - isLoading:", isLoading);
-  console.log("Home component - isError:", isError);
-
   // Modal handlers
   const openImportModal = () => setIsImportModalOpen(true);
   const openAddWhiskeyModal = () => setIsAddWhiskeyModalOpen(true);
@@ -88,10 +83,7 @@ const Home = () => {
   const openBarcodeScanner = () => setIsBarcodeScannerOpen(true);
   
   const handleCodeScanned = (code: string) => {
-    // When barcode is scanned, set it as search query
     setSearchQuery(code);
-    // You could also implement API lookup of whiskey by barcode
-    console.log("Barcode scanned:", code);
   };
   
   const openReviewModal = (whiskey: Whiskey) => {
@@ -190,7 +182,7 @@ const Home = () => {
         />
         
         {/* Stats */}
-        <CollectionStats whiskeys={whiskeys || []} />
+        {isLoading ? <SkeletonStats /> : <CollectionStats whiskeys={whiskeys || []} />}
         
         {/* Collection Grid */}
         <CollectionGrid 

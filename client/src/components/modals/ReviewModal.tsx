@@ -144,16 +144,6 @@ const ReviewModal = ({ isOpen, onClose, whiskey, existingReview }: ReviewModalPr
   // Pre-populate all form values when editing existing review
   useEffect(() => {
     if (isOpen && existingReview) {
-      // Debug: Log existing review data to see what's available
-      console.log('=== EDIT REVIEW DEBUG ===');
-      console.log('Existing review:', existingReview);
-      console.log('noseScore:', existingReview.noseScore, typeof existingReview.noseScore);
-      console.log('mouthfeelScore:', existingReview.mouthfeelScore, typeof existingReview.mouthfeelScore);
-      console.log('tasteScore:', existingReview.tasteScore, typeof existingReview.tasteScore);
-      console.log('finishScore:', existingReview.finishScore, typeof existingReview.finishScore);
-      console.log('valueScore:', existingReview.valueScore, typeof existingReview.valueScore);
-      console.log('=========================');
-
       // Reset form first, then explicitly set each field to ensure scores are populated
       form.reset();
 

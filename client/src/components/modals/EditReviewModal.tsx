@@ -46,10 +46,7 @@ const EditReviewModal = ({ isOpen, onClose, whiskey, review }: EditReviewModalPr
         if (updatedReview) {
           // Close modal
           onClose();
-          
-          // Console log for debugging
-          console.log("Navigating to edit review page with whiskey ID:", whiskey.id, "and review ID:", updatedReview.id, "type:", typeof updatedReview.id);
-          
+
           // Make sure the review ID is properly converted for URL purposes
           const reviewIdForUrl = updatedReview.id.toString();
           

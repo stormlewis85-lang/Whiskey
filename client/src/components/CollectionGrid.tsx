@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { Whiskey } from "@shared/schema";
 import WhiskeyCard from "./WhiskeyCard";
 import WhiskeyListView from "./WhiskeyListView";
+import SkeletonCard from "./SkeletonCard";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, PlusIcon, Wine, Loader2, LayoutGrid, List } from "lucide-react";
+import { AlertCircle, PlusIcon, Wine, LayoutGrid, List } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const INITIAL_COUNT = 30;
@@ -30,16 +31,13 @@ const CollectionGrid = ({
 }: CollectionGridProps) => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
-  // Loading state
+  // Loading state — skeleton cards
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <div className="relative">
-          <div className="h-16 w-16 rounded-full border-4 border-muted-foreground/20" />
-          <div className="absolute inset-0 h-16 w-16 rounded-full border-4 border-muted-foreground border-t-transparent animate-spin" />
-        </div>
-        <p className="mt-6 text-muted-foreground font-medium">Loading your collection...</p>
-        <p className="mt-1 text-sm text-muted-foreground/70">This won't take long</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+        {Array.from({ length: 9 }).map((_, i) => (
+          <SkeletonCard key={i} />
+        ))}
       </div>
     );
   }

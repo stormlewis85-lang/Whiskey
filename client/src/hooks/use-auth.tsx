@@ -59,9 +59,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Check for existing token in localStorage on initialization
   useEffect(() => {
     const authToken = getAuthToken();
-    if (authToken) {
-      console.log("Found auth token in local storage, will use it for authentication");
-    }
   }, []);
   
   const {
@@ -90,13 +87,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: (response: User & { token?: string }) => {
       // Save token to local storage if provided
       if (response.token) {
-        console.log("Saving auth token to local storage");
         saveAuthToken(response.token, response.id);
       }
-      
+
       // Remove token from user object before caching
       const { token, ...user } = response;
-      
+
       queryClient.setQueryData(["/api/user"], user);
       toast({
         title: "Login successful",
@@ -120,13 +116,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: (response: User & { token?: string }) => {
       // Save token to local storage if provided
       if (response.token) {
-        console.log("Saving auth token to local storage");
         saveAuthToken(response.token, response.id);
       }
-      
+
       // Remove token from user object before caching
       const { token, ...user } = response;
-      
+
       queryClient.setQueryData(["/api/user"], user);
       toast({
         title: "Registration successful",

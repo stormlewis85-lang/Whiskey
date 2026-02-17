@@ -205,7 +205,6 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit, onTast
   // Use mutation for whiskey deletion for better reliability
   const deleteWhiskeyMutation = useMutation({
     mutationFn: async () => {
-      console.log("Deleting whiskey:", whiskey.id);
       const response = await apiRequest(
         "DELETE",
         `/api/whiskeys/${whiskey.id}`,

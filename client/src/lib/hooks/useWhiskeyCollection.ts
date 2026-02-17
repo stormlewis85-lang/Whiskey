@@ -44,27 +44,21 @@ const useWhiskeyCollection = ({
   // Effect for filtering and sorting whiskeys
   useEffect(() => {
     if (!whiskeys) {
-      console.log("No whiskeys data available");
       return;
     }
-    
-    console.log("Processing whiskeys in useEffect:", whiskeys.length);
     
     let result = [...whiskeys];
 
     // Apply collection view filter (wishlist vs owned)
     if (collectionView === 'collection') {
       result = result.filter(whiskey => !whiskey.isWishlist);
-      console.log("After collection view filter (owned):", result.length);
     } else if (collectionView === 'wishlist') {
       result = result.filter(whiskey => whiskey.isWishlist === true);
-      console.log("After collection view filter (wishlist):", result.length);
     }
 
     // Apply status filter
     if (statusFilter && statusFilter !== 'all') {
       result = result.filter(whiskey => whiskey.status === statusFilter);
-      console.log("After status filter:", result.length);
     }
 
     // Apply text search
@@ -76,13 +70,11 @@ const useWhiskeyCollection = ({
           (whiskey.distillery && whiskey.distillery.toLowerCase().includes(lowerQuery)) ||
           (whiskey.type && whiskey.type.toLowerCase().includes(lowerQuery))
       );
-      console.log("After search query filter:", result.length);
     }
     
     // Apply type filter (skip if empty or 'all')
     if (typeFilter && typeFilter !== 'all') {
       result = result.filter(whiskey => whiskey.type === typeFilter);
-      console.log("After type filter:", result.length);
     }
 
     // Apply rating filter (skip if empty or 'all')
@@ -91,7 +83,6 @@ const useWhiskeyCollection = ({
       result = result.filter(
         whiskey => whiskey.rating !== null && whiskey.rating >= minRating
       );
-      console.log("After rating filter:", result.length);
     }
     
     // Apply bourbon-specific filters if type is Bourbon
@@ -101,7 +92,6 @@ const useWhiskeyCollection = ({
         result = result.filter(
           whiskey => whiskey.type === 'Bourbon' && whiskey.bottleType === bottleTypeFilter
         );
-        console.log("After bottle type filter:", result.length);
       }
       
       // Filter by mash bill
@@ -109,7 +99,6 @@ const useWhiskeyCollection = ({
         result = result.filter(
           whiskey => whiskey.type === 'Bourbon' && whiskey.mashBill === mashBillFilter
         );
-        console.log("After mash bill filter:", result.length);
       }
       
       // Filter by cask strength
@@ -119,7 +108,6 @@ const useWhiskeyCollection = ({
           whiskey => whiskey.type === 'Bourbon' && 
             (whiskey.caskStrength === "Yes") === isCaskStrength
         );
-        console.log("After cask strength filter:", result.length);
       }
     }
     
@@ -178,7 +166,6 @@ const useWhiskeyCollection = ({
       }
     });
     
-    console.log("Final filtered whiskeys:", result.length);
     setFilteredWhiskeys(result);
   }, [
     whiskeys,

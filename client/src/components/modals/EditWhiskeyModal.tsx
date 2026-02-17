@@ -88,7 +88,6 @@ const EditWhiskeyModal = ({ isOpen, onClose, whiskey }: EditWhiskeyModalProps) =
   const deleteWhiskeyMutation = useMutation({
     mutationFn: async () => {
       try {
-        console.log("Attempting to delete whiskey:", whiskey.id);
         const response = await apiRequest(
           "DELETE",
           `/api/whiskeys/${whiskey.id}`,
