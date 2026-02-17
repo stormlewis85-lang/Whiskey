@@ -80,8 +80,8 @@ const ReviewCard = ({
       <CardContent className="flex-grow pt-0">
         <div className="flex items-center gap-2 mb-3">
           <div className="flex items-center gap-1 bg-primary/10 px-2 py-1 rounded-full">
-            <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
-            <span className="text-lg font-bold text-primary">{review.rating.toFixed(1)}</span>
+            <Star className="h-4 w-4 fill-primary text-primary" />
+            <span className="text-lg font-bold text-foreground">{review.rating.toFixed(1)}</span>
           </div>
         </div>
         <p className="text-sm text-muted-foreground line-clamp-4 leading-relaxed">{previewText}</p>

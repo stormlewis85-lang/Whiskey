@@ -416,8 +416,8 @@ const BlindTastings = () => {
                         <CardContent className="p-4">
                           <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-3">
-                              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                                <span className="text-2xl font-bold text-primary">{btw.label}</span>
+                              <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                                <span className="text-2xl font-bold text-muted-foreground">{btw.label}</span>
                               </div>
                               <div>
                                 <div className="font-medium text-lg">Sample {btw.label}</div>
@@ -513,7 +513,7 @@ const BlindTastings = () => {
                                   "w-10 h-10 rounded-full flex items-center justify-center font-bold",
                                   index === 0
                                     ? "bg-amber-500 text-white"
-                                    : "bg-primary/10 text-primary"
+                                    : "bg-muted text-muted-foreground"
                                 )}>
                                   {index === 0 ? <Trophy className="h-5 w-5" /> : `#${index + 1}`}
                                 </div>

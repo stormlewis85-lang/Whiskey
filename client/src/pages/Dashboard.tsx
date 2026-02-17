@@ -524,8 +524,8 @@ export default function Dashboard() {
                       <td className="py-3 px-4 text-muted-foreground hidden md:table-cell">{whiskey.type}</td>
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-1">
-                          <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
-                          <span className="font-bold text-primary">{whiskey.rating.toFixed(1)}</span>
+                          <Star className="h-4 w-4 fill-primary text-primary" />
+                          <span className="font-bold text-foreground">{whiskey.rating.toFixed(1)}</span>
                         </div>
                       </td>
                     </tr>

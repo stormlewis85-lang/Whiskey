@@ -337,7 +337,7 @@ const Flights = () => {
                       <div key={fw.id} className="p-3 rounded-lg border border-border/50 bg-accent/20">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex items-start gap-3 flex-1 min-w-0">
-                            <div className="flex items-center justify-center w-7 h-7 rounded-full bg-primary/10 text-primary text-sm font-bold shrink-0">
+                            <div className="flex items-center justify-center w-7 h-7 rounded-full bg-muted text-muted-foreground text-sm font-bold shrink-0">
                               {index + 1}
                             </div>
                             <div className="min-w-0 flex-1">
@@ -380,7 +380,7 @@ const Flights = () => {
                     {selectedFlight.whiskeys.map((fw, index) => (
                       <div key={fw.id} className="p-4 rounded-lg bg-accent/30 border border-border/30">
                         <div className="flex items-center gap-2 mb-2">
-                          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+                          <Badge variant="outline" className="bg-muted text-muted-foreground border-border">
                             #{index + 1}
                           </Badge>
                           <span className="font-medium">{fw.whiskey.name}</span>

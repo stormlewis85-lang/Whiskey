@@ -259,8 +259,8 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
             </div>
             <div className="mt-3">
               <div className="text-foreground font-semibold">
-                <Star className="h-4 w-4 inline text-amber-400 fill-amber-400 mr-1" />
-                5-Star: <span className="text-lg text-primary">{scores.fiveStarScore.toFixed(1)}</span>
+                <Star className="h-4 w-4 inline fill-primary text-primary mr-1" />
+                5-Star: <span className="text-lg text-foreground">{scores.fiveStarScore.toFixed(1)}</span>
               </div>
               <div className="text-muted-foreground text-sm">Weighted: {Math.round(scores.weightedTotal)}</div>
             </div>
