@@ -29,7 +29,14 @@ const CollectionGrid = ({
   onEdit,
   onAddNew
 }: CollectionGridProps) => {
+  // All hooks must be declared before any conditional returns
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [visibleCount, setVisibleCount] = useState(INITIAL_COUNT);
+
+  // Reset when the filtered list changes (e.g. new search/filter)
+  useEffect(() => {
+    setVisibleCount(INITIAL_COUNT);
+  }, [whiskeys.length]);
 
   // Loading state — skeleton cards
   if (isLoading) {
@@ -96,14 +103,6 @@ const CollectionGrid = ({
       </div>
     );
   }
-
-  // Progressive rendering
-  const [visibleCount, setVisibleCount] = useState(INITIAL_COUNT);
-
-  // Reset when the filtered list changes (e.g. new search/filter)
-  useEffect(() => {
-    setVisibleCount(INITIAL_COUNT);
-  }, [whiskeys.length]);
 
   const visibleWhiskeys = whiskeys.slice(0, visibleCount);
   const remaining = whiskeys.length - visibleCount;
