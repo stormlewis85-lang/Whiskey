@@ -146,7 +146,7 @@ const Profile = () => {
     return (
       <>
         <Helmet>
-          <title>Profile Not Found | WhiskeyPedia</title>
+          <title>Profile Not Found | MyWhiskeyPedia</title>
         </Helmet>
         <div className="min-h-screen bg-background">
           <Header />
@@ -172,7 +172,7 @@ const Profile = () => {
   return (
     <>
       <Helmet>
-        <title>{displayName}'s Collection | WhiskeyPedia</title>
+        <title>{displayName}'s Collection | MyWhiskeyPedia</title>
       </Helmet>
       <div className="min-h-screen bg-background">
         <Header />

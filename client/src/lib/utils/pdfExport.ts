@@ -375,7 +375,7 @@ export async function generateCollectionPDF(
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(...COLORS.textLight);
     doc.text(
-      `WhiskeyPedia Collection Report • Page ${i} of ${totalPages}`,
+      `MyWhiskeyPedia Collection Report • Page ${i} of ${totalPages}`,
       pageWidth / 2,
       pageHeight - 10,
       { align: 'center' }

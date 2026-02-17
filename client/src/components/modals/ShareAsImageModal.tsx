@@ -236,9 +236,9 @@ const ShareAsImageModal = ({ isOpen, onClose, whiskey, review }: ShareAsImageMod
           {/* Branding toggle */}
           <div className="flex items-center justify-between rounded-lg border p-4">
             <div className="space-y-0.5">
-              <Label>WhiskeyPedia Branding</Label>
+              <Label>MyWhiskeyPedia Branding</Label>
               <p className="text-xs text-muted-foreground">
-                Show the WhiskeyPedia logo on the image
+                Show the MyWhiskeyPedia logo on the image
               </p>
             </div>
             <Switch

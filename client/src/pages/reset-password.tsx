@@ -104,7 +104,7 @@ export default function ResetPasswordPage() {
           <div className="text-center mb-8">
             <Link href="/" className="inline-flex items-center gap-2 mb-2">
               <Wine className="w-6 h-6 text-muted-foreground" />
-              <span className="text-xl font-bold">WhiskeyPedia</span>
+              <span className="text-xl font-bold">MyWhiskeyPedia</span>
             </Link>
           </div>
 
@@ -140,7 +140,7 @@ export default function ResetPasswordPage() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-2">
             <Wine className="w-6 h-6 text-muted-foreground" />
-            <span className="text-xl font-bold">WhiskeyPedia</span>
+            <span className="text-xl font-bold">MyWhiskeyPedia</span>
           </Link>
         </div>
 

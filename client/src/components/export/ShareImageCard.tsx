@@ -170,7 +170,7 @@ export const ShareImageCard = forwardRef<HTMLDivElement, ShareImageCardProps>(
               <div className="flex items-center gap-2">
                 <Wine className="h-4 w-4 text-amber-500" />
                 <span className="text-amber-400 font-semibold text-sm tracking-wide">
-                  WhiskeyPedia
+                  MyWhiskeyPedia
                 </span>
               </div>
             </div>
@@ -398,7 +398,7 @@ export const ShareImageCardFull = forwardRef<HTMLDivElement, ShareImageCardProps
                   fontSize: 24 * scale,
                   letterSpacing: '0.05em',
                 }}>
-                  WhiskeyPedia
+                  MyWhiskeyPedia
                 </span>
               </div>
             </div>

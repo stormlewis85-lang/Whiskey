@@ -172,7 +172,7 @@ export default function AuthPage() {
               <Wine className="w-8 h-8 text-amber-400" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold tracking-tight">WhiskeyPedia</h1>
+              <h1 className="text-2xl font-bold tracking-tight">MyWhiskeyPedia</h1>
               <p className="text-amber-300/80 text-sm">Your personal whiskey journal</p>
             </div>
           </div>
@@ -208,7 +208,7 @@ export default function AuthPage() {
           <div className="lg:hidden text-center mb-8">
             <div className="inline-flex items-center gap-2 mb-2">
               <Wine className="w-6 h-6 text-muted-foreground" />
-              <span className="text-xl font-bold text-gradient">WhiskeyPedia</span>
+              <span className="text-xl font-bold text-gradient">MyWhiskeyPedia</span>
             </div>
           </div>
 

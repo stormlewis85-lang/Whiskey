@@ -338,7 +338,7 @@ const Community = () => {
   return (
     <>
       <Helmet>
-        <title>Community Reviews | Whiskey Collection</title>
+        <title>Community Reviews | MyWhiskeyPedia</title>
       </Helmet>
       <div className="min-h-screen bg-background">
         <Header />

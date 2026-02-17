@@ -186,7 +186,7 @@ export function Header() {
 
           <Link href="/">
             <span className="font-display text-3xl md:text-4xl font-bold tracking-wide cursor-pointer">
-              <span className="text-gradient-brand">WhiskeyPedia</span>
+              <span className="text-gradient-brand">MyWhiskeyPedia</span>
             </span>
           </Link>
         </div>
