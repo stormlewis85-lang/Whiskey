@@ -80,19 +80,19 @@ Each task is atomic and independently completable. Claude Code should:
 ### 3.1 Core Flows
 | ID | Task | Success Criteria | Status |
 |----|------|------------------|--------|
-| T070 | Verify UI-001 to UI-004 | App loads, auth works | ⬜ |
-| T071 | Verify UI-005 to UI-009 | CRUD operations work in UI | ⬜ |
-| T072 | Verify UI-010 to UI-011 | Review system works | ⬜ |
-| T073 | Verify UI-012 to UI-014 | Filters and search work | ⬜ |
-| T074 | Verify UI-015 to UI-016 | Responsive + logout | ⬜ |
+| T070 | Verify UI-001 to UI-004 | App loads, auth works | ✅ |
+| T071 | Verify UI-005 to UI-009 | CRUD operations work in UI | ✅ |
+| T072 | Verify UI-010 to UI-011 | Review system works | ✅ |
+| T073 | Verify UI-012 to UI-014 | Filters and search work | ✅ |
+| T074 | Verify UI-015 to UI-016 | Responsive + logout | ✅ |
 
 ### 3.2 Error Handling
 | ID | Task | Success Criteria | Status |
 |----|------|------------------|--------|
-| T080 | Test network error | Disconnect DB, check UI message | ⬜ |
-| T081 | Test validation errors | Submit invalid form, check feedback | ⬜ |
-| T082 | Test 404 pages | Navigate to /nonexistent | ⬜ |
-| T083 | Test unauthorized | Access protected route logged out | ⬜ |
+| T080 | Test network error | Disconnect DB, check UI message | ✅ |
+| T081 | Test validation errors | Submit invalid form, check feedback | ✅ |
+| T082 | Test 404 pages | Navigate to /nonexistent | ✅ |
+| T083 | Test unauthorized | Access protected route logged out | ✅ |
 
 ---
 
@@ -148,10 +148,10 @@ Each task is atomic and independently completable. Claude Code should:
 |-------|-------|----------|-----------|
 | 1: Bug Fixes | 14 | 9 | 5 |
 | 2: API Tests | 16 | 15 | 1 |
-| 3: Frontend | 9 | 0 | 9 |
+| 3: Frontend | 9 | 9 | 0 |
 | 4: Polish | 10 | 2 | 8 |
 | 5: Deploy | 7 | 3 | 4 |
-| **TOTAL** | 56 | 29 | 27 |
+| **TOTAL** | 56 | 38 | 18 |
 
 ---
 
