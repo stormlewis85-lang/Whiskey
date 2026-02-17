@@ -952,7 +952,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey, existingReview }: ReviewModalPr
         className={cn(
           "p-0 gap-0 overflow-hidden flex flex-col",
           isMobile
-            ? "w-screen h-screen max-w-none max-h-none rounded-none border-0 translate-x-0 translate-y-0 left-0 top-0"
+            ? "w-full h-full max-w-none max-h-none rounded-none border-0 translate-x-0 translate-y-0 left-0 top-0"
             : "max-w-2xl max-h-[90vh]"
         )}
       >

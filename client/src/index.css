@@ -144,11 +144,14 @@
 
   html {
     @apply scroll-smooth;
+    overflow-x: hidden;
   }
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
+    overflow-x: hidden;
+    max-width: 100vw;
   }
 
   /* Headings - clean, modern typography */
@@ -597,7 +600,7 @@
   }
 
   .mobile-full {
-    @apply w-screen h-screen fixed inset-0;
+    @apply w-full h-full fixed inset-0;
   }
 
   .hide-on-tiny {
@@ -613,7 +616,6 @@
   }
 
   body {
-    overflow-x: hidden;
     padding-bottom: env(safe-area-inset-bottom);
   }
 

@@ -411,7 +411,7 @@ export default function Dashboard() {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={priceDistribution}
-                    margin={{ top: 5, right: 5, left: -20, bottom: 5 }}
+                    margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
                     <XAxis
@@ -444,7 +444,7 @@ export default function Dashboard() {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={reviewsByMonth}
-                    margin={{ top: 10, right: 5, left: -20, bottom: 5 }}
+                    margin={{ top: 10, right: 5, left: 0, bottom: 5 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
                     <XAxis
@@ -474,7 +474,7 @@ export default function Dashboard() {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={scoreDistribution}
-                    margin={{ top: 5, right: 5, left: -20, bottom: 5 }}
+                    margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
                     <XAxis dataKey="name" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
