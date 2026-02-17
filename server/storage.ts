@@ -87,6 +87,9 @@ export interface IStorage {
   addMarketValue(marketValue: InsertMarketValue): Promise<MarketValue>;
   updateMarketValue(valueId: number, updateData: UpdateMarketValue, userId: number): Promise<MarketValue | undefined>;
   deleteMarketValue(valueId: number, userId: number): Promise<boolean>;
+
+  // Account management
+  deleteUser(userId: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -170,11 +173,8 @@ export class DatabaseStorage implements IStorage {
   }
   
   async generateAuthToken(userId: number): Promise<string> {
-    // Generate a random token
-    const token = Array(30)
-      .fill(0)
-      .map(() => Math.random().toString(36).charAt(2))
-      .join('');
+    // Generate a cryptographically secure random token
+    const token = randomBytes(24).toString('hex');
       
     // Set token expiry to 30 days from now
     const expiryDate = new Date();
@@ -2225,6 +2225,31 @@ export class DatabaseStorage implements IStorage {
     }
 
     return quips;
+  }
+
+  // Account deletion - removes user and all associated data (CASCADE handles related tables)
+  async deleteUser(userId: number): Promise<boolean> {
+    // Get all user's whiskeys to find images that need cleanup
+    const userWhiskeys = await db.select({ image: whiskeys.image })
+      .from(whiskeys)
+      .where(eq(whiskeys.userId, userId));
+
+    // Collect image URLs for cleanup (handled by caller since it needs Spaces access)
+    // Delete the user row — CASCADE deletes handle all related data:
+    // oauthProviders, passwordResetTokens, whiskeys, follows, reviewComments,
+    // reviewLikes, priceTracks, marketValues, flights, blindTastings, aiUsageLogs, generatedScripts
+    const result = await db.delete(users).where(eq(users.id, userId));
+
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Get all image URLs for a user's whiskeys (for cleanup before account deletion)
+  async getUserWhiskeyImages(userId: number): Promise<string[]> {
+    const results = await db.select({ image: whiskeys.image })
+      .from(whiskeys)
+      .where(and(eq(whiskeys.userId, userId), sql`${whiskeys.image} IS NOT NULL`));
+
+    return results.map(r => r.image).filter((img): img is string => img !== null);
   }
 }
 

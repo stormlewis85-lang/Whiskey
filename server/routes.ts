@@ -1,6 +1,8 @@
 import express, { type Express, type Request, type Response } from "express";
 import { createServer, type Server } from "http";
+import { randomBytes } from "crypto";
 import { storage } from "./storage";
+import { safeError } from "./lib/errors";
 import multer from "multer";
 import sharp from "sharp";
 import * as XLSX from "xlsx";
@@ -71,7 +73,7 @@ const imageUpload = multer({
     },
     filename: function (req, file, cb) {
       // Create a unique filename with timestamp - will be processed to WebP
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      const uniqueSuffix = Date.now() + '-' + randomBytes(6).toString('hex');
       const ext = path.extname(file.originalname);
       cb(null, 'bottle-temp-' + uniqueSuffix + ext);
     }
@@ -152,7 +154,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.json(whiskeys);
     } catch (error) {
       console.error("Error retrieving whiskeys:", error);
-      res.status(500).json({ message: "Failed to retrieve whiskeys", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to retrieve whiskeys"));
     }
   });
 
@@ -179,7 +181,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(whiskey);
     } catch (error) {
-      res.status(500).json({ message: "Failed to retrieve whiskey", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to retrieve whiskey"));
     }
   });
 
@@ -210,7 +212,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const validationError = fromZodError(error);
         return res.status(400).json({ message: "Validation error", error: validationError.message });
       }
-      res.status(500).json({ message: "Failed to create whiskey", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to create whiskey"));
     }
   });
 
@@ -237,7 +239,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const validationError = fromZodError(error);
         return res.status(400).json({ message: "Validation error", error: validationError.message });
       }
-      res.status(500).json({ message: "Failed to update whiskey", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to update whiskey"));
     }
   });
 
@@ -270,7 +272,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       console.error("Error deleting whiskey:", error);
-      res.status(500).json({ message: "Failed to delete whiskey", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to delete whiskey"));
     }
   });
 
@@ -296,7 +298,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const validationError = fromZodError(error);
         return res.status(400).json({ message: "Validation error", error: validationError.message });
       }
-      res.status(500).json({ message: "Failed to add review", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to add review"));
     }
   });
   
@@ -323,7 +325,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const validationError = fromZodError(error);
         return res.status(400).json({ message: "Validation error", error: validationError.message });
       }
-      res.status(500).json({ message: "Failed to update review", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to update review"));
     }
   });
   
@@ -345,7 +347,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(updatedWhiskey);
     } catch (error) {
-      res.status(500).json({ message: "Failed to delete review", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to delete review"));
     }
   });
 
@@ -383,7 +385,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Process the image: resize and convert to WebP
       const tempPath = path.join(uploadDir, req.file.filename);
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      const uniqueSuffix = Date.now() + '-' + randomBytes(6).toString('hex');
       const processedFilename = `bottle-${uniqueSuffix}.webp`;
       const processedPath = path.join(uploadDir, processedFilename);
 
@@ -398,7 +400,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("Image processing error:", processError);
         // Clean up temp file on error
         try { fs.unlinkSync(tempPath); } catch (e) { /* ignore */ }
-        return res.status(500).json({ message: "Failed to process image", error: String(processError) });
+        return res.status(500).json(safeError(processError, "Failed to process image"));
       }
 
       // Verify processed file exists
@@ -407,7 +409,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("Processed file exists and is readable:", processedPath);
       } catch (err) {
         console.error("Processed file permission error:", err);
-        return res.status(500).json({ message: "File permission error", error: String(err) });
+        return res.status(500).json(safeError(err, "File permission error"));
       }
 
       // Upload to Spaces if configured, otherwise keep locally
@@ -509,7 +511,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error in image upload:", error);
-      res.status(500).json({ message: "Failed to upload image", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to upload image"));
     }
   });
 
@@ -560,10 +562,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ whiskey, review });
     } catch (error) {
-      res.status(500).json({ 
-        message: "Error retrieving review", 
-        error: String(error) 
-      });
+      res.status(500).json(safeError(error, "Error retrieving review"));
     }
   });
 
@@ -602,7 +601,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         shareUrl: updatedReview?.shareId ? `/shared/${updatedReview.shareId}` : null
       });
     } catch (error) {
-      res.status(500).json({ message: "Failed to update sharing status", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to update sharing status"));
     }
   });
 
@@ -659,7 +658,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user: userInfo
       });
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch shared review", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to fetch shared review"));
     }
   });
 
@@ -699,7 +698,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(sanitizedReviews);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch public reviews", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to fetch public reviews"));
     }
   });
 
@@ -742,7 +741,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const validationError = fromZodError(error);
         return res.status(400).json({ message: "Validation error", error: validationError.message });
       }
-      res.status(500).json({ message: "Failed to add comment", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to add comment"));
     }
   });
 
@@ -775,7 +774,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const validationError = fromZodError(error);
         return res.status(400).json({ message: "Validation error", error: validationError.message });
       }
-      res.status(500).json({ message: "Failed to update comment", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to update comment"));
     }
   });
 
@@ -797,7 +796,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.status(204).send();
     } catch (error) {
-      res.status(500).json({ message: "Failed to delete comment", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to delete comment"));
     }
   });
 
@@ -839,7 +838,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(commentsWithUsers);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch comments", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to fetch comments"));
     }
   });
 
@@ -858,7 +857,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(result);
     } catch (error) {
-      res.status(500).json({ message: "Failed to toggle like", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to toggle like"));
     }
   });
 
@@ -886,7 +885,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userLiked
       });
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch likes", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to fetch likes"));
     }
   });
   
@@ -955,7 +954,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalErrors: errors.length
       });
     } catch (error) {
-      res.status(500).json({ message: "Failed to import data", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to import data"));
     }
   });
 
@@ -978,7 +977,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(priceHistory);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch price history", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to fetch price history"));
     }
   });
   
@@ -1010,7 +1009,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const validationError = fromZodError(error);
         return res.status(400).json({ message: "Validation error", error: validationError.message });
       }
-      res.status(500).json({ message: "Failed to add price entry", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to add price entry"));
     }
   });
   
@@ -1039,7 +1038,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const validationError = fromZodError(error);
         return res.status(400).json({ message: "Validation error", error: validationError.message });
       }
-      res.status(500).json({ message: "Failed to update price entry", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to update price entry"));
     }
   });
   
@@ -1061,7 +1060,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.status(204).send();
     } catch (error) {
-      res.status(500).json({ message: "Failed to delete price entry", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to delete price entry"));
     }
   });
   
@@ -1084,7 +1083,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(marketValues);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch market values", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to fetch market values"));
     }
   });
   
@@ -1116,7 +1115,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const validationError = fromZodError(error);
         return res.status(400).json({ message: "Validation error", error: validationError.message });
       }
-      res.status(500).json({ message: "Failed to add market value", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to add market value"));
     }
   });
   
@@ -1145,7 +1144,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const validationError = fromZodError(error);
         return res.status(400).json({ message: "Validation error", error: validationError.message });
       }
-      res.status(500).json({ message: "Failed to update market value", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to update market value"));
     }
   });
   
@@ -1167,7 +1166,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.status(204).send();
     } catch (error) {
-      res.status(500).json({ message: "Failed to delete market value", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to delete market value"));
     }
   });
 
@@ -1179,7 +1178,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const flavors = await storage.getAllUserFlavors(getUserId(req));
       res.json(flavors);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch flavors", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to fetch flavors"));
     }
   });
 
@@ -1190,7 +1189,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const whiskeys = await storage.getWhiskeysWithFlavor(flavor, getUserId(req));
       res.json(whiskeys);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch whiskeys by flavor", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to fetch whiskeys by flavor"));
     }
   });
 
@@ -1219,7 +1218,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ topFlavors, allFlavors });
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch whiskey flavors", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to fetch whiskey flavors"));
     }
   });
 
@@ -1241,7 +1240,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(communityNotes);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch community notes", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to fetch community notes"));
     }
   });
 
@@ -1262,7 +1261,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const palateProfile = await storage.getPalateProfile(targetUserId);
       res.json(palateProfile);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch palate profile", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to fetch palate profile"));
     }
   });
 
@@ -1310,10 +1309,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ ...result, remaining: result.cached ? remaining : remaining - 1 });
     } catch (error) {
       console.error('Rick script generation error:', error);
-      res.status(500).json({
-        message: "Failed to generate tasting script",
-        error: error instanceof Error ? error.message : String(error)
-      });
+      res.status(500).json(safeError(error, "Failed to generate tasting script"));
     }
   });
 
@@ -1394,10 +1390,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     } catch (error) {
       console.error('Text-to-speech error:', error);
-      res.status(500).json({
-        message: "Failed to generate speech",
-        error: error instanceof Error ? error.message : String(error)
-      });
+      res.status(500).json(safeError(error, "Failed to generate speech"));
     }
   });
 
@@ -1448,10 +1441,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('Start session error:', error);
-      res.status(500).json({
-        message: "Failed to start tasting session",
-        error: error instanceof Error ? error.message : String(error)
-      });
+      res.status(500).json(safeError(error, "Failed to start tasting session"));
     }
   });
 
@@ -1505,10 +1495,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('Update session error:', error);
-      res.status(500).json({
-        message: "Failed to update session",
-        error: error instanceof Error ? error.message : String(error)
-      });
+      res.status(500).json(safeError(error, "Failed to update session"));
     }
   });
 
@@ -1559,10 +1546,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('Complete session error:', error);
-      res.status(500).json({
-        message: "Failed to complete session",
-        error: error instanceof Error ? error.message : String(error)
-      });
+      res.status(500).json(safeError(error, "Failed to complete session"));
     }
   });
 
@@ -1591,10 +1575,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(sessionsWithWhiskey);
     } catch (error) {
       console.error('Get sessions error:', error);
-      res.status(500).json({
-        message: "Failed to get session history",
-        error: error instanceof Error ? error.message : String(error)
-      });
+      res.status(500).json(safeError(error, "Failed to get session history"));
     }
   });
 
@@ -1627,10 +1608,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('Review guide generation error:', error);
-      res.status(500).json({
-        message: "Failed to generate review guide",
-        error: error instanceof Error ? error.message : String(error)
-      });
+      res.status(500).json(safeError(error, "Failed to generate review guide"));
     }
   });
 
@@ -1643,7 +1621,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const recommendations = await storage.getRecommendations(getUserId(req), limit);
       res.json(recommendations);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch recommendations", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to fetch recommendations"));
     }
   });
 
@@ -1659,7 +1637,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const similar = await storage.getSimilarWhiskeys(whiskeyId, getUserId(req), limit);
       res.json(similar);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch similar whiskeys", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to fetch similar whiskeys"));
     }
   });
 
@@ -1671,7 +1649,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const flights = await storage.getFlights(getUserId(req));
       res.json(flights);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch flights", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to fetch flights"));
     }
   });
 
@@ -1690,7 +1668,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(result);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch flight", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to fetch flight"));
     }
   });
 
@@ -1709,7 +1687,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const validationError = fromZodError(error);
         return res.status(400).json({ message: "Validation error", error: validationError.message });
       }
-      res.status(500).json({ message: "Failed to create flight", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to create flight"));
     }
   });
 
@@ -1734,7 +1712,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const validationError = fromZodError(error);
         return res.status(400).json({ message: "Validation error", error: validationError.message });
       }
-      res.status(500).json({ message: "Failed to update flight", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to update flight"));
     }
   });
 
@@ -1753,7 +1731,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.status(204).send();
     } catch (error) {
-      res.status(500).json({ message: "Failed to delete flight", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to delete flight"));
     }
   });
 
@@ -1774,7 +1752,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.status(201).json(result);
     } catch (error) {
-      res.status(500).json({ message: "Failed to add whiskey to flight", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to add whiskey to flight"));
     }
   });
 
@@ -1794,7 +1772,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.status(204).send();
     } catch (error) {
-      res.status(500).json({ message: "Failed to remove whiskey from flight", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to remove whiskey from flight"));
     }
   });
 
@@ -1820,7 +1798,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const validationError = fromZodError(error);
         return res.status(400).json({ message: "Validation error", error: validationError.message });
       }
-      res.status(500).json({ message: "Failed to update flight whiskey", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to update flight whiskey"));
     }
   });
 
@@ -1841,7 +1819,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ success: true });
     } catch (error) {
-      res.status(500).json({ message: "Failed to reorder flight whiskeys", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to reorder flight whiskeys"));
     }
   });
 
@@ -1853,7 +1831,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const blindTastings = await storage.getBlindTastings(getUserId(req));
       res.json(blindTastings);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch blind tastings", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to fetch blind tastings"));
     }
   });
 
@@ -1872,7 +1850,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(result);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch blind tasting", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to fetch blind tasting"));
     }
   });
 
@@ -1897,7 +1875,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const validationError = fromZodError(error);
         return res.status(400).json({ message: "Validation error", error: validationError.message });
       }
-      res.status(500).json({ message: "Failed to create blind tasting", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to create blind tasting"));
     }
   });
 
@@ -1916,7 +1894,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.status(204).send();
     } catch (error) {
-      res.status(500).json({ message: "Failed to delete blind tasting", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to delete blind tasting"));
     }
   });
 
@@ -1945,7 +1923,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const validationError = fromZodError(error);
         return res.status(400).json({ message: "Validation error", error: validationError.message });
       }
-      res.status(500).json({ message: "Failed to rate blind tasting whiskey", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to rate blind tasting whiskey"));
     }
   });
 
@@ -1966,7 +1944,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const fullResult = await storage.getBlindTastingWithWhiskeys(btId, getUserId(req));
       res.json(fullResult);
     } catch (error) {
-      res.status(500).json({ message: "Failed to reveal blind tasting", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to reveal blind tasting"));
     }
   });
 
@@ -1985,7 +1963,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(result);
     } catch (error) {
-      res.status(500).json({ message: "Failed to complete blind tasting", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to complete blind tasting"));
     }
   });
 
@@ -2059,7 +2037,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(lookupResult);
     } catch (error) {
       console.error('Barcode lookup error:', error);
-      res.status(500).json({ message: "Failed to lookup barcode", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to lookup barcode"));
     }
   });
 
@@ -2091,7 +2069,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(result);
     } catch (error) {
       console.error('Image identification error:', error);
-      res.status(500).json({ message: "Failed to identify whiskey from image", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to identify whiskey from image"));
     }
   });
 
@@ -2104,7 +2082,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const distilleries = await storage.getDistilleries(search);
       res.json(distilleries);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch distilleries", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to fetch distilleries"));
     }
   });
 
@@ -2123,7 +2101,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(distillery);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch distillery", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to fetch distillery"));
     }
   });
 
@@ -2138,7 +2116,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const whiskeys = await storage.getDistilleryWhiskeys(id, getUserId(req));
       res.json(whiskeys);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch distillery whiskeys", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to fetch distillery whiskeys"));
     }
   });
 
@@ -2154,7 +2132,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const validationError = fromZodError(error);
         return res.status(400).json({ message: "Validation error", error: validationError.message });
       }
-      res.status(500).json({ message: "Failed to create distillery", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to create distillery"));
     }
   });
 
@@ -2186,7 +2164,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const validationError = fromZodError(error);
         return res.status(400).json({ message: "Validation error", error: validationError.message });
       }
-      res.status(500).json({ message: "Failed to update distillery", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to update distillery"));
     }
   });
 
@@ -2214,7 +2192,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         createdAt: user.createdAt
       });
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch profile", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to fetch profile"));
     }
   });
 
@@ -2246,7 +2224,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const validationError = fromZodError(error);
         return res.status(400).json({ message: "Validation error", error: validationError.message });
       }
-      res.status(500).json({ message: "Failed to update profile", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to update profile"));
     }
   });
 
@@ -2267,7 +2245,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(profile);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch profile", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to fetch profile"));
     }
   });
 
@@ -2282,7 +2260,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const whiskeys = await storage.getPublicWhiskeys(userId);
       res.json(whiskeys);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch user's whiskeys", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to fetch user's whiskeys"));
     }
   });
 
@@ -2306,7 +2284,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(updated);
     } catch (error) {
-      res.status(500).json({ message: "Failed to update whiskey visibility", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to update whiskey visibility"));
     }
   });
 
@@ -2331,7 +2309,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.status(201).json({ success: true, follow });
     } catch (error) {
-      res.status(500).json({ message: "Failed to follow user", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to follow user"));
     }
   });
 
@@ -2350,7 +2328,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.status(204).send();
     } catch (error) {
-      res.status(500).json({ message: "Failed to unfollow user", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to unfollow user"));
     }
   });
 
@@ -2365,7 +2343,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const isFollowing = await storage.isFollowing(getUserId(req), userId);
       res.json({ isFollowing });
     } catch (error) {
-      res.status(500).json({ message: "Failed to check follow status", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to check follow status"));
     }
   });
 
@@ -2382,7 +2360,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ followers, count });
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch followers", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to fetch followers"));
     }
   });
 
@@ -2399,7 +2377,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ following, count });
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch following", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to fetch following"));
     }
   });
 
@@ -2439,7 +2417,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(sanitizedReviews);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch following feed", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to fetch following feed"));
     }
   });
 
@@ -2450,7 +2428,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const suggestions = await storage.getSuggestedUsers(getUserId(req), limit);
       res.json(suggestions);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch suggested users", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to fetch suggested users"));
     }
   });
 
@@ -2565,7 +2543,7 @@ Be specific and realistic for this style of whiskey. Use common tasting descript
       });
     } catch (error) {
       console.error("AI suggest-notes error:", error);
-      res.status(500).json({ message: "Failed to generate suggestions", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to generate suggestions"));
     }
   });
 
@@ -2657,7 +2635,7 @@ Important: Keep it authentic—don't invent flavors they didn't mention or imply
       });
     } catch (error) {
       console.error("AI enhance-notes error:", error);
-      res.status(500).json({ message: "Failed to enhance notes", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to enhance notes"));
     }
   });
 
@@ -2674,7 +2652,7 @@ Important: Keep it authentic—don't invent flavors they didn't mention or imply
         configured: !!process.env.ANTHROPIC_API_KEY
       });
     } catch (error) {
-      res.status(500).json({ message: "Failed to get AI status", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to get AI status"));
     }
   });
 

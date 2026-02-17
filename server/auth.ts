@@ -3,6 +3,7 @@ import { storage, hashPassword, comparePasswords } from "./storage";
 import { loginUserSchema, insertUserSchema, updateUserSchema, registerUserSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import { ZodError } from "zod";
+import { safeError } from "./lib/errors";
 import session from "express-session";
 import { nanoid } from "nanoid";
 import connectPgSimple from "connect-pg-simple";
@@ -12,6 +13,7 @@ import { isAccountLocked, handleFailedLogin, handleSuccessfulLogin, getLockoutRe
 import { requestPasswordReset, validateResetToken, completePasswordReset } from "./auth/password-reset";
 import { forgotPasswordSchema, resetPasswordSchema } from "@shared/schema";
 import { initiateGoogleAuth, handleGoogleCallback, isGoogleOAuthConfigured, getOAuthStatus, unlinkOAuthProvider } from "./auth/oauth-google";
+import { deleteFromSpaces, getKeyFromUrl, isSpacesConfigured } from "./spaces";
 
 // Fix TypeScript declaration for SessionData
 declare module "express-session" {
@@ -30,95 +32,74 @@ export async function isAuthenticated(req: Request, res: Response, next: NextFun
   // First try session authentication
   if (req.session.userId) {
     try {
-      // Verify the user actually exists in the database
       const user = await storage.getUser(req.session.userId);
-      
+
       if (user) {
-        // User is authenticated and exists via session
-        console.log(`User authenticated via session: ${user.username} (ID: ${user.id})`);
         return next();
       } else {
-        // If user doesn't exist but session has userId, clear the invalid session
-        req.session.destroy((err) => {
-          if (err) {
-            console.error("Error destroying invalid session:", err);
-          }
-        });
-        console.log("Session user not found, trying token auth as fallback");
+        req.session.destroy(() => {});
         // Fall through to token auth
       }
-    } catch (error) {
-      console.error("Session authentication error:", error);
+    } catch {
       // Fall through to token auth
     }
   }
-  
+
   // Try token-based authentication as a fallback
   try {
-    // Get the auth token from the Authorization header
     const authHeader = req.headers.authorization;
-    console.log(`Auth header received: ${authHeader ? 'Present' : 'Missing'}`);
-    
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.log("No Bearer token in Authorization header");
       return res.status(401).json({ message: "Not authenticated - No token provided" });
     }
-    
+
     const token = authHeader.split(' ')[1];
-    console.log(`Extracted token: ${token ? token.substring(0, 10) + '...' : 'None'}`);
-    
+
     if (!token) {
       return res.status(401).json({ message: "Not authenticated - Invalid token format" });
     }
-    
-    // Validate the token
-    console.log(`Looking up user by token...`);
+
     const user = await storage.getUserByToken(token);
-    
+
     if (!user) {
-      console.log(`No user found for token: ${token.substring(0, 10)}...`);
       return res.status(401).json({ message: "Not authenticated - Invalid token" });
     }
-    
-    console.log(`Found user: ${user.username} (ID: ${user.id}), checking expiry...`);
+
     if (user.tokenExpiry && new Date(user.tokenExpiry) < new Date()) {
-      console.log(`Token expired for user ${user.username}: ${user.tokenExpiry}`);
       return res.status(401).json({ message: "Not authenticated - Token expired" });
     }
-    
-    // Add user id to session and save it for later use
+
     req.session.userId = user.id;
 
-    // User is authenticated via token - save session before proceeding
-    console.log(`User authenticated via token: ${user.username} (ID: ${user.id})`);
-
-    // Save the session to persist the userId
     req.session.save((err) => {
       if (err) {
-        console.error("Error saving session during token auth:", err);
         // Continue anyway since we have the userId set for this request
       }
       next();
     });
   } catch (error) {
-    console.error("Token authentication error:", error);
-    res.status(500).json({ message: "Authentication verification failed", error: String(error) });
+    res.status(500).json({ message: "Authentication verification failed" });
   }
 }
 
 // Setup authentication and session
 export function setupAuth(app: express.Express) {
-  // Warn if SESSION_SECRET is not set
-  if (!process.env.SESSION_SECRET) {
-    console.warn("WARNING: SESSION_SECRET not set in .env - sessions will be lost on server restart!");
+  const isProduction = process.env.NODE_ENV === 'production';
+  const sessionSecret = process.env.SESSION_SECRET;
+
+  // In production, SESSION_SECRET is required — refuse to start without it
+  if (!sessionSecret && isProduction) {
+    throw new Error("SESSION_SECRET environment variable is required in production. Set it in your .env file.");
   }
 
-  const isProduction = process.env.NODE_ENV === 'production';
+  if (!sessionSecret) {
+    console.warn("WARNING: SESSION_SECRET not set - using random secret (sessions lost on restart)");
+  }
 
   // Configure session middleware with PostgreSQL for persistence
   app.use(
     session({
-      secret: process.env.SESSION_SECRET || nanoid(32),
+      secret: sessionSecret || nanoid(32),
       resave: false,
       saveUninitialized: false,
       rolling: true, // Extend session expiry on each request
@@ -139,107 +120,78 @@ export function setupAuth(app: express.Express) {
     })
   );
 
-  // Log environment info
   if (isProduction) {
-    app.set('trust proxy', 1); // Trust first proxy
-    console.log("Production environment detected, enabling secure cookies");
-  } else {
-    console.log("Development environment detected, using non-secure cookies with sameSite=lax");
+    app.set('trust proxy', 1);
   }
 
   // User Registration (with password strength validation)
   app.post("/api/register", registerRateLimiter, async (req: Request, res: Response) => {
     try {
-      console.log("Registration attempt:", req.body.username);
-
-      // Use the stronger registration schema for validation
       const validatedData = registerUserSchema.parse(req.body);
 
-      // Check if username already exists
       const existingUser = await storage.getUserByUsername(validatedData.username);
       if (existingUser) {
-        console.log(`Registration failed: username already exists: ${validatedData.username}`);
         return res.status(400).json({ message: "Username already exists" });
       }
 
-      // Check if email already exists (if provided)
       if (validatedData.email) {
         const existingEmail = await storage.getUserByEmail(validatedData.email);
         if (existingEmail) {
-          console.log(`Registration failed: email already exists: ${validatedData.email}`);
           return res.status(400).json({ message: "Email already in use" });
         }
       }
 
-      // Prepare user data for creation
       const userData = {
         username: validatedData.username,
-        password: validatedData.password || '', // Will be hashed in storage
+        password: validatedData.password || '',
         displayName: validatedData.displayName,
         email: validatedData.email,
       };
 
-      // Create user
       const newUser = await storage.createUser(userData);
-      console.log(`User created: ${newUser.username} (ID: ${newUser.id})`);
 
-      // Establish session
       req.session.userId = newUser.id;
 
-      // Generate auth token
       try {
         const token = await storage.generateAuthToken(newUser.id);
 
-        // Save session explicitly
         req.session.save((err) => {
           if (err) {
-            console.error("Session save error during registration:", err);
             return res.status(500).json({ message: "Session creation failed" });
           }
 
-          console.log(`Registration successful: user ${newUser.username} (ID: ${newUser.id})`);
-
-          // Return user without password but with token
           const { password, ...userWithoutPassword } = newUser;
           res.status(201).json({
             ...userWithoutPassword,
             token: token
           });
         });
-      } catch (tokenError) {
-        console.error("Token generation error:", tokenError);
-
-        // Return user without password, fallback to session-only auth
+      } catch {
         const { password, ...userWithoutPassword } = newUser;
         res.status(201).json(userWithoutPassword);
       }
     } catch (error) {
-      console.error("Registration error:", error);
       if (error instanceof ZodError) {
         const validationError = fromZodError(error);
         return res.status(400).json({ message: "Validation error", error: validationError.message });
       }
-      res.status(500).json({ message: "Registration failed", error: String(error) });
+      res.status(500).json({ message: "Registration failed" });
     }
   });
 
   // User Login (with rate limiting and account lockout)
   app.post("/api/login", loginRateLimiter, async (req: Request, res: Response) => {
     try {
-      console.log("Login attempt:", req.body.username);
       const credentials = loginUserSchema.parse(req.body);
 
-      // First, check if user exists to handle account lockout
       const existingUser = await storage.getUserByUsername(credentials.username);
 
       if (existingUser) {
-        // Check if account is locked
         const locked = await isAccountLocked(existingUser.id);
         if (locked) {
           const remainingSeconds = await getLockoutRemainingSeconds(existingUser.id);
           const remainingMinutes = Math.ceil(remainingSeconds / 60);
 
-          // Record the blocked attempt
           await recordLoginAttempt(credentials.username, false, req.ip);
 
           return res.status(423).json({
@@ -249,19 +201,14 @@ export function setupAuth(app: express.Express) {
         }
       }
 
-      // Validate credentials
       const user = await storage.validateUserCredentials(
         credentials.username,
         credentials.password
       );
 
       if (!user) {
-        console.log(`Login failed: invalid credentials for ${credentials.username}`);
-
-        // Record the failed attempt
         await recordLoginAttempt(credentials.username, false, req.ip);
 
-        // If user exists, handle failed login (increment counter, maybe lock)
         if (existingUser) {
           const result = await handleFailedLogin(existingUser.id);
           if (result.locked) {
@@ -279,66 +226,44 @@ export function setupAuth(app: express.Express) {
         return res.status(401).json({ message: "Invalid username or password" });
       }
 
-      // Successful login - reset failed attempts and record success
       await handleSuccessfulLogin(user.id);
       await recordLoginAttempt(credentials.username, true, req.ip);
 
-      // Establish session
       req.session.userId = user.id;
 
-      // Generate auth token
       try {
         const token = await storage.generateAuthToken(user.id);
 
-        // Save session explicitly
         req.session.save((err) => {
           if (err) {
-            console.error("Session save error:", err);
             return res.status(500).json({ message: "Session creation failed" });
           }
 
-          console.log(`Login successful: user ${user.username} (ID: ${user.id})`);
-
-          // Return user without password but with token
           const { password, ...userWithoutPassword } = user;
           res.json({
             ...userWithoutPassword,
             token: token
           });
         });
-      } catch (tokenError) {
-        console.error("Token generation error:", tokenError);
-
-        // Return user without password, fallback to session-only auth
+      } catch {
         const { password, ...userWithoutPassword } = user;
         res.json(userWithoutPassword);
       }
     } catch (error) {
-      console.error("Login error:", error);
       if (error instanceof ZodError) {
         const validationError = fromZodError(error);
         return res.status(400).json({ message: "Validation error", error: validationError.message });
       }
-      res.status(500).json({ message: "Login failed", error: String(error) });
+      res.status(500).json({ message: "Login failed" });
     }
   });
 
   // User Logout
   app.post("/api/logout", (req: Request, res: Response) => {
-    const sessionInfo = {
-      id: req.sessionID,
-      userId: req.session.userId,
-      isActive: !!req.session.userId
-    };
-    
-    console.log(`Logout attempt: Session info:`, sessionInfo);
-    
     req.session.destroy(err => {
       if (err) {
-        console.error("Logout error:", err);
-        return res.status(500).json({ message: "Logout failed", error: String(err) });
+        return res.status(500).json({ message: "Logout failed" });
       }
-      console.log("Logout successful");
       res.status(200).json({ message: "Logged out successfully" });
     });
   });
@@ -391,8 +316,7 @@ export function setupAuth(app: express.Express) {
       console.log("No valid session or token found, not authenticated");
       return res.status(401).json({ message: "Not authenticated" });
     } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Failed to get user", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to get user"));
     }
   });
 
@@ -414,7 +338,7 @@ export function setupAuth(app: express.Express) {
         const validationError = fromZodError(error);
         return res.status(400).json({ message: "Validation error", error: validationError.message });
       }
-      res.status(500).json({ message: "Failed to update user", error: String(error) });
+      res.status(500).json(safeError(error, "Failed to update user"));
     }
   });
 
@@ -529,6 +453,66 @@ export function setupAuth(app: express.Express) {
     } catch (error) {
       console.error("OAuth unlink error:", error);
       res.status(500).json({ message: "Failed to unlink provider" });
+    }
+  });
+
+  // ==================== Account Deletion ====================
+
+  // Delete user account and all associated data
+  app.delete("/api/account", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session.userId!;
+      const { password } = req.body;
+
+      // Get the user to check auth method
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Require password confirmation for users with a password
+      if (user.password) {
+        if (!password) {
+          return res.status(400).json({ message: "Password confirmation required" });
+        }
+
+        const passwordValid = await comparePasswords(password, user.password);
+        if (!passwordValid) {
+          return res.status(401).json({ message: "Incorrect password" });
+        }
+      }
+
+      // Clean up user's images from Spaces before deleting
+      if (isSpacesConfigured()) {
+        try {
+          const imageUrls = await storage.getUserWhiskeyImages(userId);
+          for (const url of imageUrls) {
+            const key = getKeyFromUrl(url);
+            if (key) {
+              await deleteFromSpaces(key).catch(() => {});
+            }
+          }
+        } catch {
+          // Continue with deletion even if image cleanup fails
+        }
+      }
+
+      // Delete the user (CASCADE handles all related data)
+      const deleted = await storage.deleteUser(userId);
+      if (!deleted) {
+        return res.status(500).json({ message: "Failed to delete account" });
+      }
+
+      // Destroy the session
+      req.session.destroy((err) => {
+        if (err) {
+          console.error("Error destroying session after account deletion:", err);
+        }
+      });
+
+      res.json({ message: "Account deleted successfully" });
+    } catch (error) {
+      res.status(500).json(safeError(error, "Failed to delete account"));
     }
   });
 }
