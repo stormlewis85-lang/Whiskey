@@ -202,7 +202,7 @@ const EditWhiskeyModal = ({ isOpen, onClose, whiskey }: EditWhiskeyModalProps) =
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto" description="Edit whiskey details">
           <DialogHeader>
             <DialogTitle>Edit Whiskey</DialogTitle>
           </DialogHeader>

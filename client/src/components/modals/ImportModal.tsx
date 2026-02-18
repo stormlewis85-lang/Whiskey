@@ -89,7 +89,7 @@ const ImportModal = ({ isOpen, onClose }: ImportModalProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" description="Import your whiskey collection from a file">
         <DialogHeader>
           <DialogTitle className="text-lg font-medium text-gray-900">Import Collection</DialogTitle>
         </DialogHeader>

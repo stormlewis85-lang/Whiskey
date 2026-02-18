@@ -262,7 +262,7 @@
 /* Hover state - subtle glow, not lift */
 .card-elevated:hover {
   border-color: hsl(var(--primary) / 0.3);
-  background: hsl(0 0% 8%);
+  background: hsl(var(--accent));
 }
 
 /* Interactive card with gold accent line */

@@ -173,7 +173,7 @@ export default function MarketValueModal({
   
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[600px]" description="Estimate the market value of this whiskey">
         <DialogHeader>
           <DialogTitle>Market Value Estimator - {whiskey.name}</DialogTitle>
         </DialogHeader>

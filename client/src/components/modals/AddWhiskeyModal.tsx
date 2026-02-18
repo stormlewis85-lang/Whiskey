@@ -427,7 +427,7 @@ const AddWhiskeyModal = ({ isOpen, onClose }: AddWhiskeyModalProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-hidden">
+      <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-hidden" description="Add a new whiskey to your collection">
         {/* Method Selection Screen */}
         {addMethod === 'select' && (
           <>

@@ -140,8 +140,10 @@ const Home = () => {
               variant="ghost"
               size="icon"
               className="text-muted-foreground hover:text-foreground hover:bg-accent/50 h-10 w-10"
+              title="Scan barcode"
             >
               <Scan className="h-5 w-5" />
+              <span className="sr-only">Scan barcode</span>
             </Button>
             <Button
               onClick={openAddWhiskeyModal}

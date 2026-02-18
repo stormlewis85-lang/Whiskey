@@ -949,6 +949,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey, existingReview }: ReviewModalPr
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent
         hideCloseButton
+        description="Write a tasting review"
         className={cn(
           "p-0 gap-0 overflow-hidden flex flex-col",
           isMobile

@@ -157,7 +157,7 @@ export default function PriceTrackingModal({
   
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[600px]" description="Track price history for this whiskey">
         <DialogHeader>
           <DialogTitle>Price Tracking - {whiskey.name}</DialogTitle>
         </DialogHeader>

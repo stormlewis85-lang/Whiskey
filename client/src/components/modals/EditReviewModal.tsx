@@ -133,7 +133,7 @@ const EditReviewModal = ({ isOpen, onClose, whiskey, review }: EditReviewModalPr
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-[550px]">
+        <DialogContent className="sm:max-w-[550px]" description="Edit your tasting review">
           <DialogHeader>
             <DialogTitle>Edit Review</DialogTitle>
           </DialogHeader>

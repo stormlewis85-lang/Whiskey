@@ -342,7 +342,7 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit, onTast
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col bg-card border-border/50">
+        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col bg-card border-border/50" description="Whiskey details and tasting notes">
           <DialogHeader className="pb-0 shrink-0">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
