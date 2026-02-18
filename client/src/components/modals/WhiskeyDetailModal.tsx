@@ -762,7 +762,7 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit, onTast
                                 </div>
                               )}
 
-                              <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                                 {[
                                   { label: "Nose", score: note.noseScore },
                                   { label: "Mouthfeel", score: note.mouthfeelScore },
@@ -770,8 +770,8 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit, onTast
                                   { label: "Finish", score: note.finishScore },
                                   { label: "Value", score: note.valueScore },
                                 ].map(({ label, score }) => (
-                                  <div key={label} className="flex items-center justify-between p-2.5 bg-accent/20 rounded-lg">
-                                    <span className="text-xs text-muted-foreground">{label}</span>
+                                  <div key={label} className="p-2.5 bg-accent/20 rounded-lg">
+                                    <span className="text-xs text-muted-foreground block mb-1.5">{label}</span>
                                     <div className="flex items-center gap-1.5">
                                       <StarRating score={score || 0} size="sm" />
                                       <span className="text-xs font-medium text-foreground">{score || 0}</span>
