@@ -45,7 +45,7 @@ app.use(helmet({
       ],
       fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
       objectSrc: ["'none'"],
-      mediaSrc: ["'self'", "blob:"],
+      mediaSrc: ["'self'", "blob:", "data:"],
       frameSrc: ["'none'"],
     },
   },
