@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import { Whiskey, ReviewNote, User } from '@shared/schema';
+import { calculateAverageRatingNumeric } from './calculations';
 
 interface PDFExportOptions {
   title?: string;
@@ -33,8 +34,7 @@ function calculateStats(whiskeys: Whiskey[]): CollectionStats {
   const wishlist = whiskeys.filter(w => w.isWishlist);
 
   const totalValue = collection.reduce((sum, w) => sum + (w.price || 0), 0);
-  const ratings = collection.filter(w => w.rating && w.rating > 0).map(w => w.rating!);
-  const averageRating = ratings.length > 0 ? ratings.reduce((a, b) => a + b, 0) / ratings.length : 0;
+  const averageRating = calculateAverageRatingNumeric(collection) ?? 0;
 
   const typeDistribution: Record<string, number> = {};
   collection.forEach(w => {

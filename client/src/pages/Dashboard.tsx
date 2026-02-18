@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Header } from "@/components/Header";
 import { Loader2, Home, Wine, Star, TrendingUp, DollarSign, BarChart3, AlertCircle } from "lucide-react";
 import { Link } from "wouter";
+import { calculateAverageRating } from "@/lib/utils/calculations";
 
 // Warm amber/gold color palette for charts
 const CHART_COLORS = [
@@ -298,10 +299,7 @@ export default function Dashboard() {
             },
             {
               label: "Average Rating",
-              value: whiskeys.filter(w => w.rating !== null && w.rating > 0).length > 0
-                ? (whiskeys.reduce((sum, w) => sum + (w.rating || 0), 0) /
-                   whiskeys.filter(w => w.rating !== null && w.rating > 0).length).toFixed(1)
-                : 'N/A',
+              value: calculateAverageRating(whiskeys),
               icon: TrendingUp,
               color: "text-emerald-500",
               bgColor: "bg-emerald-500/10",

@@ -1627,9 +1627,9 @@ export class DatabaseStorage implements IStorage {
     // Calculate stats
     const totalBottles = userWhiskeys.reduce((sum, w) => sum + (w.quantity || 1), 0);
     const uniqueBottles = userWhiskeys.length;
-    const ratingsSum = userWhiskeys.reduce((sum, w) => sum + (w.rating || 0), 0);
-    const ratedCount = userWhiskeys.filter(w => w.rating && w.rating > 0).length;
-    const averageRating = ratedCount > 0 ? ratingsSum / ratedCount : 0;
+    const ratedWhiskeys = userWhiskeys.filter(w => w.rating != null && w.rating > 0);
+    const ratingsSum = ratedWhiskeys.reduce((sum, w) => sum + w.rating!, 0);
+    const averageRating = ratedWhiskeys.length > 0 ? parseFloat((ratingsSum / ratedWhiskeys.length).toFixed(1)) : 0;
 
     // Get top types
     const typeCounts = new Map<string, number>();

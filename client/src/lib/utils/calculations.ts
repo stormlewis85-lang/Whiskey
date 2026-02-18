@@ -10,16 +10,32 @@ export const formatDate = (date: Date | string | null): string => {
 };
 
 /**
- * Calculate the average rating of all rated whiskeys in the collection
+ * Calculate the average rating of all rated whiskeys in the collection.
+ * Only includes bottles with a rating > 0 (excludes unrated bottles).
+ * Returns "—" if no bottles have been rated.
  */
 export const calculateAverageRating = (whiskeys: Whiskey[]): string => {
-  if (!whiskeys || whiskeys.length === 0) return "0.0";
-  
-  const ratedWhiskeys = whiskeys.filter(w => w.rating !== null && w.rating !== undefined);
-  if (ratedWhiskeys.length === 0) return "0.0";
-  
-  const sum = ratedWhiskeys.reduce((acc, whiskey) => acc + (whiskey.rating || 0), 0);
+  if (!whiskeys || whiskeys.length === 0) return "—";
+
+  const ratedWhiskeys = whiskeys.filter(w => w.rating != null && w.rating > 0);
+  if (ratedWhiskeys.length === 0) return "—";
+
+  const sum = ratedWhiskeys.reduce((acc, w) => acc + w.rating!, 0);
   return (sum / ratedWhiskeys.length).toFixed(1);
+};
+
+/**
+ * Numeric version of calculateAverageRating for contexts that need a number.
+ * Returns null if no bottles have been rated.
+ */
+export const calculateAverageRatingNumeric = (whiskeys: Whiskey[]): number | null => {
+  if (!whiskeys || whiskeys.length === 0) return null;
+
+  const ratedWhiskeys = whiskeys.filter(w => w.rating != null && w.rating > 0);
+  if (ratedWhiskeys.length === 0) return null;
+
+  const sum = ratedWhiskeys.reduce((acc, w) => acc + w.rating!, 0);
+  return parseFloat((sum / ratedWhiskeys.length).toFixed(1));
 };
 
 /**
