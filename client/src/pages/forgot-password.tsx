@@ -13,7 +13,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Loader2, Wine, ArrowLeft, Mail, CheckCircle } from "lucide-react";
+import { Loader2, ArrowLeft, Mail, CheckCircle } from "lucide-react";
+import { Logo } from "@/components/Logo";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -53,8 +54,8 @@ export default function ForgotPasswordPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-2">
-            <Wine className="w-6 h-6 text-muted-foreground" />
-            <span className="text-xl font-bold">MyWhiskeyPedia</span>
+            <Logo size="small" />
+            <span className="text-xl font-heading text-[#D4A44C]">MyWhiskeyPedia</span>
           </Link>
         </div>
 

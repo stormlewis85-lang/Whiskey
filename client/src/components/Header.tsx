@@ -1,6 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { CircleUser, LogOut, BarChart3, Home, Menu, Users, Wine, Eye, Settings, UserCircle } from "lucide-react";
+import { Logo } from "@/components/Logo";
 import { Link, useLocation } from "wouter";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -185,8 +186,11 @@ export function Header() {
           )}
 
           <Link href="/">
-            <span className="font-display text-3xl md:text-4xl font-bold tracking-wide cursor-pointer">
-              <span className="text-gradient-brand">MyWhiskeyPedia</span>
+            <span className="flex items-center gap-2 cursor-pointer">
+              <Logo size="nav" />
+              <span className="font-heading text-lg text-[#D4A44C]">
+                MyWhiskeyPedia
+              </span>
             </span>
           </Link>
         </div>

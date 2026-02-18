@@ -14,7 +14,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Loader2, Wine, Check, ArrowRight } from "lucide-react";
+import { Loader2, Check, ArrowRight } from "lucide-react";
+import { Logo } from "@/components/Logo";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
@@ -168,11 +169,9 @@ export default function AuthPage() {
         <div className="relative z-10 max-w-lg mx-auto lg:mx-0">
           {/* Logo */}
           <div className="flex items-center gap-3 mb-8">
-            <div className="p-2.5 bg-amber-500/20 rounded-xl backdrop-blur-sm border border-amber-500/20">
-              <Wine className="w-8 h-8 text-amber-400" />
-            </div>
+            <Logo size="small" className="w-14 h-14" />
             <div>
-              <h1 className="text-2xl font-bold tracking-tight">MyWhiskeyPedia</h1>
+              <h1 className="text-2xl font-heading text-[#D4A44C] tracking-tight">MyWhiskeyPedia</h1>
               <p className="text-amber-300/80 text-sm">Your personal whiskey journal</p>
             </div>
           </div>
@@ -207,8 +206,8 @@ export default function AuthPage() {
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-8">
             <div className="inline-flex items-center gap-2 mb-2">
-              <Wine className="w-6 h-6 text-muted-foreground" />
-              <span className="text-xl font-bold text-gradient">MyWhiskeyPedia</span>
+              <Logo size="small" />
+              <span className="text-xl font-heading text-[#D4A44C]">MyWhiskeyPedia</span>
             </div>
           </div>
 

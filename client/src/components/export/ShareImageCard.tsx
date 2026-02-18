@@ -1,6 +1,7 @@
 import React, { forwardRef } from 'react';
 import { Whiskey, ReviewNote } from '@shared/schema';
 import { Star, Wine } from 'lucide-react';
+import { Logo } from '@/components/Logo';
 import { cn } from '@/lib/utils';
 
 export type ImageSize = 'square' | 'portrait' | 'story';
@@ -168,8 +169,8 @@ export const ShareImageCard = forwardRef<HTMLDivElement, ShareImageCardProps>(
           {showBranding && (
             <div className="flex-shrink-0 flex items-center justify-center pt-4 border-t border-amber-800/30">
               <div className="flex items-center gap-2">
-                <Wine className="h-4 w-4 text-amber-500" />
-                <span className="text-amber-400 font-semibold text-sm tracking-wide">
+                <Logo size="favicon" />
+                <span className="text-amber-400 font-heading text-sm tracking-wide">
                   MyWhiskeyPedia
                 </span>
               </div>
