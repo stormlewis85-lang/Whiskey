@@ -110,11 +110,19 @@ const CollectionGrid = ({
   // Collection grid
   return (
     <>
-      {/* View toggle */}
+      {/* View toggle + status legend */}
       <div className="flex items-center justify-between mb-4">
-        <p className="text-sm text-muted-foreground">
-          {whiskeys.length} {whiskeys.length === 1 ? 'bottle' : 'bottles'}
-        </p>
+        <div className="flex items-center gap-4">
+          <p className="text-sm text-muted-foreground">
+            {whiskeys.length} {whiskeys.length === 1 ? 'bottle' : 'bottles'}
+          </p>
+          <div className="hidden sm:flex items-center gap-3 text-[0.6875rem] text-muted-foreground">
+            <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-emerald-500" />Open</span>
+            <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-primary" />Sealed</span>
+            <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-pink-500" />Gifted</span>
+            <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-muted-foreground" />Finished</span>
+          </div>
+        </div>
         <div className="flex items-center gap-1 border border-border rounded-lg p-1">
           <button
             onClick={() => setViewMode('grid')}

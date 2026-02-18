@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Whiskey } from "@shared/schema";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { PencilIcon, Star, Wine, Heart, Package, PackageOpen, Gift, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -18,6 +19,16 @@ const getStatusColor = (status: string | null | undefined) => {
     case 'open': return 'bg-emerald-500';
     case 'finished': return 'bg-muted-foreground';
     case 'gifted': return 'bg-pink-500';
+    default: return '';
+  }
+};
+
+const getStatusLabel = (status: string | null | undefined) => {
+  switch (status) {
+    case 'sealed': return 'Sealed';
+    case 'open': return 'Open';
+    case 'finished': return 'Finished';
+    case 'gifted': return 'Gifted';
     default: return '';
   }
 };
@@ -63,10 +74,20 @@ const WhiskeyCard = ({ whiskey, onViewDetails, onReview, onEdit }: WhiskeyCardPr
 
         {/* Status dot - top right */}
         {whiskey.status && !isWishlist && (
-          <div className={cn(
-            "absolute top-4 right-4 w-2.5 h-2.5 rounded-full",
-            getStatusColor(whiskey.status)
-          )} />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div
+                className={cn(
+                  "absolute top-4 right-4 w-2.5 h-2.5 rounded-full cursor-default",
+                  getStatusColor(whiskey.status)
+                )}
+                onClick={(e) => e.stopPropagation()}
+              />
+            </TooltipTrigger>
+            <TooltipContent side="left" className="text-xs">
+              {getStatusLabel(whiskey.status)}
+            </TooltipContent>
+          </Tooltip>
         )}
 
         {/* Wishlist indicator */}
