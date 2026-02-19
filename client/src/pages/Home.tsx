@@ -19,6 +19,7 @@ const TastingSession = lazy(() => import("@/components/TastingSession"));
 const RickErrorBoundary = lazy(() => import("@/components/RickErrorBoundary"));
 import { BarcodeScanner } from "@/components/BarcodeScanner";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { PlusIcon, UploadIcon, DownloadIcon, Scan } from "lucide-react";
 import useWhiskeyCollection from "@/lib/hooks/useWhiskeyCollection";
 import { useAuth } from "@/hooks/use-auth";
@@ -135,16 +136,20 @@ const Home = () => {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              onClick={openBarcodeScanner}
-              variant="ghost"
-              size="icon"
-              className="text-muted-foreground hover:text-foreground hover:bg-accent/50 h-10 w-10"
-              title="Scan barcode"
-            >
-              <Scan className="h-5 w-5" />
-              <span className="sr-only">Scan barcode</span>
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={openBarcodeScanner}
+                  variant="ghost"
+                  size="icon"
+                  className="text-muted-foreground hover:text-foreground hover:bg-accent/50 h-10 w-10"
+                >
+                  <Scan className="h-5 w-5" />
+                  <span className="sr-only">Scan barcode</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Scan barcode</TooltipContent>
+            </Tooltip>
             <Button
               onClick={openAddWhiskeyModal}
               className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-warm-sm"
