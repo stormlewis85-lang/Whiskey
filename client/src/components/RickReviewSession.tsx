@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { formatWhiskeyName } from "@/lib/utils/formatName";
 import { useMutation } from "@tanstack/react-query";
 import { Whiskey } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -251,7 +252,7 @@ const RickReviewSession = ({ whiskey, onClose, onComplete }: RickReviewSessionPr
 
                 <div className="space-y-2">
                   <h2 className="text-2xl font-bold text-foreground">Great Work!</h2>
-                  <p className="text-muted-foreground">{whiskey.name}</p>
+                  <p className="text-muted-foreground">{formatWhiskeyName(whiskey.name)}</p>
                 </div>
 
                 {/* Score Summary */}
@@ -315,7 +316,7 @@ const RickReviewSession = ({ whiskey, onClose, onComplete }: RickReviewSessionPr
               <h2 className="text-xl font-semibold text-foreground">
                 Rick is preparing your review guide...
               </h2>
-              <p className="text-muted-foreground">{whiskey.name}</p>
+              <p className="text-muted-foreground">{formatWhiskeyName(whiskey.name)}</p>
             </div>
             <Loader2 className="h-6 w-6 animate-spin mx-auto text-amber-500" />
           </div>
@@ -333,7 +334,7 @@ const RickReviewSession = ({ whiskey, onClose, onComplete }: RickReviewSessionPr
             <Mic className="h-5 w-5 text-amber-400" />
             <div>
               <h1 className="font-semibold text-amber-50 text-sm sm:text-base truncate max-w-[200px] sm:max-w-none">
-                {whiskey.name}
+                {formatWhiskeyName(whiskey.name)}
               </h1>
               <p className="text-xs text-amber-200/70">Review with Rick</p>
             </div>

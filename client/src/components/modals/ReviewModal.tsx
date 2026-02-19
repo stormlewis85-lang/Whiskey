@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { formatWhiskeyName } from "@/lib/utils/formatName";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
@@ -963,7 +964,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey, existingReview }: ReviewModalPr
             <div className="sticky top-0 z-10 bg-card border-b border-border px-6 py-4">
               <div className="flex items-center justify-between">
                 <DialogTitle className="text-lg font-semibold text-foreground">
-                  Review: {whiskey.name}
+                  Review: {formatWhiskeyName(whiskey.name)}
                 </DialogTitle>
                 <button
                   onClick={handleClose}
@@ -1024,7 +1025,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey, existingReview }: ReviewModalPr
               <div className="px-6 py-4">
                 <div className="flex items-center justify-between mb-3">
                   <DialogTitle className="font-heading text-xl text-foreground">
-                    {isEditMode ? 'Edit Review' : 'Review'}: {whiskey.name}
+                    {isEditMode ? 'Edit Review' : 'Review'}: {formatWhiskeyName(whiskey.name)}
                   </DialogTitle>
                   <button
                     onClick={handleClose}

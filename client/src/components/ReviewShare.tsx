@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { formatWhiskeyName } from "@/lib/utils/formatName";
 import { useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useAuth } from '@/hooks/use-auth';
@@ -124,7 +125,7 @@ const ReviewShare = ({ whiskey, review, className = '' }: ReviewShareProps) => {
           <DialogHeader>
             <DialogTitle>Share Your Whiskey Review</DialogTitle>
             <DialogDescription>
-              Share this review of {whiskey.name} with others. They can view your review without needing an account.
+              Share this review of {formatWhiskeyName(whiskey.name)} with others. They can view your review without needing an account.
             </DialogDescription>
           </DialogHeader>
           

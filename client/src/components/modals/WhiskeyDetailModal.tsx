@@ -1,4 +1,5 @@
 import { useMemo, useState, useRef } from "react";
+import { formatWhiskeyName } from "@/lib/utils/formatName";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -347,7 +348,7 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit, onTast
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
                 <DialogTitle className="text-xl md:text-2xl font-bold text-foreground pr-8">
-                  {whiskey.name}
+                  {formatWhiskeyName(whiskey.name)}
                 </DialogTitle>
                 {whiskey.distillery && (
                   <p className="text-muted-foreground mt-1">by {whiskey.distillery}</p>

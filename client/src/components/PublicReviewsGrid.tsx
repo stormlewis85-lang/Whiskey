@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatWhiskeyName } from "@/lib/utils/formatName";
 import { useQuery } from '@tanstack/react-query';
 import { getQueryFn } from '@/lib/queryClient';
 import { Whiskey, ReviewNote, User } from '@shared/schema';
@@ -69,7 +70,7 @@ const ReviewCard = ({
           </Badge>
         </div>
         <h3 className="text-lg font-semibold text-foreground line-clamp-1 transition-colors">
-          {whiskey.name}
+          {formatWhiskeyName(whiskey.name)}
         </h3>
         <p className="text-sm text-muted-foreground line-clamp-1">
           {whiskey.distillery}

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatWhiskeyName } from "@/lib/utils/formatName";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
@@ -442,7 +443,7 @@ const Flights = () => {
                   }}
                 >
                   <div>
-                    <div className="font-medium text-foreground">{whiskey.name}</div>
+                    <div className="font-medium text-foreground">{formatWhiskeyName(whiskey.name)}</div>
                     <div className="text-sm text-muted-foreground">
                       {whiskey.distillery && `${whiskey.distillery} • `}
                       {whiskey.type}

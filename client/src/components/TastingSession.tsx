@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { formatWhiskeyName } from "@/lib/utils/formatName";
 import { useMutation } from "@tanstack/react-query";
 import { Whiskey } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
@@ -240,7 +241,7 @@ const TastingSession = ({ whiskey, mode, onClose, onComplete }: TastingSessionPr
                 {/* Title & Whiskey */}
                 <div className="space-y-2">
                   <h2 className="text-2xl font-bold text-foreground">Tasting Complete!</h2>
-                  <p className="text-muted-foreground">{whiskey.name}</p>
+                  <p className="text-muted-foreground">{formatWhiskeyName(whiskey.name)}</p>
                 </div>
 
                 {/* Rick's Closing Quip */}
@@ -301,7 +302,7 @@ const TastingSession = ({ whiskey, mode, onClose, onComplete }: TastingSessionPr
                 Rick is preparing your tasting...
               </h2>
               <p className="text-muted-foreground">
-                {whiskey.name}
+                {formatWhiskeyName(whiskey.name)}
               </p>
             </div>
             <Loader2 className="h-6 w-6 animate-spin mx-auto text-amber-500" />
@@ -319,7 +320,7 @@ const TastingSession = ({ whiskey, mode, onClose, onComplete }: TastingSessionPr
           <div className="flex items-center gap-3">
             <Mic className="h-5 w-5 text-amber-400" />
             <div>
-              <h1 className="font-semibold text-amber-50">{whiskey.name}</h1>
+              <h1 className="font-semibold text-amber-50">{formatWhiskeyName(whiskey.name)}</h1>
               <p className="text-xs text-amber-200/70">
                 {mode === 'guided' ? 'Guided Tasting' : 'Quick Notes'}
               </p>

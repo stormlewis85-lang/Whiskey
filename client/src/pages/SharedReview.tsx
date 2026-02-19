@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatWhiskeyName } from "@/lib/utils/formatName";
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'wouter';
 import { getQueryFn } from '@/lib/queryClient';
@@ -159,7 +160,7 @@ const SharedReview = () => {
                 </Badge>
                 <span className="text-amber-200/70 text-sm">Shared by {user.username}</span>
               </div>
-              <h1 className="text-2xl md:text-3xl font-bold text-amber-50">{whiskey.name}</h1>
+              <h1 className="text-2xl md:text-3xl font-bold text-amber-50">{formatWhiskeyName(whiskey.name)}</h1>
               <p className="text-amber-200/80 mt-1">
                 {whiskey.distillery}
                 {whiskey.age && ` • ${whiskey.age} years`}
