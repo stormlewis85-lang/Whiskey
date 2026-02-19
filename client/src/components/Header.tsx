@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { CircleUser, LogOut, BarChart3, Home, Menu, Users, Wine, Eye, Settings, UserCircle } from "lucide-react";
+import { CircleUser, LogOut, BarChart3, Home, Menu, Users, Wine, Eye, Mic, Settings, UserCircle } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { Link, useLocation } from "wouter";
 import { useState } from "react";
@@ -102,6 +102,19 @@ export function Header() {
         >
           <Eye className="h-4 w-4" />
           <span>Blind Tastings</span>
+        </button>
+      </Link>
+      <Link href="/rick-house">
+        <button
+          onClick={() => setIsSheetOpen(false)}
+          className={`relative flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+            isActive('/rick-house')
+              ? 'text-primary bg-accent after:absolute after:bottom-0 after:left-2 after:right-2 after:h-0.5 after:bg-primary after:rounded-full'
+              : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+          }`}
+        >
+          <Mic className="h-4 w-4" />
+          <span>Rick House</span>
         </button>
       </Link>
     </>

@@ -16,6 +16,7 @@ import Community from "@/pages/Community";
 import ReviewPage from "@/pages/ReviewPage";
 import Flights from "@/pages/Flights";
 import BlindTastings from "@/pages/BlindTastings";
+import RickHouse from "@/pages/RickHouse";
 import Profile from "@/pages/Profile";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import { Toaster } from "@/components/ui/toaster";
@@ -28,6 +29,7 @@ function Router() {
       <ProtectedRoute path="/whiskey/:id/review/:reviewId" component={ReviewPage} />
       <ProtectedRoute path="/flights" component={Flights} />
       <ProtectedRoute path="/blind-tastings" component={BlindTastings} />
+      <ProtectedRoute path="/rick-house" component={RickHouse} />
       <Route path="/auth" component={AuthPage} />
       <Route path="/forgot-password" component={ForgotPasswordPage} />
       <Route path="/reset-password" component={ResetPasswordPage} />
