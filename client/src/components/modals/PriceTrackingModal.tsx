@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { formatWhiskeyName } from "@/lib/utils/formatName";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -160,7 +159,7 @@ export default function PriceTrackingModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px]" description="Track price history for this whiskey">
         <DialogHeader>
-          <DialogTitle>Price Tracking - {formatWhiskeyName(whiskey.name)}</DialogTitle>
+          <DialogTitle>Price Tracking - {whiskey.name}</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-6 py-4">

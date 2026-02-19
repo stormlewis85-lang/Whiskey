@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { formatWhiskeyName } from "@/lib/utils/formatName";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Whiskey } from "@shared/schema";
@@ -38,7 +37,7 @@ const TastingModeModal = ({ isOpen, onClose, whiskey, onSelectMode, isLoading }:
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
             Choose how you'd like Rick to guide your tasting of{" "}
-            <span className="font-medium text-foreground">{formatWhiskeyName(whiskey.name)}</span>
+            <span className="font-medium text-foreground">{whiskey.name}</span>
           </DialogDescription>
         </DialogHeader>
 

@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Whiskey } from "@shared/schema";
 import { Star, Wine, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { formatWhiskeyName } from "@/lib/utils/formatName";
 
 interface WhiskeyListViewProps {
   whiskeys: Whiskey[];
@@ -79,7 +78,7 @@ const WhiskeyListView = ({ whiskeys, onViewDetails, onReview, onEdit }: WhiskeyL
                 <td className="py-2.5 pr-3">
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="font-medium text-foreground truncate max-w-[200px] sm:max-w-[280px]">
-                      {formatWhiskeyName(whiskey.name)}
+                      {whiskey.name}
                     </span>
                     {isWishlist && (
                       <Heart className="w-3.5 h-3.5 text-pink-500 fill-pink-500 shrink-0" />

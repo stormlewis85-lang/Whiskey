@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { formatWhiskeyName } from "@/lib/utils/formatName";
 import { useMutation } from "@tanstack/react-query";
 import { Whiskey, ReviewNote } from "@shared/schema";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -141,7 +140,7 @@ const EditReviewModal = ({ isOpen, onClose, whiskey, review }: EditReviewModalPr
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-semibold text-lg">{formatWhiskeyName(whiskey.name)}</h3>
+                <h3 className="font-semibold text-lg">{whiskey.name}</h3>
                 <p className="text-sm text-gray-500">Review from {formatDate(review.date)}</p>
               </div>
               <div className="flex items-center">
@@ -204,7 +203,7 @@ const EditReviewModal = ({ isOpen, onClose, whiskey, review }: EditReviewModalPr
           <AlertDialogHeader>
             <AlertDialogTitle>Delete this review?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently remove your review for "{formatWhiskeyName(whiskey.name)}" from {formatDate(review.date)}.
+              This will permanently remove your review for "{whiskey.name}" from {formatDate(review.date)}.
               The whiskey will remain in your collection.
             </AlertDialogDescription>
           </AlertDialogHeader>

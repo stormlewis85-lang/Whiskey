@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { formatWhiskeyName } from "@/lib/utils/formatName";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -176,7 +175,7 @@ export default function MarketValueModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px]" description="Estimate the market value of this whiskey">
         <DialogHeader>
-          <DialogTitle>Market Value Estimator - {formatWhiskeyName(whiskey.name)}</DialogTitle>
+          <DialogTitle>Market Value Estimator - {whiskey.name}</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-6 py-4">

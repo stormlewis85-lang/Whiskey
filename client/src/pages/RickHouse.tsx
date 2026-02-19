@@ -8,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Whiskey } from "@shared/schema";
 import { Mic, Clock, BookOpen, Play } from "lucide-react";
 import { format } from "date-fns";
-import { formatWhiskeyName } from "@/lib/utils/formatName";
 
 const TastingModeModal = lazy(() => import("@/components/modals/TastingModeModal"));
 const TastingSession = lazy(() => import("@/components/TastingSession"));
@@ -97,7 +96,7 @@ const RickHouse = () => {
                     <SelectContent>
                       {availableWhiskeys.map(w => (
                         <SelectItem key={w.id} value={String(w.id)}>
-                          {formatWhiskeyName(w.name)}
+                          {w.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -140,7 +139,7 @@ const RickHouse = () => {
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <h3 className="font-medium text-foreground line-clamp-1">
-                        {formatWhiskeyName(session.whiskeyName)}
+                        {session.whiskeyName}
                       </h3>
                       {session.completedAt ? (
                         <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 shrink-0">

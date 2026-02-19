@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { PencilIcon, Star, Wine, Heart, Package, PackageOpen, Gift, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { formatWhiskeyName } from "@/lib/utils/formatName";
 
 interface WhiskeyCardProps {
   whiskey: Whiskey;
@@ -110,7 +109,7 @@ const WhiskeyCard = ({ whiskey, onViewDetails, onReview, onEdit }: WhiskeyCardPr
       <div className="p-5 space-y-3">
         {/* Whiskey name - serif, prominent */}
         <h3 className="text-whiskey-name text-foreground line-clamp-2 group-hover:text-primary transition-colors">
-          {formatWhiskeyName(whiskey.name)}
+          {whiskey.name}
         </h3>
 
         {/* Distillery */}

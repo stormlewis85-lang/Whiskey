@@ -1,5 +1,4 @@
 import { useState, useMemo } from "react";
-import { formatWhiskeyName } from "@/lib/utils/formatName";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -113,7 +112,7 @@ const ComparisonTool = ({ whiskeys, className = "" }: ComparisonToolProps) => {
                 <span className="w-6 h-6 rounded-full bg-muted text-muted-foreground text-sm flex items-center justify-center font-bold">
                   {idx + 1}
                 </span>
-                <span className="font-medium text-foreground truncate">{formatWhiskeyName(whiskey.name)}</span>
+                <span className="font-medium text-foreground truncate">{whiskey.name}</span>
               </div>
               <Button
                 variant="ghost"
@@ -164,7 +163,7 @@ const ComparisonTool = ({ whiskeys, className = "" }: ComparisonToolProps) => {
             {comparisonWhiskeys.map(whiskey => (
               <TableHead key={whiskey.id} className="min-w-[180px]">
                 <div className="flex flex-col">
-                  <span className="font-bold text-foreground">{formatWhiskeyName(whiskey.name)}</span>
+                  <span className="font-bold text-foreground">{whiskey.name}</span>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -418,7 +417,7 @@ const ComparisonTool = ({ whiskeys, className = "" }: ComparisonToolProps) => {
               <SelectContent>
                 {availableWhiskeys.map(whiskey => (
                   <SelectItem key={whiskey.id} value={whiskey.id.toString()}>
-                    {formatWhiskeyName(whiskey.name)}
+                    {whiskey.name}
                   </SelectItem>
                 ))}
               </SelectContent>

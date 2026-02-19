@@ -1,5 +1,4 @@
 import React from 'react';
-import { formatWhiskeyName } from "@/lib/utils/formatName";
 import { Helmet } from 'react-helmet';
 import { useQuery } from '@tanstack/react-query';
 import PublicReviewsGrid from '@/components/PublicReviewsGrid';
@@ -92,7 +91,7 @@ const FollowingReviewCard = ({ whiskey, review, user }: PublicReview) => {
           </Badge>
         </div>
         <h3 className="text-lg font-semibold text-foreground line-clamp-1 group-hover:text-foreground transition-colors">
-          {formatWhiskeyName(whiskey.name)}
+          {whiskey.name}
         </h3>
         <p className="text-sm text-muted-foreground line-clamp-1">
           {whiskey.distillery}

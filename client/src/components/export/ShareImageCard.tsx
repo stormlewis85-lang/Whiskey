@@ -1,5 +1,4 @@
 import React, { forwardRef } from 'react';
-import { formatWhiskeyName } from "@/lib/utils/formatName";
 import { Whiskey, ReviewNote } from '@shared/schema';
 import { Star, Wine } from 'lucide-react';
 import { Logo } from '@/components/Logo';
@@ -103,7 +102,7 @@ export const ShareImageCard = forwardRef<HTMLDivElement, ShareImageCardProps>(
               className="text-amber-50 font-bold leading-tight mb-1"
               style={{ fontSize: size === 'story' ? '1.25rem' : '1.1rem' }}
             >
-              {formatWhiskeyName(whiskey.name)}
+              {whiskey.name}
             </h1>
 
             {/* Distillery */}
@@ -298,7 +297,7 @@ export const ShareImageCardFull = forwardRef<HTMLDivElement, ShareImageCardProps
               lineHeight: 1.2,
               marginBottom: 8 * scale,
             }}>
-              {formatWhiskeyName(whiskey.name)}
+              {whiskey.name}
             </h1>
 
             <p style={{

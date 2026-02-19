@@ -1,5 +1,4 @@
 import React from 'react';
-import { formatWhiskeyName } from "@/lib/utils/formatName";
 import { useParams } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet';
@@ -344,7 +343,7 @@ const PublicWhiskeyCard = ({ whiskey }: { whiskey: PublicWhiskey }) => {
         <CardContent className="p-4 w-2/3 flex flex-col">
           <div className="flex-1">
             <h3 className="font-semibold text-base text-foreground line-clamp-2">
-              {formatWhiskeyName(whiskey.name)}
+              {whiskey.name}
             </h3>
             <p className="text-sm text-muted-foreground truncate mt-1">
               {whiskey.distillery || 'Unknown Distillery'}

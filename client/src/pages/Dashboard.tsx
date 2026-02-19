@@ -12,7 +12,6 @@ import { Header } from "@/components/Header";
 import { Loader2, Home, Wine, Star, TrendingUp, DollarSign, BarChart3, AlertCircle } from "lucide-react";
 import { Link } from "wouter";
 import { calculateAverageRating } from "@/lib/utils/calculations";
-import { formatWhiskeyName } from "@/lib/utils/formatName";
 
 // Warm amber/gold color palette for charts
 const CHART_COLORS = [
@@ -518,7 +517,7 @@ export default function Dashboard() {
                           {index + 1}
                         </span>
                       </td>
-                      <td className="py-3 px-4 font-medium text-foreground">{formatWhiskeyName(whiskey.name)}</td>
+                      <td className="py-3 px-4 font-medium text-foreground">{whiskey.name}</td>
                       <td className="py-3 px-4 text-muted-foreground hidden sm:table-cell">{whiskey.distillery}</td>
                       <td className="py-3 px-4 text-muted-foreground hidden md:table-cell">{whiskey.type}</td>
                       <td className="py-3 px-4">

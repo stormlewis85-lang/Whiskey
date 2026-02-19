@@ -1,5 +1,4 @@
 import React from 'react';
-import { formatWhiskeyName } from "@/lib/utils/formatName";
 import { Whiskey, ReviewNote } from '@shared/schema';
 import {
   Card,
@@ -221,7 +220,7 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
     <div className="bg-card rounded-xl shadow-warm-lg max-w-5xl mx-auto overflow-hidden border border-border/50">
       {/* Header */}
       <div className="bg-gradient-to-r from-amber-950 via-amber-900 to-amber-950 text-white p-6">
-        <h1 className="text-2xl md:text-3xl font-bold text-center text-amber-50">{formatWhiskeyName(whiskey.name)}</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-center text-amber-50">{whiskey.name}</h1>
         {whiskey.distillery && <p className="text-center text-amber-200/80 mt-1">{whiskey.distillery}</p>}
       </div>
 
