@@ -36,6 +36,8 @@ interface FilterBarProps {
   setCollectionView?: (view: 'all' | 'collection' | 'wishlist') => void;
   statusFilter?: string;
   setStatusFilter?: (status: string) => void;
+  // Optional action slot (e.g. Compare button)
+  actions?: React.ReactNode;
 }
 
 const FilterBar = ({
@@ -56,7 +58,8 @@ const FilterBar = ({
   collectionView = 'all',
   setCollectionView,
   statusFilter = 'all',
-  setStatusFilter
+  setStatusFilter,
+  actions
 }: FilterBarProps) => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const isMobile = useIsMobile();
@@ -287,6 +290,8 @@ const FilterBar = ({
             />
             <Search className="h-4 w-4 text-muted-foreground absolute left-3 top-1/2 transform -translate-y-1/2" />
           </div>
+
+          {actions}
 
           <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
             <SheetTrigger asChild>
@@ -540,6 +545,8 @@ const FilterBar = ({
               Clear
             </Button>
           )}
+
+          {actions}
         </div>
       </div>
     </div>

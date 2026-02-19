@@ -122,7 +122,7 @@ const Home = () => {
       <Header />
 
       {/* App Header */}
-      <header className="relative py-8 md:py-12 lg:py-16">
+      <header className="relative py-6 md:py-8 lg:py-10">
         <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-transparent" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div>
@@ -158,7 +158,7 @@ const Home = () => {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-5">
         {/* Filters */}
         <FilterBar
           searchQuery={searchQuery}
@@ -181,6 +181,12 @@ const Home = () => {
           setCollectionView={setCollectionView}
           statusFilter={statusFilter}
           setStatusFilter={setStatusFilter}
+          actions={whiskeys && whiskeys.length > 1 ? (
+            <ComparisonTool
+              whiskeys={whiskeys}
+              className="h-9 border-border/50 hover:border-border hover:bg-accent/50"
+            />
+          ) : undefined}
         />
         
         {/* Stats */}
@@ -197,7 +203,7 @@ const Home = () => {
           onAddNew={openAddWhiskeyModal}
         />
         
-        {/* Import, Export, and Compare Buttons at bottom */}
+        {/* Import and Export Buttons at bottom */}
         <div className="mt-8 flex flex-wrap justify-center gap-3 pb-8">
           <Button
             onClick={openImportModal}
@@ -215,14 +221,6 @@ const Home = () => {
             <DownloadIcon className="h-4 w-4 mr-2 text-muted-foreground" />
             Export Collection
           </Button>
-
-          {/* Comparison Tool */}
-          {whiskeys && whiskeys.length > 1 && (
-            <ComparisonTool
-              whiskeys={whiskeys}
-              className="border-border hover:border-border hover:bg-accent/50"
-            />
-          )}
         </div>
       </main>
 
