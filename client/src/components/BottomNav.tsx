@@ -24,9 +24,9 @@ export function BottomNav({ onScanClick }: BottomNavProps) {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 md:hidden"
+      className="fixed bottom-0 left-0 right-0 z-50 md:hidden safe-area-bottom"
       style={{
-        height: "84px",
+        minHeight: "84px",
         background: "linear-gradient(to top, hsl(var(--background)) 70%, transparent)",
       }}
     >

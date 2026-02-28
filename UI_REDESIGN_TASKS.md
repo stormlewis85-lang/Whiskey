@@ -41,7 +41,7 @@ This redesign focuses on **layout and structure**, not aesthetic overhaul. The B
 | U004 | Create MobileShell layout wrapper | New layout component that wraps page content with BottomNav. Content area has `padding-bottom: 100px` to clear nav. | ✅ |
 | U005 | Hide existing top navbar on mobile | Existing navbar hidden at `md` breakpoint and below. Show BottomNav instead. Desktop keeps top nav for now. | ✅ |
 | U006 | Update App.tsx to use MobileShell | Wrap routes in MobileShell. Ensure navigation state syncs with current route (active tab highlights correctly). | ✅ |
-| U007 | Add safe area handling | On iOS, respect safe area insets for bottom nav (notch devices). Use `env(safe-area-inset-bottom)`. | ⬜ |
+| U007 | Add safe area handling | On iOS, respect safe area insets for bottom nav (notch devices). Use `env(safe-area-inset-bottom)`. | ✅ |
 | U008 | Test navigation flow | All 5 tabs navigate correctly. Active states work. Back navigation preserves tab state. No layout shift on route change. | ⬜ |
 
 ---
