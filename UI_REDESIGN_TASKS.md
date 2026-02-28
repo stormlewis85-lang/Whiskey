@@ -71,11 +71,11 @@ This redesign focuses on **layout and structure**, not aesthetic overhaul. The B
 
 | ID | Task | Success Criteria | Status |
 |----|------|------------------|--------|
-| U016 | Create ProfileHeader component | Centered layout: avatar (gold gradient), name (Playfair), handle, tier badge. Subtle gold gradient background at top. | ⬜ |
-| U017 | Create ProfileStats component | Horizontal stat row in card: Bottles, Reviews, Following, Followers. Gold numbers, uppercase labels. | ⬜ |
-| U018 | Create ProfileTabs component | Tab bar: Collection, Reviews, Wishlist. Underline indicator on active tab. Switches content below. | ⬜ |
-| U019 | Create CollectionGrid component | 3-column grid of bottle thumbnails. Square aspect ratio, rounded corners, name overlay at bottom. | ⬜ |
-| U020 | Integrate profile components | Assemble ProfileHeader + ProfileStats + ProfileTabs + CollectionGrid into Profile page. Mobile-first layout. | ⬜ |
+| U016 | Create ProfileHeader component | Centered layout: avatar (gold gradient), name (Playfair), handle, tier badge. Subtle gold gradient background at top. | ✅ |
+| U017 | Create ProfileStats component | Horizontal stat row in card: Bottles, Reviews, Following, Followers. Gold numbers, uppercase labels. | ✅ |
+| U018 | Create ProfileTabs component | Tab bar: Collection, Reviews, Wishlist. Underline indicator on active tab. Switches content below. | ✅ |
+| U019 | Create CollectionGrid component | 3-column grid of bottle thumbnails. Square aspect ratio, rounded corners, name overlay at bottom. | ✅ |
+| U020 | Integrate profile components | Assemble ProfileHeader + ProfileStats + ProfileTabs + CollectionGrid into Profile page. Mobile-first layout. | ✅ |
 
 ---
 

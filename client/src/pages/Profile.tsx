@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet';
@@ -10,6 +10,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { apiRequest } from '@/lib/queryClient';
 import {
   User,
@@ -25,6 +26,10 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Whiskey, ReviewNote } from '@shared/schema';
+import { ProfileHeader } from '@/components/profile/ProfileHeader';
+import { ProfileStats } from '@/components/profile/ProfileStats';
+import { ProfileTabs } from '@/components/profile/ProfileTabs';
+import { MobileCollectionGrid } from '@/components/profile/MobileCollectionGrid';
 
 interface PublicProfile {
   user: {
@@ -54,6 +59,8 @@ const Profile = () => {
   const { user: currentUser, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
+  const [mobileTab, setMobileTab] = useState("Collection");
 
   // Fetch public profile
   const { data: profile, isLoading: profileLoading, error: profileError } = useQuery<PublicProfile>({
@@ -168,6 +175,63 @@ const Profile = () => {
     month: 'long',
     year: 'numeric'
   });
+
+  // Mobile profile layout
+  if (isMobile) {
+    const collectionItems = whiskeys.map((w) => ({
+      id: String(w.id),
+      name: w.name,
+      imageUrl: w.image || undefined,
+    }));
+
+    return (
+      <>
+        <Helmet>
+          <title>{displayName}'s Collection | MyWhiskeyPedia</title>
+        </Helmet>
+        <div className="min-h-screen bg-background">
+          <ProfileHeader
+            name={displayName}
+            initials={initials}
+            handle={profile.user.profileSlug ? `@${profile.user.profileSlug}` : `@${profile.user.username}`}
+            badge="Connoisseur"
+          />
+          <ProfileStats
+            stats={[
+              { value: profile.stats.whiskeyCount, label: "Bottles" },
+              { value: profile.stats.reviewCount, label: "Reviews" },
+              { value: profile.stats.followingCount, label: "Following" },
+              { value: profile.stats.followersCount, label: "Followers" },
+            ]}
+          />
+          <ProfileTabs
+            tabs={["Collection", "Reviews", "Wishlist"]}
+            activeTab={mobileTab}
+            onTabChange={setMobileTab}
+          />
+          {mobileTab === "Collection" && (
+            whiskeysLoading ? (
+              <div className="flex justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <MobileCollectionGrid items={collectionItems} />
+            )
+          )}
+          {mobileTab === "Reviews" && (
+            <div className="text-center py-12 text-muted-foreground" style={{ fontSize: "0.8rem" }}>
+              Reviews coming soon
+            </div>
+          )}
+          {mobileTab === "Wishlist" && (
+            <div className="text-center py-12 text-muted-foreground" style={{ fontSize: "0.8rem" }}>
+              Wishlist coming soon
+            </div>
+          )}
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
