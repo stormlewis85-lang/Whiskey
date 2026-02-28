@@ -23,8 +23,11 @@ export function MobileHomeHeader({ hasNotifications }: MobileHomeHeaderProps) {
       </Link>
 
       {/* Action icons */}
-      <div className="flex items-center gap-4">
-        <div className="relative" style={{ opacity: 0.7 }}>
+      <div className="flex items-center gap-1">
+        <button
+          className="relative flex items-center justify-center bg-transparent border-none cursor-pointer"
+          style={{ width: "44px", height: "44px", opacity: 0.7 }}
+        >
           <Bell className="w-[22px] h-[22px] text-foreground" />
           {hasNotifications && (
             <span
@@ -32,14 +35,19 @@ export function MobileHomeHeader({ hasNotifications }: MobileHomeHeaderProps) {
               style={{
                 width: "7px",
                 height: "7px",
-                top: "0px",
-                right: "0px",
+                top: "8px",
+                right: "8px",
               }}
             />
           )}
-        </div>
+        </button>
         <Link href="/search">
-          <Search className="w-[22px] h-[22px] text-foreground" style={{ opacity: 0.7 }} />
+          <span
+            className="flex items-center justify-center cursor-pointer"
+            style={{ width: "44px", height: "44px", opacity: 0.7 }}
+          >
+            <Search className="w-[22px] h-[22px] text-foreground" />
+          </span>
         </Link>
       </div>
     </div>

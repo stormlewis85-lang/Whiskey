@@ -22,10 +22,10 @@ export function BottleHero({ imageUrl, onBack, onShare, onFavorite, isFavorited 
         onClick={onBack}
         className="absolute flex items-center justify-center rounded-full border-none cursor-pointer"
         style={{
-          top: "48px",
-          left: "20px",
-          width: "36px",
-          height: "36px",
+          top: "44px",
+          left: "16px",
+          width: "44px",
+          height: "44px",
           background: "rgba(0,0,0,0.4)",
           backdropFilter: "blur(10px)",
         }}
@@ -37,14 +37,14 @@ export function BottleHero({ imageUrl, onBack, onShare, onFavorite, isFavorited 
       {/* Action buttons */}
       <div
         className="absolute flex gap-2.5"
-        style={{ top: "48px", right: "20px" }}
+        style={{ top: "44px", right: "16px" }}
       >
         <button
           onClick={onShare}
           className="flex items-center justify-center rounded-full border-none cursor-pointer"
           style={{
-            width: "36px",
-            height: "36px",
+            width: "44px",
+            height: "44px",
             background: "rgba(0,0,0,0.4)",
             backdropFilter: "blur(10px)",
           }}
@@ -56,8 +56,8 @@ export function BottleHero({ imageUrl, onBack, onShare, onFavorite, isFavorited 
           onClick={onFavorite}
           className="flex items-center justify-center rounded-full border-none cursor-pointer"
           style={{
-            width: "36px",
-            height: "36px",
+            width: "44px",
+            height: "44px",
             background: "rgba(0,0,0,0.4)",
             backdropFilter: "blur(10px)",
           }}

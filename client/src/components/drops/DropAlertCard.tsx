@@ -63,7 +63,7 @@ export function DropAlertCard({ alert, onClick }: DropAlertCardProps) {
       </div>
 
       {/* Store name */}
-      <div className="font-medium text-foreground mb-1" style={{ fontSize: "0.8rem" }}>
+      <div className="font-medium text-foreground mb-1 truncate" style={{ fontSize: "0.8rem" }}>
         {alert.storeName} — {alert.storeLocation}
       </div>
 

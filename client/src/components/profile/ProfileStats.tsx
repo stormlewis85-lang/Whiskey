@@ -10,9 +10,8 @@ interface ProfileStatsProps {
 export function ProfileStats({ stats }: ProfileStatsProps) {
   return (
     <div
-      className="flex justify-center mx-5"
+      className="flex justify-between mx-5"
       style={{
-        gap: "32px",
         padding: "20px",
         background: "hsl(var(--card))",
         borderRadius: "16px",

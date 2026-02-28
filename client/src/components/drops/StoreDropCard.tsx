@@ -131,7 +131,8 @@ export function StoreDropCard({ drop, onGetDirections, onViewStore }: StoreDropC
           onClick={onGetDirections}
           className="flex-1 flex items-center justify-center gap-2 bg-transparent text-foreground cursor-pointer font-medium"
           style={{
-            padding: "10px",
+            minHeight: "44px",
+            padding: "12px",
             borderRadius: "10px",
             border: "1px solid rgba(255,255,255,0.08)",
             fontSize: "0.75rem",
@@ -144,7 +145,8 @@ export function StoreDropCard({ drop, onGetDirections, onViewStore }: StoreDropC
           onClick={onViewStore}
           className="flex-1 flex items-center justify-center gap-2 bg-transparent text-foreground cursor-pointer font-medium"
           style={{
-            padding: "10px",
+            minHeight: "44px",
+            padding: "12px",
             borderRadius: "10px",
             border: "1px solid rgba(255,255,255,0.08)",
             fontSize: "0.75rem",

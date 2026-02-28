@@ -20,7 +20,8 @@ export function ProfileTabs({ tabs, activeTab, onTabChange }: ProfileTabsProps) 
               isActive ? "text-primary" : "text-muted-foreground"
             }`}
             style={{
-              padding: "12px 0",
+              padding: "14px 0",
+              minHeight: "44px",
               fontSize: "0.75rem",
               letterSpacing: "0.06em",
             }}

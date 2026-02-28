@@ -46,11 +46,11 @@ export function ActivityCard({ item, onLike, onComment }: ActivityCardProps) {
         </div>
 
         {/* Meta */}
-        <div className="flex flex-col">
-          <span className="font-medium text-foreground" style={{ fontSize: "0.85rem" }}>
+        <div className="flex flex-col min-w-0">
+          <span className="font-medium text-foreground truncate" style={{ fontSize: "0.85rem" }}>
             {item.user.name}
           </span>
-          <span style={{ fontSize: "0.75rem", color: "hsl(var(--muted-foreground))" }}>
+          <span className="break-words" style={{ fontSize: "0.75rem", color: "hsl(var(--muted-foreground))", overflowWrap: "break-word" }}>
             {item.action}{" "}
             <strong className="text-foreground">{item.bottleName}</strong>
           </span>

@@ -76,8 +76,8 @@ function TabItem({
   return (
     <Link href={href}>
       <button
-        className="flex flex-col items-center gap-1 bg-transparent border-none cursor-pointer transition-opacity duration-200"
-        style={{ opacity: active ? 1 : 0.4 }}
+        className="flex flex-col items-center justify-center gap-1 bg-transparent border-none cursor-pointer transition-opacity duration-200"
+        style={{ opacity: active ? 1 : 0.4, minHeight: "44px", minWidth: "44px", padding: "4px 8px" }}
       >
         <Icon className={`w-6 h-6 ${active ? "text-primary" : "text-foreground"}`} />
         <span

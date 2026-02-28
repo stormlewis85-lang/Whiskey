@@ -21,8 +21,8 @@ export function BottleInfo({ distillery, name, subtitle, rating, reviewCount }: 
 
       {/* Bottle name */}
       <h1
-        className="font-display font-medium text-foreground"
-        style={{ fontSize: "1.6rem", lineHeight: 1.2, marginBottom: "6px" }}
+        className="font-display font-medium text-foreground break-words"
+        style={{ fontSize: "1.6rem", lineHeight: 1.2, marginBottom: "6px", overflowWrap: "break-word" }}
       >
         {name}
       </h1>
