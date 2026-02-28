@@ -109,14 +109,14 @@ This redesign focuses on **layout and structure**, not aesthetic overhaul. The B
 
 | ID | Task | Success Criteria | Status |
 |----|------|------------------|--------|
-| U029 | Create BottleHero component | Full-width hero area: gradient background, large bottle image centered, back button, share/favorite actions. 320px height. | ⬜ |
-| U030 | Create BottleInfo component | Centered below hero: distillery label (gold, uppercase), bottle name (Playfair, large), subtitle (type + ABV), rating badge with count. | ⬜ |
-| U031 | Create BottleQuickStats component | Horizontal card: MSRP, Proof, Age. Three columns, centered values, uppercase labels. | ⬜ |
-| U032 | Create BottleActions component | Two buttons side-by-side: "Add to Collection" (primary, gold), "Review" (secondary, outline). Full width on mobile. | ⬜ |
-| U033 | Create RickHouseCard component | Prominent CTA card: gradient border, Rick House icon, "Guided Tasting Available" header, description text, "Start Tasting Session →" link. | ⬜ |
-| U034 | Refactor bottle detail modal/page | Replace current layout with: BottleHero + BottleInfo + BottleQuickStats + BottleActions + RickHouseCard. | ⬜ |
-| U035 | Add scroll behavior | Hero image scales slightly on scroll (parallax lite). Content scrolls under hero naturally. | ⬜ |
-| U036 | Test bottle detail flow | Open from collection, from search, from activity feed. All paths work. Actions functional. | ⬜ |
+| U029 | Create BottleHero component | Full-width hero area: gradient background, large bottle image centered, back button, share/favorite actions. 320px height. | ✅ |
+| U030 | Create BottleInfo component | Centered below hero: distillery label (gold, uppercase), bottle name (Playfair, large), subtitle (type + ABV), rating badge with count. | ✅ |
+| U031 | Create BottleQuickStats component | Horizontal card: MSRP, Proof, Age. Three columns, centered values, uppercase labels. | ✅ |
+| U032 | Create BottleActions component | Two buttons side-by-side: "Add to Collection" (primary, gold), "Review" (secondary, outline). Full width on mobile. | ✅ |
+| U033 | Create RickHouseCard component | Prominent CTA card: gradient border, Rick House icon, "Guided Tasting Available" header, description text, "Start Tasting Session →" link. | ✅ |
+| U034 | Refactor bottle detail modal/page | Replace current layout with: BottleHero + BottleInfo + BottleQuickStats + BottleActions + RickHouseCard. | ✅ |
+| U035 | Add scroll behavior | Hero image scales slightly on scroll (parallax lite). Content scrolls under hero naturally. | ⏭️ Deferred — parallax adds complexity with minimal visual gain on mobile |
+| U036 | Test bottle detail flow | Open from collection, from search, from activity feed. All paths work. Actions functional. | ✅ |
 
 ---
 
