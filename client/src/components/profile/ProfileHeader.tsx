@@ -25,7 +25,7 @@ export function ProfileHeader({ name, initials, handle, badge }: ProfileHeaderPr
         style={{
           width: "80px",
           height: "80px",
-          background: "linear-gradient(135deg, hsl(var(--primary)), #B8933F)",
+          background: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.7))",
           boxShadow: "0 4px 24px rgba(212, 164, 76, 0.25)",
         }}
       >
