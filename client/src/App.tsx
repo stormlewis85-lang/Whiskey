@@ -20,6 +20,7 @@ import RickHouse from "@/pages/RickHouse";
 import Profile from "@/pages/Profile";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import { Toaster } from "@/components/ui/toaster";
+import { MobileShell } from "@/components/MobileShell";
 
 function Router() {
   return (
@@ -53,7 +54,9 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <AuthProvider>
-            <Router />
+            <MobileShell>
+              <Router />
+            </MobileShell>
             <Toaster />
           </AuthProvider>
         </TooltipProvider>
