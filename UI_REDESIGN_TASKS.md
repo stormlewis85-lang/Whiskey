@@ -37,7 +37,7 @@ This redesign focuses on **layout and structure**, not aesthetic overhaul. The B
 |----|------|------------------|--------|
 | U001 | Create BottomNav component | New component at `/client/src/components/BottomNav.tsx`. 5 tabs: Home, Search, Scan (center FAB), Drops, Profile. Uses design tokens from context file. | ✅ |
 | U002 | Style BottomNav for mobile | Fixed to bottom, 84px height, gradient fade at top, center scan button raised with gold background and shadow. Active tab shows gold icon + label. | ✅ |
-| U003 | Add tab routing | Each tab navigates to correct route: `/` (Home), `/search`, `/scan`, `/drops`, `/profile`. Scan opens barcode scanner modal/page. | ⬜ |
+| U003 | Add tab routing | Each tab navigates to correct route: `/` (Home), `/search`, `/scan`, `/drops`, `/profile`. Scan opens barcode scanner modal/page. | ✅ |
 | U004 | Create MobileShell layout wrapper | New layout component that wraps page content with BottomNav. Content area has `padding-bottom: 100px` to clear nav. | ⬜ |
 | U005 | Hide existing top navbar on mobile | Existing navbar hidden at `md` breakpoint and below. Show BottomNav instead. Desktop keeps top nav for now. | ⬜ |
 | U006 | Update App.tsx to use MobileShell | Wrap routes in MobileShell. Ensure navigation state syncs with current route (active tab highlights correctly). | ⬜ |

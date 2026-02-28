@@ -2,7 +2,11 @@ import { Home, Search, Bell, User, ScanLine } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 
-export function BottomNav() {
+interface BottomNavProps {
+  onScanClick?: () => void;
+}
+
+export function BottomNav({ onScanClick }: BottomNavProps) {
   const [location] = useLocation();
   const { user } = useAuth();
 
@@ -34,20 +38,19 @@ export function BottomNav() {
         <TabItem href="/search" icon={Search} label="Search" active={isActive("/search")} />
 
         {/* Center Scan FAB */}
-        <Link href="/scan">
-          <button
-            className="flex items-center justify-center rounded-full bg-primary cursor-pointer border-none"
-            style={{
-              width: "56px",
-              height: "56px",
-              marginTop: "-20px",
-              boxShadow: "0 4px 20px rgba(212, 164, 76, 0.3)",
-            }}
-            aria-label="Scan barcode"
-          >
-            <ScanLine className="w-6 h-6 text-primary-foreground" />
-          </button>
-        </Link>
+        <button
+          onClick={onScanClick}
+          className="flex items-center justify-center rounded-full bg-primary cursor-pointer border-none"
+          style={{
+            width: "56px",
+            height: "56px",
+            marginTop: "-20px",
+            boxShadow: "0 4px 20px rgba(212, 164, 76, 0.3)",
+          }}
+          aria-label="Scan barcode"
+        >
+          <ScanLine className="w-6 h-6 text-primary-foreground" />
+        </button>
 
         {/* Drops */}
         <TabItem href="/drops" icon={Bell} label="Drops" active={isActive("/drops")} />
