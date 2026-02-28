@@ -63,9 +63,9 @@ This redesign focuses on **layout and structure**, not aesthetic overhaul. The B
 
 | ID | Task | Success Criteria | Status |
 |----|------|------------------|--------|
-| U013 | Create DropAlertCard component | Prominent alert card: gold left border, gradient background, store name, bottle name, time ago, distance, wishlist match indicator. | ⬜ |
-| U014 | Create StoreDropCard component | Full drop card for Drops page: store header (logo, name, distance, time), bottle row, wishlist match badge, action buttons (Get Directions, View Store). | ⬜ |
-| U015 | Create DropFilters component | Horizontal scrolling filter chips: All Drops, Wishlist Matches, Bourbon, Scotch, Allocated. Active state styling. | ⬜ |
+| U013 | Create DropAlertCard component | Prominent alert card: gold left border, gradient background, store name, bottle name, time ago, distance, wishlist match indicator. | ✅ |
+| U014 | Create StoreDropCard component | Full drop card for Drops page: store header (logo, name, distance, time), bottle row, wishlist match badge, action buttons (Get Directions, View Store). | ✅ |
+| U015 | Create DropFilters component | Horizontal scrolling filter chips: All Drops, Wishlist Matches, Bourbon, Scotch, Allocated. Active state styling. | ✅ |
 
 ### Profile Components
 
