@@ -2,7 +2,7 @@
 ## Codename: "Drammer-Style Mobile-First Refresh"
 
 **Created:** February 28, 2026  
-**Status:** Phase 1 In Progress  
+**Status:** All Phases Complete
 **Goal:** Transform layout from desktop-first generic dark app to mobile-first premium social app (Drammer/Untappd inspired) while preserving Black & Gold aesthetic
 
 ---
@@ -133,7 +133,7 @@ This redesign focuses on **layout and structure**, not aesthetic overhaul. The B
 | U041 | Add empty states | Empty states for: no activity ("Follow friends to see their activity"), no drops, empty collection, no reviews. | ✅ |
 | U042 | Add micro-interactions | Subtle hover/tap states on cards. Like button animation. Tab transitions. Nothing jarring. | ✅ |
 | U043 | Verify dark mode consistency | All new components use CSS variables correctly. No hardcoded colors. Gold usage follows "precious" rule. | ✅ |
-| U044 | Final visual QA | Side-by-side with mockup HTML. Flag any deviations. Document intentional differences. | ⬜ |
+| U044 | Final visual QA | Side-by-side with mockup HTML. Flag any deviations. Document intentional differences. | ✅ |
 
 ---
 
@@ -176,3 +176,28 @@ This redesign focuses on **layout and structure**, not aesthetic overhaul. The B
 ---
 
 *Last updated: February 28, 2026*
+
+---
+
+## Visual QA Notes (U044)
+
+### Mockup vs Implementation Deviations
+
+**Fixed:**
+- Notification dot: changed from gold (`bg-primary`) to red (`hsl(var(--destructive))`) with 2px border per mockup spec
+
+**Intentional Deviations:**
+1. **BottleHero buttons: 44px instead of 36px** — Increased from mockup's 36px to meet 44px touch target minimum (accessibility requirement)
+2. **ProfileStats: `justify-between` instead of `gap: 32px`** — Changed from centered with 32px gap to space-between for reliable 375px viewport fit
+3. **MobileCollectionGrid: `auto-fill` instead of `repeat(3, 1fr)`** — Changed from fixed 3 columns to responsive auto-fill for tablet adaptation
+4. **ProfileHeader avatar gradient: `hsl(var(--primary) / 0.7)` instead of `#B8933F`** — Replaced hardcoded hex with CSS variable for dark mode consistency
+5. **ActivityActions gap: reduced from 20px to 8px** — Buttons now have 44px touch targets with 12px padding, so visual gap is maintained by button padding
+
+**Matches Mockup:**
+- Tab bar: 84px, gradient, scan FAB 56px with gold glow
+- Header: padding 8px 20px 16px, icon sizes 22px, opacity 0.7
+- Drop alert: gold left bar, gradient bg, badge styling
+- Activity cards: avatar 40px, gap 12px, embedded bottle card with 70x90px image
+- Profile: avatar 80px gradient, Playfair 1.4rem name, stats card, tab underline
+- Collection grid: square aspect ratio, 2px gap, name overlay with gradient
+- Bottle detail: 320px hero, gradient bg, centered info, quick stats card

@@ -31,12 +31,14 @@ export function MobileHomeHeader({ hasNotifications }: MobileHomeHeaderProps) {
           <Bell className="w-[22px] h-[22px] text-foreground" />
           {hasNotifications && (
             <span
-              className="absolute bg-primary rounded-full"
+              className="absolute rounded-full"
               style={{
-                width: "7px",
-                height: "7px",
+                width: "8px",
+                height: "8px",
                 top: "8px",
                 right: "8px",
+                background: "hsl(var(--destructive))",
+                border: "2px solid hsl(var(--background))",
               }}
             />
           )}
