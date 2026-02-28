@@ -54,10 +54,10 @@ This redesign focuses on **layout and structure**, not aesthetic overhaul. The B
 
 | ID | Task | Success Criteria | Status |
 |----|------|------------------|--------|
-| U009 | Create ActivityCard component | New component for social feed items. Shows: avatar, username, action text, timestamp, bottle card, note, like/comment counts. See context file for spec. | ⬜ |
-| U010 | Create ActivityBottleCard sub-component | Embedded bottle preview: image placeholder, name (Playfair), distillery, rating badge. Horizontal layout, 70px image, rounded corners. | ⬜ |
-| U011 | Create ActivityActions sub-component | Like button (heart icon, gold when liked), comment button, counts. Horizontal layout with proper spacing. | ⬜ |
-| U012 | Create mock activity data | Temporary mock data array for testing feed. 5-10 items with varied actions (reviewed, added to collection, wishlisted). | ⬜ |
+| U009 | Create ActivityCard component | New component for social feed items. Shows: avatar, username, action text, timestamp, bottle card, note, like/comment counts. See context file for spec. | ✅ |
+| U010 | Create ActivityBottleCard sub-component | Embedded bottle preview: image placeholder, name (Playfair), distillery, rating badge. Horizontal layout, 70px image, rounded corners. | ✅ |
+| U011 | Create ActivityActions sub-component | Like button (heart icon, gold when liked), comment button, counts. Horizontal layout with proper spacing. | ✅ |
+| U012 | Create mock activity data | Temporary mock data array for testing feed. 5-10 items with varied actions (reviewed, added to collection, wishlisted). | ✅ |
 
 ### Drop Alert Components
 
