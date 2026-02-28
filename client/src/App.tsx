@@ -22,6 +22,7 @@ import Drops from "@/pages/Drops";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import { Toaster } from "@/components/ui/toaster";
 import { MobileShell } from "@/components/MobileShell";
+import { ProfileRedirect } from "@/components/ProfileRedirect";
 
 function Router() {
   return (
@@ -33,6 +34,8 @@ function Router() {
       <ProtectedRoute path="/blind-tastings" component={BlindTastings} />
       <ProtectedRoute path="/rick-house" component={RickHouse} />
       <ProtectedRoute path="/drops" component={Drops} />
+      <ProtectedRoute path="/search" component={Community} />
+      <ProtectedRoute path="/profile" component={ProfileRedirect} />
       <Route path="/auth" component={AuthPage} />
       <Route path="/forgot-password" component={ForgotPasswordPage} />
       <Route path="/reset-password" component={ResetPasswordPage} />
