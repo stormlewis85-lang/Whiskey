@@ -25,7 +25,7 @@ interface StoreDropCardProps {
 export function StoreDropCard({ drop, onGetDirections, onViewStore }: StoreDropCardProps) {
   return (
     <div
-      className="overflow-hidden mb-3"
+      className="overflow-hidden mb-3 transition-transform duration-150 active:scale-[0.98]"
       style={{
         background: "hsl(var(--card))",
         border: "1px solid rgba(255,255,255,0.04)",

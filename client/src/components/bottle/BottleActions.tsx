@@ -11,7 +11,7 @@ export function BottleActions({ onAddToCollection, onReview, inCollection }: Bot
     <div className="flex gap-3 px-5 py-5">
       <button
         onClick={onAddToCollection}
-        className="flex-1 flex items-center justify-center gap-2 border-none cursor-pointer uppercase font-semibold"
+        className="flex-1 flex items-center justify-center gap-2 border-none cursor-pointer uppercase font-semibold transition-transform duration-150 active:scale-95"
         style={{
           padding: "14px",
           borderRadius: "12px",
@@ -26,7 +26,7 @@ export function BottleActions({ onAddToCollection, onReview, inCollection }: Bot
       </button>
       <button
         onClick={onReview}
-        className="flex-1 flex items-center justify-center gap-2 cursor-pointer uppercase font-semibold"
+        className="flex-1 flex items-center justify-center gap-2 cursor-pointer uppercase font-semibold transition-transform duration-150 active:scale-95"
         style={{
           padding: "14px",
           borderRadius: "12px",

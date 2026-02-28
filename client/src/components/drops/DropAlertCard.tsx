@@ -18,7 +18,7 @@ interface DropAlertCardProps {
 export function DropAlertCard({ alert, onClick }: DropAlertCardProps) {
   return (
     <div
-      className="relative mx-4 mb-4 cursor-pointer"
+      className="relative mx-4 mb-4 cursor-pointer transition-transform duration-150 active:scale-[0.98]"
       onClick={onClick}
       style={{
         background: "linear-gradient(135deg, rgba(212,164,76,0.12), rgba(212,164,76,0.04))",

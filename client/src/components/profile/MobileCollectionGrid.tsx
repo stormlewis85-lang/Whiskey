@@ -23,7 +23,7 @@ export function MobileCollectionGrid({ items, onItemClick }: MobileCollectionGri
         <button
           key={item.id}
           onClick={() => onItemClick?.(item.id)}
-          className="relative overflow-hidden flex items-center justify-center bg-transparent border-none cursor-pointer p-0"
+          className="relative overflow-hidden flex items-center justify-center bg-transparent border-none cursor-pointer p-0 transition-transform duration-150 active:scale-95"
           style={{
             aspectRatio: "1",
             background: "hsl(var(--popover))",

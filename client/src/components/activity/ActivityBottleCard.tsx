@@ -14,7 +14,7 @@ interface ActivityBottleCardProps {
 export function ActivityBottleCard({ bottle }: ActivityBottleCardProps) {
   return (
     <div
-      className="flex overflow-hidden"
+      className="flex overflow-hidden transition-transform duration-150 active:scale-[0.98] cursor-pointer"
       style={{
         background: "hsl(var(--popover))",
         borderRadius: "12px",

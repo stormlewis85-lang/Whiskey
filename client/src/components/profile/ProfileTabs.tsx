@@ -16,7 +16,7 @@ export function ProfileTabs({ tabs, activeTab, onTabChange }: ProfileTabsProps) 
           <button
             key={tab}
             onClick={() => onTabChange(tab)}
-            className={`flex-1 text-center relative bg-transparent border-none cursor-pointer font-medium uppercase ${
+            className={`flex-1 text-center relative bg-transparent border-none cursor-pointer font-medium uppercase transition-colors duration-200 ${
               isActive ? "text-primary" : "text-muted-foreground"
             }`}
             style={{

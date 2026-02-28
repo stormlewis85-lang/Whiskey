@@ -13,12 +13,12 @@ export function ActivityActions({ likes, comments, liked, onLike, onComment }: A
     <div className="flex items-center gap-2 mt-3">
       <button
         onClick={onLike}
-        className={`flex items-center gap-1.5 bg-transparent border-none cursor-pointer transition-colors ${
+        className={`flex items-center gap-1.5 bg-transparent border-none cursor-pointer transition-all duration-200 active:scale-90 ${
           liked ? "text-primary" : "text-muted-foreground"
         }`}
         style={{ fontSize: "0.7rem", minHeight: "44px", padding: "8px 12px" }}
       >
-        <Heart className={`w-4 h-4 ${liked ? "fill-primary" : ""}`} />
+        <Heart className={`w-4 h-4 transition-transform duration-200 ${liked ? "fill-primary scale-110" : ""}`} />
         {likes}
       </button>
 
