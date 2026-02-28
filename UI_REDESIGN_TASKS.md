@@ -96,10 +96,10 @@ This redesign focuses on **layout and structure**, not aesthetic overhaul. The B
 
 | ID | Task | Success Criteria | Status |
 |----|------|------------------|--------|
-| U025 | Create Drops page header | Large title "Store Drops", subtitle "Alerts from stores you follow". Playfair typography. | ⬜ |
-| U026 | Add DropFilters to Drops page | Horizontal scrolling filters below header. Filters are non-functional for now (UI only). | ⬜ |
-| U027 | Create Drops list | Vertical list of StoreDropCard components. Mock data: 3-5 stores with bottle drops. | ⬜ |
-| U028 | Assemble Drops page | Combine: header + filters + drops list. Empty state if no drops ("No drops yet. Follow stores to get alerts."). | ⬜ |
+| U025 | Create Drops page header | Large title "Store Drops", subtitle "Alerts from stores you follow". Playfair typography. | ✅ |
+| U026 | Add DropFilters to Drops page | Horizontal scrolling filters below header. Filters are non-functional for now (UI only). | ✅ |
+| U027 | Create Drops list | Vertical list of StoreDropCard components. Mock data: 3-5 stores with bottle drops. | ✅ |
+| U028 | Assemble Drops page | Combine: header + filters + drops list. Empty state if no drops ("No drops yet. Follow stores to get alerts."). | ✅ |
 
 ---
 

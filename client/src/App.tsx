@@ -18,6 +18,7 @@ import Flights from "@/pages/Flights";
 import BlindTastings from "@/pages/BlindTastings";
 import RickHouse from "@/pages/RickHouse";
 import Profile from "@/pages/Profile";
+import Drops from "@/pages/Drops";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import { Toaster } from "@/components/ui/toaster";
 import { MobileShell } from "@/components/MobileShell";
@@ -31,6 +32,7 @@ function Router() {
       <ProtectedRoute path="/flights" component={Flights} />
       <ProtectedRoute path="/blind-tastings" component={BlindTastings} />
       <ProtectedRoute path="/rick-house" component={RickHouse} />
+      <ProtectedRoute path="/drops" component={Drops} />
       <Route path="/auth" component={AuthPage} />
       <Route path="/forgot-password" component={ForgotPasswordPage} />
       <Route path="/reset-password" component={ResetPasswordPage} />
