@@ -126,7 +126,7 @@ const Home = () => {
   // Mobile Activity Feed layout
   if (isMobile) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background max-w-2xl mx-auto">
         <MobileHomeHeader hasNotifications />
 
         {/* Featured Drop Alert */}

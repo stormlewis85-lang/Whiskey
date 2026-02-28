@@ -31,35 +31,37 @@ const Drops = () => {
     <div className="min-h-screen bg-background">
       {!isMobile && <Header />}
 
-      {/* Page Header */}
-      <div style={{ padding: isMobile ? "16px 20px 8px" : "32px 20px 16px" }}>
-        <h1
-          className="font-display font-medium text-foreground"
-          style={{ fontSize: isMobile ? "1.8rem" : "2.5rem" }}
-        >
-          Store Drops
-        </h1>
-        <p className="text-muted-foreground mt-1" style={{ fontSize: "0.8rem" }}>
-          Alerts from stores you follow
-        </p>
-      </div>
+      <div className="max-w-2xl mx-auto">
+        {/* Page Header */}
+        <div style={{ padding: isMobile ? "16px 20px 8px" : "32px 20px 16px" }}>
+          <h1
+            className="font-display font-medium text-foreground"
+            style={{ fontSize: isMobile ? "1.8rem" : "2.5rem" }}
+          >
+            Store Drops
+          </h1>
+          <p className="text-muted-foreground mt-1" style={{ fontSize: "0.8rem" }}>
+            Alerts from stores you follow
+          </p>
+        </div>
 
-      {/* Filters */}
-      <DropFilters />
+        {/* Filters */}
+        <DropFilters />
 
-      {/* Drops List */}
-      <div style={{ padding: "0 16px 100px" }}>
-        {mockDrops.length === 0 ? (
-          <div className="text-center py-16">
-            <p className="text-muted-foreground" style={{ fontSize: "0.85rem" }}>
-              No drops yet. Follow stores to get alerts.
-            </p>
-          </div>
-        ) : (
-          mockDrops.map((drop) => (
-            <StoreDropCard key={drop.id} drop={drop} />
-          ))
-        )}
+        {/* Drops List */}
+        <div style={{ padding: "0 16px 100px" }}>
+          {mockDrops.length === 0 ? (
+            <div className="text-center py-16">
+              <p className="text-muted-foreground" style={{ fontSize: "0.85rem" }}>
+                No drops yet. Follow stores to get alerts.
+              </p>
+            </div>
+          ) : (
+            mockDrops.map((drop) => (
+              <StoreDropCard key={drop.id} drop={drop} />
+            ))
+          )}
+        </div>
       </div>
     </div>
   );

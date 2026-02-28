@@ -14,7 +14,7 @@ export function MobileCollectionGrid({ items, onItemClick }: MobileCollectionGri
     <div
       className="grid"
       style={{
-        gridTemplateColumns: "repeat(3, 1fr)",
+        gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))",
         gap: "2px",
         padding: "2px 20px 100px",
       }}

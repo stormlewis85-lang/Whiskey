@@ -127,7 +127,7 @@ This redesign focuses on **layout and structure**, not aesthetic overhaul. The B
 | ID | Task | Success Criteria | Status |
 |----|------|------------------|--------|
 | U037 | Audit mobile viewport (375px) | All pages render correctly on iPhone SE / small Android. No horizontal scroll. Touch targets 44px minimum. | ✅ |
-| U038 | Audit tablet viewport (768px) | Layouts adapt gracefully. Collection grid expands to 4 columns. Activity cards have more breathing room. | ⬜ |
+| U038 | Audit tablet viewport (768px) | Layouts adapt gracefully. Collection grid expands to 4 columns. Activity cards have more breathing room. | ✅ |
 | U039 | Audit desktop viewport (1280px+) | Consider keeping top nav on desktop. Content max-width contained. Not awkwardly stretched. | ⬜ |
 | U040 | Add loading skeletons | Skeleton states for: ActivityCard, StoreDropCard, CollectionGrid items, ProfileStats. Pulse animation. | ⬜ |
 | U041 | Add empty states | Empty states for: no activity ("Follow friends to see their activity"), no drops, empty collection, no reviews. | ⬜ |
