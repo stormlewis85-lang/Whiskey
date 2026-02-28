@@ -87,10 +87,10 @@ This redesign focuses on **layout and structure**, not aesthetic overhaul. The B
 
 | ID | Task | Success Criteria | Status |
 |----|------|------------------|--------|
-| U021 | Create Home page header | Compact header: logo (28px), brand name, notification bell (with dot), search icon. No full navbar, just essential actions. | ⬜ |
-| U022 | Add DropAlertCard to Home | If user has pending drop alerts, show featured DropAlertCard at top of home feed. Dismissible or tappable. | ⬜ |
-| U023 | Create Activity section | Section header ("Activity" + "All Friends" link), followed by ActivityCard list. Mock data for now. | ⬜ |
-| U024 | Assemble Home page | Combine: compact header + drop alert (optional) + activity section. Scrollable, padding for bottom nav. | ⬜ |
+| U021 | Create Home page header | Compact header: logo (28px), brand name, notification bell (with dot), search icon. No full navbar, just essential actions. | ✅ |
+| U022 | Add DropAlertCard to Home | If user has pending drop alerts, show featured DropAlertCard at top of home feed. Dismissible or tappable. | ✅ |
+| U023 | Create Activity section | Section header ("Activity" + "All Friends" link), followed by ActivityCard list. Mock data for now. | ✅ |
+| U024 | Assemble Home page | Combine: compact header + drop alert (optional) + activity section. Scrollable, padding for bottom nav. | ✅ |
 
 ### Drops Page
 

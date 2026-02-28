@@ -2,6 +2,11 @@ import { useState, lazy, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Whiskey, ReviewNote } from "@shared/schema";
 import { Header } from "@/components/Header";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { MobileHomeHeader } from "@/components/MobileHomeHeader";
+import { DropAlertCard } from "@/components/drops/DropAlertCard";
+import { ActivityCard } from "@/components/activity/ActivityCard";
+import { mockActivityData } from "@/components/activity/mockActivityData";
 import CollectionStats from "@/components/CollectionStats";
 import { SkeletonStats } from "@/components/SkeletonCard";
 import FilterBar from "@/components/FilterBar";
@@ -26,6 +31,7 @@ import { useAuth } from "@/hooks/use-auth";
 
 const Home = () => {
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   
   // Modals state
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -116,6 +122,61 @@ const Home = () => {
     setIsTastingModeModalOpen(true);
     setIsDetailModalOpen(false);
   };
+
+  // Mobile Activity Feed layout
+  if (isMobile) {
+    return (
+      <div className="min-h-screen bg-background">
+        <MobileHomeHeader hasNotifications />
+
+        {/* Featured Drop Alert */}
+        <DropAlertCard
+          alert={{
+            id: "1",
+            storeName: "Bottle King",
+            storeLocation: "Troy, MI",
+            bottleName: "Blanton's Single Barrel",
+            timeAgo: "2 min ago",
+            distance: "2.4 mi",
+            onWishlist: true,
+          }}
+        />
+
+        {/* Activity Section */}
+        <div className="flex justify-between items-baseline" style={{ padding: "20px 20px 12px" }}>
+          <span className="font-display font-medium text-foreground" style={{ fontSize: "1.2rem" }}>
+            Activity
+          </span>
+          <span
+            className="text-primary uppercase font-medium cursor-pointer"
+            style={{ fontSize: "0.7rem", letterSpacing: "0.08em" }}
+          >
+            All Friends
+          </span>
+        </div>
+
+        {/* Activity Feed */}
+        {mockActivityData.map((item) => (
+          <ActivityCard key={item.id} item={item} />
+        ))}
+
+        {/* Keep existing modals functional */}
+        <ImportModal
+          isOpen={isImportModalOpen}
+          onClose={() => setIsImportModalOpen(false)}
+        />
+        <AddWhiskeyModal
+          isOpen={isAddWhiskeyModalOpen}
+          onClose={() => setIsAddWhiskeyModalOpen(false)}
+        />
+        <BarcodeScanner
+          open={isBarcodeScannerOpen}
+          onOpenChange={setIsBarcodeScannerOpen}
+          onCodeScanned={handleCodeScanned}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
