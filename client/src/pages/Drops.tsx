@@ -1,7 +1,9 @@
 import { Header } from "@/components/Header";
 import { DropFilters } from "@/components/drops/DropFilters";
 import { StoreDropCard, type StoreDrop } from "@/components/drops/StoreDropCard";
+import { EmptyState } from "@/components/EmptyState";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Bell } from "lucide-react";
 
 const mockDrops: StoreDrop[] = [
   {
@@ -51,11 +53,11 @@ const Drops = () => {
         {/* Drops List */}
         <div style={{ padding: "0 16px 100px" }}>
           {mockDrops.length === 0 ? (
-            <div className="text-center py-16">
-              <p className="text-muted-foreground" style={{ fontSize: "0.85rem" }}>
-                No drops yet. Follow stores to get alerts.
-              </p>
-            </div>
+            <EmptyState
+              icon={Bell}
+              title="No Drops Yet"
+              description="Follow stores near you to get alerts when they receive new bottles."
+            />
           ) : (
             mockDrops.map((drop) => (
               <StoreDropCard key={drop.id} drop={drop} />

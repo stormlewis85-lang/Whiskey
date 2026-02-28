@@ -7,6 +7,7 @@ import { MobileHomeHeader } from "@/components/MobileHomeHeader";
 import { DropAlertCard } from "@/components/drops/DropAlertCard";
 import { ActivityCard } from "@/components/activity/ActivityCard";
 import { mockActivityData } from "@/components/activity/mockActivityData";
+import { EmptyState } from "@/components/EmptyState";
 import CollectionStats from "@/components/CollectionStats";
 import { SkeletonStats } from "@/components/SkeletonCard";
 import FilterBar from "@/components/FilterBar";
@@ -25,7 +26,7 @@ const RickErrorBoundary = lazy(() => import("@/components/RickErrorBoundary"));
 import { BarcodeScanner } from "@/components/BarcodeScanner";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { PlusIcon, UploadIcon, DownloadIcon, Scan } from "lucide-react";
+import { PlusIcon, UploadIcon, DownloadIcon, Scan, Users } from "lucide-react";
 import useWhiskeyCollection from "@/lib/hooks/useWhiskeyCollection";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -156,9 +157,17 @@ const Home = () => {
         </div>
 
         {/* Activity Feed */}
-        {mockActivityData.map((item) => (
-          <ActivityCard key={item.id} item={item} />
-        ))}
+        {mockActivityData.length === 0 ? (
+          <EmptyState
+            icon={Users}
+            title="No Activity Yet"
+            description="Follow friends to see their reviews, collections, and whiskey discoveries."
+          />
+        ) : (
+          mockActivityData.map((item) => (
+            <ActivityCard key={item.id} item={item} />
+          ))
+        )}
 
         {/* Keep existing modals functional */}
         <ImportModal

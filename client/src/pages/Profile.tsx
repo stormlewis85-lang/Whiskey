@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Whiskey, ReviewNote } from '@shared/schema';
+import { EmptyState } from '@/components/EmptyState';
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
 import { ProfileStats } from '@/components/profile/ProfileStats';
 import { ProfileTabs } from '@/components/profile/ProfileTabs';
@@ -214,19 +215,29 @@ const Profile = () => {
               <div className="flex justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
+            ) : collectionItems.length === 0 ? (
+              <EmptyState
+                icon={Wine}
+                title="No Bottles Yet"
+                description="Start building your collection by adding your first bottle."
+              />
             ) : (
               <MobileCollectionGrid items={collectionItems} />
             )
           )}
           {mobileTab === "Reviews" && (
-            <div className="text-center py-12 text-muted-foreground" style={{ fontSize: "0.8rem" }}>
-              Reviews coming soon
-            </div>
+            <EmptyState
+              icon={Star}
+              title="No Reviews Yet"
+              description="Review bottles in your collection to share your tasting notes."
+            />
           )}
           {mobileTab === "Wishlist" && (
-            <div className="text-center py-12 text-muted-foreground" style={{ fontSize: "0.8rem" }}>
-              Wishlist coming soon
-            </div>
+            <EmptyState
+              icon={Heart}
+              title="Wishlist Empty"
+              description="Save bottles you want to try by adding them to your wishlist."
+            />
           )}
         </div>
       </>
