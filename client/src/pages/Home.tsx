@@ -1,13 +1,8 @@
 import { useState, lazy, Suspense } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { Whiskey, ReviewNote } from "@shared/schema";
 import { Header } from "@/components/Header";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileHomeHeader } from "@/components/MobileHomeHeader";
-import { DropAlertCard } from "@/components/drops/DropAlertCard";
-import { ActivityCard } from "@/components/activity/ActivityCard";
-import { mockActivityData } from "@/components/activity/mockActivityData";
-import { EmptyState } from "@/components/EmptyState";
 import CollectionStats from "@/components/CollectionStats";
 import { SkeletonStats } from "@/components/SkeletonCard";
 import FilterBar from "@/components/FilterBar";
@@ -26,7 +21,7 @@ const RickErrorBoundary = lazy(() => import("@/components/RickErrorBoundary"));
 import { BarcodeScanner } from "@/components/BarcodeScanner";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { PlusIcon, UploadIcon, DownloadIcon, Scan, Users } from "lucide-react";
+import { PlusIcon, UploadIcon, DownloadIcon, Scan } from "lucide-react";
 import useWhiskeyCollection from "@/lib/hooks/useWhiskeyCollection";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -124,52 +119,98 @@ const Home = () => {
     setIsDetailModalOpen(false);
   };
 
-  // Mobile Activity Feed layout
+  // Mobile layout — same collection functionality, mobile-first presentation
   if (isMobile) {
     return (
       <div className="min-h-screen bg-background max-w-2xl mx-auto">
         <MobileHomeHeader hasNotifications />
 
-        {/* Featured Drop Alert */}
-        <DropAlertCard
-          alert={{
-            id: "1",
-            storeName: "Bottle King",
-            storeLocation: "Troy, MI",
-            bottleName: "Blanton's Single Barrel",
-            timeAgo: "2 min ago",
-            distance: "2.4 mi",
-            onWishlist: true,
-          }}
-        />
-
-        {/* Activity Section */}
-        <div className="flex justify-between items-baseline" style={{ padding: "20px 20px 12px" }}>
-          <span className="font-display font-medium text-foreground" style={{ fontSize: "1.2rem" }}>
-            Activity
-          </span>
-          <span
-            className="text-primary uppercase font-medium cursor-pointer"
-            style={{ fontSize: "0.7rem", letterSpacing: "0.08em" }}
+        {/* Collection header + add button */}
+        <div className="flex justify-between items-center px-5 pt-2 pb-3">
+          <div>
+            <p className="text-label-caps text-primary text-xs uppercase tracking-wider mb-0.5">Your Collection</p>
+            <h1 className="font-display text-lg text-foreground font-medium">
+              {user?.displayName || user?.username}'s Collection
+            </h1>
+          </div>
+          <Button
+            onClick={openAddWhiskeyModal}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-warm-sm h-9 px-3"
           >
-            All Friends
-          </span>
+            <PlusIcon className="h-4 w-4 mr-1" />
+            Add
+          </Button>
         </div>
 
-        {/* Activity Feed */}
-        {mockActivityData.length === 0 ? (
-          <EmptyState
-            icon={Users}
-            title="No Activity Yet"
-            description="Follow friends to see their reviews, collections, and whiskey discoveries."
-          />
-        ) : (
-          mockActivityData.map((item) => (
-            <ActivityCard key={item.id} item={item} />
-          ))
-        )}
+        {/* Stats */}
+        <div className="px-5 pb-3">
+          {isLoading ? <SkeletonStats /> : <CollectionStats whiskeys={whiskeys || []} />}
+        </div>
 
-        {/* Keep existing modals functional */}
+        {/* Filters */}
+        <div className="px-5 pb-3">
+          <FilterBar
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            sortBy={sortBy}
+            setSortBy={setSortBy}
+            typeFilter={typeFilter}
+            setTypeFilter={setTypeFilter}
+            ratingFilter={ratingFilter}
+            setRatingFilter={setRatingFilter}
+            bottleTypeFilter={bottleTypeFilter}
+            setBottleTypeFilter={setBottleTypeFilter}
+            mashBillFilter={mashBillFilter}
+            setMashBillFilter={setMashBillFilter}
+            caskStrengthFilter={caskStrengthFilter}
+            setCaskStrengthFilter={setCaskStrengthFilter}
+            collectionView={collectionView}
+            setCollectionView={setCollectionView}
+            statusFilter={statusFilter}
+            setStatusFilter={setStatusFilter}
+            actions={whiskeys && whiskeys.length > 1 ? (
+              <ComparisonTool
+                whiskeys={whiskeys}
+                className="h-9 border-border/50 hover:border-border hover:bg-accent/50"
+              />
+            ) : undefined}
+          />
+        </div>
+
+        {/* Collection Grid */}
+        <div className="px-5 pb-5">
+          <CollectionGrid
+            whiskeys={filteredWhiskeys || []}
+            isLoading={isLoading}
+            isError={isError}
+            onViewDetails={openDetailModal}
+            onReview={openReviewModal}
+            onEdit={openEditWhiskeyModal}
+            onAddNew={openAddWhiskeyModal}
+          />
+        </div>
+
+        {/* Import / Export */}
+        <div className="flex justify-center gap-3 px-5 pb-8">
+          <Button
+            onClick={openImportModal}
+            variant="outline"
+            className="border-border hover:border-border hover:bg-accent/50"
+          >
+            <UploadIcon className="h-4 w-4 mr-2 text-muted-foreground" />
+            Import
+          </Button>
+          <Button
+            onClick={openExportModal}
+            variant="outline"
+            className="border-border hover:border-border hover:bg-accent/50"
+          >
+            <DownloadIcon className="h-4 w-4 mr-2 text-muted-foreground" />
+            Export
+          </Button>
+        </div>
+
+        {/* All modals */}
         <ImportModal
           isOpen={isImportModalOpen}
           onClose={() => setIsImportModalOpen(false)}
@@ -178,11 +219,80 @@ const Home = () => {
           isOpen={isAddWhiskeyModalOpen}
           onClose={() => setIsAddWhiskeyModalOpen(false)}
         />
+        <ExportModal
+          isOpen={isExportModalOpen}
+          onClose={() => setIsExportModalOpen(false)}
+        />
         <BarcodeScanner
           open={isBarcodeScannerOpen}
           onOpenChange={setIsBarcodeScannerOpen}
           onCodeScanned={handleCodeScanned}
         />
+        {currentWhiskey && (
+          <>
+            <ReviewModal
+              isOpen={isReviewModalOpen}
+              onClose={() => {
+                setIsReviewModalOpen(false);
+                setExistingReview(undefined);
+              }}
+              whiskey={currentWhiskey}
+              existingReview={existingReview}
+            />
+            <EditWhiskeyModal
+              isOpen={isEditWhiskeyModalOpen}
+              onClose={() => setIsEditWhiskeyModalOpen(false)}
+              whiskey={currentWhiskey}
+            />
+            <WhiskeyDetailModal
+              isOpen={isDetailModalOpen}
+              onClose={() => setIsDetailModalOpen(false)}
+              whiskey={currentWhiskey}
+              onReview={openReviewModal}
+              onEdit={openEditWhiskeyModal}
+              onTasteWithRick={openTastingModeModal}
+            />
+            <Suspense fallback={null}>
+              <TastingModeModal
+                isOpen={isTastingModeModalOpen}
+                onClose={() => setIsTastingModeModalOpen(false)}
+                whiskey={currentWhiskey}
+                onSelectMode={(mode) => {
+                  setTastingMode(mode);
+                  setIsTastingModeModalOpen(false);
+                  setIsTastingSessionActive(true);
+                }}
+              />
+            </Suspense>
+            {isTastingSessionActive && (
+              <Suspense fallback={
+                <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="animate-pulse text-muted-foreground">Loading Rick House...</div>
+                  </div>
+                </div>
+              }>
+                <RickErrorBoundary
+                  onClose={() => setIsTastingSessionActive(false)}
+                  onRetry={() => {
+                    setIsTastingSessionActive(false);
+                    setTimeout(() => setIsTastingSessionActive(true), 100);
+                  }}
+                >
+                  <TastingSession
+                    whiskey={currentWhiskey}
+                    mode={tastingMode}
+                    onClose={() => setIsTastingSessionActive(false)}
+                    onComplete={() => {
+                      setIsTastingSessionActive(false);
+                      openReviewModal(currentWhiskey);
+                    }}
+                  />
+                </RickErrorBoundary>
+              </Suspense>
+            )}
+          </>
+        )}
       </div>
     );
   }
