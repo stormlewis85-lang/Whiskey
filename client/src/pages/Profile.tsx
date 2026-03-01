@@ -31,6 +31,8 @@ import { ProfileHeader } from '@/components/profile/ProfileHeader';
 import { ProfileStats } from '@/components/profile/ProfileStats';
 import { ProfileTabs } from '@/components/profile/ProfileTabs';
 import { MobileCollectionGrid } from '@/components/profile/MobileCollectionGrid';
+import { ProfileMenu } from '@/components/profile/ProfileMenu';
+import ProfileSettingsModal from '@/components/modals/ProfileSettingsModal';
 
 interface PublicProfile {
   user: {
@@ -62,6 +64,7 @@ const Profile = () => {
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
   const [mobileTab, setMobileTab] = useState("Collection");
+  const [isProfileSettingsOpen, setIsProfileSettingsOpen] = useState(false);
 
   // Fetch public profile
   const { data: profile, isLoading: profileLoading, error: profileError } = useQuery<PublicProfile>({
@@ -239,7 +242,16 @@ const Profile = () => {
               description="Save bottles you want to try by adding them to your wishlist."
             />
           )}
+
+          {isOwnProfile && (
+            <ProfileMenu onOpenSettings={() => setIsProfileSettingsOpen(true)} />
+          )}
         </div>
+
+        <ProfileSettingsModal
+          isOpen={isProfileSettingsOpen}
+          onClose={() => setIsProfileSettingsOpen(false)}
+        />
       </>
     );
   }
