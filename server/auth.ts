@@ -1,6 +1,6 @@
 import express, { type Request, type Response, type NextFunction } from "express";
 import { storage, hashPassword, comparePasswords } from "./storage";
-import { loginUserSchema, insertUserSchema, updateUserSchema, registerUserSchema, changePasswordSchema, users } from "@shared/schema";
+import { loginUserSchema, insertUserSchema, updateUserSchema, registerUserSchema, changePasswordSchema, users, type User } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import { ZodError } from "zod";
 import { safeError } from "./lib/errors";
@@ -16,6 +16,14 @@ import { forgotPasswordSchema, resetPasswordSchema } from "@shared/schema";
 import { initiateGoogleAuth, handleGoogleCallback, isGoogleOAuthConfigured, getOAuthStatus, unlinkOAuthProvider } from "./auth/oauth-google";
 import { deleteFromSpaces, getKeyFromUrl, isSpacesConfigured } from "./spaces";
 import logger from "./lib/logger";
+
+// Strip sensitive fields from user objects before sending to client
+const SENSITIVE_USER_FIELDS = ['password', 'authToken', 'tokenExpiry', 'failedLoginAttempts', 'accountLockedUntil'] as const;
+
+function sanitizeUser(user: User): Omit<User, typeof SENSITIVE_USER_FIELDS[number]> {
+  const { password, authToken, tokenExpiry, failedLoginAttempts, accountLockedUntil, ...safeUser } = user;
+  return safeUser;
+}
 
 // Fix TypeScript declaration for SessionData
 declare module "express-session" {
@@ -162,15 +170,13 @@ export function setupAuth(app: express.Express) {
             return res.status(500).json({ message: "Session creation failed" });
           }
 
-          const { password, ...userWithoutPassword } = newUser;
           res.status(201).json({
-            ...userWithoutPassword,
+            ...sanitizeUser(newUser),
             token: token
           });
         });
       } catch {
-        const { password, ...userWithoutPassword } = newUser;
-        res.status(201).json(userWithoutPassword);
+        res.status(201).json(sanitizeUser(newUser));
       }
     } catch (error) {
       if (error instanceof ZodError) {
@@ -241,15 +247,13 @@ export function setupAuth(app: express.Express) {
             return res.status(500).json({ message: "Session creation failed" });
           }
 
-          const { password, ...userWithoutPassword } = user;
           res.json({
-            ...userWithoutPassword,
+            ...sanitizeUser(user),
             token: token
           });
         });
       } catch {
-        const { password, ...userWithoutPassword } = user;
-        res.json(userWithoutPassword);
+        res.json(sanitizeUser(user));
       }
     } catch (error) {
       if (error instanceof ZodError) {
@@ -281,9 +285,7 @@ export function setupAuth(app: express.Express) {
         if (sessionUser) {
           logger.info(`Session auth: user ${sessionUser.username} (ID: ${sessionUser.id})`);
           
-          // Return user without password
-          const { password, ...userWithoutPassword } = sessionUser;
-          return res.json(userWithoutPassword);
+          return res.json(sanitizeUser(sessionUser));
         } else {
           logger.info(`User not found for session userId ${req.session.userId}`);
           // Clear invalid session
@@ -308,9 +310,7 @@ export function setupAuth(app: express.Express) {
           // Set session for future requests
           req.session.userId = tokenUser.id;
           
-          // Return user without password
-          const { password, ...userWithoutPassword } = tokenUser;
-          return res.json(userWithoutPassword);
+          return res.json(sanitizeUser(tokenUser));
         }
       }
       
@@ -358,9 +358,7 @@ export function setupAuth(app: express.Express) {
         return res.status(404).json({ message: "User not found" });
       }
 
-      // Return user without password
-      const { password, ...userWithoutPassword } = updatedUser;
-      res.json(userWithoutPassword);
+      res.json(sanitizeUser(updatedUser));
     } catch (error) {
       if (error instanceof ZodError) {
         const validationError = fromZodError(error);

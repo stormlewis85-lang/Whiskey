@@ -2724,6 +2724,11 @@ Important: Keep it authentic—don't invent flavors they didn't mention or imply
     }
   });
 
+  // API 404 catch-all — must be AFTER all real API routes and BEFORE Vite middleware
+  app.all("/api/*", (_req: Request, res: Response) => {
+    res.status(404).json({ message: "Not found" });
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
