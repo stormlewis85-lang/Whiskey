@@ -836,6 +836,10 @@ export class DatabaseStorage implements IStorage {
     const flight = await this.getFlight(flightId, userId);
     if (!flight) return undefined;
 
+    // Verify whiskey belongs to user (prevent adding other users' whiskeys)
+    const whiskey = await this.getWhiskey(whiskeyId, userId);
+    if (!whiskey) return undefined;
+
     // Get current max order
     const existing = await db
       .select()
@@ -967,6 +971,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createBlindTasting(data: InsertBlindTasting, whiskeyIds: number[]): Promise<BlindTasting> {
+    // Verify all whiskeys belong to the user
+    for (const whiskeyId of whiskeyIds) {
+      const whiskey = await this.getWhiskey(whiskeyId, data.userId);
+      if (!whiskey) {
+        throw new Error(`Whiskey ${whiskeyId} not found or not owned by user`);
+      }
+    }
+
     const [newBt] = await db
       .insert(blindTastings)
       .values(data)
@@ -1957,13 +1969,15 @@ export class DatabaseStorage implements IStorage {
             ilike(distilleries.region, `%${search}%`)
           )
         )
-        .orderBy(asc(distilleries.name));
+        .orderBy(asc(distilleries.name))
+        .limit(50);
     }
 
     return db
       .select()
       .from(distilleries)
-      .orderBy(asc(distilleries.name));
+      .orderBy(asc(distilleries.name))
+      .limit(50);
   }
 
   async getDistillery(id: number): Promise<Distillery | undefined> {

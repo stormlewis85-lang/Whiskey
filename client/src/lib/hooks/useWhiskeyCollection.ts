@@ -80,9 +80,11 @@ const useWhiskeyCollection = ({
     // Apply rating filter (skip if empty or 'all')
     if (ratingFilter && ratingFilter !== 'all') {
       const minRating = parseInt(ratingFilter);
-      result = result.filter(
-        whiskey => whiskey.rating !== null && whiskey.rating >= minRating
-      );
+      if (!isNaN(minRating)) {
+        result = result.filter(
+          whiskey => whiskey.rating !== null && whiskey.rating >= minRating
+        );
+      }
     }
     
     // Apply bourbon-specific filters if type is Bourbon

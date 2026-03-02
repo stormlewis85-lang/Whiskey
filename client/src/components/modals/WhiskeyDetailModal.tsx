@@ -342,7 +342,7 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit, onTast
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col bg-card border-border/50" description="Whiskey details and tasting notes">
+        <DialogContent className="max-w-[calc(100vw-32px)] sm:max-w-3xl max-h-[90vh] flex flex-col bg-card border-border/50" description="Whiskey details and tasting notes">
           <DialogHeader className="pb-0 shrink-0">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
@@ -400,7 +400,7 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit, onTast
 
           <Separator className="my-2 shrink-0" />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto pr-2 pb-8 flex-1 min-h-0">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6 overflow-y-auto pr-2 pb-8 flex-1 min-h-0">
             {/* Left column - Image & details */}
             <div className="space-y-3 sm:space-y-4">
               <div className="aspect-[4/3] sm:aspect-square overflow-hidden rounded-xl bg-accent/30 relative group border border-border/30">
@@ -467,42 +467,42 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit, onTast
               <div className="grid grid-cols-2 gap-2 sm:gap-3">
                 {whiskey.type && (
                   <div className="p-2 sm:p-3 bg-accent/20 rounded-lg border border-border/20">
-                    <div className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">Type</div>
+                    <div className="text-xs text-muted-foreground mb-0.5 sm:mb-1">Type</div>
                     <div className="font-medium text-foreground text-sm sm:text-base truncate">{whiskey.type}</div>
                   </div>
                 )}
 
                 {whiskey.region && (
                   <div className="p-2 sm:p-3 bg-accent/20 rounded-lg border border-border/20">
-                    <div className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">Region</div>
+                    <div className="text-xs text-muted-foreground mb-0.5 sm:mb-1">Region</div>
                     <div className="font-medium text-foreground text-sm sm:text-base truncate">{whiskey.region}</div>
                   </div>
                 )}
 
                 {whiskey.age !== null && (
                   <div className="p-2 sm:p-3 bg-accent/20 rounded-lg border border-border/20">
-                    <div className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">Age</div>
+                    <div className="text-xs text-muted-foreground mb-0.5 sm:mb-1">Age</div>
                     <div className="font-medium text-foreground text-sm sm:text-base">{whiskey.age} {whiskey.age === 1 ? 'yr' : 'yrs'}</div>
                   </div>
                 )}
 
                 {whiskey.abv !== null && (
                   <div className="p-2 sm:p-3 bg-accent/20 rounded-lg border border-border/20">
-                    <div className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">ABV</div>
+                    <div className="text-xs text-muted-foreground mb-0.5 sm:mb-1">ABV</div>
                     <div className="font-medium text-foreground text-sm sm:text-base">{whiskey.abv}%</div>
                   </div>
                 )}
 
                 {whiskey.price !== null && (
                   <div className="p-2 sm:p-3 bg-accent/20 rounded-lg border border-border/20">
-                    <div className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">Price</div>
+                    <div className="text-xs text-muted-foreground mb-0.5 sm:mb-1">Price</div>
                     <div className="font-medium text-primary text-sm sm:text-base">${whiskey.price.toFixed(2)}</div>
                   </div>
                 )}
 
                 {whiskey.dateAdded && (
                   <div className="p-2 sm:p-3 bg-accent/20 rounded-lg border border-border/20">
-                    <div className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">Added</div>
+                    <div className="text-xs text-muted-foreground mb-0.5 sm:mb-1">Added</div>
                     <div className="font-medium text-foreground text-sm sm:text-base">{new Date(whiskey.dateAdded).toLocaleDateString()}</div>
                   </div>
                 )}
@@ -512,35 +512,35 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit, onTast
                   <>
                     {whiskey.bottleType && (
                       <div className="p-2 sm:p-3 bg-accent/20 rounded-lg border border-border/20">
-                        <div className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">Bottle Type</div>
+                        <div className="text-xs text-muted-foreground mb-0.5 sm:mb-1">Bottle Type</div>
                         <div className="font-medium text-foreground text-sm sm:text-base truncate">{whiskey.bottleType}</div>
                       </div>
                     )}
 
                     {whiskey.mashBill && (
                       <div className="p-2 sm:p-3 bg-accent/20 rounded-lg border border-border/20">
-                        <div className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">Mash Bill</div>
+                        <div className="text-xs text-muted-foreground mb-0.5 sm:mb-1">Mash Bill</div>
                         <div className="font-medium text-foreground text-sm sm:text-base truncate">{whiskey.mashBill}</div>
                       </div>
                     )}
 
                     {whiskey.caskStrength && (
                       <div className="p-2 sm:p-3 bg-accent/20 rounded-lg border border-border/20">
-                        <div className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">Cask Strength</div>
+                        <div className="text-xs text-muted-foreground mb-0.5 sm:mb-1">Cask Strength</div>
                         <div className="font-medium text-foreground text-sm sm:text-base">{whiskey.caskStrength}</div>
                       </div>
                     )}
 
                     {whiskey.finished && (
                       <div className="p-2 sm:p-3 bg-accent/20 rounded-lg border border-border/20">
-                        <div className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">Finished</div>
+                        <div className="text-xs text-muted-foreground mb-0.5 sm:mb-1">Finished</div>
                         <div className="font-medium text-foreground text-sm sm:text-base">{whiskey.finished}</div>
                       </div>
                     )}
 
                     {whiskey.finishType && (
                       <div className="p-2 sm:p-3 bg-accent/20 rounded-lg border border-border/20">
-                        <div className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">Finish Type</div>
+                        <div className="text-xs text-muted-foreground mb-0.5 sm:mb-1">Finish Type</div>
                         <div className="font-medium text-foreground text-sm sm:text-base truncate">{whiskey.finishType}</div>
                       </div>
                     )}
