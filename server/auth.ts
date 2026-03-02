@@ -153,7 +153,7 @@ export function setupAuth(app: express.Express) {
 
       const userData = {
         username: validatedData.username,
-        password: validatedData.password || '',
+        password: validatedData.password || null,
         displayName: validatedData.displayName,
         email: validatedData.email,
       };
@@ -237,24 +237,34 @@ export function setupAuth(app: express.Express) {
       await handleSuccessfulLogin(user.id);
       await recordLoginAttempt(credentials.username, true, req.ip);
 
-      req.session.userId = user.id;
+      // Regenerate session to prevent session fixation attacks
+      req.session.regenerate((regenErr) => {
+        if (regenErr) {
+          logger.error("Session regeneration failed:", regenErr);
+          return res.status(500).json({ message: "Session creation failed" });
+        }
 
-      try {
-        const token = await storage.generateAuthToken(user.id);
+        req.session.userId = user.id;
 
-        req.session.save((err) => {
-          if (err) {
-            return res.status(500).json({ message: "Session creation failed" });
+        (async () => {
+          try {
+            const token = await storage.generateAuthToken(user.id);
+
+            req.session.save((err) => {
+              if (err) {
+                return res.status(500).json({ message: "Session creation failed" });
+              }
+
+              res.json({
+                ...sanitizeUser(user),
+                token: token
+              });
+            });
+          } catch {
+            res.json(sanitizeUser(user));
           }
-
-          res.json({
-            ...sanitizeUser(user),
-            token: token
-          });
-        });
-      } catch {
-        res.json(sanitizeUser(user));
-      }
+        })();
+      });
     } catch (error) {
       if (error instanceof ZodError) {
         const validationError = fromZodError(error);
@@ -265,7 +275,20 @@ export function setupAuth(app: express.Express) {
   });
 
   // User Logout
-  app.post("/api/logout", (req: Request, res: Response) => {
+  app.post("/api/logout", async (req: Request, res: Response) => {
+    // Invalidate auth token so Bearer token can't be reused after logout
+    const userId = req.session.userId;
+    if (userId) {
+      try {
+        await db.update(users).set({
+          authToken: null,
+          tokenExpiry: null,
+        }).where(eq(users.id, userId));
+      } catch (error) {
+        logger.error("Failed to invalidate auth token on logout:", error);
+      }
+    }
+
     req.session.destroy(err => {
       if (err) {
         return res.status(500).json({ message: "Logout failed" });
@@ -305,11 +328,17 @@ export function setupAuth(app: express.Express) {
         
         const tokenUser = await storage.getUserByToken(token);
         if (tokenUser) {
+          // Check token expiry
+          if (tokenUser.tokenExpiry && new Date(tokenUser.tokenExpiry) < new Date()) {
+            logger.info(`Token expired for user ${tokenUser.username}`);
+            return res.status(401).json({ message: "Not authenticated" });
+          }
+
           logger.info(`Token auth: user ${tokenUser.username} (ID: ${tokenUser.id})`);
-          
+
           // Set session for future requests
           req.session.userId = tokenUser.id;
-          
+
           return res.json(sanitizeUser(tokenUser));
         }
       }
