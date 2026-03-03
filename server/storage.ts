@@ -21,7 +21,12 @@ import {
   aiUsageLogs, AiUsageLog, InsertAiUsageLog,
   // Rick House imports
   generatedScripts, GeneratedScript, InsertGeneratedScript,
-  tastingSessions, TastingSession, InsertTastingSession, UpdateTastingSession
+  tastingSessions, TastingSession, InsertTastingSession, UpdateTastingSession,
+  // Hunt imports
+  stores, Store, InsertStore, UpdateStore,
+  storeFollows, StoreFollow,
+  drops, Drop, InsertDrop, UpdateDrop,
+  notifications, Notification
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, asc, desc, sql, ne, count, ilike } from "drizzle-orm";
@@ -93,6 +98,34 @@ export interface IStorage {
 
   // Account management
   deleteUser(userId: number): Promise<boolean>;
+
+  // Hunt: Stores
+  getStores(search?: string, limit?: number, offset?: number): Promise<Store[]>;
+  getStore(id: number): Promise<Store | undefined>;
+  createStore(store: InsertStore): Promise<Store>;
+  updateStore(id: number, store: UpdateStore): Promise<Store | undefined>;
+
+  // Hunt: Store follows
+  followStore(userId: number, storeId: number): Promise<StoreFollow | undefined>;
+  unfollowStore(userId: number, storeId: number): Promise<boolean>;
+  isFollowingStore(userId: number, storeId: number): Promise<boolean>;
+  getFollowedStores(userId: number): Promise<(Store & { followerCount: number })[]>;
+  getStoreFollowerCount(storeId: number): Promise<number>;
+
+  // Hunt: Drops
+  getDrops(options: { storeId?: number; status?: string; limit?: number; offset?: number }): Promise<(Drop & { store: Store })[]>;
+  getDrop(id: number): Promise<(Drop & { store: Store }) | undefined>;
+  createDrop(drop: InsertDrop): Promise<Drop>;
+  updateDrop(id: number, update: UpdateDrop, userId: number): Promise<Drop | undefined>;
+  getDropsForFollowedStores(userId: number, limit?: number, offset?: number): Promise<(Drop & { store: Store })[]>;
+  getWishlistMatchingDrops(userId: number, limit?: number, offset?: number): Promise<(Drop & { store: Store })[]>;
+
+  // Hunt: Notifications
+  getNotifications(userId: number, limit?: number, offset?: number): Promise<Notification[]>;
+  createNotification(notification: { userId: number; type: string; title: string; message: string; data?: any }): Promise<Notification>;
+  markNotificationRead(id: number, userId: number): Promise<boolean>;
+  markAllNotificationsRead(userId: number): Promise<void>;
+  getUnreadNotificationCount(userId: number): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2267,6 +2300,322 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(whiskeys.userId, userId), sql`${whiskeys.image} IS NOT NULL`));
 
     return results.map(r => r.image).filter((img): img is string => img !== null);
+  }
+
+  // ==================== THE HUNT: STORES ====================
+
+  async getStores(search?: string, limit: number = 50, offset: number = 0): Promise<Store[]> {
+    const query = db.select().from(stores);
+
+    if (search) {
+      return query
+        .where(ilike(stores.name, `%${search}%`))
+        .orderBy(asc(stores.name))
+        .limit(limit)
+        .offset(offset);
+    }
+
+    return query.orderBy(asc(stores.name)).limit(limit).offset(offset);
+  }
+
+  async getStore(id: number): Promise<Store | undefined> {
+    const [store] = await db.select().from(stores).where(eq(stores.id, id));
+    return store || undefined;
+  }
+
+  async createStore(storeData: InsertStore): Promise<Store> {
+    const [store] = await db.insert(stores).values(storeData).returning();
+    return store;
+  }
+
+  async updateStore(id: number, storeData: UpdateStore): Promise<Store | undefined> {
+    const [updated] = await db
+      .update(stores)
+      .set({ ...storeData, updatedAt: new Date() })
+      .where(eq(stores.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  // ==================== THE HUNT: STORE FOLLOWS ====================
+
+  async followStore(userId: number, storeId: number): Promise<StoreFollow | undefined> {
+    // Verify store exists
+    const store = await this.getStore(storeId);
+    if (!store) return undefined;
+
+    // Check if already following
+    const existing = await db
+      .select()
+      .from(storeFollows)
+      .where(and(eq(storeFollows.userId, userId), eq(storeFollows.storeId, storeId)));
+
+    if (existing.length > 0) return existing[0];
+
+    const [follow] = await db
+      .insert(storeFollows)
+      .values({ userId, storeId })
+      .returning();
+    return follow;
+  }
+
+  async unfollowStore(userId: number, storeId: number): Promise<boolean> {
+    const result = await db
+      .delete(storeFollows)
+      .where(and(eq(storeFollows.userId, userId), eq(storeFollows.storeId, storeId)))
+      .returning();
+    return result.length > 0;
+  }
+
+  async isFollowingStore(userId: number, storeId: number): Promise<boolean> {
+    const result = await db
+      .select()
+      .from(storeFollows)
+      .where(and(eq(storeFollows.userId, userId), eq(storeFollows.storeId, storeId)));
+    return result.length > 0;
+  }
+
+  async getFollowedStores(userId: number): Promise<(Store & { followerCount: number })[]> {
+    const followRecords = await db
+      .select()
+      .from(storeFollows)
+      .where(eq(storeFollows.userId, userId))
+      .orderBy(desc(storeFollows.createdAt));
+
+    const results: (Store & { followerCount: number })[] = [];
+    for (const f of followRecords) {
+      const store = await this.getStore(f.storeId);
+      if (!store) continue;
+      const followerCount = await this.getStoreFollowerCount(f.storeId);
+      results.push({ ...store, followerCount });
+    }
+    return results;
+  }
+
+  async getStoreFollowerCount(storeId: number): Promise<number> {
+    const result = await db
+      .select({ count: count() })
+      .from(storeFollows)
+      .where(eq(storeFollows.storeId, storeId));
+    return result[0]?.count || 0;
+  }
+
+  // ==================== THE HUNT: DROPS ====================
+
+  async getDrops(options: { storeId?: number; status?: string; limit?: number; offset?: number } = {}): Promise<(Drop & { store: Store })[]> {
+    const { storeId, status, limit: lim = 50, offset: off = 0 } = options;
+
+    const conditions = [];
+    if (storeId) conditions.push(eq(drops.storeId, storeId));
+    if (status) conditions.push(sql`${drops.status} = ${status}`);
+
+    const dropRows = conditions.length > 0
+      ? await db.select().from(drops).where(and(...conditions)).orderBy(desc(drops.droppedAt)).limit(lim).offset(off)
+      : await db.select().from(drops).orderBy(desc(drops.droppedAt)).limit(lim).offset(off);
+
+    const results: (Drop & { store: Store })[] = [];
+    for (const drop of dropRows) {
+      const store = await this.getStore(drop.storeId);
+      if (store) results.push({ ...drop, store });
+    }
+    return results;
+  }
+
+  async getDrop(id: number): Promise<(Drop & { store: Store }) | undefined> {
+    const [drop] = await db.select().from(drops).where(eq(drops.id, id));
+    if (!drop) return undefined;
+
+    const store = await this.getStore(drop.storeId);
+    if (!store) return undefined;
+
+    return { ...drop, store };
+  }
+
+  async createDrop(dropData: InsertDrop): Promise<Drop> {
+    const [drop] = await db.insert(drops).values(dropData).returning();
+
+    // Get the store for this drop
+    const store = await this.getStore(drop.storeId);
+
+    // Notify store followers + wishlist matching
+    try {
+      const followers = await db
+        .select()
+        .from(storeFollows)
+        .where(eq(storeFollows.storeId, drop.storeId));
+
+      for (const follower of followers) {
+        // Skip notifying the person who reported the drop
+        if (follower.userId === drop.createdBy) continue;
+
+        // Check if this drop matches anything on their wishlist
+        const wishlistItems = await db
+          .select()
+          .from(whiskeys)
+          .where(and(
+            eq(whiskeys.userId, follower.userId),
+            eq(whiskeys.isWishlist, true)
+          ));
+
+        let isWishlistMatch = false;
+        for (const item of wishlistItems) {
+          if (item.name && drop.whiskeyName &&
+            item.name.toLowerCase().includes(drop.whiskeyName.toLowerCase()) ||
+            drop.whiskeyName.toLowerCase().includes(item.name?.toLowerCase() || '')) {
+            isWishlistMatch = true;
+            break;
+          }
+        }
+
+        const storeName = store?.name || 'A store';
+
+        if (isWishlistMatch) {
+          await this.createNotification({
+            userId: follower.userId,
+            type: 'wishlist_match',
+            title: 'Wishlist Match!',
+            message: `${drop.whiskeyName} was spotted at ${storeName}`,
+            data: { dropId: drop.id, storeId: drop.storeId },
+          });
+        } else {
+          await this.createNotification({
+            userId: follower.userId,
+            type: 'store_new_drop',
+            title: 'New Drop',
+            message: `${storeName} just got ${drop.whiskeyName}`,
+            data: { dropId: drop.id, storeId: drop.storeId },
+          });
+        }
+      }
+    } catch (err) {
+      // Don't fail the drop creation if notification fails
+      console.error("Notification error during createDrop:", err);
+    }
+
+    return drop;
+  }
+
+  async updateDrop(id: number, update: UpdateDrop, userId: number): Promise<Drop | undefined> {
+    const [existing] = await db.select().from(drops).where(eq(drops.id, id));
+    if (!existing || existing.createdBy !== userId) return undefined;
+
+    const [updated] = await db
+      .update(drops)
+      .set(update)
+      .where(eq(drops.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async getDropsForFollowedStores(userId: number, limit: number = 50, offset: number = 0): Promise<(Drop & { store: Store })[]> {
+    const followedStoreIds = await db
+      .select({ storeId: storeFollows.storeId })
+      .from(storeFollows)
+      .where(eq(storeFollows.userId, userId));
+
+    if (followedStoreIds.length === 0) return [];
+
+    const ids = followedStoreIds.map(f => f.storeId);
+    const dropRows = await db
+      .select()
+      .from(drops)
+      .where(sql`${drops.storeId} IN (${sql.join(ids.map(id => sql`${id}`), sql`, `)})`)
+      .orderBy(desc(drops.droppedAt))
+      .limit(limit)
+      .offset(offset);
+
+    const results: (Drop & { store: Store })[] = [];
+    for (const drop of dropRows) {
+      const store = await this.getStore(drop.storeId);
+      if (store) results.push({ ...drop, store });
+    }
+    return results;
+  }
+
+  async getWishlistMatchingDrops(userId: number, limit: number = 50, offset: number = 0): Promise<(Drop & { store: Store })[]> {
+    // Get user's wishlist items
+    const wishlistItems = await db
+      .select()
+      .from(whiskeys)
+      .where(and(eq(whiskeys.userId, userId), eq(whiskeys.isWishlist, true)));
+
+    if (wishlistItems.length === 0) return [];
+
+    // Get followed store IDs
+    const followedStoreIds = await db
+      .select({ storeId: storeFollows.storeId })
+      .from(storeFollows)
+      .where(eq(storeFollows.userId, userId));
+
+    if (followedStoreIds.length === 0) return [];
+
+    const storeIds = followedStoreIds.map(f => f.storeId);
+
+    // Build ILIKE conditions for wishlist matching
+    const wishlistConditions = wishlistItems
+      .filter(w => w.name)
+      .map(w => ilike(drops.whiskeyName, `%${w.name}%`));
+
+    if (wishlistConditions.length === 0) return [];
+
+    const dropRows = await db
+      .select()
+      .from(drops)
+      .where(and(
+        sql`${drops.storeId} IN (${sql.join(storeIds.map(id => sql`${id}`), sql`, `)})`,
+        or(...wishlistConditions)
+      ))
+      .orderBy(desc(drops.droppedAt))
+      .limit(limit)
+      .offset(offset);
+
+    const results: (Drop & { store: Store })[] = [];
+    for (const drop of dropRows) {
+      const store = await this.getStore(drop.storeId);
+      if (store) results.push({ ...drop, store });
+    }
+    return results;
+  }
+
+  // ==================== THE HUNT: NOTIFICATIONS ====================
+
+  async getNotifications(userId: number, limit: number = 50, offset: number = 0): Promise<Notification[]> {
+    return db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, userId))
+      .orderBy(desc(notifications.createdAt))
+      .limit(limit)
+      .offset(offset);
+  }
+
+  async createNotification(notification: { userId: number; type: string; title: string; message: string; data?: any }): Promise<Notification> {
+    const [n] = await db.insert(notifications).values(notification).returning();
+    return n;
+  }
+
+  async markNotificationRead(id: number, userId: number): Promise<boolean> {
+    const result = await db
+      .update(notifications)
+      .set({ isRead: true })
+      .where(and(eq(notifications.id, id), eq(notifications.userId, userId)))
+      .returning();
+    return result.length > 0;
+  }
+
+  async markAllNotificationsRead(userId: number): Promise<void> {
+    await db
+      .update(notifications)
+      .set({ isRead: true })
+      .where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)));
+  }
+
+  async getUnreadNotificationCount(userId: number): Promise<number> {
+    const result = await db
+      .select({ count: count() })
+      .from(notifications)
+      .where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)));
+    return result[0]?.count || 0;
   }
 }
 

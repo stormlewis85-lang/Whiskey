@@ -7,6 +7,9 @@ import { v4 as uuidv4 } from 'uuid';
 // Bottle status enum for collection management
 export const bottleStatusEnum = pgEnum('bottle_status', ['sealed', 'open', 'finished', 'gifted']);
 
+// Drop status enum for store drops
+export const dropStatusEnum = pgEnum('drop_status', ['active', 'expired', 'sold_out']);
+
 // Blind tasting status enum
 export const blindTastingStatusEnum = pgEnum('blind_tasting_status', ['active', 'revealed', 'completed']);
 
@@ -369,6 +372,10 @@ export const usersRelations = relations(users, ({ many }) => ({
   // Auth relations
   oauthProviders: many(oauthProviders),
   passwordResetTokens: many(passwordResetTokens),
+  // Hunt relations
+  storeFollows: many(storeFollows),
+  drops: many(drops),
+  notifications: many(notifications),
 }));
 
 // OAuth Providers relations
@@ -424,6 +431,8 @@ export const whiskeysRelations = relations(whiskeys, ({ one, many }) => ({
   // Rick House relations
   tastingSessions: many(tastingSessions),
   generatedScripts: many(generatedScripts),
+  // Hunt relations
+  drops: many(drops),
 }));
 
 export const reviewCommentsRelations = relations(reviewComments, ({ one }) => ({
@@ -802,6 +811,142 @@ export type InsertPasswordResetToken = typeof passwordResetTokens.$inferInsert;
 // Login Attempt types
 export type LoginAttempt = typeof loginAttempts.$inferSelect;
 export type InsertLoginAttempt = typeof loginAttempts.$inferInsert;
+
+// ==================== THE HUNT TABLES ====================
+
+// Stores — liquor stores that users can follow
+export const stores = pgTable("stores", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  location: text("location"), // City, State
+  address: text("address"),
+  instagramHandle: text("instagram_handle"),
+  latitude: real("latitude"),
+  longitude: real("longitude"),
+  isVerified: boolean("is_verified").default(false),
+  submittedBy: integer("submitted_by").references(() => users.id, { onDelete: 'set null' }),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Store Follows — user follows a store
+export const storeFollows = pgTable("store_follows", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  storeId: integer("store_id").notNull().references(() => stores.id, { onDelete: 'cascade' }),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  uniqueStoreFollow: unique("unique_store_follow").on(table.userId, table.storeId),
+}));
+
+// Drops — bottle sightings at stores
+export const drops = pgTable("drops", {
+  id: serial("id").primaryKey(),
+  storeId: integer("store_id").notNull().references(() => stores.id, { onDelete: 'cascade' }),
+  createdBy: integer("created_by").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  whiskeyName: text("whiskey_name").notNull(),
+  whiskeyType: text("whiskey_type"), // Bourbon, Scotch, etc.
+  whiskeyId: integer("whiskey_id").references(() => whiskeys.id, { onDelete: 'set null' }),
+  price: real("price"),
+  status: dropStatusEnum("status").default('active'),
+  droppedAt: timestamp("dropped_at").defaultNow(),
+  expiresAt: timestamp("expires_at"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Notifications — in-app alerts
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  type: text("type").notNull(), // 'store_new_drop', 'wishlist_match', etc.
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  data: jsonb("data"), // Additional context (storeId, dropId, etc.)
+  isRead: boolean("is_read").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Store relations
+export const storesRelations = relations(stores, ({ one, many }) => ({
+  submitter: one(users, {
+    fields: [stores.submittedBy],
+    references: [users.id],
+  }),
+  follows: many(storeFollows),
+  drops: many(drops),
+}));
+
+// Store follows relations
+export const storeFollowsRelations = relations(storeFollows, ({ one }) => ({
+  user: one(users, {
+    fields: [storeFollows.userId],
+    references: [users.id],
+  }),
+  store: one(stores, {
+    fields: [storeFollows.storeId],
+    references: [stores.id],
+  }),
+}));
+
+// Drops relations
+export const dropsRelations = relations(drops, ({ one }) => ({
+  store: one(stores, {
+    fields: [drops.storeId],
+    references: [stores.id],
+  }),
+  creator: one(users, {
+    fields: [drops.createdBy],
+    references: [users.id],
+  }),
+  whiskey: one(whiskeys, {
+    fields: [drops.whiskeyId],
+    references: [whiskeys.id],
+  }),
+}));
+
+// Notification relations
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, {
+    fields: [notifications.userId],
+    references: [users.id],
+  }),
+}));
+
+// Store schemas
+export const insertStoreSchema = createInsertSchema(stores)
+  .omit({ id: true, createdAt: true, updatedAt: true, isVerified: true });
+
+export const updateStoreSchema = insertStoreSchema.partial();
+
+// Drop schemas
+export const dropStatusValues = ['active', 'expired', 'sold_out'] as const;
+export type DropStatus = typeof dropStatusValues[number];
+
+export const insertDropSchema = createInsertSchema(drops)
+  .omit({ id: true, createdAt: true, droppedAt: true });
+
+export const updateDropSchema = z.object({
+  status: z.enum(dropStatusValues).optional(),
+  notes: z.string().optional(),
+  price: z.number().optional(),
+});
+
+// Store types
+export type Store = typeof stores.$inferSelect;
+export type InsertStore = z.infer<typeof insertStoreSchema>;
+export type UpdateStore = z.infer<typeof updateStoreSchema>;
+
+// Store follow types
+export type StoreFollow = typeof storeFollows.$inferSelect;
+
+// Drop types
+export type Drop = typeof drops.$inferSelect;
+export type InsertDrop = z.infer<typeof insertDropSchema>;
+export type UpdateDrop = z.infer<typeof updateDropSchema>;
+
+// Notification types
+export type Notification = typeof notifications.$inferSelect;
 
 // Flavor tag constants for search/filter
 export const FLAVOR_TAGS = {

@@ -1,9 +1,10 @@
+import React from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 import { Redirect, Route } from "wouter";
 import { Component as ReactComponent, ErrorInfo, ReactNode } from "react";
 
-type ComponentType = () => JSX.Element;
+type ComponentType = React.ComponentType<any>;
 
 /**
  * Error boundary that catches rendering errors inside protected routes

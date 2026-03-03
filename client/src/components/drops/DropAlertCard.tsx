@@ -1,21 +1,26 @@
 import { Clock, MapPin, Heart } from "lucide-react";
-
-export interface DropAlert {
-  id: string;
-  storeName: string;
-  storeLocation: string;
-  bottleName: string;
-  timeAgo: string;
-  distance: string;
-  onWishlist?: boolean;
-}
+import type { StoreDrop } from "./StoreDropCard";
 
 interface DropAlertCardProps {
-  alert: DropAlert;
+  drop: StoreDrop;
   onClick?: () => void;
 }
 
-export function DropAlertCard({ alert, onClick }: DropAlertCardProps) {
+function getTimeAgo(dateStr: string | null): string {
+  if (!dateStr) return "";
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "Just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d ago`;
+}
+
+export function DropAlertCard({ drop, onClick }: DropAlertCardProps) {
+  const timeAgo = getTimeAgo(drop.droppedAt);
+
   return (
     <div
       className="relative mx-4 mb-4 cursor-pointer transition-transform duration-150 active:scale-[0.98]"
@@ -54,36 +59,36 @@ export function DropAlertCard({ alert, onClick }: DropAlertCardProps) {
             className="text-primary font-semibold uppercase"
             style={{ fontSize: "0.65rem", letterSpacing: "0.05em" }}
           >
-            Drop Alert
+            Wishlist Match
           </span>
         </div>
         <span className="text-muted-foreground" style={{ fontSize: "0.65rem" }}>
-          {alert.timeAgo}
+          {timeAgo}
         </span>
       </div>
 
       {/* Store name */}
       <div className="font-medium text-foreground mb-1 truncate" style={{ fontSize: "0.8rem" }}>
-        {alert.storeName} — {alert.storeLocation}
+        {drop.store.name} — {drop.store.location || ""}
       </div>
 
       {/* Bottle name */}
       <div className="font-display text-primary mb-2" style={{ fontSize: "1rem" }}>
-        {alert.bottleName}
+        {drop.whiskeyName}
       </div>
 
       {/* Meta row */}
       <div className="flex gap-4 text-muted-foreground" style={{ fontSize: "0.7rem" }}>
-        <span className="flex items-center gap-1">
-          <MapPin className="w-3 h-3" />
-          {alert.distance} away
-        </span>
-        {alert.onWishlist && (
-          <span className="flex items-center gap-1 text-primary">
-            <Heart className="w-3 h-3 fill-primary" />
-            On your wishlist
+        {drop.store.location && (
+          <span className="flex items-center gap-1">
+            <MapPin className="w-3 h-3" />
+            {drop.store.location}
           </span>
         )}
+        <span className="flex items-center gap-1 text-primary">
+          <Heart className="w-3 h-3 fill-primary" />
+          On your wishlist
+        </span>
       </div>
     </div>
   );

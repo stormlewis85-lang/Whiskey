@@ -1,19 +1,25 @@
-import { Check, Navigation, Store } from "lucide-react";
+import { Check, Navigation, Store, Clock } from "lucide-react";
 
 export interface StoreDrop {
-  id: string;
+  id: number;
+  storeId: number;
+  createdBy: number;
+  whiskeyName: string;
+  whiskeyType: string | null;
+  whiskeyId: number | null;
+  price: number | null;
+  status: string | null;
+  droppedAt: string | null;
+  expiresAt: string | null;
+  notes: string | null;
+  createdAt: string | null;
   store: {
+    id: number;
     name: string;
-    initials: string;
-    location: string;
-    distance: string;
+    location: string | null;
+    address: string | null;
   };
-  timeAgo: string;
-  bottle: {
-    name: string;
-    type: string;
-    onWishlist?: boolean;
-  };
+  isWishlistMatch?: boolean;
 }
 
 interface StoreDropCardProps {
@@ -22,7 +28,30 @@ interface StoreDropCardProps {
   onViewStore?: () => void;
 }
 
+function getTimeAgo(dateStr: string | null): string {
+  if (!dateStr) return "";
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "Just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d ago`;
+}
+
+function getInitials(name: string): string {
+  return name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase();
+}
+
 export function StoreDropCard({ drop, onGetDirections, onViewStore }: StoreDropCardProps) {
+  const timeAgo = getTimeAgo(drop.droppedAt);
+
   return (
     <div
       className="overflow-hidden mb-3 transition-transform duration-150 active:scale-[0.98]"
@@ -52,7 +81,7 @@ export function StoreDropCard({ drop, onGetDirections, onViewStore }: StoreDropC
             color: "hsl(var(--muted-foreground))",
           }}
         >
-          {drop.store.initials}
+          {getInitials(drop.store.name)}
         </div>
 
         {/* Store info */}
@@ -61,22 +90,25 @@ export function StoreDropCard({ drop, onGetDirections, onViewStore }: StoreDropC
             {drop.store.name}
           </div>
           <div className="text-muted-foreground" style={{ fontSize: "0.7rem" }}>
-            {drop.store.location} · {drop.store.distance}
+            {drop.store.location || drop.store.address || ""}
           </div>
         </div>
 
         {/* Time badge */}
-        <div
-          className="text-primary"
-          style={{
-            fontSize: "0.65rem",
-            background: "rgba(212,164,76,0.12)",
-            padding: "4px 10px",
-            borderRadius: "12px",
-          }}
-        >
-          {drop.timeAgo}
-        </div>
+        {timeAgo && (
+          <div
+            className="flex items-center gap-1 text-primary"
+            style={{
+              fontSize: "0.65rem",
+              background: "rgba(212,164,76,0.12)",
+              padding: "4px 10px",
+              borderRadius: "12px",
+            }}
+          >
+            <Clock className="w-3 h-3" />
+            {timeAgo}
+          </div>
+        )}
       </div>
 
       {/* Bottle content */}
@@ -107,18 +139,28 @@ export function StoreDropCard({ drop, onGetDirections, onViewStore }: StoreDropC
           {/* Bottle info */}
           <div className="flex-1">
             <div className="font-display" style={{ fontSize: "1rem", marginBottom: "4px" }}>
-              {drop.bottle.name}
+              {drop.whiskeyName}
             </div>
             <div className="text-muted-foreground" style={{ fontSize: "0.7rem", marginBottom: "6px" }}>
-              {drop.bottle.type}
+              {[drop.whiskeyType, drop.price ? `$${drop.price}` : null]
+                .filter(Boolean)
+                .join(" · ")}
             </div>
-            {drop.bottle.onWishlist && (
+            {drop.isWishlistMatch && (
               <span
                 className="inline-flex items-center gap-1"
-                style={{ fontSize: "0.65rem", color: "hsl(var(--success))" }}
+                style={{ fontSize: "0.65rem", color: "hsl(var(--success, 142 71% 45%))" }}
               >
                 <Check className="w-3 h-3" />
                 On your wishlist
+              </span>
+            )}
+            {drop.status === "sold_out" && (
+              <span
+                className="inline-flex items-center gap-1 text-muted-foreground"
+                style={{ fontSize: "0.65rem" }}
+              >
+                Sold out
               </span>
             )}
           </div>

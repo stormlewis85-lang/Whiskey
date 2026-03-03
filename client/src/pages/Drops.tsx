@@ -1,10 +1,85 @@
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { Header } from "@/components/Header";
 import { EmptyState } from "@/components/EmptyState";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Bell } from "lucide-react";
+import { StoreDropCard, type StoreDrop } from "@/components/drops/StoreDropCard";
+import { DropAlertCard } from "@/components/drops/DropAlertCard";
+import { DropFilters } from "@/components/drops/DropFilters";
+import { FollowedStoresList } from "@/components/drops/FollowedStoresList";
+import { StoreDropCardSkeleton } from "@/components/drops/StoreDropCardSkeleton";
+import { StoreSearchModal } from "@/components/modals/StoreSearchModal";
+import { ReportDropModal } from "@/components/modals/ReportDropModal";
+import { Bell, Plus, Store } from "lucide-react";
+
+interface FollowedStore {
+  id: number;
+  name: string;
+  location: string | null;
+  followerCount: number;
+}
 
 const Drops = () => {
   const isMobile = useIsMobile();
+  const [activeFilter, setActiveFilter] = useState("All Drops");
+  const [storeSearchOpen, setStoreSearchOpen] = useState(false);
+  const [reportDropOpen, setReportDropOpen] = useState(false);
+
+  // Followed stores
+  const followedStoresQuery = useQuery<FollowedStore[]>({
+    queryKey: ["/api/user/followed-stores"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/user/followed-stores");
+      return res.json();
+    },
+  });
+
+  // Drops feed (all from followed stores)
+  const dropsQuery = useQuery<StoreDrop[]>({
+    queryKey: ["/api/drops"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/drops");
+      return res.json();
+    },
+  });
+
+  // Wishlist matches
+  const wishlistQuery = useQuery<StoreDrop[]>({
+    queryKey: ["/api/drops/wishlist-matches"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/drops/wishlist-matches");
+      return res.json();
+    },
+  });
+
+  // Unread notification count
+  const unreadQuery = useQuery<{ count: number }>({
+    queryKey: ["/api/notifications/unread-count"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/notifications/unread-count");
+      return res.json();
+    },
+    refetchInterval: 30000, // Poll every 30s
+  });
+
+  const followedStores = followedStoresQuery.data || [];
+  const allDrops = dropsQuery.data || [];
+  const wishlistMatches = wishlistQuery.data || [];
+  const unreadCount = unreadQuery.data?.count || 0;
+  const isLoading = dropsQuery.isLoading;
+
+  // Filter drops based on active filter
+  const filteredDrops = (() => {
+    if (activeFilter === "Wishlist Matches") return wishlistMatches;
+    if (activeFilter === "Bourbon") return allDrops.filter((d) => d.whiskeyType?.toLowerCase() === "bourbon");
+    if (activeFilter === "Scotch") return allDrops.filter((d) => d.whiskeyType?.toLowerCase() === "scotch");
+    if (activeFilter === "Allocated") return allDrops.filter((d) => d.whiskeyType?.toLowerCase() === "allocated");
+    return allDrops; // "All Drops"
+  })();
+
+  const showWishlistView = activeFilter === "Wishlist Matches";
+  const hasFollowedStores = followedStores.length > 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -12,24 +87,144 @@ const Drops = () => {
 
       <div className="max-w-2xl mx-auto">
         {/* Page Header */}
-        <div className={isMobile ? "px-5 pt-4 pb-2" : "px-5 pt-8 pb-4"}>
-          <h1 className={`font-display font-medium text-foreground ${isMobile ? "text-3xl" : "text-4xl"}`}>
-            Store Drops
-          </h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Alerts from stores you follow
-          </p>
+        <div className={`flex items-center justify-between ${isMobile ? "px-5 pt-4 pb-2" : "px-5 pt-8 pb-4"}`}>
+          <div>
+            <h1
+              className={`font-display font-medium text-foreground ${isMobile ? "text-3xl" : "text-4xl"}`}
+            >
+              Store Drops
+            </h1>
+            <p className="text-muted-foreground mt-1 text-sm">
+              Alerts from stores you follow
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {/* Notification bell */}
+            <button
+              className="relative flex items-center justify-center bg-transparent border-none cursor-pointer"
+              style={{
+                width: "40px",
+                height: "40px",
+                borderRadius: "12px",
+                background: "hsl(var(--popover))",
+                border: "1px solid rgba(255,255,255,0.06)",
+              }}
+            >
+              <Bell className="w-4.5 h-4.5 text-foreground" />
+              {unreadCount > 0 && (
+                <span
+                  className="absolute flex items-center justify-center font-bold text-white"
+                  style={{
+                    top: "-4px",
+                    right: "-4px",
+                    minWidth: "18px",
+                    height: "18px",
+                    borderRadius: "9px",
+                    background: "hsl(var(--primary))",
+                    fontSize: "0.6rem",
+                    padding: "0 4px",
+                  }}
+                >
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
+            </button>
+
+            {/* Report drop button */}
+            {hasFollowedStores && (
+              <button
+                onClick={() => setReportDropOpen(true)}
+                className="flex items-center justify-center border-none cursor-pointer"
+                style={{
+                  width: "40px",
+                  height: "40px",
+                  borderRadius: "12px",
+                  background: "hsl(var(--primary))",
+                }}
+              >
+                <Plus className="w-4.5 h-4.5 text-primary-foreground" />
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Coming Soon */}
-        <div className="px-4 pb-24">
-          <EmptyState
-            icon={Bell}
-            title="Coming Soon"
-            description="Store drop alerts are coming in a future update. You'll be able to follow local stores and get notified when they receive new bottles."
+        {/* Followed stores horizontal scroll */}
+        {hasFollowedStores && (
+          <FollowedStoresList
+            stores={followedStores}
+            onAddStore={() => setStoreSearchOpen(true)}
           />
+        )}
+
+        {/* Filter bar */}
+        {hasFollowedStores && (
+          <DropFilters onFilterChange={(filter) => setActiveFilter(filter)} />
+        )}
+
+        {/* Content */}
+        <div className="px-4 pb-24">
+          {/* Loading state */}
+          {isLoading && (
+            <>
+              <StoreDropCardSkeleton />
+              <StoreDropCardSkeleton />
+              <StoreDropCardSkeleton />
+            </>
+          )}
+
+          {/* No followed stores — empty state */}
+          {!isLoading && !hasFollowedStores && (
+            <EmptyState
+              icon={Store}
+              title="Follow Stores to See Drops"
+              description="Find local liquor stores and follow them to see when new bottles arrive."
+              action={{
+                label: "Find Stores",
+                onClick: () => setStoreSearchOpen(true),
+              }}
+            />
+          )}
+
+          {/* Has followed stores but no drops */}
+          {!isLoading && hasFollowedStores && filteredDrops.length === 0 && (
+            <EmptyState
+              icon={Bell}
+              title={showWishlistView ? "No Wishlist Matches" : "No Drops Yet"}
+              description={
+                showWishlistView
+                  ? "When a store you follow gets a bottle on your wishlist, you'll see it here."
+                  : "When stores you follow report new bottles, they'll appear here."
+              }
+            />
+          )}
+
+          {/* Drops list */}
+          {!isLoading &&
+            filteredDrops.map((drop) =>
+              showWishlistView ? (
+                <DropAlertCard key={drop.id} drop={drop} />
+              ) : (
+                <StoreDropCard
+                  key={drop.id}
+                  drop={drop}
+                  onGetDirections={() => {
+                    if (drop.store.address) {
+                      window.open(
+                        `https://maps.google.com/?q=${encodeURIComponent(drop.store.address)}`,
+                        "_blank"
+                      );
+                    }
+                  }}
+                />
+              )
+            )}
         </div>
       </div>
+
+      {/* Modals */}
+      <StoreSearchModal isOpen={storeSearchOpen} onClose={() => setStoreSearchOpen(false)} />
+      <ReportDropModal isOpen={reportDropOpen} onClose={() => setReportDropOpen(false)} />
     </div>
   );
 };

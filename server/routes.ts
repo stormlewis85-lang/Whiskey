@@ -23,7 +23,10 @@ import {
   updateFlightWhiskeySchema,
   insertBlindTastingSchema,
   updateBlindTastingWhiskeySchema,
-  updateProfileSchema
+  updateProfileSchema,
+  insertStoreSchema,
+  insertDropSchema,
+  updateDropSchema
 } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -2720,6 +2723,248 @@ Important: Keep it authentic—don't invent flavors they didn't mention or imply
       });
     } catch (error) {
       res.status(errorStatus(error)).json(safeError(error, "Failed to get AI status"));
+    }
+  });
+
+  // ==================== THE HUNT: STORE ROUTES ====================
+
+  // Search/list stores
+  app.get("/api/stores", async (req: Request, res: Response) => {
+    try {
+      const search = req.query.search as string | undefined;
+      const { limit, offset } = parsePaginationParams(req);
+      const storesList = await storage.getStores(search, limit, offset);
+      res.json(storesList);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to fetch stores"));
+    }
+  });
+
+  // Get single store + follower count
+  app.get("/api/stores/:id", async (req: Request, res: Response) => {
+    try {
+      const storeId = parseInt(req.params.id);
+      if (isNaN(storeId)) {
+        return res.status(400).json({ message: "Invalid store ID format" });
+      }
+
+      const store = await storage.getStore(storeId);
+      if (!store) {
+        return res.status(404).json({ message: "Store not found" });
+      }
+
+      const followerCount = await storage.getStoreFollowerCount(storeId);
+      const isFollowing = req.session?.userId
+        ? await storage.isFollowingStore(req.session.userId, storeId)
+        : false;
+
+      res.json({ ...store, followerCount, isFollowing });
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to fetch store"));
+    }
+  });
+
+  // Submit a new store (auth)
+  app.post("/api/stores", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const storeData = insertStoreSchema.parse({
+        ...req.body,
+        submittedBy: getUserId(req),
+      });
+      const store = await storage.createStore(storeData);
+      res.status(201).json(store);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        return res.status(400).json({ message: "Validation error", error: validationError.message });
+      }
+      res.status(errorStatus(error)).json(safeError(error, "Failed to create store"));
+    }
+  });
+
+  // Follow a store (auth)
+  app.post("/api/stores/:id/follow", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const storeId = parseInt(req.params.id);
+      if (isNaN(storeId)) {
+        return res.status(400).json({ message: "Invalid store ID format" });
+      }
+
+      const follow = await storage.followStore(getUserId(req), storeId);
+      if (!follow) {
+        return res.status(404).json({ message: "Store not found" });
+      }
+
+      res.status(201).json(follow);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to follow store"));
+    }
+  });
+
+  // Unfollow a store (auth)
+  app.delete("/api/stores/:id/follow", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const storeId = parseInt(req.params.id);
+      if (isNaN(storeId)) {
+        return res.status(400).json({ message: "Invalid store ID format" });
+      }
+
+      const unfollowed = await storage.unfollowStore(getUserId(req), storeId);
+      if (!unfollowed) {
+        return res.status(404).json({ message: "Not following this store" });
+      }
+
+      res.status(204).send();
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to unfollow store"));
+    }
+  });
+
+  // Get user's followed stores (auth)
+  app.get("/api/user/followed-stores", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const followedStores = await storage.getFollowedStores(getUserId(req));
+      res.json(followedStores);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to fetch followed stores"));
+    }
+  });
+
+  // ==================== THE HUNT: DROP ROUTES ====================
+
+  // Drops feed from followed stores (auth)
+  app.get("/api/drops", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const { limit, offset } = parsePaginationParams(req);
+      const dropsFeed = await storage.getDropsForFollowedStores(getUserId(req), limit, offset);
+      res.json(dropsFeed);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to fetch drops"));
+    }
+  });
+
+  // Drops matching user's wishlist (auth)
+  app.get("/api/drops/wishlist-matches", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const { limit, offset } = parsePaginationParams(req);
+      const matches = await storage.getWishlistMatchingDrops(getUserId(req), limit, offset);
+      res.json(matches);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to fetch wishlist matches"));
+    }
+  });
+
+  // Get single drop with store info
+  app.get("/api/drops/:id", async (req: Request, res: Response) => {
+    try {
+      const dropId = parseInt(req.params.id);
+      if (isNaN(dropId)) {
+        return res.status(400).json({ message: "Invalid drop ID format" });
+      }
+
+      const drop = await storage.getDrop(dropId);
+      if (!drop) {
+        return res.status(404).json({ message: "Drop not found" });
+      }
+
+      res.json(drop);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to fetch drop"));
+    }
+  });
+
+  // Report a drop (auth)
+  app.post("/api/drops", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const dropData = insertDropSchema.parse({
+        ...req.body,
+        createdBy: getUserId(req),
+      });
+      const drop = await storage.createDrop(dropData);
+      res.status(201).json(drop);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        return res.status(400).json({ message: "Validation error", error: validationError.message });
+      }
+      res.status(errorStatus(error)).json(safeError(error, "Failed to create drop"));
+    }
+  });
+
+  // Update drop status (auth, creator only)
+  app.patch("/api/drops/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const dropId = parseInt(req.params.id);
+      if (isNaN(dropId)) {
+        return res.status(400).json({ message: "Invalid drop ID format" });
+      }
+
+      const updateData = updateDropSchema.parse(req.body);
+      const updated = await storage.updateDrop(dropId, updateData, getUserId(req));
+
+      if (!updated) {
+        return res.status(404).json({ message: "Drop not found or not owned by you" });
+      }
+
+      res.json(updated);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        return res.status(400).json({ message: "Validation error", error: validationError.message });
+      }
+      res.status(errorStatus(error)).json(safeError(error, "Failed to update drop"));
+    }
+  });
+
+  // ==================== THE HUNT: NOTIFICATION ROUTES ====================
+
+  // Get user's notifications (auth)
+  app.get("/api/notifications", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const { limit, offset } = parsePaginationParams(req);
+      const notifs = await storage.getNotifications(getUserId(req), limit, offset);
+      res.json(notifs);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to fetch notifications"));
+    }
+  });
+
+  // Get unread notification count (auth)
+  app.get("/api/notifications/unread-count", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const count = await storage.getUnreadNotificationCount(getUserId(req));
+      res.json({ count });
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to fetch unread count"));
+    }
+  });
+
+  // Mark single notification as read (auth)
+  app.post("/api/notifications/:id/read", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const notifId = parseInt(req.params.id);
+      if (isNaN(notifId)) {
+        return res.status(400).json({ message: "Invalid notification ID format" });
+      }
+
+      const success = await storage.markNotificationRead(notifId, getUserId(req));
+      if (!success) {
+        return res.status(404).json({ message: "Notification not found" });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to mark notification as read"));
+    }
+  });
+
+  // Mark all notifications as read (auth)
+  app.post("/api/notifications/read-all", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      await storage.markAllNotificationsRead(getUserId(req));
+      res.json({ success: true });
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to mark all notifications as read"));
     }
   });
 
