@@ -2,6 +2,7 @@ import { Plus, X } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 
 interface FollowedStore {
   id: number;
@@ -17,6 +18,7 @@ interface FollowedStoresListProps {
 
 export function FollowedStoresList({ stores, onAddStore }: FollowedStoresListProps) {
   const { toast } = useToast();
+  const [, navigate] = useLocation();
 
   const unfollowMutation = useMutation({
     mutationFn: async (storeId: number) => {
@@ -73,7 +75,8 @@ export function FollowedStoresList({ stores, onAddStore }: FollowedStoresListPro
           style={{ minWidth: "60px" }}
         >
           <div
-            className="flex items-center justify-center font-semibold"
+            className="flex items-center justify-center font-semibold cursor-pointer"
+            onClick={() => navigate(`/store/${store.id}`)}
             style={{
               width: "48px",
               height: "48px",

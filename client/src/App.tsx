@@ -25,6 +25,9 @@ const BlindTastings = lazy(() => import("@/pages/BlindTastings"));
 const RickHouse = lazy(() => import("@/pages/RickHouse"));
 const Profile = lazy(() => import("@/pages/Profile"));
 const Drops = lazy(() => import("@/pages/Drops"));
+const StoreProfile = lazy(() => import("@/pages/StoreProfile"));
+const StoreEdit = lazy(() => import("@/pages/StoreEdit"));
+const StoreAnalytics = lazy(() => import("@/pages/StoreAnalytics"));
 const PrivacyPolicy = lazy(() => import("@/pages/PrivacyPolicy"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
@@ -55,6 +58,9 @@ function Router() {
         <ProtectedRoute path="/blind-tastings" component={BlindTastings} />
         <ProtectedRoute path="/rick-house" component={RickHouse} />
         <ProtectedRoute path="/drops" component={Drops} />
+        <Route path="/store/:id" component={StoreProfile} />
+        <ProtectedRoute path="/store/:id/edit" component={StoreEdit} />
+        <ProtectedRoute path="/store/:id/analytics" component={StoreAnalytics} />
         <ProtectedRoute path="/search" component={Community} />
         <ProtectedRoute path="/profile" component={ProfileRedirect} />
         <Route path="/auth" component={AuthPage} />

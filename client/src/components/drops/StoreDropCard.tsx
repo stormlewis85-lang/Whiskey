@@ -1,4 +1,5 @@
 import { Check, Navigation, Store, Clock } from "lucide-react";
+import { useLocation } from "wouter";
 
 export interface StoreDrop {
   id: number;
@@ -50,6 +51,7 @@ function getInitials(name: string): string {
 }
 
 export function StoreDropCard({ drop, onGetDirections, onViewStore }: StoreDropCardProps) {
+  const [, navigate] = useLocation();
   const timeAgo = getTimeAgo(drop.droppedAt);
 
   return (
@@ -85,8 +87,8 @@ export function StoreDropCard({ drop, onGetDirections, onViewStore }: StoreDropC
         </div>
 
         {/* Store info */}
-        <div className="flex-1">
-          <div className="font-medium text-foreground" style={{ fontSize: "0.85rem", marginBottom: "2px" }}>
+        <div className="flex-1 cursor-pointer" onClick={() => navigate(`/store/${drop.storeId}`)}>
+          <div className="font-medium text-foreground hover:text-primary" style={{ fontSize: "0.85rem", marginBottom: "2px" }}>
             {drop.store.name}
           </div>
           <div className="text-muted-foreground" style={{ fontSize: "0.7rem" }}>
@@ -184,7 +186,7 @@ export function StoreDropCard({ drop, onGetDirections, onViewStore }: StoreDropC
           Get Directions
         </button>
         <button
-          onClick={onViewStore}
+          onClick={onViewStore || (() => navigate(`/store/${drop.storeId}`))}
           className="flex-1 flex items-center justify-center gap-2 bg-transparent text-foreground cursor-pointer font-medium"
           style={{
             minHeight: "44px",

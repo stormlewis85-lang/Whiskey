@@ -10,6 +10,9 @@ export const bottleStatusEnum = pgEnum('bottle_status', ['sealed', 'open', 'fini
 // Drop status enum for store drops
 export const dropStatusEnum = pgEnum('drop_status', ['active', 'expired', 'sold_out']);
 
+// Store claim status enum
+export const claimStatusEnum = pgEnum('claim_status', ['pending', 'approved', 'rejected']);
+
 // Blind tasting status enum
 export const blindTastingStatusEnum = pgEnum('blind_tasting_status', ['active', 'revealed', 'completed']);
 
@@ -825,6 +828,15 @@ export const stores = pgTable("stores", {
   longitude: real("longitude"),
   isVerified: boolean("is_verified").default(false),
   submittedBy: integer("submitted_by").references(() => users.id, { onDelete: 'set null' }),
+  // Phase 2: Store Profile fields
+  claimedBy: integer("claimed_by").references(() => users.id, { onDelete: 'set null' }),
+  claimedAt: timestamp("claimed_at"),
+  description: text("description"),
+  phone: text("phone"),
+  website: text("website"),
+  hours: text("hours"), // Free-form text, e.g. "Mon-Sat 9am-9pm, Sun 12-6pm"
+  coverImage: text("cover_image"),
+  logoImage: text("logo_image"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -867,14 +879,42 @@ export const notifications = pgTable("notifications", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Store Claims — users request to claim ownership of a store
+export const storeClaims = pgTable("store_claims", {
+  id: serial("id").primaryKey(),
+  storeId: integer("store_id").notNull().references(() => stores.id, { onDelete: 'cascade' }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  status: claimStatusEnum("status").default('pending'),
+  businessRole: text("business_role"), // "owner", "manager", "employee"
+  verificationNote: text("verification_note"), // User's proof of ownership
+  reviewNote: text("review_note"), // Admin note on approval/rejection
+  reviewedBy: integer("reviewed_by").references(() => users.id, { onDelete: 'set null' }),
+  createdAt: timestamp("created_at").defaultNow(),
+  reviewedAt: timestamp("reviewed_at"),
+});
+
+// Store Views — page view analytics
+export const storeViews = pgTable("store_views", {
+  id: serial("id").primaryKey(),
+  storeId: integer("store_id").notNull().references(() => stores.id, { onDelete: 'cascade' }),
+  viewedBy: integer("viewed_by").references(() => users.id, { onDelete: 'set null' }),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Store relations
 export const storesRelations = relations(stores, ({ one, many }) => ({
   submitter: one(users, {
     fields: [stores.submittedBy],
     references: [users.id],
   }),
+  owner: one(users, {
+    fields: [stores.claimedBy],
+    references: [users.id],
+  }),
   follows: many(storeFollows),
   drops: many(drops),
+  claims: many(storeClaims),
+  views: many(storeViews),
 }));
 
 // Store follows relations
@@ -913,9 +953,37 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
   }),
 }));
 
+// Store claims relations
+export const storeClaimsRelations = relations(storeClaims, ({ one }) => ({
+  store: one(stores, {
+    fields: [storeClaims.storeId],
+    references: [stores.id],
+  }),
+  user: one(users, {
+    fields: [storeClaims.userId],
+    references: [users.id],
+  }),
+  reviewer: one(users, {
+    fields: [storeClaims.reviewedBy],
+    references: [users.id],
+  }),
+}));
+
+// Store views relations
+export const storeViewsRelations = relations(storeViews, ({ one }) => ({
+  store: one(stores, {
+    fields: [storeViews.storeId],
+    references: [stores.id],
+  }),
+  viewer: one(users, {
+    fields: [storeViews.viewedBy],
+    references: [users.id],
+  }),
+}));
+
 // Store schemas
 export const insertStoreSchema = createInsertSchema(stores)
-  .omit({ id: true, createdAt: true, updatedAt: true, isVerified: true });
+  .omit({ id: true, createdAt: true, updatedAt: true, isVerified: true, claimedBy: true, claimedAt: true });
 
 export const updateStoreSchema = insertStoreSchema.partial();
 
@@ -947,6 +1015,32 @@ export type UpdateDrop = z.infer<typeof updateDropSchema>;
 
 // Notification types
 export type Notification = typeof notifications.$inferSelect;
+
+// Store claim schemas
+export const claimStatusValues = ['pending', 'approved', 'rejected'] as const;
+export type ClaimStatus = typeof claimStatusValues[number];
+
+export const insertStoreClaimSchema = createInsertSchema(storeClaims)
+  .omit({ id: true, createdAt: true, reviewedAt: true, reviewedBy: true, status: true });
+
+export type StoreClaim = typeof storeClaims.$inferSelect;
+export type InsertStoreClaim = z.infer<typeof insertStoreClaimSchema>;
+
+// Store view types
+export type StoreView = typeof storeViews.$inferSelect;
+
+// Store profile update schema (for claimed store owners)
+export const updateStoreProfileSchema = z.object({
+  name: z.string().min(1).optional(),
+  description: z.string().max(1000).optional(),
+  phone: z.string().optional(),
+  website: z.string().url().optional().or(z.literal("")),
+  hours: z.string().optional(),
+  address: z.string().optional(),
+  instagramHandle: z.string().optional(),
+});
+
+export type UpdateStoreProfile = z.infer<typeof updateStoreProfileSchema>;
 
 // Flavor tag constants for search/filter
 export const FLAVOR_TAGS = {

@@ -2,6 +2,8 @@ import express, { type Express, type Request, type Response } from "express";
 import { createServer, type Server } from "http";
 import { randomBytes } from "crypto";
 import { storage } from "./storage";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 import { safeError, errorStatus } from "./lib/errors";
 import multer from "multer";
 import sharp from "sharp";
@@ -26,7 +28,10 @@ import {
   updateProfileSchema,
   insertStoreSchema,
   insertDropSchema,
-  updateDropSchema
+  updateDropSchema,
+  insertStoreClaimSchema,
+  updateStoreProfileSchema,
+  stores
 } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -84,6 +89,16 @@ const excelUpload = multer({
   storage: multer.memoryStorage(),
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+});
+
+// Setup multer for store image uploads (in memory, processed via sharp)
+const storeImageUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    cb(null, allowed.includes(file.mimetype));
   },
 });
 
@@ -2965,6 +2980,261 @@ Important: Keep it authentic—don't invent flavors they didn't mention or imply
       res.json({ success: true });
     } catch (error) {
       res.status(errorStatus(error)).json(safeError(error, "Failed to mark all notifications as read"));
+    }
+  });
+
+  // ==================== PHASE 2: STORE PROFILES ====================
+
+  // Get store profile (public, records a view)
+  app.get("/api/stores/:id/profile", async (req: Request, res: Response) => {
+    try {
+      const storeId = parseInt(req.params.id);
+      if (isNaN(storeId)) return res.status(400).json({ message: "Invalid store ID" });
+
+      const profile = await storage.getStoreProfile(storeId);
+      if (!profile) return res.status(404).json({ message: "Store not found" });
+
+      // Record the view (optional auth)
+      const viewerId = req.session?.userId || undefined;
+      await storage.recordStoreView(storeId, viewerId);
+
+      res.json(profile);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to get store profile"));
+    }
+  });
+
+  // Update store profile (auth, owner or admin only)
+  app.patch("/api/stores/:id/profile", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const storeId = parseInt(req.params.id);
+      if (isNaN(storeId)) return res.status(400).json({ message: "Invalid store ID" });
+
+      const parsed = updateStoreProfileSchema.parse(req.body);
+      const updated = await storage.updateStoreProfile(storeId, parsed, getUserId(req));
+      if (!updated) return res.status(403).json({ message: "Not authorized to update this store" });
+
+      res.json(updated);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({ message: fromZodError(error).message });
+      }
+      res.status(errorStatus(error)).json(safeError(error, "Failed to update store profile"));
+    }
+  });
+
+  // Upload store cover image (auth, owner or admin only)
+  app.post("/api/stores/:id/cover-image", isAuthenticated, storeImageUpload.single("image"), async (req: Request, res: Response) => {
+    try {
+      const storeId = parseInt(req.params.id);
+      if (isNaN(storeId)) return res.status(400).json({ message: "Invalid store ID" });
+      if (!req.file) return res.status(400).json({ message: "No image file provided" });
+
+      // Check authorization
+      const store = await storage.getStore(storeId);
+      if (!store) return res.status(404).json({ message: "Store not found" });
+      if (store.claimedBy !== getUserId(req) && getUserId(req) !== 1) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+
+      // Process image
+      const processed = await sharp(req.file.buffer)
+        .resize(1200, 400, { fit: "cover" })
+        .jpeg({ quality: 85 })
+        .toBuffer();
+
+      const uploadsDir = path.join(process.cwd(), "uploads", "stores");
+      if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+      const filename = `cover-${storeId}-${Date.now()}.jpg`;
+      const filePath = path.join(uploadsDir, filename);
+      fs.writeFileSync(filePath, processed);
+
+      let imageUrl: string;
+      if (isSpacesConfigured()) {
+        const key = `stores/${storeId}/cover-${Date.now()}.jpg`;
+        imageUrl = await uploadToSpaces(filePath, key, "image/jpeg");
+        fs.unlinkSync(filePath); // clean up temp file
+        if (store.coverImage) {
+          const oldKey = getKeyFromUrl(store.coverImage);
+          if (oldKey) try { await deleteFromSpaces(oldKey); } catch {}
+        }
+      } else {
+        imageUrl = `/uploads/stores/${filename}`;
+      }
+
+      const [updated] = await db
+        .update(stores)
+        .set({ coverImage: imageUrl })
+        .where(eq(stores.id, storeId))
+        .returning();
+
+      res.json({ coverImage: imageUrl, store: updated });
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to upload cover image"));
+    }
+  });
+
+  // Upload store logo image (auth, owner or admin only)
+  app.post("/api/stores/:id/logo-image", isAuthenticated, storeImageUpload.single("image"), async (req: Request, res: Response) => {
+    try {
+      const storeId = parseInt(req.params.id);
+      if (isNaN(storeId)) return res.status(400).json({ message: "Invalid store ID" });
+      if (!req.file) return res.status(400).json({ message: "No image file provided" });
+
+      const store = await storage.getStore(storeId);
+      if (!store) return res.status(404).json({ message: "Store not found" });
+      if (store.claimedBy !== getUserId(req) && getUserId(req) !== 1) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+
+      const processed = await sharp(req.file.buffer)
+        .resize(200, 200, { fit: "cover" })
+        .png({ quality: 90 })
+        .toBuffer();
+
+      const uploadsDir = path.join(process.cwd(), "uploads", "stores");
+      if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+      const filename = `logo-${storeId}-${Date.now()}.png`;
+      const filePath = path.join(uploadsDir, filename);
+      fs.writeFileSync(filePath, processed);
+
+      let imageUrl: string;
+      if (isSpacesConfigured()) {
+        const key = `stores/${storeId}/logo-${Date.now()}.png`;
+        imageUrl = await uploadToSpaces(filePath, key, "image/png");
+        fs.unlinkSync(filePath);
+        if (store.logoImage) {
+          const oldKey = getKeyFromUrl(store.logoImage);
+          if (oldKey) try { await deleteFromSpaces(oldKey); } catch {}
+        }
+      } else {
+        imageUrl = `/uploads/stores/${filename}`;
+      }
+
+      const [updated] = await db
+        .update(stores)
+        .set({ logoImage: imageUrl })
+        .where(eq(stores.id, storeId))
+        .returning();
+
+      res.json({ logoImage: imageUrl, store: updated });
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to upload logo image"));
+    }
+  });
+
+  // ==================== PHASE 2: STORE CLAIMS ====================
+
+  // Submit a store claim (auth)
+  app.post("/api/stores/:id/claim", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const storeId = parseInt(req.params.id);
+      if (isNaN(storeId)) return res.status(400).json({ message: "Invalid store ID" });
+
+      const store = await storage.getStore(storeId);
+      if (!store) return res.status(404).json({ message: "Store not found" });
+      if (store.claimedBy) return res.status(409).json({ message: "Store is already claimed" });
+
+      // Check for existing pending claim by this user
+      const existing = await storage.getStoreClaims(storeId);
+      const userPending = existing.find(c => c.userId === getUserId(req) && c.status === 'pending');
+      if (userPending) return res.status(409).json({ message: "You already have a pending claim for this store" });
+
+      const parsed = insertStoreClaimSchema.parse({
+        ...req.body,
+        storeId,
+        userId: getUserId(req),
+      });
+
+      const claim = await storage.createStoreClaim(parsed);
+      res.status(201).json(claim);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({ message: fromZodError(error).message });
+      }
+      res.status(errorStatus(error)).json(safeError(error, "Failed to submit store claim"));
+    }
+  });
+
+  // Get claims for a store or all claims (admin only for all)
+  app.get("/api/store-claims", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const storeId = req.query.storeId ? parseInt(req.query.storeId as string) : undefined;
+      const status = req.query.status as string | undefined;
+
+      // Non-admin users can only see claims for stores they've claimed or their own claims
+      const claims = await storage.getStoreClaims(storeId, status);
+
+      // If not admin, filter to only the user's own claims
+      const userId = getUserId(req);
+      if (userId !== 1) {
+        const filtered = claims.filter(c => c.userId === userId);
+        return res.json(filtered);
+      }
+
+      res.json(claims);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to get store claims"));
+    }
+  });
+
+  // Approve a store claim (admin only)
+  app.post("/api/store-claims/:id/approve", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = getUserId(req);
+      if (userId !== 1) return res.status(403).json({ message: "Admin access required" });
+
+      const claimId = parseInt(req.params.id);
+      if (isNaN(claimId)) return res.status(400).json({ message: "Invalid claim ID" });
+
+      const result = await storage.approveStoreClaim(claimId, userId, req.body.reviewNote);
+      if (!result) return res.status(404).json({ message: "Claim not found or not pending" });
+
+      res.json(result);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to approve claim"));
+    }
+  });
+
+  // Reject a store claim (admin only)
+  app.post("/api/store-claims/:id/reject", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = getUserId(req);
+      if (userId !== 1) return res.status(403).json({ message: "Admin access required" });
+
+      const claimId = parseInt(req.params.id);
+      if (isNaN(claimId)) return res.status(400).json({ message: "Invalid claim ID" });
+
+      const result = await storage.rejectStoreClaim(claimId, userId, req.body.reviewNote);
+      if (!result) return res.status(404).json({ message: "Claim not found or not pending" });
+
+      res.json(result);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to reject claim"));
+    }
+  });
+
+  // ==================== PHASE 2: STORE ANALYTICS ====================
+
+  // Get store analytics (auth, owner or admin only)
+  app.get("/api/stores/:id/analytics", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const storeId = parseInt(req.params.id);
+      if (isNaN(storeId)) return res.status(400).json({ message: "Invalid store ID" });
+
+      const store = await storage.getStore(storeId);
+      if (!store) return res.status(404).json({ message: "Store not found" });
+
+      const userId = getUserId(req);
+      if (store.claimedBy !== userId && userId !== 1) {
+        return res.status(403).json({ message: "Not authorized to view analytics" });
+      }
+
+      const days = req.query.days ? parseInt(req.query.days as string) : 30;
+      const analytics = await storage.getStoreAnalytics(storeId, days);
+      res.json(analytics);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to get store analytics"));
     }
   });
 

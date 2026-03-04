@@ -26,7 +26,11 @@ import {
   stores, Store, InsertStore, UpdateStore,
   storeFollows, StoreFollow,
   drops, Drop, InsertDrop, UpdateDrop,
-  notifications, Notification
+  notifications, Notification,
+  // Phase 2: Store Profiles imports
+  storeClaims, StoreClaim, InsertStoreClaim,
+  storeViews, StoreView,
+  UpdateStoreProfile
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, asc, desc, sql, ne, count, ilike } from "drizzle-orm";
@@ -126,6 +130,26 @@ export interface IStorage {
   markNotificationRead(id: number, userId: number): Promise<boolean>;
   markAllNotificationsRead(userId: number): Promise<void>;
   getUnreadNotificationCount(userId: number): Promise<number>;
+
+  // Phase 2: Store Profiles
+  getStoreProfile(storeId: number): Promise<any>;
+  updateStoreProfile(storeId: number, data: UpdateStoreProfile, userId: number): Promise<Store | undefined>;
+
+  // Phase 2: Store Claims
+  createStoreClaim(claim: InsertStoreClaim): Promise<StoreClaim>;
+  getStoreClaims(storeId?: number, status?: string): Promise<StoreClaim[]>;
+  approveStoreClaim(claimId: number, reviewerId: number, reviewNote?: string): Promise<StoreClaim | undefined>;
+  rejectStoreClaim(claimId: number, reviewerId: number, reviewNote?: string): Promise<StoreClaim | undefined>;
+
+  // Phase 2: Store Analytics
+  recordStoreView(storeId: number, viewedBy?: number): Promise<void>;
+  getStoreAnalytics(storeId: number, days?: number): Promise<{
+    totalViews: number;
+    viewsByDay: { date: string; count: number }[];
+    followerCount: number;
+    dropCount: number;
+    recentDrops: Drop[];
+  }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2616,6 +2640,245 @@ export class DatabaseStorage implements IStorage {
       .from(notifications)
       .where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)));
     return result[0]?.count || 0;
+  }
+
+  // ==================== PHASE 2: STORE PROFILES ====================
+
+  async getStoreProfile(storeId: number): Promise<any> {
+    const [store] = await db.select().from(stores).where(eq(stores.id, storeId));
+    if (!store) return undefined;
+
+    // Get follower count
+    const [followerResult] = await db
+      .select({ count: count() })
+      .from(storeFollows)
+      .where(eq(storeFollows.storeId, storeId));
+
+    // Get drop count
+    const [dropResult] = await db
+      .select({ count: count() })
+      .from(drops)
+      .where(eq(drops.storeId, storeId));
+
+    // Get recent drops (last 10)
+    const recentDrops = await db
+      .select()
+      .from(drops)
+      .where(eq(drops.storeId, storeId))
+      .orderBy(desc(drops.droppedAt))
+      .limit(10);
+
+    // Get claimer info if claimed
+    let claimedByUser = null;
+    if (store.claimedBy) {
+      const [user] = await db.select({ id: users.id, username: users.username }).from(users).where(eq(users.id, store.claimedBy));
+      claimedByUser = user || null;
+    }
+
+    return {
+      ...store,
+      followerCount: followerResult?.count || 0,
+      dropCount: dropResult?.count || 0,
+      recentDrops,
+      claimedByUser,
+    };
+  }
+
+  async updateStoreProfile(storeId: number, data: UpdateStoreProfile, userId: number): Promise<Store | undefined> {
+    // Only the claimer or admin can update the profile
+    const [store] = await db.select().from(stores).where(eq(stores.id, storeId));
+    if (!store) return undefined;
+    if (store.claimedBy !== userId && userId !== ADMIN_USER_ID) return undefined;
+
+    const updateData: Record<string, any> = {};
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.description !== undefined) updateData.description = data.description;
+    if (data.phone !== undefined) updateData.phone = data.phone;
+    if (data.website !== undefined) updateData.website = data.website;
+    if (data.hours !== undefined) updateData.hours = data.hours;
+    if (data.address !== undefined) updateData.address = data.address;
+    if (data.instagramHandle !== undefined) updateData.instagramHandle = data.instagramHandle;
+
+    if (Object.keys(updateData).length === 0) return store;
+
+    const [updated] = await db
+      .update(stores)
+      .set(updateData)
+      .where(eq(stores.id, storeId))
+      .returning();
+    return updated || undefined;
+  }
+
+  // ==================== PHASE 2: STORE CLAIMS ====================
+
+  async createStoreClaim(claim: InsertStoreClaim): Promise<StoreClaim> {
+    const [created] = await db.insert(storeClaims).values(claim).returning();
+    return created;
+  }
+
+  async getStoreClaims(storeId?: number, status?: string): Promise<StoreClaim[]> {
+    const conditions = [];
+    if (storeId !== undefined) conditions.push(eq(storeClaims.storeId, storeId));
+    if (status !== undefined) conditions.push(sql`${storeClaims.status} = ${status}`);
+
+    return db
+      .select()
+      .from(storeClaims)
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(desc(storeClaims.createdAt));
+  }
+
+  async approveStoreClaim(claimId: number, reviewerId: number, reviewNote?: string): Promise<StoreClaim | undefined> {
+    const [claim] = await db.select().from(storeClaims).where(eq(storeClaims.id, claimId));
+    if (!claim || claim.status !== 'pending') return undefined;
+
+    // Update claim status
+    const [updated] = await db
+      .update(storeClaims)
+      .set({
+        status: 'approved',
+        reviewedBy: reviewerId,
+        reviewNote: reviewNote || null,
+        reviewedAt: new Date(),
+      })
+      .where(eq(storeClaims.id, claimId))
+      .returning();
+
+    // Update store to mark as claimed
+    await db
+      .update(stores)
+      .set({
+        claimedBy: claim.userId,
+        claimedAt: new Date(),
+      })
+      .where(eq(stores.id, claim.storeId));
+
+    // Reject any other pending claims for the same store
+    await db
+      .update(storeClaims)
+      .set({
+        status: 'rejected',
+        reviewedBy: reviewerId,
+        reviewNote: 'Another claim was approved for this store',
+        reviewedAt: new Date(),
+      })
+      .where(and(
+        eq(storeClaims.storeId, claim.storeId),
+        eq(storeClaims.status, 'pending'),
+        ne(storeClaims.id, claimId)
+      ));
+
+    // Notify the claimant
+    await this.createNotification({
+      userId: claim.userId,
+      type: 'claim_approved',
+      title: 'Claim Approved!',
+      message: 'Your store claim has been approved. You can now manage the store profile.',
+      data: { storeId: claim.storeId, claimId },
+    });
+
+    return updated || undefined;
+  }
+
+  async rejectStoreClaim(claimId: number, reviewerId: number, reviewNote?: string): Promise<StoreClaim | undefined> {
+    const [claim] = await db.select().from(storeClaims).where(eq(storeClaims.id, claimId));
+    if (!claim || claim.status !== 'pending') return undefined;
+
+    const [updated] = await db
+      .update(storeClaims)
+      .set({
+        status: 'rejected',
+        reviewedBy: reviewerId,
+        reviewNote: reviewNote || null,
+        reviewedAt: new Date(),
+      })
+      .where(eq(storeClaims.id, claimId))
+      .returning();
+
+    // Notify the claimant
+    await this.createNotification({
+      userId: claim.userId,
+      type: 'claim_rejected',
+      title: 'Claim Not Approved',
+      message: reviewNote ? `Your store claim was not approved: ${reviewNote}` : 'Your store claim was not approved.',
+      data: { storeId: claim.storeId, claimId },
+    });
+
+    return updated || undefined;
+  }
+
+  // ==================== PHASE 2: STORE ANALYTICS ====================
+
+  async recordStoreView(storeId: number, viewedBy?: number): Promise<void> {
+    await db.insert(storeViews).values({
+      storeId,
+      viewedBy: viewedBy || null,
+    });
+  }
+
+  async getStoreAnalytics(storeId: number, days: number = 30): Promise<{
+    totalViews: number;
+    viewsByDay: { date: string; count: number }[];
+    followerCount: number;
+    dropCount: number;
+    recentDrops: Drop[];
+  }> {
+    const sinceDate = new Date();
+    sinceDate.setDate(sinceDate.getDate() - days);
+
+    // Total views in period
+    const [viewResult] = await db
+      .select({ count: count() })
+      .from(storeViews)
+      .where(and(
+        eq(storeViews.storeId, storeId),
+        sql`${storeViews.createdAt} >= ${sinceDate}`
+      ));
+
+    // Views by day
+    const viewsByDayRows = await db
+      .select({
+        date: sql<string>`DATE(${storeViews.createdAt})`,
+        count: count(),
+      })
+      .from(storeViews)
+      .where(and(
+        eq(storeViews.storeId, storeId),
+        sql`${storeViews.createdAt} >= ${sinceDate}`
+      ))
+      .groupBy(sql`DATE(${storeViews.createdAt})`)
+      .orderBy(sql`DATE(${storeViews.createdAt})`);
+
+    // Follower count
+    const [followerResult] = await db
+      .select({ count: count() })
+      .from(storeFollows)
+      .where(eq(storeFollows.storeId, storeId));
+
+    // Drop count in period
+    const [dropResult] = await db
+      .select({ count: count() })
+      .from(drops)
+      .where(and(
+        eq(drops.storeId, storeId),
+        sql`${drops.droppedAt} >= ${sinceDate}`
+      ));
+
+    // Recent drops
+    const recentDrops = await db
+      .select()
+      .from(drops)
+      .where(eq(drops.storeId, storeId))
+      .orderBy(desc(drops.droppedAt))
+      .limit(10);
+
+    return {
+      totalViews: viewResult?.count || 0,
+      viewsByDay: viewsByDayRows.map(r => ({ date: String(r.date), count: r.count })),
+      followerCount: followerResult?.count || 0,
+      dropCount: dropResult?.count || 0,
+      recentDrops,
+    };
   }
 }
 
