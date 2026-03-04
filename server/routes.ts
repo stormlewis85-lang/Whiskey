@@ -507,7 +507,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json(safeError(err, "File permission error"));
       }
 
-      // Upload to Spaces if configured, otherwise keep locally
+      // Upload to Spaces — required for production (local /uploads/ is ephemeral)
       let imagePath: string;
       if (isSpacesConfigured()) {
         try {
@@ -523,12 +523,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.warn("Could not delete local file after Spaces upload:", e);
           }
         } catch (spacesError) {
-          console.error("Spaces upload failed, falling back to local storage:", spacesError);
-          imagePath = `/uploads/${processedFilename}`;
+          console.error("Spaces upload failed:", spacesError);
+          try { fs.unlinkSync(processedPath); } catch (e) { /* ignore */ }
+          return res.status(500).json({ message: "Image storage service unavailable. Please try again." });
         }
       } else {
-        imagePath = `/uploads/${processedFilename}`;
-        console.log("Spaces not configured, using local storage");
+        console.error("Spaces not configured — image uploads require DO Spaces credentials");
+        try { fs.unlinkSync(processedPath); } catch (e) { /* ignore */ }
+        return res.status(500).json({ message: "Image storage not configured. Contact support." });
       }
       console.log("Image path:", imagePath);
       
@@ -3112,16 +3114,16 @@ Important: Keep it authentic—don't invent flavors they didn't mention or imply
       fs.writeFileSync(filePath, processed);
 
       let imageUrl: string;
-      if (isSpacesConfigured()) {
-        const key = `stores/${storeId}/cover-${Date.now()}.jpg`;
-        imageUrl = await uploadToSpaces(filePath, key, "image/jpeg");
-        fs.unlinkSync(filePath); // clean up temp file
-        if (store.coverImage) {
-          const oldKey = getKeyFromUrl(store.coverImage);
-          if (oldKey) try { await deleteFromSpaces(oldKey); } catch {}
-        }
-      } else {
-        imageUrl = `/uploads/stores/${filename}`;
+      if (!isSpacesConfigured()) {
+        fs.unlinkSync(filePath);
+        return res.status(500).json({ message: "Image storage not configured." });
+      }
+      const key = `stores/${storeId}/cover-${Date.now()}.jpg`;
+      imageUrl = await uploadToSpaces(filePath, key, "image/jpeg");
+      fs.unlinkSync(filePath);
+      if (store.coverImage) {
+        const oldKey = getKeyFromUrl(store.coverImage);
+        if (oldKey) try { await deleteFromSpaces(oldKey); } catch {}
       }
 
       const [updated] = await db
@@ -3161,16 +3163,16 @@ Important: Keep it authentic—don't invent flavors they didn't mention or imply
       fs.writeFileSync(filePath, processed);
 
       let imageUrl: string;
-      if (isSpacesConfigured()) {
-        const key = `stores/${storeId}/logo-${Date.now()}.png`;
-        imageUrl = await uploadToSpaces(filePath, key, "image/png");
+      if (!isSpacesConfigured()) {
         fs.unlinkSync(filePath);
-        if (store.logoImage) {
-          const oldKey = getKeyFromUrl(store.logoImage);
-          if (oldKey) try { await deleteFromSpaces(oldKey); } catch {}
-        }
-      } else {
-        imageUrl = `/uploads/stores/${filename}`;
+        return res.status(500).json({ message: "Image storage not configured." });
+      }
+      const key = `stores/${storeId}/logo-${Date.now()}.png`;
+      imageUrl = await uploadToSpaces(filePath, key, "image/png");
+      fs.unlinkSync(filePath);
+      if (store.logoImage) {
+        const oldKey = getKeyFromUrl(store.logoImage);
+        if (oldKey) try { await deleteFromSpaces(oldKey); } catch {}
       }
 
       const [updated] = await db
