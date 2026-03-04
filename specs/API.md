@@ -733,6 +733,103 @@ All errors follow this structure:
 }
 ```
 
+### Phase 4: Social Layer Endpoints
+
+#### Activity Feed
+
+- **GET /api/activity/feed** — Personalized activity feed (follows + self, authenticated)
+- **GET /api/activity/global** — Public activity feed from all public users
+
+Query: `?limit=30` (max 50)
+
+Response: Array of activity items with user, targetUser, whiskey context.
+
+---
+
+#### Palate Matching
+
+- **GET /api/palate/profile** — Current user's palate profile (authenticated)
+- **GET /api/palate/profile/:userId** — Public user's palate profile
+- **GET /api/palate/matches** — Find users with similar palates (authenticated)
+
+Query: `?limit=10` (max 20)
+
+Match response includes `similarity` (0-100%) and `sharedFlavors` array.
+
+---
+
+#### Collection Comparison
+
+- **GET /api/collections/compare/:userId** — Compare your collection with another user (authenticated)
+
+Response includes shared bottles, unique bottles per user, stats comparison, overlap percentage.
+
+---
+
+#### Trade Listings
+
+- **POST /api/trade-listings** — Create trade listing (authenticated)
+- **GET /api/trade-listings** — Browse all available listings (public)
+- **GET /api/trade-listings/mine** — User's own listings (authenticated)
+- **GET /api/trade-listings/:id** — Single listing detail
+- **PUT /api/trade-listings/:id** — Update listing (owner only)
+- **DELETE /api/trade-listings/:id** — Delete listing (owner only)
+
+Trade listing body: `{ whiskeyId, seeking?, notes? }`
+Update body: `{ status?, seeking?, notes? }`
+Status values: `available`, `pending`, `completed`, `withdrawn`
+
+---
+
+### Phase 5: Palate Development Endpoints
+
+#### Challenges
+
+- **GET /api/challenges** — List all active challenges (authenticated)
+- **GET /api/challenges/:id** — Get challenge details (authenticated)
+- **GET /api/user-challenges** — Get user's challenges (authenticated)
+
+Query: `?status=active|completed|abandoned|expired`
+
+- **POST /api/user-challenges** — Join a challenge (authenticated)
+
+Body: `{ challengeId }`
+
+- **PATCH /api/user-challenges/:id/progress** — Update challenge progress (authenticated, owner only)
+
+Body: `{ progress, metadata? }`
+
+- **POST /api/user-challenges/:id/abandon** — Abandon a challenge (authenticated, owner only)
+
+---
+
+#### Progress & Leaderboard
+
+- **GET /api/progress** — Get current user's progress (XP, level, streaks) (authenticated)
+
+Response includes: `userId`, `xp`, `level`, `title`, `xpRequired`, `nextLevelXp`, `currentStreak`, `longestStreak`, `totalReviews`, `totalChallengesCompleted`
+
+- **GET /api/leaderboard** — Get XP leaderboard (authenticated)
+
+Query: `?limit=20` (max 50)
+
+Response: Array of user progress entries with username, displayName, profileImage, level info.
+
+---
+
+#### Palate Exercises
+
+- **GET /api/exercises** — Get user's palate exercises (authenticated)
+
+Query: `?completed=true|false`
+
+- **POST /api/exercises/generate** — Generate AI palate exercise via Rick (authenticated, rate-limited)
+- **POST /api/exercises/:id/complete** — Mark exercise as complete (authenticated, owner only)
+
+Body: `{ userNotes? }`
+
+---
+
 ## Rate Limiting
 
 - General: 100 requests/minute

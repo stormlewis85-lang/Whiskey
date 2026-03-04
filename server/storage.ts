@@ -30,7 +30,22 @@ import {
   // Phase 2: Store Profiles imports
   storeClaims, StoreClaim, InsertStoreClaim,
   storeViews, StoreView,
-  UpdateStoreProfile
+  UpdateStoreProfile,
+  // Phase 3: Tasting Clubs imports
+  clubs, Club, InsertClub, UpdateClub,
+  clubMembers, ClubMember, ClubRole, ClubMemberStatus,
+  clubSessions, ClubSession, InsertClubSession, ClubSessionStatus,
+  clubSessionWhiskeys, ClubSessionWhiskey,
+  clubSessionRatings, ClubSessionRating, InsertClubSessionRating,
+  // Phase 4: Social Layer imports
+  activities, Activity, InsertActivity, ActivityType,
+  tradeListings, TradeListing, InsertTradeListing, UpdateTradeListing, TradeStatus,
+  // Phase 5: Palate Development imports
+  challenges, Challenge, InsertChallenge,
+  userChallenges, UserChallenge,
+  userProgress, UserProgress,
+  palateExercises, PalateExercise,
+  getLevelForXP, XP_LEVELS
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, asc, desc, sql, ne, count, ilike } from "drizzle-orm";
@@ -150,6 +165,29 @@ export interface IStorage {
     dropCount: number;
     recentDrops: Drop[];
   }>;
+
+  // Phase 3: Tasting Clubs
+  createClub(data: InsertClub): Promise<Club>;
+  getClub(id: number): Promise<Club | undefined>;
+  getUserClubs(userId: number): Promise<Club[]>;
+  updateClub(id: number, data: UpdateClub, userId: number): Promise<Club | undefined>;
+  deleteClub(id: number, userId: number): Promise<boolean>;
+  getClubMembers(clubId: number): Promise<(ClubMember & { user: Pick<User, 'id' | 'username' | 'displayName' | 'profileImage'> })[]>;
+  inviteMember(clubId: number, targetUserId: number, inviterId: number): Promise<ClubMember | undefined>;
+  acceptInvite(clubId: number, userId: number): Promise<ClubMember | undefined>;
+  declineInvite(clubId: number, userId: number): Promise<boolean>;
+  removeMember(clubId: number, targetUserId: number, adminId: number): Promise<boolean>;
+  updateMemberRole(clubId: number, targetUserId: number, role: ClubRole, adminId: number): Promise<ClubMember | undefined>;
+  getPendingInvites(userId: number): Promise<(ClubMember & { club: Club })[]>;
+  createClubSession(data: InsertClubSession): Promise<ClubSession>;
+  getClubSessions(clubId: number): Promise<ClubSession[]>;
+  getClubSessionWithWhiskeys(sessionId: number, userId: number): Promise<any>;
+  addWhiskeyToSession(sessionId: number, whiskeyId: number, userId: number): Promise<ClubSessionWhiskey | undefined>;
+  removeWhiskeyFromSession(sessionWhiskeyId: number, userId: number): Promise<boolean>;
+  startClubSession(sessionId: number, userId: number): Promise<ClubSession | undefined>;
+  revealClubSession(sessionId: number, userId: number): Promise<ClubSession | undefined>;
+  completeClubSession(sessionId: number, userId: number): Promise<ClubSession | undefined>;
+  submitClubRating(sessionWhiskeyId: number, userId: number, data: InsertClubSessionRating): Promise<ClubSessionRating>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2879,6 +2917,1434 @@ export class DatabaseStorage implements IStorage {
       dropCount: dropResult?.count || 0,
       recentDrops,
     };
+  }
+
+  // ==================== TASTING CLUBS METHODS ====================
+
+  async createClub(data: InsertClub): Promise<Club> {
+    const [club] = await db
+      .insert(clubs)
+      .values(data)
+      .returning();
+
+    // Add the creator as admin member
+    await db.insert(clubMembers).values({
+      clubId: club.id,
+      userId: data.createdBy,
+      role: 'admin' as ClubRole,
+      status: 'active' as ClubMemberStatus,
+      joinedAt: new Date(),
+    });
+
+    return club;
+  }
+
+  async getClub(id: number): Promise<Club | undefined> {
+    const [club] = await db
+      .select()
+      .from(clubs)
+      .where(eq(clubs.id, id));
+    return club || undefined;
+  }
+
+  async getUserClubs(userId: number): Promise<Club[]> {
+    const memberships = await db
+      .select({ clubId: clubMembers.clubId })
+      .from(clubMembers)
+      .where(and(
+        eq(clubMembers.userId, userId),
+        ne(clubMembers.status, 'removed' as ClubMemberStatus)
+      ));
+
+    if (memberships.length === 0) return [];
+
+    const clubIds = memberships.map(m => m.clubId);
+    return db
+      .select()
+      .from(clubs)
+      .where(sql`${clubs.id} IN (${sql.join(clubIds.map(id => sql`${id}`), sql`, `)})`)
+      .orderBy(desc(clubs.updatedAt));
+  }
+
+  async updateClub(id: number, data: UpdateClub, userId: number): Promise<Club | undefined> {
+    // Verify user is admin
+    const isAdmin = await this.isClubAdmin(id, userId);
+    if (!isAdmin) return undefined;
+
+    const [updated] = await db
+      .update(clubs)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(clubs.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteClub(id: number, userId: number): Promise<boolean> {
+    const isAdmin = await this.isClubAdmin(id, userId);
+    if (!isAdmin) return false;
+
+    const result = await db
+      .delete(clubs)
+      .where(eq(clubs.id, id))
+      .returning();
+    return result.length > 0;
+  }
+
+  private async isClubAdmin(clubId: number, userId: number): Promise<boolean> {
+    const [member] = await db
+      .select()
+      .from(clubMembers)
+      .where(and(
+        eq(clubMembers.clubId, clubId),
+        eq(clubMembers.userId, userId),
+        eq(clubMembers.role, 'admin' as ClubRole),
+        eq(clubMembers.status, 'active' as ClubMemberStatus)
+      ));
+    return !!member;
+  }
+
+  private async isClubMember(clubId: number, userId: number): Promise<boolean> {
+    const [member] = await db
+      .select()
+      .from(clubMembers)
+      .where(and(
+        eq(clubMembers.clubId, clubId),
+        eq(clubMembers.userId, userId),
+        eq(clubMembers.status, 'active' as ClubMemberStatus)
+      ));
+    return !!member;
+  }
+
+  async getClubMembers(clubId: number): Promise<(ClubMember & { user: Pick<User, 'id' | 'username' | 'displayName' | 'profileImage'> })[]> {
+    const members = await db
+      .select({
+        id: clubMembers.id,
+        clubId: clubMembers.clubId,
+        userId: clubMembers.userId,
+        role: clubMembers.role,
+        status: clubMembers.status,
+        joinedAt: clubMembers.joinedAt,
+        createdAt: clubMembers.createdAt,
+        userName: users.username,
+        userDisplayName: users.displayName,
+        userProfileImage: users.profileImage,
+      })
+      .from(clubMembers)
+      .innerJoin(users, eq(clubMembers.userId, users.id))
+      .where(and(
+        eq(clubMembers.clubId, clubId),
+        ne(clubMembers.status, 'removed' as ClubMemberStatus)
+      ))
+      .orderBy(asc(clubMembers.createdAt));
+
+    return members.map(m => ({
+      id: m.id,
+      clubId: m.clubId,
+      userId: m.userId,
+      role: m.role,
+      status: m.status,
+      joinedAt: m.joinedAt,
+      createdAt: m.createdAt,
+      user: {
+        id: m.userId,
+        username: m.userName,
+        displayName: m.userDisplayName,
+        profileImage: m.userProfileImage,
+      },
+    }));
+  }
+
+  async inviteMember(clubId: number, targetUserId: number, inviterId: number): Promise<ClubMember | undefined> {
+    const isAdmin = await this.isClubAdmin(clubId, inviterId);
+    if (!isAdmin) return undefined;
+
+    // Check target user exists
+    const targetUser = await this.getUser(targetUserId);
+    if (!targetUser) return undefined;
+
+    // Check for existing membership
+    const [existing] = await db
+      .select()
+      .from(clubMembers)
+      .where(and(
+        eq(clubMembers.clubId, clubId),
+        eq(clubMembers.userId, targetUserId)
+      ));
+
+    if (existing) {
+      if (existing.status === 'removed') {
+        // Re-invite removed member
+        const [updated] = await db
+          .update(clubMembers)
+          .set({ status: 'invited' as ClubMemberStatus, role: 'member' as ClubRole })
+          .where(eq(clubMembers.id, existing.id))
+          .returning();
+        return updated;
+      }
+      return undefined; // Already invited or active
+    }
+
+    const [member] = await db
+      .insert(clubMembers)
+      .values({
+        clubId,
+        userId: targetUserId,
+        role: 'member' as ClubRole,
+        status: 'invited' as ClubMemberStatus,
+      })
+      .returning();
+
+    // Send notification
+    const club = await this.getClub(clubId);
+    if (club) {
+      await this.createNotification({
+        userId: targetUserId,
+        type: 'club_invite',
+        title: 'Club Invitation',
+        message: `You've been invited to join "${club.name}"`,
+        data: { clubId, clubName: club.name },
+      });
+    }
+
+    return member;
+  }
+
+  async acceptInvite(clubId: number, userId: number): Promise<ClubMember | undefined> {
+    const [member] = await db
+      .select()
+      .from(clubMembers)
+      .where(and(
+        eq(clubMembers.clubId, clubId),
+        eq(clubMembers.userId, userId),
+        eq(clubMembers.status, 'invited' as ClubMemberStatus)
+      ));
+
+    if (!member) return undefined;
+
+    const [updated] = await db
+      .update(clubMembers)
+      .set({ status: 'active' as ClubMemberStatus, joinedAt: new Date() })
+      .where(eq(clubMembers.id, member.id))
+      .returning();
+
+    // Notify club members
+    const club = await this.getClub(clubId);
+    const joiner = await this.getUser(userId);
+    if (club && joiner) {
+      const members = await this.getClubMembers(clubId);
+      for (const m of members) {
+        if (m.userId !== userId && m.status === 'active') {
+          await this.createNotification({
+            userId: m.userId,
+            type: 'club_member_joined',
+            title: 'New Club Member',
+            message: `${joiner.displayName || joiner.username} joined "${club.name}"`,
+            data: { clubId, clubName: club.name, username: joiner.username },
+          });
+        }
+      }
+    }
+
+    return updated;
+  }
+
+  async declineInvite(clubId: number, userId: number): Promise<boolean> {
+    const result = await db
+      .delete(clubMembers)
+      .where(and(
+        eq(clubMembers.clubId, clubId),
+        eq(clubMembers.userId, userId),
+        eq(clubMembers.status, 'invited' as ClubMemberStatus)
+      ))
+      .returning();
+    return result.length > 0;
+  }
+
+  async removeMember(clubId: number, targetUserId: number, adminId: number): Promise<boolean> {
+    const isAdmin = await this.isClubAdmin(clubId, adminId);
+    if (!isAdmin || targetUserId === adminId) return false;
+
+    const [updated] = await db
+      .update(clubMembers)
+      .set({ status: 'removed' as ClubMemberStatus })
+      .where(and(
+        eq(clubMembers.clubId, clubId),
+        eq(clubMembers.userId, targetUserId)
+      ))
+      .returning();
+    return !!updated;
+  }
+
+  async updateMemberRole(clubId: number, targetUserId: number, role: ClubRole, adminId: number): Promise<ClubMember | undefined> {
+    const isAdmin = await this.isClubAdmin(clubId, adminId);
+    if (!isAdmin) return undefined;
+
+    const [updated] = await db
+      .update(clubMembers)
+      .set({ role })
+      .where(and(
+        eq(clubMembers.clubId, clubId),
+        eq(clubMembers.userId, targetUserId),
+        eq(clubMembers.status, 'active' as ClubMemberStatus)
+      ))
+      .returning();
+    return updated || undefined;
+  }
+
+  async getPendingInvites(userId: number): Promise<(ClubMember & { club: Club })[]> {
+    const invites = await db
+      .select()
+      .from(clubMembers)
+      .innerJoin(clubs, eq(clubMembers.clubId, clubs.id))
+      .where(and(
+        eq(clubMembers.userId, userId),
+        eq(clubMembers.status, 'invited' as ClubMemberStatus)
+      ))
+      .orderBy(desc(clubMembers.createdAt));
+
+    return invites.map(row => ({
+      ...row.club_members,
+      club: row.clubs,
+    }));
+  }
+
+  async createClubSession(data: InsertClubSession): Promise<ClubSession> {
+    // Verify user is admin of the club
+    const isAdmin = await this.isClubAdmin(data.clubId, data.createdBy);
+    if (!isAdmin) throw new Error("Only club admins can create sessions");
+
+    const [session] = await db
+      .insert(clubSessions)
+      .values(data)
+      .returning();
+    return session;
+  }
+
+  async getClubSessions(clubId: number): Promise<ClubSession[]> {
+    return db
+      .select()
+      .from(clubSessions)
+      .where(eq(clubSessions.clubId, clubId))
+      .orderBy(desc(clubSessions.createdAt));
+  }
+
+  async getClubSessionWithWhiskeys(sessionId: number, userId: number): Promise<any> {
+    const [session] = await db
+      .select()
+      .from(clubSessions)
+      .where(eq(clubSessions.id, sessionId));
+
+    if (!session) return undefined;
+
+    // Verify user is a member
+    const isMember = await this.isClubMember(session.clubId, userId);
+    if (!isMember) return undefined;
+
+    const sessionWhiskeys = await db
+      .select()
+      .from(clubSessionWhiskeys)
+      .where(eq(clubSessionWhiskeys.sessionId, sessionId))
+      .orderBy(asc(clubSessionWhiskeys.order));
+
+    // Get ratings
+    const ratings = await db
+      .select()
+      .from(clubSessionRatings)
+      .innerJoin(users, eq(clubSessionRatings.userId, users.id))
+      .where(
+        sql`${clubSessionRatings.sessionWhiskeyId} IN (${
+          sessionWhiskeys.length > 0
+            ? sql.join(sessionWhiskeys.map(sw => sql`${sw.id}`), sql`, `)
+            : sql`-1`
+        })`
+      );
+
+    // Build whiskey data based on session status
+    const whiskeysWithData = await Promise.all(
+      sessionWhiskeys.map(async (sw) => {
+        let whiskey = undefined;
+        // Only reveal whiskey identity after revealed status
+        if (session.status === 'revealed' || session.status === 'completed' || session.status === 'draft') {
+          const [w] = await db
+            .select()
+            .from(whiskeys)
+            .where(eq(whiskeys.id, sw.whiskeyId));
+          whiskey = w;
+        }
+
+        // Filter ratings based on status
+        const swRatings = ratings
+          .filter(r => r.club_session_ratings.sessionWhiskeyId === sw.id)
+          .map(r => ({
+            ...r.club_session_ratings,
+            user: {
+              id: r.users.id,
+              username: r.users.username,
+              displayName: r.users.displayName,
+              profileImage: r.users.profileImage,
+            },
+          }));
+
+        // During active phase, only show the caller's own rating
+        const visibleRatings = session.status === 'active'
+          ? swRatings.filter(r => r.userId === userId)
+          : swRatings;
+
+        return {
+          ...sw,
+          whiskey,
+          ratings: visibleRatings,
+        };
+      })
+    );
+
+    return {
+      session,
+      whiskeys: whiskeysWithData,
+    };
+  }
+
+  async addWhiskeyToSession(sessionId: number, whiskeyId: number, userId: number): Promise<ClubSessionWhiskey | undefined> {
+    const [session] = await db
+      .select()
+      .from(clubSessions)
+      .where(eq(clubSessions.id, sessionId));
+
+    if (!session || session.status !== 'draft') return undefined;
+
+    const isAdmin = await this.isClubAdmin(session.clubId, userId);
+    if (!isAdmin) return undefined;
+
+    // Get current count for label assignment
+    const existing = await db
+      .select()
+      .from(clubSessionWhiskeys)
+      .where(eq(clubSessionWhiskeys.sessionId, sessionId));
+
+    const labels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    const label = labels[existing.length] || `#${existing.length + 1}`;
+
+    const [sw] = await db
+      .insert(clubSessionWhiskeys)
+      .values({
+        sessionId,
+        whiskeyId,
+        label,
+        order: existing.length,
+      })
+      .returning();
+    return sw;
+  }
+
+  async removeWhiskeyFromSession(sessionWhiskeyId: number, userId: number): Promise<boolean> {
+    const [sw] = await db
+      .select()
+      .from(clubSessionWhiskeys)
+      .where(eq(clubSessionWhiskeys.id, sessionWhiskeyId));
+
+    if (!sw) return false;
+
+    const [session] = await db
+      .select()
+      .from(clubSessions)
+      .where(eq(clubSessions.id, sw.sessionId));
+
+    if (!session || session.status !== 'draft') return false;
+
+    const isAdmin = await this.isClubAdmin(session.clubId, userId);
+    if (!isAdmin) return false;
+
+    const result = await db
+      .delete(clubSessionWhiskeys)
+      .where(eq(clubSessionWhiskeys.id, sessionWhiskeyId))
+      .returning();
+    return result.length > 0;
+  }
+
+  async startClubSession(sessionId: number, userId: number): Promise<ClubSession | undefined> {
+    const [session] = await db
+      .select()
+      .from(clubSessions)
+      .where(eq(clubSessions.id, sessionId));
+
+    if (!session || session.status !== 'draft') return undefined;
+
+    const isAdmin = await this.isClubAdmin(session.clubId, userId);
+    if (!isAdmin) return undefined;
+
+    // Verify there are whiskeys in the session
+    const swCount = await db
+      .select({ count: count() })
+      .from(clubSessionWhiskeys)
+      .where(eq(clubSessionWhiskeys.sessionId, sessionId));
+
+    if (!swCount[0]?.count || swCount[0].count < 1) return undefined;
+
+    // Shuffle labels
+    const sessionWhiskeysList = await db
+      .select()
+      .from(clubSessionWhiskeys)
+      .where(eq(clubSessionWhiskeys.sessionId, sessionId));
+
+    const shuffledIndices = sessionWhiskeysList.map((_, i) => i).sort(() => Math.random() - 0.5);
+    const labels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+
+    await Promise.all(
+      sessionWhiskeysList.map((sw, i) =>
+        db.update(clubSessionWhiskeys)
+          .set({ label: labels[shuffledIndices[i]] || `#${shuffledIndices[i] + 1}`, order: shuffledIndices[i] })
+          .where(eq(clubSessionWhiskeys.id, sw.id))
+      )
+    );
+
+    const [updated] = await db
+      .update(clubSessions)
+      .set({ status: 'active' as ClubSessionStatus, startedAt: new Date() })
+      .where(eq(clubSessions.id, sessionId))
+      .returning();
+
+    // Notify all club members
+    const club = await this.getClub(session.clubId);
+    if (club) {
+      const members = await this.getClubMembers(session.clubId);
+      for (const m of members) {
+        if (m.userId !== userId && m.status === 'active') {
+          await this.createNotification({
+            userId: m.userId,
+            type: 'club_session_started',
+            title: 'Tasting Session Started',
+            message: `"${session.name}" in "${club.name}" is now active. Time to rate!`,
+            data: { clubId: session.clubId, sessionId, clubName: club.name, sessionName: session.name },
+          });
+        }
+      }
+    }
+
+    return updated;
+  }
+
+  async revealClubSession(sessionId: number, userId: number): Promise<ClubSession | undefined> {
+    const [session] = await db
+      .select()
+      .from(clubSessions)
+      .where(eq(clubSessions.id, sessionId));
+
+    if (!session || session.status !== 'active') return undefined;
+
+    const isAdmin = await this.isClubAdmin(session.clubId, userId);
+    if (!isAdmin) return undefined;
+
+    const [updated] = await db
+      .update(clubSessions)
+      .set({ status: 'revealed' as ClubSessionStatus, revealedAt: new Date() })
+      .where(eq(clubSessions.id, sessionId))
+      .returning();
+
+    // Notify members
+    const club = await this.getClub(session.clubId);
+    if (club) {
+      const members = await this.getClubMembers(session.clubId);
+      for (const m of members) {
+        if (m.userId !== userId && m.status === 'active') {
+          await this.createNotification({
+            userId: m.userId,
+            type: 'club_session_revealed',
+            title: 'Results Revealed!',
+            message: `"${session.name}" in "${club.name}" — see how everyone rated!`,
+            data: { clubId: session.clubId, sessionId, clubName: club.name, sessionName: session.name },
+          });
+        }
+      }
+    }
+
+    return updated;
+  }
+
+  async completeClubSession(sessionId: number, userId: number): Promise<ClubSession | undefined> {
+    const [session] = await db
+      .select()
+      .from(clubSessions)
+      .where(eq(clubSessions.id, sessionId));
+
+    if (!session || session.status !== 'revealed') return undefined;
+
+    const isAdmin = await this.isClubAdmin(session.clubId, userId);
+    if (!isAdmin) return undefined;
+
+    const [updated] = await db
+      .update(clubSessions)
+      .set({ status: 'completed' as ClubSessionStatus, completedAt: new Date() })
+      .where(eq(clubSessions.id, sessionId))
+      .returning();
+    return updated;
+  }
+
+  async submitClubRating(sessionWhiskeyId: number, userId: number, data: InsertClubSessionRating): Promise<ClubSessionRating> {
+    // Get the session whiskey and verify session is active
+    const [sw] = await db
+      .select()
+      .from(clubSessionWhiskeys)
+      .where(eq(clubSessionWhiskeys.id, sessionWhiskeyId));
+
+    if (!sw) throw new Error("Session whiskey not found");
+
+    const [session] = await db
+      .select()
+      .from(clubSessions)
+      .where(eq(clubSessions.id, sw.sessionId));
+
+    if (!session || session.status !== 'active') throw new Error("Session is not active");
+
+    // Verify user is club member
+    const isMember = await this.isClubMember(session.clubId, userId);
+    if (!isMember) throw new Error("Not a club member");
+
+    // Upsert rating
+    const [existing] = await db
+      .select()
+      .from(clubSessionRatings)
+      .where(and(
+        eq(clubSessionRatings.sessionWhiskeyId, sessionWhiskeyId),
+        eq(clubSessionRatings.userId, userId)
+      ));
+
+    if (existing) {
+      const [updated] = await db
+        .update(clubSessionRatings)
+        .set({ rating: data.rating, notes: data.notes, updatedAt: new Date() })
+        .where(eq(clubSessionRatings.id, existing.id))
+        .returning();
+      return updated;
+    }
+
+    const [created] = await db
+      .insert(clubSessionRatings)
+      .values({
+        sessionWhiskeyId,
+        userId,
+        rating: data.rating,
+        notes: data.notes,
+      })
+      .returning();
+    return created;
+  }
+
+  // ==================== PHASE 4: SOCIAL LAYER METHODS ====================
+
+  // --- Activity Feed ---
+
+  async logActivity(data: {
+    userId: number;
+    type: ActivityType;
+    targetUserId?: number;
+    whiskeyId?: number;
+    metadata?: Record<string, unknown>;
+  }): Promise<Activity> {
+    const [activity] = await db
+      .insert(activities)
+      .values({
+        userId: data.userId,
+        type: data.type,
+        targetUserId: data.targetUserId,
+        whiskeyId: data.whiskeyId,
+        metadata: data.metadata,
+      })
+      .returning();
+    return activity;
+  }
+
+  async getPersonalizedFeed(userId: number, limit: number = 30): Promise<Array<{
+    activity: Activity;
+    user: PublicUser;
+    targetUser?: PublicUser;
+    whiskey?: Whiskey;
+  }>> {
+    // Get who the user is following
+    const followingRecords = await db
+      .select()
+      .from(follows)
+      .where(eq(follows.followerId, userId));
+
+    const followingIds = followingRecords.map(f => f.followingId);
+    followingIds.push(userId); // Include own activities
+
+    if (followingIds.length === 0) return [];
+
+    // Fetch activities from followed users + self
+    const feedActivities = await db
+      .select()
+      .from(activities)
+      .where(sql`${activities.userId} = ANY(${sql.raw(`ARRAY[${followingIds.join(',')}]`)})`)
+      .orderBy(desc(activities.createdAt))
+      .limit(limit);
+
+    // Hydrate with user/whiskey data
+    const results = [];
+    for (const act of feedActivities) {
+      const actUser = await this.getUser(act.userId);
+      if (!actUser) continue;
+
+      const publicUser: PublicUser = {
+        id: actUser.id,
+        username: actUser.username,
+        displayName: actUser.displayName,
+        profileImage: actUser.profileImage,
+        bio: actUser.bio,
+        profileSlug: actUser.profileSlug,
+        createdAt: actUser.createdAt,
+      };
+
+      let targetUser: PublicUser | undefined;
+      if (act.targetUserId) {
+        const tu = await this.getUser(act.targetUserId);
+        if (tu) {
+          targetUser = {
+            id: tu.id,
+            username: tu.username,
+            displayName: tu.displayName,
+            profileImage: tu.profileImage,
+            bio: tu.bio,
+            profileSlug: tu.profileSlug,
+            createdAt: tu.createdAt,
+          };
+        }
+      }
+
+      let whiskey: Whiskey | undefined;
+      if (act.whiskeyId) {
+        const w = await this.getWhiskey(act.whiskeyId);
+        if (w) whiskey = w;
+      }
+
+      results.push({ activity: act, user: publicUser, targetUser, whiskey });
+    }
+
+    return results;
+  }
+
+  async getGlobalFeed(limit: number = 30): Promise<Array<{
+    activity: Activity;
+    user: PublicUser;
+    targetUser?: PublicUser;
+    whiskey?: Whiskey;
+  }>> {
+    // Get recent activities from public users only
+    const recentActivities = await db
+      .select()
+      .from(activities)
+      .innerJoin(users, eq(activities.userId, users.id))
+      .where(eq(users.isPublic, true))
+      .orderBy(desc(activities.createdAt))
+      .limit(limit);
+
+    const results = [];
+    for (const row of recentActivities) {
+      const act = row.activities;
+      const actUser = row.users;
+
+      const publicUser: PublicUser = {
+        id: actUser.id,
+        username: actUser.username,
+        displayName: actUser.displayName,
+        profileImage: actUser.profileImage,
+        bio: actUser.bio,
+        profileSlug: actUser.profileSlug,
+        createdAt: actUser.createdAt,
+      };
+
+      let targetUser: PublicUser | undefined;
+      if (act.targetUserId) {
+        const tu = await this.getUser(act.targetUserId);
+        if (tu) {
+          targetUser = {
+            id: tu.id,
+            username: tu.username,
+            displayName: tu.displayName,
+            profileImage: tu.profileImage,
+            bio: tu.bio,
+            profileSlug: tu.profileSlug,
+            createdAt: tu.createdAt,
+          };
+        }
+      }
+
+      let whiskey: Whiskey | undefined;
+      if (act.whiskeyId) {
+        const w = await this.getWhiskey(act.whiskeyId);
+        if (w) whiskey = w;
+      }
+
+      results.push({ activity: act, user: publicUser, targetUser, whiskey });
+    }
+
+    return results;
+  }
+
+  // --- Palate Matching ---
+
+  async getPalateMatches(userId: number, limit: number = 10): Promise<Array<{
+    user: PublicUser;
+    similarity: number;
+    sharedFlavors: string[];
+  }>> {
+    const myProfile = await this.getPalateProfile(userId);
+    if (myProfile.reviewCount === 0) return [];
+
+    // Get all public users except self
+    const publicUsers = await db
+      .select()
+      .from(users)
+      .where(and(eq(users.isPublic, true), ne(users.id, userId)));
+
+    const matches: Array<{
+      user: PublicUser;
+      similarity: number;
+      sharedFlavors: string[];
+    }> = [];
+
+    for (const u of publicUsers) {
+      const theirProfile = await this.getPalateProfile(u.id);
+      if (theirProfile.reviewCount === 0) continue;
+
+      // Build scoring vector from scoringTendencies (existing palate profile structure)
+      const myScoreVec = [
+        myProfile.scoringTendencies.averageNose || 0,
+        myProfile.scoringTendencies.averageMouthfeel || 0,
+        myProfile.scoringTendencies.averageTaste || 0,
+        myProfile.scoringTendencies.averageFinish || 0,
+        myProfile.scoringTendencies.averageValue || 0,
+        myProfile.scoringTendencies.averageOverall || 0,
+      ];
+      const theirScoreVec = [
+        theirProfile.scoringTendencies.averageNose || 0,
+        theirProfile.scoringTendencies.averageMouthfeel || 0,
+        theirProfile.scoringTendencies.averageTaste || 0,
+        theirProfile.scoringTendencies.averageFinish || 0,
+        theirProfile.scoringTendencies.averageValue || 0,
+        theirProfile.scoringTendencies.averageOverall || 0,
+      ];
+
+      // Check if vectors have any non-zero values
+      const myMag = Math.sqrt(myScoreVec.reduce((a, b) => a + b * b, 0));
+      const theirMag = Math.sqrt(theirScoreVec.reduce((a, b) => a + b * b, 0));
+
+      if (myMag === 0 || theirMag === 0) continue;
+
+      const dotProduct = myScoreVec.reduce((a, b, i) => a + b * theirScoreVec[i], 0);
+      const similarity = parseFloat(((dotProduct / (myMag * theirMag)) * 100).toFixed(1));
+
+      // Shared flavors from the all-flavors list
+      const myFlavorNames = myProfile.topFlavors.all.map(f => f.flavor);
+      const myFlavorSet = new Set(myFlavorNames);
+      const sharedFlavors = theirProfile.topFlavors.all
+        .map(f => f.flavor)
+        .filter(f => myFlavorSet.has(f));
+
+      matches.push({
+        user: {
+          id: u.id,
+          username: u.username,
+          displayName: u.displayName,
+          profileImage: u.profileImage,
+          bio: u.bio,
+          profileSlug: u.profileSlug,
+          createdAt: u.createdAt,
+        },
+        similarity,
+        sharedFlavors,
+      });
+    }
+
+    return matches
+      .sort((a, b) => b.similarity - a.similarity)
+      .slice(0, limit);
+  }
+
+  // --- Collection Comparison ---
+
+  async compareCollections(userId1: number, userId2: number): Promise<{
+    user1Stats: { totalBottles: number; avgRating: number; topTypes: string[] };
+    user2Stats: { totalBottles: number; avgRating: number; topTypes: string[] };
+    shared: Array<{ name: string; type: string | null; distillery: string | null }>;
+    uniqueToUser1: Array<{ name: string; type: string | null; distillery: string | null }>;
+    uniqueToUser2: Array<{ name: string; type: string | null; distillery: string | null }>;
+    overlapPercentage: number;
+  }> {
+    const col1 = await db
+      .select()
+      .from(whiskeys)
+      .where(and(eq(whiskeys.userId, userId1), eq(whiskeys.isWishlist, false)));
+
+    const col2 = await db
+      .select()
+      .from(whiskeys)
+      .where(and(eq(whiskeys.userId, userId2), eq(whiskeys.isWishlist, false)));
+
+    // Normalize bottle identity by lowercase name
+    const normalize = (name: string) => name.toLowerCase().trim();
+
+    const col1Names = new Set(col1.map(w => normalize(w.name)));
+    const col2Names = new Set(col2.map(w => normalize(w.name)));
+
+    const sharedNames = new Set<string>();
+    col1Names.forEach(name => {
+      if (col2Names.has(name)) sharedNames.add(name);
+    });
+
+    const pick = (w: Whiskey) => ({ name: w.name, type: w.type, distillery: w.distillery });
+
+    const shared = col1
+      .filter(w => sharedNames.has(normalize(w.name)))
+      .map(pick);
+
+    const uniqueToUser1 = col1
+      .filter(w => !sharedNames.has(normalize(w.name)))
+      .map(pick);
+
+    const uniqueToUser2 = col2
+      .filter(w => !sharedNames.has(normalize(w.name)))
+      .map(pick);
+
+    const getTopTypes = (col: Whiskey[]) => {
+      const counts = new Map<string, number>();
+      col.forEach(w => { if (w.type) counts.set(w.type, (counts.get(w.type) || 0) + 1); });
+      return Array.from(counts.entries()).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([t]) => t);
+    };
+
+    const getAvgRating = (col: Whiskey[]) => {
+      const rated = col.filter(w => w.rating != null && w.rating > 0);
+      if (rated.length === 0) return 0;
+      return parseFloat((rated.reduce((a, w) => a + w.rating!, 0) / rated.length).toFixed(1));
+    };
+
+    const totalUnique = col1Names.size + col2Names.size - sharedNames.size;
+    const overlapPercentage = totalUnique > 0
+      ? parseFloat(((sharedNames.size / totalUnique) * 100).toFixed(1))
+      : 0;
+
+    return {
+      user1Stats: { totalBottles: col1.length, avgRating: getAvgRating(col1), topTypes: getTopTypes(col1) },
+      user2Stats: { totalBottles: col2.length, avgRating: getAvgRating(col2), topTypes: getTopTypes(col2) },
+      shared,
+      uniqueToUser1,
+      uniqueToUser2,
+      overlapPercentage,
+    };
+  }
+
+  // --- Trade Listings ---
+
+  async createTradeListing(userId: number, data: InsertTradeListing): Promise<TradeListing> {
+    // Verify the whiskey belongs to the user
+    const whiskey = await this.getWhiskey(data.whiskeyId);
+    if (!whiskey || whiskey.userId !== userId) {
+      throw Object.assign(new Error("Whiskey not found in your collection"), { status: 404 });
+    }
+
+    const [listing] = await db
+      .insert(tradeListings)
+      .values({
+        userId,
+        whiskeyId: data.whiskeyId,
+        seeking: data.seeking,
+        notes: data.notes,
+      })
+      .returning();
+
+    return listing;
+  }
+
+  async updateTradeListing(id: number, userId: number, data: UpdateTradeListing): Promise<TradeListing | undefined> {
+    const [listing] = await db
+      .select()
+      .from(tradeListings)
+      .where(and(eq(tradeListings.id, id), eq(tradeListings.userId, userId)));
+
+    if (!listing) return undefined;
+
+    const updateData: Record<string, unknown> = { updatedAt: new Date() };
+    if (data.status !== undefined) updateData.status = data.status;
+    if (data.seeking !== undefined) updateData.seeking = data.seeking;
+    if (data.notes !== undefined) updateData.notes = data.notes;
+
+    const [updated] = await db
+      .update(tradeListings)
+      .set(updateData)
+      .where(eq(tradeListings.id, id))
+      .returning();
+
+    return updated;
+  }
+
+  async deleteTradeListing(id: number, userId: number): Promise<boolean> {
+    const result = await db
+      .delete(tradeListings)
+      .where(and(eq(tradeListings.id, id), eq(tradeListings.userId, userId)))
+      .returning();
+
+    return result.length > 0;
+  }
+
+  async getTradeListing(id: number): Promise<(TradeListing & { whiskey: Whiskey; user: PublicUser }) | undefined> {
+    const [listing] = await db
+      .select()
+      .from(tradeListings)
+      .where(eq(tradeListings.id, id));
+
+    if (!listing) return undefined;
+
+    const whiskey = await this.getWhiskey(listing.whiskeyId);
+    if (!whiskey) return undefined;
+
+    const user = await this.getUser(listing.userId);
+    if (!user) return undefined;
+
+    return {
+      ...listing,
+      whiskey,
+      user: {
+        id: user.id,
+        username: user.username,
+        displayName: user.displayName,
+        profileImage: user.profileImage,
+        bio: user.bio,
+        profileSlug: user.profileSlug,
+        createdAt: user.createdAt,
+      },
+    };
+  }
+
+  async getUserTradeListings(userId: number): Promise<Array<TradeListing & { whiskey: Whiskey }>> {
+    const listings = await db
+      .select()
+      .from(tradeListings)
+      .where(eq(tradeListings.userId, userId))
+      .orderBy(desc(tradeListings.createdAt));
+
+    const results = [];
+    for (const listing of listings) {
+      const whiskey = await this.getWhiskey(listing.whiskeyId);
+      if (whiskey) results.push({ ...listing, whiskey });
+    }
+
+    return results;
+  }
+
+  async browseTradeListings(limit: number = 30, type?: string): Promise<Array<TradeListing & { whiskey: Whiskey; user: PublicUser }>> {
+    const listings = await db
+      .select()
+      .from(tradeListings)
+      .where(eq(tradeListings.status, 'available'))
+      .orderBy(desc(tradeListings.createdAt))
+      .limit(limit);
+
+    const results = [];
+    for (const listing of listings) {
+      const whiskey = await this.getWhiskey(listing.whiskeyId);
+      if (!whiskey) continue;
+
+      // Filter by type if specified
+      if (type && whiskey.type !== type) continue;
+
+      const user = await this.getUser(listing.userId);
+      if (!user || !user.isPublic) continue;
+
+      results.push({
+        ...listing,
+        whiskey,
+        user: {
+          id: user.id,
+          username: user.username,
+          displayName: user.displayName,
+          profileImage: user.profileImage,
+          bio: user.bio,
+          profileSlug: user.profileSlug,
+          createdAt: user.createdAt,
+        },
+      });
+    }
+
+    return results;
+  }
+
+  // ==================== PHASE 5: PALATE DEVELOPMENT ====================
+
+  // --- Challenges ---
+
+  async getChallenges(activeOnly: boolean = true): Promise<Challenge[]> {
+    if (activeOnly) {
+      return db.select().from(challenges).where(eq(challenges.isActive, true)).orderBy(desc(challenges.createdAt));
+    }
+    return db.select().from(challenges).orderBy(desc(challenges.createdAt));
+  }
+
+  async getChallenge(id: number): Promise<Challenge | undefined> {
+    const [challenge] = await db.select().from(challenges).where(eq(challenges.id, id));
+    return challenge;
+  }
+
+  async createChallenge(data: InsertChallenge): Promise<Challenge> {
+    const [challenge] = await db.insert(challenges).values(data).returning();
+    return challenge;
+  }
+
+  // --- User Challenges ---
+
+  async getUserChallenges(userId: number, status?: string): Promise<(UserChallenge & { challenge: Challenge })[]> {
+    const conditions = [eq(userChallenges.userId, userId)];
+    if (status) {
+      conditions.push(eq(userChallenges.status, status as any));
+    }
+
+    const rows = await db
+      .select()
+      .from(userChallenges)
+      .where(and(...conditions))
+      .orderBy(desc(userChallenges.startedAt));
+
+    const results: (UserChallenge & { challenge: Challenge })[] = [];
+    for (const row of rows) {
+      const challenge = await this.getChallenge(row.challengeId);
+      if (challenge) {
+        results.push({ ...row, challenge });
+      }
+    }
+    return results;
+  }
+
+  async getUserChallenge(id: number): Promise<(UserChallenge & { challenge: Challenge }) | undefined> {
+    const [row] = await db.select().from(userChallenges).where(eq(userChallenges.id, id));
+    if (!row) return undefined;
+    const challenge = await this.getChallenge(row.challengeId);
+    if (!challenge) return undefined;
+    return { ...row, challenge };
+  }
+
+  async joinChallenge(userId: number, challengeId: number): Promise<UserChallenge> {
+    // Check if already enrolled in this challenge
+    const [existing] = await db.select().from(userChallenges)
+      .where(and(
+        eq(userChallenges.userId, userId),
+        eq(userChallenges.challengeId, challengeId),
+        eq(userChallenges.status, 'active')
+      ));
+    if (existing) {
+      throw new Error('Already enrolled in this challenge');
+    }
+
+    const [uc] = await db.insert(userChallenges).values({
+      userId,
+      challengeId,
+      progress: 0,
+      status: 'active',
+    }).returning();
+    return uc;
+  }
+
+  async updateChallengeProgress(id: number, progress: number, metadata?: any): Promise<UserChallenge | undefined> {
+    const uc = await this.getUserChallenge(id);
+    if (!uc) return undefined;
+
+    const updates: any = { progress, metadata };
+
+    // Check if challenge is completed
+    if (progress >= uc.challenge.goalCount) {
+      updates.status = 'completed';
+      updates.completedAt = new Date();
+    }
+
+    const [updated] = await db.update(userChallenges)
+      .set(updates)
+      .where(eq(userChallenges.id, id))
+      .returning();
+
+    // If just completed, award XP
+    if (updates.status === 'completed') {
+      await this.addXP(uc.userId, uc.challenge.xpReward, 'challenge_complete');
+    }
+
+    return updated;
+  }
+
+  async abandonChallenge(id: number): Promise<UserChallenge | undefined> {
+    const [updated] = await db.update(userChallenges)
+      .set({ status: 'abandoned' })
+      .where(eq(userChallenges.id, id))
+      .returning();
+    return updated;
+  }
+
+  // --- User Progress & XP ---
+
+  async getUserProgress(userId: number): Promise<UserProgress> {
+    const [existing] = await db.select().from(userProgress).where(eq(userProgress.userId, userId));
+    if (existing) return existing;
+
+    // Auto-create progress record for new users
+    const [created] = await db.insert(userProgress).values({ userId }).returning();
+    return created;
+  }
+
+  async addXP(userId: number, amount: number, reason: string): Promise<UserProgress> {
+    const progress = await this.getUserProgress(userId);
+    const newXP = progress.xp + amount;
+    const levelInfo = getLevelForXP(newXP);
+
+    const [updated] = await db.update(userProgress)
+      .set({
+        xp: newXP,
+        level: levelInfo.level,
+        updatedAt: new Date(),
+      })
+      .where(eq(userProgress.userId, userId))
+      .returning();
+
+    return updated;
+  }
+
+  async updateStreak(userId: number): Promise<UserProgress> {
+    const progress = await this.getUserProgress(userId);
+    const today = new Date().toISOString().split('T')[0];
+    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+    const lastActivity = progress.lastActivityDate;
+
+    let newStreak = progress.currentStreak;
+    let longestStreak = progress.longestStreak;
+
+    if (lastActivity === today) {
+      // Already counted today
+      return progress;
+    } else if (lastActivity === yesterday) {
+      // Continuing streak
+      newStreak += 1;
+    } else {
+      // Streak broken or first activity
+      newStreak = 1;
+    }
+
+    if (newStreak > longestStreak) {
+      longestStreak = newStreak;
+    }
+
+    const [updated] = await db.update(userProgress)
+      .set({
+        currentStreak: newStreak,
+        longestStreak,
+        lastActivityDate: today,
+        updatedAt: new Date(),
+      })
+      .where(eq(userProgress.userId, userId))
+      .returning();
+
+    // Award streak XP milestones
+    if (newStreak === 7) await this.addXP(userId, 50, 'streak_7');
+    if (newStreak === 30) await this.addXP(userId, 200, 'streak_30');
+
+    return updated;
+  }
+
+  async incrementReviewCount(userId: number): Promise<void> {
+    const progress = await this.getUserProgress(userId);
+    await db.update(userProgress)
+      .set({
+        totalReviews: progress.totalReviews + 1,
+        updatedAt: new Date(),
+      })
+      .where(eq(userProgress.userId, userId));
+
+    // Award XP for reviews
+    await this.addXP(userId, 25, 'review_complete');
+    await this.updateStreak(userId);
+  }
+
+  async getLeaderboard(limit: number = 20): Promise<(UserProgress & { username: string; displayName: string | null; profileImage: string | null })[]> {
+    const rows = await db
+      .select()
+      .from(userProgress)
+      .orderBy(desc(userProgress.xp))
+      .limit(Math.min(limit, 50));
+
+    const results: (UserProgress & { username: string; displayName: string | null; profileImage: string | null })[] = [];
+    for (const row of rows) {
+      const user = await this.getUser(row.userId);
+      if (user && user.isPublic) {
+        results.push({
+          ...row,
+          username: user.username,
+          displayName: user.displayName,
+          profileImage: user.profileImage,
+        });
+      }
+    }
+    return results;
+  }
+
+  // --- Palate Exercises ---
+
+  async createPalateExercise(data: {
+    userId: number;
+    title: string;
+    description: string;
+    exerciseType: string;
+    difficulty: string;
+    instructions: any;
+    targetFlavors?: any;
+    whiskeyIds?: any;
+  }): Promise<PalateExercise> {
+    const [exercise] = await db.insert(palateExercises).values(data as any).returning();
+    return exercise;
+  }
+
+  async getUserExercises(userId: number, completedOnly?: boolean): Promise<PalateExercise[]> {
+    const conditions = [eq(palateExercises.userId, userId)];
+    if (completedOnly !== undefined) {
+      conditions.push(eq(palateExercises.isCompleted, completedOnly));
+    }
+    return db.select().from(palateExercises)
+      .where(and(...conditions))
+      .orderBy(desc(palateExercises.createdAt));
+  }
+
+  async getExercise(id: number): Promise<PalateExercise | undefined> {
+    const [exercise] = await db.select().from(palateExercises).where(eq(palateExercises.id, id));
+    return exercise;
+  }
+
+  async completeExercise(id: number, userNotes?: string): Promise<PalateExercise | undefined> {
+    const [updated] = await db.update(palateExercises)
+      .set({
+        isCompleted: true,
+        completedAt: new Date(),
+        userNotes,
+      })
+      .where(eq(palateExercises.id, id))
+      .returning();
+
+    if (updated) {
+      // Award XP for completing exercise
+      await this.addXP(updated.userId, 30, 'exercise_complete');
+    }
+
+    return updated;
+  }
+
+  // --- Seed challenges ---
+
+  async seedDefaultChallenges(): Promise<void> {
+    const existing = await db.select().from(challenges).limit(1);
+    if (existing.length > 0) return; // Already seeded
+
+    const defaultChallenges: InsertChallenge[] = [
+      {
+        title: 'First Sip',
+        description: 'Complete your first whiskey review. Take your time and explore each component.',
+        type: 'review_streak',
+        difficulty: 'beginner',
+        goalCount: 1,
+        xpReward: 50,
+        isActive: true,
+        isRecurring: false,
+      },
+      {
+        title: 'Review Streak: Week Warrior',
+        description: 'Review at least one whiskey per day for 7 consecutive days.',
+        type: 'review_streak',
+        difficulty: 'intermediate',
+        goalCount: 7,
+        xpReward: 150,
+        durationDays: 7,
+        isActive: true,
+        isRecurring: true,
+      },
+      {
+        title: 'Flavor Hunter: Vanilla',
+        description: 'Identify vanilla notes in 3 different whiskeys during your tastings.',
+        type: 'flavor_hunt',
+        difficulty: 'beginner',
+        goalCount: 3,
+        goalDetails: { flavorTarget: 'vanilla' },
+        xpReward: 75,
+        isActive: true,
+        isRecurring: false,
+      },
+      {
+        title: 'Flavor Hunter: Smoke & Peat',
+        description: 'Find smoke or peat characteristics in 3 whiskeys. Try Islay scotches!',
+        type: 'flavor_hunt',
+        difficulty: 'intermediate',
+        goalCount: 3,
+        goalDetails: { flavorTarget: ['smoke', 'peat'] },
+        xpReward: 100,
+        isActive: true,
+        isRecurring: false,
+      },
+      {
+        title: 'World Explorer',
+        description: 'Review whiskeys from 5 different countries. Expand your horizons!',
+        type: 'explore_type',
+        difficulty: 'intermediate',
+        goalCount: 5,
+        goalDetails: { dimension: 'country' },
+        xpReward: 200,
+        isActive: true,
+        isRecurring: false,
+      },
+      {
+        title: 'Bourbon Deep Dive',
+        description: 'Review 5 different bourbons. Compare and contrast their profiles.',
+        type: 'explore_type',
+        difficulty: 'beginner',
+        goalCount: 5,
+        goalDetails: { typeTarget: 'Bourbon' },
+        xpReward: 125,
+        isActive: true,
+        isRecurring: false,
+      },
+      {
+        title: 'Blind Instinct',
+        description: 'Complete 3 blind tastings. Trust your palate!',
+        type: 'blind_identify',
+        difficulty: 'advanced',
+        goalCount: 3,
+        xpReward: 250,
+        isActive: true,
+        isRecurring: true,
+      },
+      {
+        title: 'The Nose Knows',
+        description: 'Score the nose component on 10 different whiskeys. Train your olfactory senses.',
+        type: 'flavor_hunt',
+        difficulty: 'beginner',
+        goalCount: 10,
+        goalDetails: { component: 'nose' },
+        xpReward: 100,
+        isActive: true,
+        isRecurring: false,
+      },
+      {
+        title: 'Community Spirit',
+        description: 'Follow 5 other whiskey enthusiasts and explore their collections.',
+        type: 'community_challenge',
+        difficulty: 'beginner',
+        goalCount: 5,
+        goalDetails: { action: 'follow' },
+        xpReward: 75,
+        isActive: true,
+        isRecurring: false,
+      },
+      {
+        title: 'Critic\'s Circle',
+        description: 'Write detailed tasting notes for 10 whiskeys. Quality matters!',
+        type: 'review_streak',
+        difficulty: 'advanced',
+        goalCount: 10,
+        xpReward: 300,
+        isActive: true,
+        isRecurring: true,
+      },
+    ];
+
+    await db.insert(challenges).values(defaultChallenges);
   }
 }
 

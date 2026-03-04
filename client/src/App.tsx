@@ -29,6 +29,15 @@ const StoreProfile = lazy(() => import("@/pages/StoreProfile"));
 const StoreEdit = lazy(() => import("@/pages/StoreEdit"));
 const StoreAnalytics = lazy(() => import("@/pages/StoreAnalytics"));
 const PrivacyPolicy = lazy(() => import("@/pages/PrivacyPolicy"));
+const Clubs = lazy(() => import("@/pages/Clubs"));
+const ClubDetail = lazy(() => import("@/pages/ClubDetail"));
+const ClubSession = lazy(() => import("@/pages/ClubSession"));
+const PalateMatches = lazy(() => import("@/pages/PalateMatches"));
+const TradeListings = lazy(() => import("@/pages/TradeListings"));
+const CollectionCompare = lazy(() => import("@/pages/CollectionCompare"));
+const Challenges = lazy(() => import("@/pages/Challenges"));
+const ProgressPage = lazy(() => import("@/pages/ProgressPage"));
+const PalateExercises = lazy(() => import("@/pages/PalateExercises"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
 function PageLoader() {
@@ -57,6 +66,15 @@ function Router() {
         <ProtectedRoute path="/flights" component={Flights} />
         <ProtectedRoute path="/blind-tastings" component={BlindTastings} />
         <ProtectedRoute path="/rick-house" component={RickHouse} />
+        <ProtectedRoute path="/clubs" component={Clubs} />
+        <ProtectedRoute path="/clubs/:clubId" component={ClubDetail} />
+        <ProtectedRoute path="/clubs/:clubId/sessions/:sessionId" component={ClubSession} />
+        <ProtectedRoute path="/palate-matches" component={PalateMatches} />
+        <Route path="/trades" component={TradeListings} />
+        <ProtectedRoute path="/compare/:userId" component={CollectionCompare} />
+        <ProtectedRoute path="/challenges" component={Challenges} />
+        <ProtectedRoute path="/progress" component={ProgressPage} />
+        <ProtectedRoute path="/exercises" component={PalateExercises} />
         <ProtectedRoute path="/drops" component={Drops} />
         <Route path="/store/:id" component={StoreProfile} />
         <ProtectedRoute path="/store/:id/edit" component={StoreEdit} />

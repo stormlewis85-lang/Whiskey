@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { randomBytes } from "crypto";
 import { storage } from "./storage";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, ilike } from "drizzle-orm";
 import { safeError, errorStatus } from "./lib/errors";
 import multer from "multer";
 import sharp from "sharp";
@@ -31,7 +31,19 @@ import {
   updateDropSchema,
   insertStoreClaimSchema,
   updateStoreProfileSchema,
-  stores
+  stores,
+  users,
+  insertClubSchema,
+  updateClubSchema,
+  insertClubSessionSchema,
+  insertClubSessionRatingSchema,
+  clubRoleValues,
+  // Phase 4: Social Layer imports
+  insertTradeListingSchema,
+  updateTradeListingSchema,
+  // Phase 5: Palate Development imports
+  insertUserChallengeSchema,
+  getLevelForXP
 } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -270,6 +282,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertWhiskeySchema.parse(whiskey);
       const newWhiskey = await storage.createWhiskey(validatedData);
       console.log(`Successfully created whiskey ID ${newWhiskey.id} for user ${userId}`);
+
+      // Log activity
+      await storage.logActivity({
+        userId: getUserId(req),
+        type: 'add_bottle',
+        whiskeyId: newWhiskey.id,
+        metadata: { name: newWhiskey.name, type: newWhiskey.type },
+      }).catch(() => {}); // Non-blocking
+
       res.status(201).json(newWhiskey);
     } catch (error) {
       if (error instanceof ZodError) {
@@ -342,11 +363,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const validatedReview = reviewNoteSchema.parse(req.body);
       const updatedWhiskey = await storage.addReview(id, validatedReview, getUserId(req));
-      
+
       if (!updatedWhiskey) {
         return res.status(404).json({ message: "Whiskey not found or not owned by you" });
       }
-      
+
+      // Log activity
+      await storage.logActivity({
+        userId: getUserId(req),
+        type: 'review',
+        whiskeyId: id,
+        metadata: { rating: validatedReview.rating, name: updatedWhiskey.name },
+      }).catch(() => {}); // Non-blocking
+
+      // Phase 5: Track review progress (XP, streak, challenge progress)
+      storage.incrementReviewCount(getUserId(req)).catch(() => {}); // Non-blocking
+
       res.json(updatedWhiskey);
     } catch (error) {
       if (error instanceof ZodError) {
@@ -2392,6 +2424,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
 
+      // Log activity
+      await storage.logActivity({
+        userId: getUserId(req),
+        type: 'follow',
+        targetUserId: userId,
+      }).catch(() => {}); // Non-blocking
+
       res.status(201).json({ success: true, follow });
     } catch (error) {
       res.status(errorStatus(error)).json(safeError(error, "Failed to follow user"));
@@ -2507,6 +2546,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get suggested users to follow
+  // Search users by username
+  app.get("/api/users/search", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const q = (req.query.q as string || "").trim();
+      if (q.length < 2) return res.json({ users: [] });
+
+      const results = await db
+        .select({
+          id: users.id,
+          username: users.username,
+          displayName: users.displayName,
+          profileImage: users.profileImage,
+        })
+        .from(users)
+        .where(ilike(users.username, `%${q}%`))
+        .limit(10);
+
+      res.json({ users: results });
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to search users"));
+    }
+  });
+
   app.get("/api/users/suggested", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const { limit } = parsePaginationParams(req, { limit: 10 });
@@ -3235,6 +3297,757 @@ Important: Keep it authentic—don't invent flavors they didn't mention or imply
       res.json(analytics);
     } catch (error) {
       res.status(errorStatus(error)).json(safeError(error, "Failed to get store analytics"));
+    }
+  });
+
+  // ==================== PHASE 3: TASTING CLUBS ====================
+
+  // Get user's clubs
+  app.get("/api/clubs", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const clubs = await storage.getUserClubs(getUserId(req));
+      res.json(clubs);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to fetch clubs"));
+    }
+  });
+
+  // Get pending invites
+  app.get("/api/clubs/invites", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const invites = await storage.getPendingInvites(getUserId(req));
+      res.json(invites);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to fetch invites"));
+    }
+  });
+
+  // Create a club
+  app.post("/api/clubs", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const data = insertClubSchema.parse({
+        ...req.body,
+        createdBy: getUserId(req),
+      });
+      const club = await storage.createClub(data);
+      res.status(201).json(club);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        return res.status(400).json({ message: "Validation error", error: validationError.message });
+      }
+      res.status(errorStatus(error)).json(safeError(error, "Failed to create club"));
+    }
+  });
+
+  // Get club detail
+  app.get("/api/clubs/:clubId", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const clubId = parseInt(req.params.clubId);
+      if (isNaN(clubId)) return res.status(400).json({ message: "Invalid club ID" });
+
+      const club = await storage.getClub(clubId);
+      if (!club) return res.status(404).json({ message: "Club not found" });
+
+      res.json(club);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to fetch club"));
+    }
+  });
+
+  // Update club (admin only)
+  app.put("/api/clubs/:clubId", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const clubId = parseInt(req.params.clubId);
+      if (isNaN(clubId)) return res.status(400).json({ message: "Invalid club ID" });
+
+      const data = updateClubSchema.parse(req.body);
+      const club = await storage.updateClub(clubId, data, getUserId(req));
+      if (!club) return res.status(403).json({ message: "Not authorized or club not found" });
+
+      res.json(club);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        return res.status(400).json({ message: "Validation error", error: validationError.message });
+      }
+      res.status(errorStatus(error)).json(safeError(error, "Failed to update club"));
+    }
+  });
+
+  // Delete club (admin only)
+  app.delete("/api/clubs/:clubId", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const clubId = parseInt(req.params.clubId);
+      if (isNaN(clubId)) return res.status(400).json({ message: "Invalid club ID" });
+
+      const success = await storage.deleteClub(clubId, getUserId(req));
+      if (!success) return res.status(403).json({ message: "Not authorized or club not found" });
+
+      res.status(204).send();
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to delete club"));
+    }
+  });
+
+  // List club members
+  app.get("/api/clubs/:clubId/members", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const clubId = parseInt(req.params.clubId);
+      if (isNaN(clubId)) return res.status(400).json({ message: "Invalid club ID" });
+
+      const members = await storage.getClubMembers(clubId);
+      res.json(members);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to fetch members"));
+    }
+  });
+
+  // Invite member (admin only)
+  app.post("/api/clubs/:clubId/members", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const clubId = parseInt(req.params.clubId);
+      if (isNaN(clubId)) return res.status(400).json({ message: "Invalid club ID" });
+
+      const { userId: targetUserId } = req.body;
+      if (!targetUserId) return res.status(400).json({ message: "userId is required" });
+
+      const member = await storage.inviteMember(clubId, parseInt(targetUserId), getUserId(req));
+      if (!member) return res.status(400).json({ message: "Unable to invite user. They may already be a member or you lack admin access." });
+
+      res.status(201).json(member);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to invite member"));
+    }
+  });
+
+  // Remove member (admin only)
+  app.delete("/api/clubs/:clubId/members/:userId", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const clubId = parseInt(req.params.clubId);
+      const targetUserId = parseInt(req.params.userId);
+      if (isNaN(clubId) || isNaN(targetUserId)) return res.status(400).json({ message: "Invalid ID" });
+
+      const success = await storage.removeMember(clubId, targetUserId, getUserId(req));
+      if (!success) return res.status(403).json({ message: "Not authorized or member not found" });
+
+      res.status(204).send();
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to remove member"));
+    }
+  });
+
+  // Update member role (admin only)
+  app.put("/api/clubs/:clubId/members/:userId", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const clubId = parseInt(req.params.clubId);
+      const targetUserId = parseInt(req.params.userId);
+      if (isNaN(clubId) || isNaN(targetUserId)) return res.status(400).json({ message: "Invalid ID" });
+
+      const { role } = req.body;
+      if (!role || !clubRoleValues.includes(role)) {
+        return res.status(400).json({ message: "Valid role is required (admin or member)" });
+      }
+
+      const member = await storage.updateMemberRole(clubId, targetUserId, role, getUserId(req));
+      if (!member) return res.status(403).json({ message: "Not authorized or member not found" });
+
+      res.json(member);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to update member role"));
+    }
+  });
+
+  // Accept invite
+  app.post("/api/clubs/:clubId/accept", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const clubId = parseInt(req.params.clubId);
+      if (isNaN(clubId)) return res.status(400).json({ message: "Invalid club ID" });
+
+      const member = await storage.acceptInvite(clubId, getUserId(req));
+      if (!member) return res.status(404).json({ message: "No pending invite found" });
+
+      res.json(member);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to accept invite"));
+    }
+  });
+
+  // Decline invite
+  app.post("/api/clubs/:clubId/decline", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const clubId = parseInt(req.params.clubId);
+      if (isNaN(clubId)) return res.status(400).json({ message: "Invalid club ID" });
+
+      const success = await storage.declineInvite(clubId, getUserId(req));
+      if (!success) return res.status(404).json({ message: "No pending invite found" });
+
+      res.status(204).send();
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to decline invite"));
+    }
+  });
+
+  // List club sessions
+  app.get("/api/clubs/:clubId/sessions", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const clubId = parseInt(req.params.clubId);
+      if (isNaN(clubId)) return res.status(400).json({ message: "Invalid club ID" });
+
+      const sessions = await storage.getClubSessions(clubId);
+      res.json(sessions);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to fetch sessions"));
+    }
+  });
+
+  // Create club session (admin only)
+  app.post("/api/clubs/:clubId/sessions", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const clubId = parseInt(req.params.clubId);
+      if (isNaN(clubId)) return res.status(400).json({ message: "Invalid club ID" });
+
+      const data = insertClubSessionSchema.parse({
+        ...req.body,
+        clubId,
+        createdBy: getUserId(req),
+      });
+      const session = await storage.createClubSession(data);
+      res.status(201).json(session);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        return res.status(400).json({ message: "Validation error", error: validationError.message });
+      }
+      res.status(errorStatus(error)).json(safeError(error, "Failed to create session"));
+    }
+  });
+
+  // Get session with whiskeys
+  app.get("/api/clubs/:clubId/sessions/:sessionId", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const sessionId = parseInt(req.params.sessionId);
+      if (isNaN(sessionId)) return res.status(400).json({ message: "Invalid session ID" });
+
+      const result = await storage.getClubSessionWithWhiskeys(sessionId, getUserId(req));
+      if (!result) return res.status(404).json({ message: "Session not found or not authorized" });
+
+      res.json(result);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to fetch session"));
+    }
+  });
+
+  // Add whiskey to session (draft only, admin)
+  app.post("/api/clubs/:clubId/sessions/:sessionId/whiskeys", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const sessionId = parseInt(req.params.sessionId);
+      if (isNaN(sessionId)) return res.status(400).json({ message: "Invalid session ID" });
+
+      const { whiskeyId } = req.body;
+      if (!whiskeyId) return res.status(400).json({ message: "whiskeyId is required" });
+
+      const sw = await storage.addWhiskeyToSession(sessionId, parseInt(whiskeyId), getUserId(req));
+      if (!sw) return res.status(400).json({ message: "Cannot add whiskey. Session may not be in draft status or you lack admin access." });
+
+      res.status(201).json(sw);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to add whiskey to session"));
+    }
+  });
+
+  // Remove whiskey from session
+  app.delete("/api/clubs/:clubId/sessions/:sessionId/whiskeys/:swId", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const swId = parseInt(req.params.swId);
+      if (isNaN(swId)) return res.status(400).json({ message: "Invalid ID" });
+
+      const success = await storage.removeWhiskeyFromSession(swId, getUserId(req));
+      if (!success) return res.status(400).json({ message: "Cannot remove whiskey" });
+
+      res.status(204).send();
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to remove whiskey"));
+    }
+  });
+
+  // Start session
+  app.post("/api/clubs/:clubId/sessions/:sessionId/start", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const sessionId = parseInt(req.params.sessionId);
+      if (isNaN(sessionId)) return res.status(400).json({ message: "Invalid session ID" });
+
+      const session = await storage.startClubSession(sessionId, getUserId(req));
+      if (!session) return res.status(400).json({ message: "Cannot start session. Must be in draft status with at least one whiskey." });
+
+      res.json(session);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to start session"));
+    }
+  });
+
+  // Reveal session
+  app.post("/api/clubs/:clubId/sessions/:sessionId/reveal", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const sessionId = parseInt(req.params.sessionId);
+      if (isNaN(sessionId)) return res.status(400).json({ message: "Invalid session ID" });
+
+      const session = await storage.revealClubSession(sessionId, getUserId(req));
+      if (!session) return res.status(400).json({ message: "Cannot reveal session. Must be in active status." });
+
+      const fullResult = await storage.getClubSessionWithWhiskeys(sessionId, getUserId(req));
+      res.json(fullResult);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to reveal session"));
+    }
+  });
+
+  // Complete session
+  app.post("/api/clubs/:clubId/sessions/:sessionId/complete", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const sessionId = parseInt(req.params.sessionId);
+      if (isNaN(sessionId)) return res.status(400).json({ message: "Invalid session ID" });
+
+      const session = await storage.completeClubSession(sessionId, getUserId(req));
+      if (!session) return res.status(400).json({ message: "Cannot complete session. Must be in revealed status." });
+
+      res.json(session);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to complete session"));
+    }
+  });
+
+  // Submit rating
+  app.post("/api/club-sessions/:sessionId/whiskeys/:swId/rate", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const swId = parseInt(req.params.swId);
+      if (isNaN(swId)) return res.status(400).json({ message: "Invalid ID" });
+
+      const data = insertClubSessionRatingSchema.parse(req.body);
+      const rating = await storage.submitClubRating(swId, getUserId(req), data);
+      res.json(rating);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        return res.status(400).json({ message: "Validation error", error: validationError.message });
+      }
+      res.status(errorStatus(error)).json(safeError(error, "Failed to submit rating"));
+    }
+  });
+
+  // ==================== PHASE 4: SOCIAL LAYER ROUTES ====================
+
+  // --- Activity Feed ---
+
+  // GET /api/activity/feed - personalized activity feed (from followed users + self)
+  app.get("/api/activity/feed", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const limit = Math.min(parseInt(req.query.limit as string) || 30, 50);
+      const feed = await storage.getPersonalizedFeed(getUserId(req), limit);
+
+      const sanitized = feed.map(({ activity, user, targetUser, whiskey }) => ({
+        id: activity.id,
+        type: activity.type,
+        metadata: activity.metadata,
+        createdAt: activity.createdAt,
+        user: {
+          id: user.id,
+          displayName: user.displayName || user.username,
+          profileImage: user.profileImage,
+          profileSlug: user.profileSlug,
+        },
+        targetUser: targetUser ? {
+          id: targetUser.id,
+          displayName: targetUser.displayName || targetUser.username,
+          profileImage: targetUser.profileImage,
+          profileSlug: targetUser.profileSlug,
+        } : undefined,
+        whiskey: whiskey ? {
+          id: whiskey.id,
+          name: whiskey.name,
+          distillery: whiskey.distillery,
+          type: whiskey.type,
+          image: whiskey.image,
+        } : undefined,
+      }));
+
+      res.json(sanitized);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to fetch activity feed"));
+    }
+  });
+
+  // GET /api/activity/global - public activity feed
+  app.get("/api/activity/global", async (_req: Request, res: Response) => {
+    try {
+      const limit = Math.min(parseInt(_req.query.limit as string) || 30, 50);
+      const feed = await storage.getGlobalFeed(limit);
+
+      const sanitized = feed.map(({ activity, user, targetUser, whiskey }) => ({
+        id: activity.id,
+        type: activity.type,
+        metadata: activity.metadata,
+        createdAt: activity.createdAt,
+        user: {
+          id: user.id,
+          displayName: user.displayName || user.username,
+          profileImage: user.profileImage,
+          profileSlug: user.profileSlug,
+        },
+        targetUser: targetUser ? {
+          id: targetUser.id,
+          displayName: targetUser.displayName || targetUser.username,
+          profileImage: targetUser.profileImage,
+          profileSlug: targetUser.profileSlug,
+        } : undefined,
+        whiskey: whiskey ? {
+          id: whiskey.id,
+          name: whiskey.name,
+          distillery: whiskey.distillery,
+          type: whiskey.type,
+          image: whiskey.image,
+        } : undefined,
+      }));
+
+      res.json(sanitized);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to fetch global activity feed"));
+    }
+  });
+
+  // --- Palate Matching ---
+
+  // GET /api/palate/profile - current user's palate profile
+  app.get("/api/palate/profile", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const profile = await storage.getPalateProfile(getUserId(req));
+      res.json(profile);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to fetch palate profile"));
+    }
+  });
+
+  // GET /api/palate/profile/:userId - another user's palate profile (public only)
+  app.get("/api/palate/profile/:userId", async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      if (isNaN(userId)) return res.status(400).json({ message: "Invalid user ID" });
+
+      const user = await storage.getUser(userId);
+      if (!user || !user.isPublic) return res.status(404).json({ message: "User not found" });
+
+      const profile = await storage.getPalateProfile(userId);
+      res.json(profile);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to fetch palate profile"));
+    }
+  });
+
+  // GET /api/palate/matches - find users with similar palates
+  app.get("/api/palate/matches", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const limit = Math.min(parseInt(req.query.limit as string) || 10, 20);
+      const matches = await storage.getPalateMatches(getUserId(req), limit);
+      res.json(matches);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to fetch palate matches"));
+    }
+  });
+
+  // --- Collection Comparison ---
+
+  // GET /api/collections/compare/:userId - compare your collection with another user
+  app.get("/api/collections/compare/:userId", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const targetUserId = parseInt(req.params.userId);
+      if (isNaN(targetUserId)) return res.status(400).json({ message: "Invalid user ID" });
+
+      const targetUser = await storage.getUser(targetUserId);
+      if (!targetUser || !targetUser.isPublic) {
+        return res.status(404).json({ message: "User not found or profile is private" });
+      }
+
+      const comparison = await storage.compareCollections(getUserId(req), targetUserId);
+      res.json(comparison);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to compare collections"));
+    }
+  });
+
+  // --- Trade Listings ---
+
+  // POST /api/trade-listings - create a trade listing
+  app.post("/api/trade-listings", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const data = insertTradeListingSchema.parse(req.body);
+      const listing = await storage.createTradeListing(getUserId(req), data);
+
+      // Log activity
+      await storage.logActivity({
+        userId: getUserId(req),
+        type: 'trade_list',
+        whiskeyId: data.whiskeyId,
+        metadata: { listingId: listing.id },
+      });
+
+      res.status(201).json(listing);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        return res.status(400).json({ message: "Validation error", error: validationError.message });
+      }
+      res.status(errorStatus(error)).json(safeError(error, "Failed to create trade listing"));
+    }
+  });
+
+  // GET /api/trade-listings - browse all available trade listings
+  app.get("/api/trade-listings", async (req: Request, res: Response) => {
+    try {
+      const limit = Math.min(parseInt(req.query.limit as string) || 30, 50);
+      const type = req.query.type as string | undefined;
+      const listings = await storage.browseTradeListings(limit, type);
+      res.json(listings);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to browse trade listings"));
+    }
+  });
+
+  // GET /api/trade-listings/mine - user's own trade listings
+  app.get("/api/trade-listings/mine", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const listings = await storage.getUserTradeListings(getUserId(req));
+      res.json(listings);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to fetch your trade listings"));
+    }
+  });
+
+  // GET /api/trade-listings/:id - get single trade listing
+  app.get("/api/trade-listings/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ message: "Invalid listing ID" });
+
+      const listing = await storage.getTradeListing(id);
+      if (!listing) return res.status(404).json({ message: "Trade listing not found" });
+
+      res.json(listing);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to fetch trade listing"));
+    }
+  });
+
+  // PUT /api/trade-listings/:id - update trade listing
+  app.put("/api/trade-listings/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ message: "Invalid listing ID" });
+
+      const data = updateTradeListingSchema.parse(req.body);
+      const listing = await storage.updateTradeListing(id, getUserId(req), data);
+
+      if (!listing) return res.status(404).json({ message: "Trade listing not found" });
+
+      // Log completion activity
+      if (data.status === 'completed') {
+        await storage.logActivity({
+          userId: getUserId(req),
+          type: 'trade_complete',
+          whiskeyId: listing.whiskeyId,
+          metadata: { listingId: listing.id },
+        });
+      }
+
+      res.json(listing);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        return res.status(400).json({ message: "Validation error", error: validationError.message });
+      }
+      res.status(errorStatus(error)).json(safeError(error, "Failed to update trade listing"));
+    }
+  });
+
+  // DELETE /api/trade-listings/:id - delete trade listing
+  app.delete("/api/trade-listings/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ message: "Invalid listing ID" });
+
+      const success = await storage.deleteTradeListing(id, getUserId(req));
+      if (!success) return res.status(404).json({ message: "Trade listing not found" });
+
+      res.status(204).send();
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to delete trade listing"));
+    }
+  });
+
+  // ==================== PHASE 5: PALATE DEVELOPMENT ROUTES ====================
+
+  // GET /api/challenges - list available challenges
+  app.get("/api/challenges", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      // Seed default challenges on first access
+      await storage.seedDefaultChallenges();
+      const challengeList = await storage.getChallenges(true);
+      res.json(challengeList);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to fetch challenges"));
+    }
+  });
+
+  // GET /api/challenges/:id - get challenge details
+  app.get("/api/challenges/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ message: "Invalid challenge ID" });
+
+      const challenge = await storage.getChallenge(id);
+      if (!challenge) return res.status(404).json({ message: "Challenge not found" });
+
+      res.json(challenge);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to fetch challenge"));
+    }
+  });
+
+  // GET /api/user-challenges - get current user's challenges
+  app.get("/api/user-challenges", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = getUserId(req);
+      const status = req.query.status as string | undefined;
+      const userChallenges = await storage.getUserChallenges(userId, status);
+      res.json(userChallenges);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to fetch user challenges"));
+    }
+  });
+
+  // POST /api/user-challenges - join a challenge
+  app.post("/api/user-challenges", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = getUserId(req);
+      const { challengeId } = insertUserChallengeSchema.parse(req.body);
+      const uc = await storage.joinChallenge(userId, challengeId);
+      res.status(201).json(uc);
+    } catch (error) {
+      if (error instanceof Error && error.message === 'Already enrolled in this challenge') {
+        return res.status(409).json({ message: error.message });
+      }
+      res.status(errorStatus(error)).json(safeError(error, "Failed to join challenge"));
+    }
+  });
+
+  // PATCH /api/user-challenges/:id/progress - update challenge progress
+  app.patch("/api/user-challenges/:id/progress", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ message: "Invalid ID" });
+
+      const uc = await storage.getUserChallenge(id);
+      if (!uc) return res.status(404).json({ message: "Challenge not found" });
+      if (uc.userId !== getUserId(req)) return res.status(403).json({ message: "Not your challenge" });
+
+      const { progress, metadata } = req.body;
+      const updated = await storage.updateChallengeProgress(id, progress, metadata);
+      res.json(updated);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to update progress"));
+    }
+  });
+
+  // POST /api/user-challenges/:id/abandon - abandon a challenge
+  app.post("/api/user-challenges/:id/abandon", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ message: "Invalid ID" });
+
+      const uc = await storage.getUserChallenge(id);
+      if (!uc) return res.status(404).json({ message: "Challenge not found" });
+      if (uc.userId !== getUserId(req)) return res.status(403).json({ message: "Not your challenge" });
+
+      const updated = await storage.abandonChallenge(id);
+      res.json(updated);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to abandon challenge"));
+    }
+  });
+
+  // GET /api/progress - get current user's progress (XP, level, streaks)
+  app.get("/api/progress", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = getUserId(req);
+      const progress = await storage.getUserProgress(userId);
+      const levelInfo = getLevelForXP(progress.xp);
+      res.json({ ...progress, ...levelInfo });
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to fetch progress"));
+    }
+  });
+
+  // GET /api/leaderboard - get XP leaderboard
+  app.get("/api/leaderboard", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
+      const leaderboard = await storage.getLeaderboard(limit);
+
+      // Add level info to each entry
+      const enriched = leaderboard.map(entry => ({
+        ...entry,
+        ...getLevelForXP(entry.xp),
+      }));
+
+      res.json(enriched);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to fetch leaderboard"));
+    }
+  });
+
+  // GET /api/exercises - get user's palate exercises
+  app.get("/api/exercises", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = getUserId(req);
+      const completed = req.query.completed === 'true' ? true : req.query.completed === 'false' ? false : undefined;
+      const exercises = await storage.getUserExercises(userId, completed);
+      res.json(exercises);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to fetch exercises"));
+    }
+  });
+
+  // POST /api/exercises/generate - generate a new AI palate exercise
+  app.post("/api/exercises/generate", isAuthenticated, aiRateLimiter, async (req: Request, res: Response) => {
+    try {
+      const userId = getUserId(req);
+      const { generatePalateExercise } = await import('./rick-service');
+      const exerciseData = await generatePalateExercise(userId);
+
+      const exercise = await storage.createPalateExercise({
+        userId,
+        ...exerciseData,
+      });
+
+      res.status(201).json(exercise);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to generate exercise"));
+    }
+  });
+
+  // POST /api/exercises/:id/complete - mark exercise as complete
+  app.post("/api/exercises/:id/complete", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ message: "Invalid exercise ID" });
+
+      const exercise = await storage.getExercise(id);
+      if (!exercise) return res.status(404).json({ message: "Exercise not found" });
+      if (exercise.userId !== getUserId(req)) return res.status(403).json({ message: "Not your exercise" });
+
+      const updated = await storage.completeExercise(id, req.body.userNotes);
+      res.json(updated);
+    } catch (error) {
+      res.status(errorStatus(error)).json(safeError(error, "Failed to complete exercise"));
     }
   });
 

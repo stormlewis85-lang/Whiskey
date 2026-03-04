@@ -18,12 +18,16 @@ import {
   Wine,
   EyeOff,
   MessageSquare,
+  Users,
   Settings,
   Sun,
   Moon,
   Monitor,
   LogOut,
   ChevronRight,
+  Trophy,
+  TrendingUp,
+  Zap,
 } from "lucide-react";
 
 interface ProfileMenuProps {
@@ -124,6 +128,30 @@ export function ProfileMenu({ onOpenSettings }: ProfileMenuProps) {
             icon={MessageSquare}
             label="Rick House"
             onClick={() => navigate("/rick-house")}
+            rightElement={chevron}
+          />
+          <MenuItem
+            icon={Users}
+            label="Tasting Clubs"
+            onClick={() => navigate("/clubs")}
+            rightElement={chevron}
+          />
+          <MenuItem
+            icon={Trophy}
+            label="Challenges"
+            onClick={() => navigate("/challenges")}
+            rightElement={chevron}
+          />
+          <MenuItem
+            icon={TrendingUp}
+            label="Progress"
+            onClick={() => navigate("/progress")}
+            rightElement={chevron}
+          />
+          <MenuItem
+            icon={Zap}
+            label="Palate Exercises"
+            onClick={() => navigate("/exercises")}
             rightElement={chevron}
           />
           <MenuItem

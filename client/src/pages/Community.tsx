@@ -22,7 +22,11 @@ import {
   Share2,
   Wine,
   Heart,
-  Loader2
+  Loader2,
+  Activity,
+  Fingerprint,
+  ArrowLeftRight,
+  ArrowRight
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Whiskey, ReviewNote, User } from '@shared/schema';
@@ -332,6 +336,194 @@ const SuggestedUsers = () => {
   );
 };
 
+// Activity Feed Item
+interface ActivityItem {
+  id: number;
+  type: string;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+  user: {
+    id: number;
+    displayName: string;
+    profileImage: string | null;
+    profileSlug: string | null;
+  };
+  targetUser?: {
+    id: number;
+    displayName: string;
+    profileImage: string | null;
+    profileSlug: string | null;
+  };
+  whiskey?: {
+    id: number;
+    name: string;
+    distillery: string | null;
+    type: string | null;
+    image: string | null;
+  };
+}
+
+const activityText = (item: ActivityItem): string => {
+  switch (item.type) {
+    case 'follow':
+      return `started following ${item.targetUser?.displayName || 'someone'}`;
+    case 'add_bottle':
+      return `added ${item.whiskey?.name || 'a bottle'} to their collection`;
+    case 'review':
+      return `reviewed ${item.whiskey?.name || 'a whiskey'}`;
+    case 'like':
+      return `liked a review on ${item.whiskey?.name || 'a whiskey'}`;
+    case 'trade_list':
+      return `listed ${item.whiskey?.name || 'a bottle'} for trade`;
+    case 'trade_complete':
+      return `completed a trade for ${item.whiskey?.name || 'a bottle'}`;
+    default:
+      return 'did something';
+  }
+};
+
+const activityIcon = (type: string) => {
+  switch (type) {
+    case 'follow': return <UserPlus className="h-3.5 w-3.5 text-blue-400" />;
+    case 'add_bottle': return <Wine className="h-3.5 w-3.5 text-green-400" />;
+    case 'review': return <Star className="h-3.5 w-3.5 text-primary" />;
+    case 'like': return <Heart className="h-3.5 w-3.5 text-red-400" />;
+    case 'trade_list': return <ArrowLeftRight className="h-3.5 w-3.5 text-violet-400" />;
+    case 'trade_complete': return <ArrowLeftRight className="h-3.5 w-3.5 text-green-400" />;
+    default: return <Activity className="h-3.5 w-3.5 text-muted-foreground" />;
+  }
+};
+
+const ActivityFeed = () => {
+  const { data: items = [], isLoading } = useQuery<ActivityItem[]>({
+    queryKey: ['/api/activity/feed'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/activity/feed?limit=30');
+      return res.json();
+    },
+  });
+
+  const formatTime = (dateStr: string) => {
+    const d = new Date(dateStr);
+    const now = new Date();
+    const diff = now.getTime() - d.getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    if (days < 7) return `${days}d ago`;
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {Array(6).fill(0).map((_, i) => (
+          <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-card border border-border/50">
+            <Skeleton className="h-8 w-8 rounded-full shrink-0" />
+            <div className="flex-1 space-y-1.5">
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-3 w-1/3" />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (items.length === 0) {
+    return (
+      <div className="bg-card border border-border/50 rounded-xl p-10 text-center">
+        <Activity className="h-10 w-10 text-muted-foreground mx-auto mb-4" />
+        <h3 className="text-lg font-semibold text-foreground">No activity yet</h3>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Follow users or add bottles to see activity here!
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {items.map((item) => (
+        <div key={item.id} className="flex items-start gap-3 p-3 rounded-lg bg-card border border-border/50 hover:border-border transition-colors">
+          <Link href={item.user.profileSlug ? `/u/${item.user.profileSlug}` : '#'}>
+            <Avatar className="h-8 w-8 border border-border cursor-pointer hover:opacity-80">
+              {item.user.profileImage ? (
+                <AvatarImage src={item.user.profileImage} />
+              ) : (
+                <AvatarFallback className="bg-muted text-xs">
+                  {(item.user.displayName || '?').substring(0, 2).toUpperCase()}
+                </AvatarFallback>
+              )}
+            </Avatar>
+          </Link>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm">
+              <Link href={item.user.profileSlug ? `/u/${item.user.profileSlug}` : '#'}>
+                <span className="font-medium text-foreground hover:underline cursor-pointer">
+                  {item.user.displayName}
+                </span>
+              </Link>
+              {' '}
+              <span className="text-muted-foreground">{activityText(item)}</span>
+            </p>
+            <div className="flex items-center gap-2 mt-1">
+              {activityIcon(item.type)}
+              <span className="text-xs text-muted-foreground">{formatTime(item.createdAt)}</span>
+              {item.metadata && typeof item.metadata === 'object' && 'rating' in item.metadata && (
+                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
+                  {String(item.metadata.rating)} / 5
+                </Badge>
+              )}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// Social Features Quick Links
+const SocialFeatureLinks = () => (
+  <div className="space-y-2 mt-6">
+    <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+      <Users className="h-4 w-4" />
+      Social Features
+    </h3>
+    <Link href="/palate-matches">
+      <Card className="bg-card border-border/50 hover:border-border transition-all cursor-pointer">
+        <CardContent className="p-3 flex items-center gap-3">
+          <div className="p-2 rounded-md bg-primary/10">
+            <Fingerprint className="h-4 w-4 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-foreground">Palate Matches</p>
+            <p className="text-xs text-muted-foreground">Find your flavor twin</p>
+          </div>
+          <ArrowRight className="h-4 w-4 text-muted-foreground" />
+        </CardContent>
+      </Card>
+    </Link>
+    <Link href="/trades">
+      <Card className="bg-card border-border/50 hover:border-border transition-all cursor-pointer">
+        <CardContent className="p-3 flex items-center gap-3">
+          <div className="p-2 rounded-md bg-violet-400/10">
+            <ArrowLeftRight className="h-4 w-4 text-violet-400" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-foreground">Trade Board</p>
+            <p className="text-xs text-muted-foreground">Browse & list bottles for trade</p>
+          </div>
+          <ArrowRight className="h-4 w-4 text-muted-foreground" />
+        </CardContent>
+      </Card>
+    </Link>
+  </div>
+);
+
 const Community = () => {
   const { user, isLoading: authLoading } = useAuth();
 
@@ -361,8 +553,12 @@ const Community = () => {
               // Logged in: Show tabs for Discover and Following
               <div className="flex flex-col lg:flex-row gap-6">
                 <div className="flex-1">
-                  <Tabs defaultValue="discover" className="w-full">
+                  <Tabs defaultValue="activity" className="w-full">
                     <TabsList className="mb-6">
+                      <TabsTrigger value="activity" className="gap-2">
+                        <Activity className="h-4 w-4" />
+                        Activity
+                      </TabsTrigger>
                       <TabsTrigger value="discover" className="gap-2">
                         <Globe className="h-4 w-4" />
                         Discover
@@ -372,6 +568,10 @@ const Community = () => {
                         Following
                       </TabsTrigger>
                     </TabsList>
+
+                    <TabsContent value="activity">
+                      <ActivityFeed />
+                    </TabsContent>
 
                     <TabsContent value="discover">
                       <PublicReviewsGrid limit={12} />
@@ -383,9 +583,10 @@ const Community = () => {
                   </Tabs>
                 </div>
 
-                {/* Sidebar with suggested users */}
+                {/* Sidebar with suggested users and social links */}
                 <aside className="lg:w-80 shrink-0">
                   <SuggestedUsers />
+                  <SocialFeatureLinks />
                 </aside>
               </div>
             ) : (

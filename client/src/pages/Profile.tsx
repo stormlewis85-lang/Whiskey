@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams } from 'wouter';
+import { useParams, Link } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet';
 import { Header } from '@/components/Header';
@@ -22,7 +22,8 @@ import {
   Calendar,
   Loader2,
   Heart,
-  Lock
+  Lock,
+  GitCompareArrows
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Whiskey, ReviewNote } from '@shared/schema';
@@ -312,33 +313,46 @@ const Profile = () => {
                 </div>
               </div>
 
-              {/* Follow Button */}
+              {/* Follow & Compare Buttons */}
               {!isOwnProfile && currentUser && (
-                <Button
-                  onClick={handleFollowToggle}
-                  disabled={isFollowLoading}
-                  variant={isFollowing ? "outline" : "default"}
-                  className={cn(
-                    "gap-2 shadow-warm-sm",
-                    isFollowing
-                      ? "border-primary/30 text-foreground hover:bg-accent/50"
-                      : ""
-                  )}
-                >
-                  {isFollowLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : isFollowing ? (
-                    <>
-                      <UserMinus className="h-4 w-4" />
-                      Unfollow
-                    </>
-                  ) : (
-                    <>
-                      <UserPlus className="h-4 w-4" />
-                      Follow
-                    </>
-                  )}
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleFollowToggle}
+                    disabled={isFollowLoading}
+                    variant={isFollowing ? "outline" : "default"}
+                    className={cn(
+                      "gap-2 shadow-warm-sm",
+                      isFollowing
+                        ? "border-primary/30 text-foreground hover:bg-accent/50"
+                        : ""
+                    )}
+                  >
+                    {isFollowLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : isFollowing ? (
+                      <>
+                        <UserMinus className="h-4 w-4" />
+                        Unfollow
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus className="h-4 w-4" />
+                        Follow
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="default"
+                    className="gap-2 border-border/50 hover:bg-accent/50"
+                  >
+                    <Link href={`/compare/${profile.user.id}`}>
+                      <GitCompareArrows className="h-4 w-4" />
+                      Compare
+                    </Link>
+                  </Button>
+                </div>
               )}
             </div>
           </div>

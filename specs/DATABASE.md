@@ -229,6 +229,100 @@ CREATE TABLE user_profiles (
 CREATE INDEX idx_user_profiles_slug ON user_profiles(slug);
 ```
 
+### activities (Phase 4: Social Layer)
+```sql
+CREATE TABLE activities (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  type activity_type NOT NULL, -- follow, add_bottle, review, like, trade_list, trade_complete
+  target_user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  whiskey_id INTEGER REFERENCES whiskeys(id) ON DELETE CASCADE,
+  metadata JSONB,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### trade_listings (Phase 4: Social Layer)
+```sql
+CREATE TABLE trade_listings (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  whiskey_id INTEGER NOT NULL REFERENCES whiskeys(id) ON DELETE CASCADE,
+  status trade_status DEFAULT 'available', -- available, pending, completed, withdrawn
+  seeking TEXT,
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### challenges (Phase 5: Palate Development)
+```sql
+CREATE TABLE challenges (
+  id SERIAL PRIMARY KEY,
+  title TEXT NOT NULL,
+  description TEXT NOT NULL,
+  type challenge_type NOT NULL,  -- blind_identify, flavor_hunt, review_streak, explore_type, community_challenge
+  difficulty challenge_difficulty DEFAULT 'beginner' NOT NULL,  -- beginner, intermediate, advanced, expert
+  goal_count INTEGER DEFAULT 1 NOT NULL,
+  goal_details JSONB,
+  xp_reward INTEGER DEFAULT 50 NOT NULL,
+  duration_days INTEGER,
+  is_active BOOLEAN DEFAULT TRUE NOT NULL,
+  is_recurring BOOLEAN DEFAULT FALSE NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### user_challenges (Phase 5: Palate Development)
+```sql
+CREATE TABLE user_challenges (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  challenge_id INTEGER NOT NULL REFERENCES challenges(id) ON DELETE CASCADE,
+  progress INTEGER DEFAULT 0 NOT NULL,
+  status user_challenge_status DEFAULT 'active' NOT NULL,  -- active, completed, abandoned, expired
+  started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  completed_at TIMESTAMP,
+  metadata JSONB
+);
+```
+
+### user_progress (Phase 5: Palate Development)
+```sql
+CREATE TABLE user_progress (
+  user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  xp INTEGER DEFAULT 0 NOT NULL,
+  level INTEGER DEFAULT 1 NOT NULL,
+  current_streak INTEGER DEFAULT 0 NOT NULL,
+  longest_streak INTEGER DEFAULT 0 NOT NULL,
+  last_activity_date DATE,
+  total_reviews INTEGER DEFAULT 0 NOT NULL,
+  total_challenges_completed INTEGER DEFAULT 0 NOT NULL,
+  total_flavor_ids INTEGER DEFAULT 0 NOT NULL,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### palate_exercises (Phase 5: Palate Development)
+```sql
+CREATE TABLE palate_exercises (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  description TEXT NOT NULL,
+  exercise_type TEXT NOT NULL,  -- nose_training, blind_comparison, flavor_isolation, palate_calibration
+  difficulty challenge_difficulty DEFAULT 'beginner' NOT NULL,
+  instructions JSONB NOT NULL,
+  target_flavors JSONB,
+  whiskey_ids JSONB,
+  is_completed BOOLEAN DEFAULT FALSE NOT NULL,
+  completed_at TIMESTAMP,
+  user_notes TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
 ## Common Queries
 
 ### Get user's collection with distillery info

@@ -73,6 +73,20 @@ _(Empty — all fix tasks completed)_
 
 ## Completed Tasks
 
+### [PHASE5-001] Palate Development — Challenge System, Progress Tracking, AI Exercises
+- **Completed:** 2026-03-03
+- **Scope:** Deep
+- **Assigned:** Developer
+- **Priority:** P1
+- **Summary:** Full Phase 5: Palate Development implementation. Added 4 new DB tables (challenges, user_challenges, user_progress, palate_exercises) with Drizzle migration. Challenge system with 10 default challenges across 5 types (review_streak, flavor_hunt, explore_type, blind_identify, community_challenge). XP/level system with 10 levels (Newcomer → Legend). Streak tracking with milestone XP bonuses (7-day, 30-day). Leaderboard for public users. AI-generated palate exercises via Rick House Claude API integration (4 exercise types: nose_training, blind_comparison, flavor_isolation, palate_calibration). Review creation now awards XP and updates streaks. 12 new API endpoints. 3 new frontend pages (Challenges, ProgressPage, PalateExercises). ProfileMenu updated with Challenges, Progress, and Palate Exercises links.
+
+### [PHASE4-001] Social Layer — Activity Feed, Palate Matching, Collection Comparison, Trade Flagging
+- **Completed:** 2026-03-03
+- **Scope:** Deep
+- **Assigned:** Developer
+- **Priority:** P1
+- **Summary:** Full Phase 4: Social Layer implementation. Added 2 new DB tables (activities, trade_listings) with Drizzle migration. Activity feed logs follow/add_bottle/review/like/trade events. Palate matching algorithm uses cosine similarity on scoring tendencies + shared flavor analysis. Collection comparison computes overlap percentage, shared/unique bottles, stat comparison. Trade board with CRUD for listings. 14 new API endpoints. 3 new frontend pages (PalateMatches, TradeListings, CollectionCompare). Enhanced Community page with Activity tab and social feature links sidebar. Compare Collection button on user profiles.
+
 ### [FIX-001] Create Missing Database Tables
 - **Completed:** 2026-03-02
 - **Summary:** Created 5 missing tables (flights, flight_whiskeys, blind_tastings, blind_tasting_whiskeys, follows) via migration script. All verified present in production DB.
@@ -137,7 +151,8 @@ _(Empty — all fix tasks completed)_
 
 ## Backlog
 
-- Community features roadmap (Phase 1: The Hunt — see CONTEXT_PROJECT.md)
+- ~~Phase 5: Palate Development~~ — COMPLETE (PHASE5-001)
+- Trade board: add in-app messaging/offers for trade negotiations
 - Drops page: implement real store integration (currently "Coming Soon")
 - RadarChart component: integrate into review display (currently orphaned)
 - Stripe integration for freemium tiers

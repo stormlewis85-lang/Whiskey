@@ -379,6 +379,12 @@ export const usersRelations = relations(users, ({ many }) => ({
   storeFollows: many(storeFollows),
   drops: many(drops),
   notifications: many(notifications),
+  // Club relations
+  clubMemberships: many(clubMembers),
+  clubSessionRatings: many(clubSessionRatings),
+  // Social Layer relations
+  activities: many(activities, { relationName: 'activities' }),
+  tradeListings: many(tradeListings),
 }));
 
 // OAuth Providers relations
@@ -436,6 +442,10 @@ export const whiskeysRelations = relations(whiskeys, ({ one, many }) => ({
   generatedScripts: many(generatedScripts),
   // Hunt relations
   drops: many(drops),
+  // Club relations
+  clubSessionWhiskeys: many(clubSessionWhiskeys),
+  // Social Layer relations
+  tradeListings: many(tradeListings),
 }));
 
 export const reviewCommentsRelations = relations(reviewComments, ({ one }) => ({
@@ -1041,6 +1051,435 @@ export const updateStoreProfileSchema = z.object({
 });
 
 export type UpdateStoreProfile = z.infer<typeof updateStoreProfileSchema>;
+
+// ==================== TASTING CLUBS TABLES ====================
+
+// Club role enum
+export const clubRoleEnum = pgEnum('club_role', ['admin', 'member']);
+
+// Club member status enum
+export const clubMemberStatusEnum = pgEnum('club_member_status', ['invited', 'active', 'removed']);
+
+// Club session status enum
+export const clubSessionStatusEnum = pgEnum('club_session_status', ['draft', 'active', 'revealed', 'completed']);
+
+// Clubs table
+export const clubs = pgTable("clubs", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  createdBy: integer("created_by").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  isPrivate: boolean("is_private").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Club Members table
+export const clubMembers = pgTable("club_members", {
+  id: serial("id").primaryKey(),
+  clubId: integer("club_id").notNull().references(() => clubs.id, { onDelete: 'cascade' }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  role: clubRoleEnum("role").default('member'),
+  status: clubMemberStatusEnum("status").default('invited'),
+  joinedAt: timestamp("joined_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  uniqueClubMember: unique("unique_club_member").on(table.clubId, table.userId),
+}));
+
+// Club Sessions table
+export const clubSessions = pgTable("club_sessions", {
+  id: serial("id").primaryKey(),
+  clubId: integer("club_id").notNull().references(() => clubs.id, { onDelete: 'cascade' }),
+  createdBy: integer("created_by").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  name: text("name").notNull(),
+  description: text("description"),
+  status: clubSessionStatusEnum("status").default('draft'),
+  scheduledFor: timestamp("scheduled_for"),
+  startedAt: timestamp("started_at"),
+  revealedAt: timestamp("revealed_at"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Club Session Whiskeys table
+export const clubSessionWhiskeys = pgTable("club_session_whiskeys", {
+  id: serial("id").primaryKey(),
+  sessionId: integer("session_id").notNull().references(() => clubSessions.id, { onDelete: 'cascade' }),
+  whiskeyId: integer("whiskey_id").notNull().references(() => whiskeys.id, { onDelete: 'cascade' }),
+  label: text("label").notNull(), // A, B, C, etc.
+  order: integer("order").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Club Session Ratings table
+export const clubSessionRatings = pgTable("club_session_ratings", {
+  id: serial("id").primaryKey(),
+  sessionWhiskeyId: integer("session_whiskey_id").notNull().references(() => clubSessionWhiskeys.id, { onDelete: 'cascade' }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  rating: real("rating").notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  uniqueSessionWhiskeyUser: unique("unique_session_whiskey_user").on(table.sessionWhiskeyId, table.userId),
+}));
+
+// Club relations
+export const clubsRelations = relations(clubs, ({ one, many }) => ({
+  creator: one(users, {
+    fields: [clubs.createdBy],
+    references: [users.id],
+  }),
+  members: many(clubMembers),
+  sessions: many(clubSessions),
+}));
+
+export const clubMembersRelations = relations(clubMembers, ({ one }) => ({
+  club: one(clubs, {
+    fields: [clubMembers.clubId],
+    references: [clubs.id],
+  }),
+  user: one(users, {
+    fields: [clubMembers.userId],
+    references: [users.id],
+  }),
+}));
+
+export const clubSessionsRelations = relations(clubSessions, ({ one, many }) => ({
+  club: one(clubs, {
+    fields: [clubSessions.clubId],
+    references: [clubs.id],
+  }),
+  creator: one(users, {
+    fields: [clubSessions.createdBy],
+    references: [users.id],
+  }),
+  whiskeys: many(clubSessionWhiskeys),
+}));
+
+export const clubSessionWhiskeysRelations = relations(clubSessionWhiskeys, ({ one, many }) => ({
+  session: one(clubSessions, {
+    fields: [clubSessionWhiskeys.sessionId],
+    references: [clubSessions.id],
+  }),
+  whiskey: one(whiskeys, {
+    fields: [clubSessionWhiskeys.whiskeyId],
+    references: [whiskeys.id],
+  }),
+  ratings: many(clubSessionRatings),
+}));
+
+export const clubSessionRatingsRelations = relations(clubSessionRatings, ({ one }) => ({
+  sessionWhiskey: one(clubSessionWhiskeys, {
+    fields: [clubSessionRatings.sessionWhiskeyId],
+    references: [clubSessionWhiskeys.id],
+  }),
+  user: one(users, {
+    fields: [clubSessionRatings.userId],
+    references: [users.id],
+  }),
+}));
+
+// Club schemas
+export const clubRoleValues = ['admin', 'member'] as const;
+export type ClubRole = typeof clubRoleValues[number];
+
+export const clubMemberStatusValues = ['invited', 'active', 'removed'] as const;
+export type ClubMemberStatus = typeof clubMemberStatusValues[number];
+
+export const clubSessionStatusValues = ['draft', 'active', 'revealed', 'completed'] as const;
+export type ClubSessionStatus = typeof clubSessionStatusValues[number];
+
+export const insertClubSchema = createInsertSchema(clubs)
+  .omit({ id: true, createdAt: true, updatedAt: true });
+
+export const updateClubSchema = z.object({
+  name: z.string().min(1).optional(),
+  description: z.string().optional(),
+  isPrivate: z.boolean().optional(),
+});
+
+export const insertClubSessionSchema = createInsertSchema(clubSessions)
+  .omit({ id: true, createdAt: true, startedAt: true, revealedAt: true, completedAt: true });
+
+export const insertClubSessionRatingSchema = z.object({
+  rating: z.number().min(0).max(5),
+  notes: z.string().optional(),
+});
+
+// Club types
+export type Club = typeof clubs.$inferSelect;
+export type InsertClub = z.infer<typeof insertClubSchema>;
+export type UpdateClub = z.infer<typeof updateClubSchema>;
+
+export type ClubMember = typeof clubMembers.$inferSelect;
+
+export type ClubSession = typeof clubSessions.$inferSelect;
+export type InsertClubSession = z.infer<typeof insertClubSessionSchema>;
+
+export type ClubSessionWhiskey = typeof clubSessionWhiskeys.$inferSelect;
+
+export type ClubSessionRating = typeof clubSessionRatings.$inferSelect;
+export type InsertClubSessionRating = z.infer<typeof insertClubSessionRatingSchema>;
+
+// ==================== PHASE 4: SOCIAL LAYER TABLES ====================
+
+// Activity type enum
+export const activityTypeEnum = pgEnum('activity_type', [
+  'follow', 'add_bottle', 'review', 'like', 'trade_list', 'trade_complete'
+]);
+
+// Trade listing status enum
+export const tradeStatusEnum = pgEnum('trade_status', ['available', 'pending', 'completed', 'withdrawn']);
+
+// Activities table - tracks user actions for the activity feed
+export const activities = pgTable("activities", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  type: activityTypeEnum("type").notNull(),
+  targetUserId: integer("target_user_id").references(() => users.id, { onDelete: 'cascade' }),
+  whiskeyId: integer("whiskey_id").references(() => whiskeys.id, { onDelete: 'cascade' }),
+  metadata: jsonb("metadata"), // Flexible extra data (review rating, trade details, etc.)
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Trade Listings table - bottles flagged for trade
+export const tradeListings = pgTable("trade_listings", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  whiskeyId: integer("whiskey_id").notNull().references(() => whiskeys.id, { onDelete: 'cascade' }),
+  status: tradeStatusEnum("status").default('available'),
+  seeking: text("seeking"), // What the user wants in return
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Activity relations
+export const activitiesRelations = relations(activities, ({ one }) => ({
+  user: one(users, {
+    fields: [activities.userId],
+    references: [users.id],
+    relationName: 'activities',
+  }),
+  targetUser: one(users, {
+    fields: [activities.targetUserId],
+    references: [users.id],
+    relationName: 'targetActivities',
+  }),
+  whiskey: one(whiskeys, {
+    fields: [activities.whiskeyId],
+    references: [whiskeys.id],
+  }),
+}));
+
+// Trade listing relations
+export const tradeListingsRelations = relations(tradeListings, ({ one }) => ({
+  user: one(users, {
+    fields: [tradeListings.userId],
+    references: [users.id],
+  }),
+  whiskey: one(whiskeys, {
+    fields: [tradeListings.whiskeyId],
+    references: [whiskeys.id],
+  }),
+}));
+
+// Activity schemas
+export const activityTypeValues = ['follow', 'add_bottle', 'review', 'like', 'trade_list', 'trade_complete'] as const;
+export type ActivityType = typeof activityTypeValues[number];
+
+export const insertActivitySchema = createInsertSchema(activities)
+  .omit({ id: true, createdAt: true });
+
+export type Activity = typeof activities.$inferSelect;
+export type InsertActivity = z.infer<typeof insertActivitySchema>;
+
+// Trade listing schemas
+export const tradeStatusValues = ['available', 'pending', 'completed', 'withdrawn'] as const;
+export type TradeStatus = typeof tradeStatusValues[number];
+
+export const insertTradeListingSchema = z.object({
+  whiskeyId: z.number().int(),
+  seeking: z.string().max(500).optional(),
+  notes: z.string().max(1000).optional(),
+});
+
+export const updateTradeListingSchema = z.object({
+  status: z.enum(tradeStatusValues).optional(),
+  seeking: z.string().max(500).optional(),
+  notes: z.string().max(1000).optional(),
+});
+
+export type TradeListing = typeof tradeListings.$inferSelect;
+export type InsertTradeListing = z.infer<typeof insertTradeListingSchema>;
+export type UpdateTradeListing = z.infer<typeof updateTradeListingSchema>;
+
+// ==================== PHASE 5: PALATE DEVELOPMENT TABLES ====================
+
+// Challenge type enum
+export const challengeTypeEnum = pgEnum('challenge_type', [
+  'blind_identify',      // Identify whiskey characteristics blind
+  'flavor_hunt',         // Find specific flavors in tastings
+  'review_streak',       // Complete reviews on consecutive days
+  'explore_type',        // Try whiskeys from new categories/regions
+  'community_challenge'  // Social challenges with friends
+]);
+
+// Challenge difficulty enum
+export const challengeDifficultyEnum = pgEnum('challenge_difficulty', [
+  'beginner', 'intermediate', 'advanced', 'expert'
+]);
+
+// User challenge status enum
+export const userChallengeStatusEnum = pgEnum('user_challenge_status', [
+  'active', 'completed', 'abandoned', 'expired'
+]);
+
+// Challenges table — defines available challenges
+export const challenges = pgTable("challenges", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  type: challengeTypeEnum("type").notNull(),
+  difficulty: challengeDifficultyEnum("difficulty").notNull().default('beginner'),
+  goalCount: integer("goal_count").notNull().default(1),  // Target number to complete
+  goalDetails: jsonb("goal_details"),  // Type-specific config (e.g., { flavorTarget: "vanilla", typeTarget: "Scotch" })
+  xpReward: integer("xp_reward").notNull().default(50),
+  durationDays: integer("duration_days"),  // NULL = no time limit
+  isActive: boolean("is_active").notNull().default(true),
+  isRecurring: boolean("is_recurring").notNull().default(false),  // Can be re-taken
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// User challenges — tracks per-user enrollment and progress
+export const userChallenges = pgTable("user_challenges", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  challengeId: integer("challenge_id").notNull().references(() => challenges.id, { onDelete: 'cascade' }),
+  progress: integer("progress").notNull().default(0),  // Current count toward goal
+  status: userChallengeStatusEnum("status").notNull().default('active'),
+  startedAt: timestamp("started_at").defaultNow(),
+  completedAt: timestamp("completed_at"),
+  metadata: jsonb("metadata"),  // Progress details (e.g., { identifiedFlavors: ["vanilla", "oak"] })
+});
+
+// User progress — XP, levels, streaks
+export const userProgress = pgTable("user_progress", {
+  userId: integer("user_id").primaryKey().references(() => users.id, { onDelete: 'cascade' }),
+  xp: integer("xp").notNull().default(0),
+  level: integer("level").notNull().default(1),
+  currentStreak: integer("current_streak").notNull().default(0),  // Consecutive days with activity
+  longestStreak: integer("longest_streak").notNull().default(0),
+  lastActivityDate: date("last_activity_date"),
+  totalReviews: integer("total_reviews").notNull().default(0),
+  totalChallengesCompleted: integer("total_challenges_completed").notNull().default(0),
+  totalFlavorIds: integer("total_flavor_ids").notNull().default(0),  // Unique flavors identified
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Palate exercises — AI-generated exercises from Rick House
+export const palateExercises = pgTable("palate_exercises", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  exerciseType: text("exercise_type").notNull(),  // 'nose_training', 'blind_comparison', 'flavor_isolation', 'palate_calibration'
+  difficulty: challengeDifficultyEnum("difficulty").notNull().default('beginner'),
+  instructions: jsonb("instructions").notNull(),  // AI-generated step-by-step instructions
+  targetFlavors: jsonb("target_flavors"),  // Flavors to focus on
+  whiskeyIds: jsonb("whiskey_ids"),  // Recommended whiskeys for the exercise
+  isCompleted: boolean("is_completed").notNull().default(false),
+  completedAt: timestamp("completed_at"),
+  userNotes: text("user_notes"),  // User's notes after completing
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Challenge relations
+export const challengesRelations = relations(challenges, ({ many }) => ({
+  userChallenges: many(userChallenges),
+}));
+
+export const userChallengesRelations = relations(userChallenges, ({ one }) => ({
+  user: one(users, {
+    fields: [userChallenges.userId],
+    references: [users.id],
+  }),
+  challenge: one(challenges, {
+    fields: [userChallenges.challengeId],
+    references: [challenges.id],
+  }),
+}));
+
+export const userProgressRelations = relations(userProgress, ({ one }) => ({
+  user: one(users, {
+    fields: [userProgress.userId],
+    references: [users.id],
+  }),
+}));
+
+export const palateExercisesRelations = relations(palateExercises, ({ one }) => ({
+  user: one(users, {
+    fields: [palateExercises.userId],
+    references: [users.id],
+  }),
+}));
+
+// Phase 5 Zod schemas
+export const challengeTypeValues = ['blind_identify', 'flavor_hunt', 'review_streak', 'explore_type', 'community_challenge'] as const;
+export type ChallengeType = typeof challengeTypeValues[number];
+
+export const challengeDifficultyValues = ['beginner', 'intermediate', 'advanced', 'expert'] as const;
+export type ChallengeDifficulty = typeof challengeDifficultyValues[number];
+
+export const userChallengeStatusValues = ['active', 'completed', 'abandoned', 'expired'] as const;
+export type UserChallengeStatus = typeof userChallengeStatusValues[number];
+
+export const insertChallengeSchema = createInsertSchema(challenges)
+  .omit({ id: true, createdAt: true });
+
+export const insertUserChallengeSchema = z.object({
+  challengeId: z.number().int(),
+});
+
+export const insertPalateExerciseSchema = createInsertSchema(palateExercises)
+  .omit({ id: true, createdAt: true, completedAt: true, isCompleted: true });
+
+export type Challenge = typeof challenges.$inferSelect;
+export type InsertChallenge = z.infer<typeof insertChallengeSchema>;
+export type UserChallenge = typeof userChallenges.$inferSelect;
+export type InsertUserChallenge = z.infer<typeof insertUserChallengeSchema>;
+export type UserProgress = typeof userProgress.$inferSelect;
+export type PalateExercise = typeof palateExercises.$inferSelect;
+
+// XP level thresholds
+export const XP_LEVELS = [
+  { level: 1, xpRequired: 0, title: 'Newcomer' },
+  { level: 2, xpRequired: 100, title: 'Apprentice' },
+  { level: 3, xpRequired: 300, title: 'Enthusiast' },
+  { level: 4, xpRequired: 600, title: 'Connoisseur' },
+  { level: 5, xpRequired: 1000, title: 'Aficionado' },
+  { level: 6, xpRequired: 1500, title: 'Expert' },
+  { level: 7, xpRequired: 2200, title: 'Master' },
+  { level: 8, xpRequired: 3000, title: 'Sommelier' },
+  { level: 9, xpRequired: 4000, title: 'Grand Master' },
+  { level: 10, xpRequired: 5500, title: 'Legend' },
+] as const;
+
+export function getLevelForXP(xp: number): { level: number; title: string; xpRequired: number; nextLevelXp: number | null } {
+  for (let i = XP_LEVELS.length - 1; i >= 0; i--) {
+    if (xp >= XP_LEVELS[i].xpRequired) {
+      return {
+        level: XP_LEVELS[i].level,
+        title: XP_LEVELS[i].title,
+        xpRequired: XP_LEVELS[i].xpRequired,
+        nextLevelXp: i < XP_LEVELS.length - 1 ? XP_LEVELS[i + 1].xpRequired : null,
+      };
+    }
+  }
+  return { level: 1, title: 'Newcomer', xpRequired: 0, nextLevelXp: 100 };
+}
 
 // Flavor tag constants for search/filter
 export const FLAVOR_TAGS = {

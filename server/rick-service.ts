@@ -417,6 +417,114 @@ export interface GenerateReviewGuideResult {
  * Generate a review guide script using Claude API with Rick's persona
  * This guides users through scoring each aspect of their review
  */
+/**
+ * Generate a personalized palate exercise using Claude API
+ * Analyzes user's palate profile gaps and creates targeted training exercises
+ */
+export async function generatePalateExercise(userId: number): Promise<{
+  title: string;
+  description: string;
+  exerciseType: string;
+  difficulty: string;
+  instructions: any;
+  targetFlavors: string[];
+}> {
+  const config = getRickConfig();
+
+  if (!config.anthropicApiKey) {
+    throw new Error('Anthropic API key not configured');
+  }
+
+  // Get user's palate profile for personalization
+  let palateProfile = null;
+  try {
+    palateProfile = await storage.getPalateProfile(userId);
+  } catch (error) {
+    // Continue without palate profile
+  }
+
+  const profileContext = palateProfile && palateProfile.reviewCount >= 3
+    ? `User's palate profile (${palateProfile.reviewCount} reviews):
+- Scoring tendency: ${palateProfile.scoringTendencies.tendency}
+- Average scores: Nose ${palateProfile.scoringTendencies.averageNose?.toFixed(1)}, Taste ${palateProfile.scoringTendencies.averageTaste?.toFixed(1)}, Finish ${palateProfile.scoringTendencies.averageFinish?.toFixed(1)}, Mouthfeel ${palateProfile.scoringTendencies.averageMouthfeel?.toFixed(1)}
+- Top flavors: ${palateProfile.topFlavors.all?.slice(0, 8).map((f: any) => f.flavor).join(', ') || 'none yet'}
+- Preferred types: ${palateProfile.preferredTypes?.slice(0, 3).map((t: any) => t.type).join(', ') || 'various'}`
+    : 'New user with limited review history. Focus on foundational exercises.';
+
+  const exerciseTypes = ['nose_training', 'blind_comparison', 'flavor_isolation', 'palate_calibration'];
+  const randomType = exerciseTypes[Math.floor(Math.random() * exerciseTypes.length)];
+
+  const prompt = `You are Rick, a friendly whiskey expert and palate coach. Generate a personalized palate development exercise.
+
+${profileContext}
+
+Exercise type requested: ${randomType}
+
+Generate a single exercise in this EXACT JSON format (no markdown, no code fences):
+{
+  "title": "Short catchy title",
+  "description": "2-3 sentence description of what this exercise trains",
+  "exerciseType": "${randomType}",
+  "difficulty": "beginner|intermediate|advanced|expert",
+  "instructions": [
+    "Step 1...",
+    "Step 2...",
+    "Step 3...",
+    "Step 4..."
+  ],
+  "targetFlavors": ["flavor1", "flavor2", "flavor3"]
+}
+
+Guidelines:
+- For nose_training: Focus on identifying specific aromas, comparing neat vs. with water
+- For blind_comparison: Compare 2-3 similar whiskeys side by side without labels
+- For flavor_isolation: Focus on isolating one specific flavor component
+- For palate_calibration: Score the same whiskey on different days to check consistency
+- Difficulty should match user's experience level
+- Target flavors they haven't identified much (gaps in their profile)
+- Keep instructions practical and fun, 4-6 steps`;
+
+  const Anthropic = (await import("@anthropic-ai/sdk")).default;
+  const anthropic = new Anthropic({ apiKey: config.anthropicApiKey });
+
+  const message = await anthropic.messages.create({
+    model: "claude-sonnet-4-20250514",
+    max_tokens: 1024,
+    messages: [{ role: "user", content: prompt }]
+  });
+
+  const responseText = message.content[0].type === 'text' ? message.content[0].text : '';
+
+  try {
+    // Strip any markdown code fences
+    const cleaned = responseText.replace(/```json?\s*/g, '').replace(/```\s*/g, '').trim();
+    const exercise = JSON.parse(cleaned);
+    return {
+      title: exercise.title || 'Palate Exercise',
+      description: exercise.description || 'Train your palate with this exercise.',
+      exerciseType: exercise.exerciseType || randomType,
+      difficulty: exercise.difficulty || 'beginner',
+      instructions: exercise.instructions || ['Complete the exercise.'],
+      targetFlavors: exercise.targetFlavors || [],
+    };
+  } catch {
+    // Fallback if parsing fails
+    return {
+      title: 'Nose Training Basics',
+      description: 'Practice identifying primary aromas in your next pour.',
+      exerciseType: randomType,
+      difficulty: 'beginner',
+      instructions: [
+        'Pour a dram of any whiskey you have on hand.',
+        'Before tasting, spend 30 seconds just nosing the glass at different distances.',
+        'Write down 3 aromas you detect — be specific (e.g., "brown sugar" not just "sweet").',
+        'Add a few drops of water and nose again. Note what changes.',
+      ],
+      targetFlavors: ['vanilla', 'caramel', 'oak'],
+    };
+  }
+}
+
 export async function generateRickReviewGuide(input: GenerateReviewGuideInput): Promise<GenerateReviewGuideResult> {
   const config = getRickConfig();
 
