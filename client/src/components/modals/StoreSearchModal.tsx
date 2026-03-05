@@ -5,7 +5,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Plus, MapPin, Check, Loader2 } from "lucide-react";
+import { Search, Plus, MapPin, Check, Loader2, ExternalLink } from "lucide-react";
+import { Link } from "wouter";
 
 interface StoreSearchModalProps {
   isOpen: boolean;
@@ -140,7 +141,12 @@ export function StoreSearchModal({ isOpen, onClose }: StoreSearchModalProps) {
                     .toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-sm truncate">{store.name}</div>
+                  <Link href={`/store/${store.id}`} onClick={() => onClose()}>
+                    <div className="font-medium text-sm truncate hover:text-primary transition-colors cursor-pointer flex items-center gap-1">
+                      {store.name}
+                      <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-50 transition-opacity shrink-0" />
+                    </div>
+                  </Link>
                   {store.location && (
                     <div className="flex items-center gap-1 text-muted-foreground" style={{ fontSize: "0.7rem" }}>
                       <MapPin className="w-3 h-3" />
