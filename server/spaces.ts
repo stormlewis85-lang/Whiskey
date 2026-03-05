@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
 import fs from 'fs';
 import path from 'path';
 
@@ -84,6 +84,35 @@ export function getKeyFromUrl(url: string): string | null {
   if (directMatch) return directMatch[1];
 
   return null;
+}
+
+/**
+ * Test Spaces connectivity by listing objects
+ */
+export async function testSpacesConnection(): Promise<{
+  ok: boolean;
+  configured: boolean;
+  endpoint: string;
+  bucket: string;
+  objectCount?: number;
+  error?: string;
+}> {
+  const configured = isSpacesConfigured();
+  const base = { configured, endpoint: SPACES_ENDPOINT, bucket: SPACES_BUCKET };
+
+  if (!configured) {
+    return { ...base, ok: false, error: 'Missing SPACES_ACCESS_KEY or SPACES_SECRET_KEY' };
+  }
+
+  try {
+    const result = await s3Client.send(new ListObjectsV2Command({
+      Bucket: SPACES_BUCKET,
+      MaxKeys: 1,
+    }));
+    return { ...base, ok: true, objectCount: result.KeyCount ?? 0 };
+  } catch (err: any) {
+    return { ...base, ok: false, error: err.message || String(err) };
+  }
 }
 
 console.log('=== DigitalOcean Spaces Configuration ===');

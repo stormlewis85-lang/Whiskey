@@ -50,7 +50,7 @@ import { fromZodError } from "zod-validation-error";
 import path from "path";
 import fs from "fs";
 import { setupAuth, isAuthenticated } from "./auth";
-import { uploadToSpaces, isSpacesConfigured, deleteFromSpaces, getKeyFromUrl } from "./spaces";
+import { uploadToSpaces, isSpacesConfigured, deleteFromSpaces, getKeyFromUrl, testSpacesConnection } from "./spaces";
 import rateLimit from "express-rate-limit";
 
 // Stricter rate limiter for AI endpoints — protects Anthropic API credits
@@ -204,6 +204,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
   setupAuth(app);
   
+  // Spaces health check — hit /api/health/spaces in production to diagnose upload issues
+  app.get("/api/health/spaces", async (_req: Request, res: Response) => {
+    const result = await testSpacesConnection();
+    res.status(result.ok ? 200 : 503).json(result);
+  });
+
   // Get all whiskeys (requires authentication - users only see their own bottles)
   app.get("/api/whiskeys", async (req: Request, res: Response) => {
     try {
@@ -522,10 +528,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           } catch (e) {
             console.warn("Could not delete local file after Spaces upload:", e);
           }
-        } catch (spacesError) {
+        } catch (spacesError: any) {
           console.error("Spaces upload failed:", spacesError);
           try { fs.unlinkSync(processedPath); } catch (e) { /* ignore */ }
-          return res.status(500).json({ message: "Image storage service unavailable. Please try again." });
+          const detail = spacesError?.message || spacesError?.Code || "Unknown error";
+          return res.status(500).json({ message: `Image storage service unavailable: ${detail}` });
         }
       } else {
         console.error("Spaces not configured — image uploads require DO Spaces credentials");
