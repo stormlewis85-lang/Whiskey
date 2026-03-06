@@ -5,7 +5,8 @@ import path from 'path';
 // DigitalOcean Spaces configuration
 const SPACES_REGION = process.env.SPACES_REGION || 'sfo3'; // San Francisco
 const SPACES_BUCKET = process.env.SPACES_BUCKET || 'whiskeypedia-uploads';
-const SPACES_ENDPOINT = `https://${SPACES_REGION}.digitaloceanspaces.com`;
+// Allow explicit endpoint override to avoid region typos (e.g. sf03 vs sfo3)
+const SPACES_ENDPOINT = process.env.SPACES_ENDPOINT || `https://${SPACES_REGION}.digitaloceanspaces.com`;
 const SPACES_CDN_ENDPOINT = process.env.SPACES_CDN_ENDPOINT || `https://${SPACES_BUCKET}.${SPACES_REGION}.cdn.digitaloceanspaces.com`;
 
 // Initialize S3 client for DigitalOcean Spaces
