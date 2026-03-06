@@ -135,7 +135,15 @@ const RickHouse = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {sessions.map((session) => (
-                <Card key={session.id} className="border-border/50 hover:border-amber-500/30 transition-colors">
+                <Card
+                  key={session.id}
+                  className="border-border/50 hover:border-amber-500/30 transition-colors cursor-pointer"
+                  onClick={() => {
+                    setSelectedWhiskeyId(String(session.whiskeyId));
+                    setTastingMode(session.mode);
+                    setIsTastingSessionActive(true);
+                  }}
+                >
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <h3 className="font-medium text-foreground line-clamp-1">
