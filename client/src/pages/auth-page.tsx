@@ -71,6 +71,9 @@ export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [oauthError, setOauthError] = useState<string | null>(null);
+  const [betaCode, setBetaCode] = useState("");
+  const [betaValidated, setBetaValidated] = useState(false);
+  const [betaError, setBetaError] = useState<string | null>(null);
   const searchString = useSearch();
 
   // Check for OAuth errors in URL
@@ -84,6 +87,7 @@ export default function AuthPage() {
         oauth_failed: "Google sign-in failed. Please try again.",
         token_exchange_failed: "Failed to complete sign-in. Please try again.",
         session_failed: "Failed to create session. Please try again.",
+        beta_required: "Beta access required. Please enter your invite code first.",
       };
       setOauthError(errorMessages[error] || "Sign-in failed. Please try again.");
       // Clear the error from URL
@@ -125,16 +129,29 @@ export default function AuthPage() {
 
   const onRegister = (data: RegisterFormValues) => {
     setOauthError(null);
-    // Filter out empty email
+    // Filter out empty email, include beta code
     const submitData = {
       ...data,
       email: data.email || undefined,
+      betaCode: betaCode.trim(),
     };
     registerMutation.mutate(submitData);
   };
 
-  const handleGoogleSignIn = () => {
+  const handleGoogleSignIn = async () => {
     setOauthError(null);
+    // Store beta code in session before OAuth redirect
+    if (betaCode.trim()) {
+      try {
+        await fetch("/api/auth/beta-code", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code: betaCode.trim() }),
+        });
+      } catch {
+        // Continue anyway — backend will validate
+      }
+    }
     window.location.href = "/api/auth/google";
   };
 
@@ -253,6 +270,22 @@ export default function AuthPage() {
                     <h3 className="text-xl font-semibold text-foreground">Welcome back</h3>
                     <p className="text-muted-foreground text-sm mt-1">
                       Sign in to access your collection
+                    </p>
+                  </div>
+
+                  {/* Beta code input */}
+                  <div className="mb-4">
+                    <label className="text-sm font-medium text-foreground mb-1.5 block">
+                      Beta Invite Code
+                    </label>
+                    <Input
+                      placeholder="Enter your invite code"
+                      value={betaCode}
+                      onChange={(e) => setBetaCode(e.target.value)}
+                      className="h-11"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Required for new accounts. Returning users can sign in without a code.
                     </p>
                   </div>
 
@@ -383,8 +416,21 @@ export default function AuthPage() {
                   <div className="mb-6">
                     <h3 className="text-xl font-semibold text-foreground">Create your account</h3>
                     <p className="text-muted-foreground text-sm mt-1">
-                      Start building your whiskey collection
+                      Beta access is invite-only
                     </p>
+                  </div>
+
+                  {/* Beta code input */}
+                  <div className="mb-4">
+                    <label className="text-sm font-medium text-foreground mb-1.5 block">
+                      Beta Invite Code
+                    </label>
+                    <Input
+                      placeholder="Enter your invite code"
+                      value={betaCode}
+                      onChange={(e) => setBetaCode(e.target.value)}
+                      className="h-11"
+                    />
                   </div>
 
                   {/* Google OAuth Button */}

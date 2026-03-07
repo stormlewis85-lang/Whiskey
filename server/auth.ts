@@ -31,6 +31,7 @@ declare module "express-session" {
     userId?: number;
     username?: string;
     oauthState?: string; // For OAuth CSRF protection
+    betaCode?: string; // Beta invite code for new signups
   }
 }
 
@@ -135,9 +136,33 @@ export function setupAuth(app: express.Express) {
   }
 
   // User Registration (with password strength validation)
+  // Beta code submission — stores code in session for OAuth flow
+  app.post("/api/auth/beta-code", (req: Request, res: Response) => {
+    const { code } = req.body;
+    if (!code) {
+      return res.status(400).json({ message: "Beta code is required" });
+    }
+    if (code !== 'Rick2026') {
+      return res.status(403).json({ message: "Invalid beta code" });
+    }
+    req.session.betaCode = code;
+    req.session.save((err) => {
+      if (err) {
+        return res.status(500).json({ message: "Failed to save session" });
+      }
+      res.json({ valid: true });
+    });
+  });
+
   app.post("/api/register", registerRateLimiter, async (req: Request, res: Response) => {
     try {
-      const validatedData = registerUserSchema.parse(req.body);
+      // Beta gate — new registrations require beta code
+      const { betaCode, ...rest } = req.body;
+      if (!betaCode || betaCode !== 'Rick2026') {
+        return res.status(403).json({ message: "Beta code required. This app is currently invite-only." });
+      }
+
+      const validatedData = registerUserSchema.parse(rest);
 
       const existingUser = await storage.getUserByUsername(validatedData.username);
       if (existingUser) {

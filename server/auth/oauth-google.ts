@@ -10,6 +10,9 @@ const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const GOOGLE_USERINFO_URL = 'https://www.googleapis.com/oauth2/v2/userinfo';
 
+// Beta invite code — required for new account creation
+const BETA_CODE = 'Rick2026';
+
 interface GoogleUserInfo {
   id: string;
   email: string;
@@ -299,6 +302,14 @@ export async function handleGoogleCallback(req: Request, res: Response) {
         user = existingUser;
         logger.info(`Linked Google account to existing user: ${user.username}`);
       } else {
+        // Beta gate — new users must have entered the beta code
+        if (!req.session.betaCode || req.session.betaCode !== BETA_CODE) {
+          logger.info(`Beta gate blocked new signup: ${googleUser.email}`);
+          delete req.session.betaCode;
+          return res.redirect('/auth?error=beta_required');
+        }
+        delete req.session.betaCode; // Clear after use
+
         // Create new user
         user = await createUserFromOAuth(
           googleUser,
