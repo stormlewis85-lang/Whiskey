@@ -540,6 +540,15 @@ export default function Dashboard() {
             </div>
           </CardContent>
         </Card>
+        {/* Full Analytics Link */}
+        <div className="text-center pb-6">
+          <Link href="/analytics">
+            <Button variant="outline" size="lg">
+              <BarChart3 className="h-4 w-4 mr-2" />
+              View Full Analytics
+            </Button>
+          </Link>
+        </div>
       </main>
     </div>
   );

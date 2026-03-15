@@ -113,6 +113,12 @@ export function ProfileMenu({ onOpenSettings }: ProfileMenuProps) {
             rightElement={chevron}
           />
           <MenuItem
+            icon={TrendingUp}
+            label="Analytics"
+            onClick={() => navigate("/analytics")}
+            rightElement={chevron}
+          />
+          <MenuItem
             icon={Wine}
             label="Flights"
             onClick={() => navigate("/flights")}

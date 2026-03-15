@@ -38,6 +38,7 @@ const CollectionCompare = lazy(() => import("@/pages/CollectionCompare"));
 const Challenges = lazy(() => import("@/pages/Challenges"));
 const ProgressPage = lazy(() => import("@/pages/ProgressPage"));
 const PalateExercises = lazy(() => import("@/pages/PalateExercises"));
+const Analytics = lazy(() => import("@/pages/Analytics"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
 function PageLoader() {
@@ -75,6 +76,7 @@ function Router() {
         <ProtectedRoute path="/challenges" component={Challenges} />
         <ProtectedRoute path="/progress" component={ProgressPage} />
         <ProtectedRoute path="/exercises" component={PalateExercises} />
+        <ProtectedRoute path="/analytics" component={Analytics} />
         <ProtectedRoute path="/drops" component={Drops} />
         <Route path="/store/:id" component={StoreProfile} />
         <ProtectedRoute path="/store/:id/edit" component={StoreEdit} />
