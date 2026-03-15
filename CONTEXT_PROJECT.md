@@ -1,13 +1,15 @@
 # CONTEXT_PROJECT.md — MyWhiskeyPedia
 
-> Project-specific context for the agent team. Read after CONTEXT_MASTER.md.
+> Project-specific context for the agent team. Read after `.agent-framework/CONTEXT_MASTER.md` and `.agent-framework/domains/software.md`.
+>
+> **Domain:** Software | **Framework:** `.agent-framework/` (git submodule)
 
 ## What This Is
 
 MyWhiskeyPedia is a premium whiskey collection and review platform that combines personal collection management with AI-powered tasting guidance and community features. It serves whiskey enthusiasts who want to track collections, get intelligent tasting recommendations, and connect with other collectors around rare bottle releases and store drops.
 
 **Live at:** mywhiskeypedia.com
-**Repo:** GitHub (private)
+**Repo:** github.com/stormlewis85-lang/Whiskey
 
 ## Tech Stack
 
@@ -53,9 +55,10 @@ MyWhiskeyPedia is a premium whiskey collection and review platform that combines
 
 ### What's NOT Built Yet
 
-- Community features (The Hunt, Store Profiles, Tasting Clubs, Social Layer)
 - Freemium monetization (Stripe integration, feature gating)
 - Push notification infrastructure
+- Code splitting optimization
+- N+1 query refactoring
 
 ## Architecture Notes
 

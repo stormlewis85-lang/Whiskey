@@ -1,21 +1,21 @@
-# CLAUDE.md - MyWhiskeyPedia Agent System Configuration
+# CLAUDE.md — MyWhiskeyPedia Agent System Configuration
 
 > This project uses a structured agent system. Read this file first on every session.
 
-## Agent System
+## Agent Framework
 
-- **Master agents:** `./agents-master/`
-- **Project overrides:** `./agents/overrides/`
-- **Custom agents:** `./agents/custom/`
-- **Agent resolution order:** overrides > custom > master
+- **Framework:** `.agent-framework/` (git submodule — DO NOT MODIFY)
+- **Framework repo:** github.com/stormlewis85-lang/agent-master-repo
+- **Domain:** Software (see `.agent-framework/domains/software.md`)
 
 ## Context Files
 
-1. Read `./agents-master/CONTEXT_MASTER.md` for universal standards
-2. Read `./CONTEXT_PROJECT.md` for project-specific details
-3. Read `./PATTERNS.md` for codebase conventions (if it exists)
-4. Read `./specs/` directory for detailed system documentation
-5. Project context overrides master where there is a conflict
+1. Read `.agent-framework/CONTEXT_MASTER.md` for universal standards
+2. Read `.agent-framework/domains/software.md` for domain behavior
+3. Read `./CONTEXT_PROJECT.md` for project-specific details
+4. Read `./PATTERNS.md` for codebase conventions (if it exists)
+5. Read `./specs/` directory for detailed system documentation
+6. Project context overrides framework where there's a conflict
 
 ## Project State
 

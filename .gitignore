@@ -7,6 +7,10 @@ vite.config.ts.*
 uploads/
 nul
 
+# Agent framework
+.claude/logs/
+.claude/worktrees/
+
 # Environment variables - NEVER commit secrets
 .env
 .env.*
