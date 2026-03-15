@@ -1,0 +1,36 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(timeout:*)",
+      "Bash(ping:*)",
+      "Bash(set NODE_ENV=development)",
+      "Bash(npx tsx:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(tasklist:*)",
+      "Bash(npm run dev:*)",
+      "Bash(curl:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm install:*)",
+      "Bash(npx drizzle-kit push)",
+      "Bash(echo:*)",
+      "Bash(npx drizzle-kit push:*)",
+      "Bash(npx drizzle-kit:*)",
+      "Bash(node:*)",
+      "Bash(git push:*)",
+      "Bash(pg_dump:*)",
+      "Bash(psql:*)",
+      "Bash(cat:*)",
+      "Bash(grep:*)",
+      "Bash(npx vite build)",
+      "Bash(git status:*)",
+      "Bash(git reset:*)",
+      "Bash(cd:*)",
+      "Bash(npx dotenv:*)",
+      "Bash(set:*)"
+    ]
+  }
+}

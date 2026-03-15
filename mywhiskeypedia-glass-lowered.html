@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MyWhiskeyPedia — Glass Lowered</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=DM+Serif+Display&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root { --gold: #D4A44C; --black: #0A0A0A; --black-card: #111; --gray: #666; --gray-dark: #333; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--black); font-family:'DM Sans',sans-serif; color:#F5F2ED; min-height:100vh; -webkit-font-smoothing:antialiased; }
+  .header { text-align:center; padding:64px 20px 16px; border-bottom:1px solid rgba(212,164,76,0.1); margin-bottom:48px; }
+  .header h1 { font-family:'Playfair Display',serif; font-size:1.8rem; font-weight:500; color:var(--gold); }
+  .header p { color:var(--gray); margin-top:8px; font-size:0.85rem; font-weight:300; }
+  .hero { display:flex; justify-content:center; align-items:start; gap:56px; padding:48px 32px 64px; flex-wrap:wrap; }
+  .lb { display:flex; flex-direction:column; align-items:center; gap:14px; }
+  .lb svg { width:280px; height:280px; filter:drop-shadow(0 0 40px rgba(212,164,76,0.06)); }
+  .lb .ll { font-family:'Playfair Display',serif; font-size:0.7rem; color:var(--gray); letter-spacing:0.15em; text-transform:uppercase; }
+  .lb .ld { color:var(--gray-dark); font-size:0.7rem; text-align:center; max-width:280px; line-height:1.5; font-weight:300; }
+  .section { padding:48px 32px; border-top:1px solid rgba(212,164,76,0.08); }
+  .st { font-family:'Playfair Display',serif; font-size:0.85rem; font-weight:500; color:var(--gold); text-align:center; letter-spacing:0.15em; text-transform:uppercase; margin-bottom:36px; opacity:0.6; }
+  .sr { display:flex; align-items:end; justify-content:center; gap:48px; flex-wrap:wrap; }
+  .si { display:flex; flex-direction:column; align-items:center; gap:12px; }
+  .si span { font-size:0.6rem; color:var(--gray-dark); text-transform:uppercase; letter-spacing:0.1em; }
+  .nav { max-width:860px; margin:0 auto; background:var(--black-card); border:1px solid rgba(212,164,76,0.1); border-radius:12px; padding:12px 24px; display:flex; align-items:center; gap:12px; }
+  .nav svg { flex-shrink:0; }
+  .nav .bt { font-family:'DM Serif Display',serif; color:var(--gold); font-size:1rem; }
+  .nav .nl { margin-left:auto; display:flex; gap:24px; color:var(--gray); font-size:0.75rem; font-weight:300; }
+  .vg { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; max-width:900px; margin:0 auto; }
+  .vc { border-radius:14px; padding:32px; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:12px; min-height:180px; }
+  .vc svg { width:90px; height:90px; }
+  .vc span { font-size:0.6rem; text-transform:uppercase; letter-spacing:0.1em; opacity:0.5; }
+  .vb { background:var(--black); border:1px solid rgba(212,164,76,0.12); color:var(--gold); }
+  .vw { background:#fff; color:#0A0A0A; }
+  .vcr { background:#F5F2ED; color:#0A0A0A; }
+  .vgo { background:var(--gold); color:var(--black); }
+  .sc { max-width:360px; margin:0 auto; background:var(--black-card); border:1px solid rgba(212,164,76,0.1); border-radius:16px; padding:44px 32px; display:flex; flex-direction:column; align-items:center; gap:16px; text-align:center; }
+  .sc svg { width:80px; height:80px; }
+  .sc .bn { font-family:'Playfair Display',serif; font-size:1.4rem; font-weight:600; color:var(--gold); }
+  .sc .tl { font-size:0.75rem; color:var(--gray); font-weight:300; letter-spacing:0.05em; }
+  .sc .dv { width:36px; height:1px; background:rgba(212,164,76,0.25); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>MyWhiskeyPedia</h1>
+  <p>Glass lowered to just above center — book unchanged</p>
+</div>
+
+<div class="hero">
+
+  <!-- MAIN: Glass shifted down 20px, book stays -->
+  <div class="lb">
+    <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="100" cy="100" r="96" stroke="#D4A44C" stroke-width="2.5"/>
+
+      <!-- === OPEN BOOK (unchanged) === -->
+      <path d="M30 62 L30 148 Q65 156 100 148 L100 62 Q65 58 30 62 Z"
+            fill="#D4A44C" opacity="0.06" stroke="#D4A44C" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M170 62 L170 148 Q135 156 100 148 L100 62 Q135 58 170 62 Z"
+            fill="#D4A44C" opacity="0.06" stroke="#D4A44C" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M30 148 Q30 158 34 162 Q65 170 100 162 Q135 170 166 162 Q170 158 170 148"
+            stroke="#D4A44C" stroke-width="2" fill="#D4A44C" opacity="0.04" stroke-linejoin="round"/>
+      <path d="M32 150 Q65 158 100 150 Q135 158 168 150"
+            stroke="#D4A44C" stroke-width="1" fill="none" opacity="0.2"/>
+      <path d="M33 154 Q65 162 100 154 Q135 162 167 154"
+            stroke="#D4A44C" stroke-width="0.8" fill="none" opacity="0.15"/>
+
+      <!-- Text lines LEFT page (unchanged) -->
+      <line x1="38" y1="72" x2="90" y2="68" stroke="#D4A44C" stroke-width="0.9" opacity="0.2" stroke-linecap="round"/>
+      <line x1="37" y1="80" x2="91" y2="76" stroke="#D4A44C" stroke-width="0.9" opacity="0.2" stroke-linecap="round"/>
+      <line x1="36" y1="88" x2="92" y2="84" stroke="#D4A44C" stroke-width="0.9" opacity="0.2" stroke-linecap="round"/>
+      <line x1="35" y1="96" x2="92" y2="92" stroke="#D4A44C" stroke-width="0.9" opacity="0.2" stroke-linecap="round"/>
+      <line x1="34" y1="104" x2="80" y2="101" stroke="#D4A44C" stroke-width="0.9" opacity="0.2" stroke-linecap="round"/>
+      <line x1="34" y1="112" x2="78" y2="109" stroke="#D4A44C" stroke-width="0.9" opacity="0.2" stroke-linecap="round"/>
+      <line x1="33" y1="120" x2="76" y2="117" stroke="#D4A44C" stroke-width="0.9" opacity="0.2" stroke-linecap="round"/>
+      <line x1="33" y1="128" x2="74" y2="126" stroke="#D4A44C" stroke-width="0.9" opacity="0.2" stroke-linecap="round"/>
+      <line x1="32" y1="136" x2="72" y2="134" stroke="#D4A44C" stroke-width="0.9" opacity="0.2" stroke-linecap="round"/>
+      <line x1="32" y1="144" x2="70" y2="142" stroke="#D4A44C" stroke-width="0.9" opacity="0.2" stroke-linecap="round"/>
+
+      <!-- Text lines RIGHT page (unchanged) -->
+      <line x1="162" y1="72" x2="110" y2="68" stroke="#D4A44C" stroke-width="0.9" opacity="0.2" stroke-linecap="round"/>
+      <line x1="163" y1="80" x2="109" y2="76" stroke="#D4A44C" stroke-width="0.9" opacity="0.2" stroke-linecap="round"/>
+      <line x1="164" y1="88" x2="108" y2="84" stroke="#D4A44C" stroke-width="0.9" opacity="0.2" stroke-linecap="round"/>
+      <line x1="165" y1="96" x2="108" y2="92" stroke="#D4A44C" stroke-width="0.9" opacity="0.2" stroke-linecap="round"/>
+      <line x1="166" y1="104" x2="120" y2="101" stroke="#D4A44C" stroke-width="0.9" opacity="0.2" stroke-linecap="round"/>
+      <line x1="166" y1="112" x2="122" y2="109" stroke="#D4A44C" stroke-width="0.9" opacity="0.2" stroke-linecap="round"/>
+      <line x1="167" y1="120" x2="124" y2="117" stroke="#D4A44C" stroke-width="0.9" opacity="0.2" stroke-linecap="round"/>
+      <line x1="167" y1="128" x2="126" y2="126" stroke="#D4A44C" stroke-width="0.9" opacity="0.2" stroke-linecap="round"/>
+      <line x1="168" y1="136" x2="128" y2="134" stroke="#D4A44C" stroke-width="0.9" opacity="0.2" stroke-linecap="round"/>
+      <line x1="168" y1="144" x2="130" y2="142" stroke="#D4A44C" stroke-width="0.9" opacity="0.2" stroke-linecap="round"/>
+
+      <!-- === GLENCAIRN GLASS (shifted down 20px) === -->
+      <!-- Mouth -->
+      <ellipse cx="100" cy="46" rx="14" ry="3.5" stroke="#D4A44C" stroke-width="2" fill="none"/>
+
+      <!-- Glass body fill to obscure book lines -->
+      <path d="M86 46 C86 46 83 58 81 66 C76 76 68 88 68 102 C68 118 82 130 100 130 C118 130 132 118 132 102 C132 88 124 76 119 66 C117 58 114 46 114 46"
+            fill="#0A0A0A" opacity="0.95"/>
+      <!-- Glass body stroke -->
+      <path d="M86 46 C86 46 83 58 81 66 C76 76 68 88 68 102 C68 118 82 130 100 130 C118 130 132 118 132 102 C132 88 124 76 119 66 C117 58 114 46 114 46"
+            stroke="#D4A44C" stroke-width="2.5" fill="none" stroke-linejoin="round"/>
+
+      <!-- Whiskey fill -->
+      <path d="M72 100 Q100 106 128 100 C129 104 130 108 130 110 C130 116 118 127 100 127 C82 127 70 116 70 110 C70 108 71 104 72 100 Z"
+            fill="#D4A44C" opacity="0.16"/>
+      <path d="M72 100 Q100 106 128 100" stroke="#D4A44C" stroke-width="1.2" fill="none" opacity="0.35"/>
+
+      <!-- Stem -->
+      <rect x="97" y="130" width="6" height="10" fill="#0A0A0A" opacity="0.95"/>
+      <line x1="100" y1="130" x2="100" y2="140" stroke="#D4A44C" stroke-width="2.5" stroke-linecap="round"/>
+
+      <!-- Base -->
+      <ellipse cx="100" cy="142" rx="18" ry="4" fill="#0A0A0A" opacity="0.95"/>
+      <ellipse cx="100" cy="142" rx="18" ry="4" stroke="#D4A44C" stroke-width="2" fill="none"/>
+    </svg>
+    <span class="ll">Glass Lowered — Masked</span>
+    <span class="ld">Book stays in place. Glass moved down so its center sits just above the circle center. Glass masks book lines behind it.</span>
+  </div>
+
+  <!-- VARIANT: Transparent glass -->
+  <div class="lb">
+    <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="100" cy="100" r="96" stroke="#D4A44C" stroke-width="2.5"/>
+
+      <!-- === OPEN BOOK (unchanged) === -->
+      <path d="M30 62 L30 148 Q65 156 100 148 L100 62 Q65 58 30 62 Z"
+            fill="#D4A44C" opacity="0.06" stroke="#D4A44C" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M170 62 L170 148 Q135 156 100 148 L100 62 Q135 58 170 62 Z"
+            fill="#D4A44C" opacity="0.06" stroke="#D4A44C" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M30 148 Q30 158 34 162 Q65 170 100 162 Q135 170 166 162 Q170 158 170 148"
+            stroke="#D4A44C" stroke-width="2" fill="#D4A44C" opacity="0.04"/>
+      <path d="M32 150 Q65 158 100 150 Q135 158 168 150"
+            stroke="#D4A44C" stroke-width="1" fill="none" opacity="0.2"/>
+      <path d="M33 154 Q65 162 100 154 Q135 162 167 154"
+            stroke="#D4A44C" stroke-width="0.8" fill="none" opacity="0.15"/>
+
+      <!-- Text lines LEFT (shorter near glass contour) -->
+      <line x1="38" y1="72" x2="82" y2="69" stroke="#D4A44C" stroke-width="0.9" opacity="0.2" stroke-linecap="round"/>
+      <line x1="37" y1="80" x2="80" y2="77" stroke="#D4A44C" stroke-width="0.9" opacity="0.2" stroke-linecap="round"/>
+      <line x1="36" y1="88" x2="76" y2="86" stroke="#D4A44C" stroke-width="0.9" opacity="0.2" stroke-linecap="round"/>
+      <line x1="35" y1="96" x2="72" y2="94" stroke="#D4A44C" stroke-width="0.9" opacity="0.2" stroke-linecap="round"/>
+      <line x1="34" y1="104" x2="70" y2="102" stroke="#D4A44C" stroke-width="0.9" opacity="0.2" stroke-linecap="round"/>
+      <line x1="34" y1="112" x2="72" y2="110" stroke="#D4A44C" stroke-width="0.9" opacity="0.2" stroke-linecap="round"/>
+      <line x1="33" y1="120" x2="76" y2="118" stroke="#D4A44C" stroke-width="0.9" opacity="0.2" stroke-linecap="round"/>
+      <line x1="33" y1="128" x2="80" y2="126" stroke="#D4A44C" stroke-width="0.9" opacity="0.2" stroke-linecap="round"/>
+      <line x1="32" y1="136" x2="86" y2="134" stroke="#D4A44C" stroke-width="0.9" opacity="0.2" stroke-linecap="round"/>
+      <line x1="32" y1="144" x2="94" y2="143" stroke="#D4A44C" stroke-width="0.9" opacity="0.2" stroke-linecap="round"/>
+
+      <!-- Text lines RIGHT -->
+      <line x1="162" y1="72" x2="118" y2="69" stroke="#D4A44C" stroke-width="0.9" opacity="0.2" stroke-linecap="round"/>
+      <line x1="163" y1="80" x2="120" y2="77" stroke="#D4A44C" stroke-width="0.9" opacity="0.2" stroke-linecap="round"/>
+      <line x1="164" y1="88" x2="124" y2="86" stroke="#D4A44C" stroke-width="0.9" opacity="0.2" stroke-linecap="round"/>
+      <line x1="165" y1="96" x2="128" y2="94" stroke="#D4A44C" stroke-width="0.9" opacity="0.2" stroke-linecap="round"/>
+      <line x1="166" y1="104" x2="130" y2="102" stroke="#D4A44C" stroke-width="0.9" opacity="0.2" stroke-linecap="round"/>
+      <line x1="166" y1="112" x2="128" y2="110" stroke="#D4A44C" stroke-width="0.9" opacity="0.2" stroke-linecap="round"/>
+      <line x1="167" y1="120" x2="124" y2="118" stroke="#D4A44C" stroke-width="0.9" opacity="0.2" stroke-linecap="round"/>
+      <line x1="167" y1="128" x2="120" y2="126" stroke="#D4A44C" stroke-width="0.9" opacity="0.2" stroke-linecap="round"/>
+      <line x1="168" y1="136" x2="114" y2="134" stroke="#D4A44C" stroke-width="0.9" opacity="0.2" stroke-linecap="round"/>
+      <line x1="168" y1="144" x2="106" y2="143" stroke="#D4A44C" stroke-width="0.9" opacity="0.2" stroke-linecap="round"/>
+
+      <!-- === GLASS (shifted down 20px, transparent) === -->
+      <ellipse cx="100" cy="46" rx="14" ry="3.5" stroke="#D4A44C" stroke-width="2" fill="none"/>
+      <path d="M86 46 C86 46 83 58 81 66 C76 76 68 88 68 102 C68 118 82 130 100 130 C118 130 132 118 132 102 C132 88 124 76 119 66 C117 58 114 46 114 46"
+            stroke="#D4A44C" stroke-width="2.5" fill="none" stroke-linejoin="round"/>
+      <path d="M72 100 Q100 106 128 100 C129 104 130 108 130 110 C130 116 118 127 100 127 C82 127 70 116 70 110 C70 108 71 104 72 100 Z"
+            fill="#D4A44C" opacity="0.16"/>
+      <path d="M72 100 Q100 106 128 100" stroke="#D4A44C" stroke-width="1.2" fill="none" opacity="0.35"/>
+
+      <line x1="100" y1="130" x2="100" y2="140" stroke="#D4A44C" stroke-width="2.5" stroke-linecap="round"/>
+      <ellipse cx="100" cy="142" rx="18" ry="4" stroke="#D4A44C" stroke-width="2" fill="none"/>
+    </svg>
+    <span class="ll">Glass Lowered — Transparent</span>
+    <span class="ld">Same lowered position but text lines flow behind the glass. Lines get shorter near the glass contour.</span>
+  </div>
+
+</div>
+
+<!-- ===== SCALE ===== -->
+<div class="section">
+  <div class="st">Scale Test</div>
+  <div class="sr">
+    <div class="si">
+      <svg viewBox="0 0 200 200" fill="none" width="160" height="160"><circle cx="100" cy="100" r="96" stroke="#D4A44C" stroke-width="2.5"/><path d="M30 62 L30 148 Q65 156 100 148 L100 62 Q65 58 30 62 Z" fill="#D4A44C" opacity="0.06" stroke="#D4A44C" stroke-width="2"/><path d="M170 62 L170 148 Q135 156 100 148 L100 62 Q135 58 170 62 Z" fill="#D4A44C" opacity="0.06" stroke="#D4A44C" stroke-width="2"/><path d="M30 148 Q30 158 34 162 Q65 170 100 162 Q135 170 166 162 Q170 158 170 148" stroke="#D4A44C" stroke-width="2" fill="#D4A44C" opacity="0.04"/><path d="M32 150 Q65 158 100 150 Q135 158 168 150" stroke="#D4A44C" stroke-width="1" fill="none" opacity="0.2"/><line x1="38" y1="72" x2="82" y2="69" stroke="#D4A44C" stroke-width="0.9" opacity="0.2"/><line x1="37" y1="80" x2="80" y2="77" stroke="#D4A44C" stroke-width="0.9" opacity="0.2"/><line x1="36" y1="88" x2="76" y2="86" stroke="#D4A44C" stroke-width="0.9" opacity="0.2"/><line x1="35" y1="96" x2="72" y2="94" stroke="#D4A44C" stroke-width="0.9" opacity="0.2"/><line x1="34" y1="104" x2="70" y2="102" stroke="#D4A44C" stroke-width="0.9" opacity="0.2"/><line x1="34" y1="112" x2="72" y2="110" stroke="#D4A44C" stroke-width="0.9" opacity="0.2"/><line x1="33" y1="120" x2="76" y2="118" stroke="#D4A44C" stroke-width="0.9" opacity="0.2"/><line x1="33" y1="128" x2="80" y2="126" stroke="#D4A44C" stroke-width="0.9" opacity="0.2"/><line x1="32" y1="136" x2="86" y2="134" stroke="#D4A44C" stroke-width="0.9" opacity="0.2"/><line x1="162" y1="72" x2="118" y2="69" stroke="#D4A44C" stroke-width="0.9" opacity="0.2"/><line x1="163" y1="80" x2="120" y2="77" stroke="#D4A44C" stroke-width="0.9" opacity="0.2"/><line x1="164" y1="88" x2="124" y2="86" stroke="#D4A44C" stroke-width="0.9" opacity="0.2"/><line x1="165" y1="96" x2="128" y2="94" stroke="#D4A44C" stroke-width="0.9" opacity="0.2"/><line x1="166" y1="104" x2="130" y2="102" stroke="#D4A44C" stroke-width="0.9" opacity="0.2"/><line x1="166" y1="112" x2="128" y2="110" stroke="#D4A44C" stroke-width="0.9" opacity="0.2"/><line x1="167" y1="120" x2="124" y2="118" stroke="#D4A44C" stroke-width="0.9" opacity="0.2"/><line x1="167" y1="128" x2="120" y2="126" stroke="#D4A44C" stroke-width="0.9" opacity="0.2"/><line x1="168" y1="136" x2="114" y2="134" stroke="#D4A44C" stroke-width="0.9" opacity="0.2"/><ellipse cx="100" cy="46" rx="14" ry="3.5" stroke="#D4A44C" stroke-width="2" fill="none"/><path d="M86 46 C86 46 83 58 81 66 C76 76 68 88 68 102 C68 118 82 130 100 130 C118 130 132 118 132 102 C132 88 124 76 119 66 C117 58 114 46 114 46" stroke="#D4A44C" stroke-width="2.5" fill="none"/><path d="M72 100 Q100 106 128 100 C129 104 130 108 130 110 C130 116 118 127 100 127 C82 127 70 116 70 110 C70 108 71 104 72 100 Z" fill="#D4A44C" opacity="0.16"/><line x1="100" y1="130" x2="100" y2="140" stroke="#D4A44C" stroke-width="2.5"/><ellipse cx="100" cy="142" rx="18" ry="4" stroke="#D4A44C" stroke-width="2" fill="none"/></svg>
+      <span>Large</span>
+    </div>
+    <div class="si">
+      <svg viewBox="0 0 200 200" fill="none" width="64" height="64"><circle cx="100" cy="100" r="96" stroke="#D4A44C" stroke-width="3.5"/><path d="M30 62 L30 148 Q65 156 100 148 L100 62 Q65 58 30 62 Z" fill="#D4A44C" opacity="0.08" stroke="#D4A44C" stroke-width="3"/><path d="M170 62 L170 148 Q135 156 100 148 L100 62 Q135 58 170 62 Z" fill="#D4A44C" opacity="0.08" stroke="#D4A44C" stroke-width="3"/><path d="M30 148 Q30 158 34 162 Q65 170 100 162 Q135 170 166 162 Q170 158 170 148" stroke="#D4A44C" stroke-width="2.5" fill="#D4A44C" opacity="0.06"/><ellipse cx="100" cy="46" rx="14" ry="3.5" stroke="#D4A44C" stroke-width="3" fill="none"/><path d="M86 46 C86 46 83 58 81 66 C76 76 68 88 68 102 C68 118 82 130 100 130 C118 130 132 118 132 102 C132 88 124 76 119 66 C117 58 114 46 114 46" stroke="#D4A44C" stroke-width="3.5" fill="none"/><path d="M72 100 Q100 106 128 100 C129 104 130 108 130 110 C130 116 118 127 100 127 C82 127 70 116 70 110 C70 108 71 104 72 100 Z" fill="#D4A44C" opacity="0.2"/><line x1="100" y1="130" x2="100" y2="140" stroke="#D4A44C" stroke-width="3"/><ellipse cx="100" cy="142" rx="18" ry="4" stroke="#D4A44C" stroke-width="2.5" fill="none"/></svg>
+      <span>Navbar</span>
+    </div>
+    <div class="si">
+      <svg viewBox="0 0 200 200" fill="none" width="32" height="32"><circle cx="100" cy="100" r="94" stroke="#D4A44C" stroke-width="6"/><path d="M28 60 L28 150 Q65 158 100 150 L100 60 Q65 56 28 60 Z" fill="#D4A44C" opacity="0.12" stroke="#D4A44C" stroke-width="5"/><path d="M172 60 L172 150 Q135 158 100 150 L100 60 Q135 56 172 60 Z" fill="#D4A44C" opacity="0.12" stroke="#D4A44C" stroke-width="5"/><path d="M28 150 Q28 160 34 164 Q65 172 100 164 Q135 172 166 164 Q172 160 172 150" stroke="#D4A44C" stroke-width="4" fill="#D4A44C" opacity="0.08"/><path d="M86 46 C86 46 82 60 78 70 C72 80 66 90 66 104 C66 120 80 132 100 132 C120 132 134 120 134 104 C134 90 128 80 122 70 C118 60 114 46 114 46" stroke="#D4A44C" stroke-width="6" fill="none"/><ellipse cx="100" cy="46" rx="14" ry="4" stroke="#D4A44C" stroke-width="5" fill="none"/><path d="M72 102 Q100 108 128 102 C129 106 130 110 130 112 C130 118 118 129 100 129 C82 129 70 118 70 112 C70 110 71 106 72 102 Z" fill="#D4A44C" opacity="0.22"/></svg>
+      <span>Small</span>
+    </div>
+    <div class="si">
+      <svg viewBox="0 0 200 200" fill="none" width="20" height="20"><circle cx="100" cy="100" r="92" stroke="#D4A44C" stroke-width="9"/><path d="M26 58 L26 152 Q65 160 100 152 L100 58 Q65 54 26 58 Z" fill="#D4A44C" opacity="0.18" stroke="#D4A44C" stroke-width="7"/><path d="M174 58 L174 152 Q135 160 100 152 L100 58 Q135 54 174 58 Z" fill="#D4A44C" opacity="0.18" stroke="#D4A44C" stroke-width="7"/><path d="M86 48 C86 48 80 64 76 74 C70 84 64 94 64 106 C64 122 80 134 100 134 C120 134 136 122 136 106 C136 94 130 84 124 74 C120 64 114 48 114 48" stroke="#D4A44C" stroke-width="9" fill="none"/></svg>
+      <span>Favicon</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== NAVBAR ===== -->
+<div class="section">
+  <div class="st">Navbar</div>
+  <div class="nav">
+    <svg viewBox="0 0 200 200" fill="none" width="30" height="30"><circle cx="100" cy="100" r="96" stroke="#D4A44C" stroke-width="4"/><path d="M30 62 L30 148 Q65 156 100 148 L100 62 Q65 58 30 62 Z" fill="#D4A44C" opacity="0.1" stroke="#D4A44C" stroke-width="3"/><path d="M170 62 L170 148 Q135 156 100 148 L100 62 Q135 58 170 62 Z" fill="#D4A44C" opacity="0.1" stroke="#D4A44C" stroke-width="3"/><path d="M30 148 Q30 158 34 162 Q65 170 100 162 Q135 170 166 162 Q170 158 170 148" stroke="#D4A44C" stroke-width="2.5" fill="#D4A44C" opacity="0.06"/><ellipse cx="100" cy="46" rx="14" ry="3.5" stroke="#D4A44C" stroke-width="3" fill="none"/><path d="M86 46 C86 46 83 58 81 66 C76 76 68 88 68 102 C68 118 82 130 100 130 C118 130 132 118 132 102 C132 88 124 76 119 66 C117 58 114 46 114 46" stroke="#D4A44C" stroke-width="4" fill="none"/><path d="M72 100 Q100 106 128 100 C129 104 130 108 130 110 C130 116 118 127 100 127 C82 127 70 116 70 110 C70 108 71 104 72 100 Z" fill="#D4A44C" opacity="0.2"/><line x1="100" y1="130" x2="100" y2="140" stroke="#D4A44C" stroke-width="3.5"/><ellipse cx="100" cy="142" rx="18" ry="4" stroke="#D4A44C" stroke-width="3" fill="none"/></svg>
+    <span class="bt">MyWhiskeyPedia</span>
+    <div class="nl"><span>Collection</span><span>Rick House</span><span>Community</span></div>
+  </div>
+</div>
+
+<!-- ===== BACKGROUNDS ===== -->
+<div class="section">
+  <div class="st">Backgrounds</div>
+  <div class="vg">
+    <div class="vc vb">
+      <svg viewBox="0 0 200 200" fill="none"><circle cx="100" cy="100" r="96" stroke="#D4A44C" stroke-width="2.5"/><path d="M30 62 L30 148 Q65 156 100 148 L100 62 Q65 58 30 62 Z" fill="#D4A44C" opacity="0.06" stroke="#D4A44C" stroke-width="2"/><path d="M170 62 L170 148 Q135 156 100 148 L100 62 Q135 58 170 62 Z" fill="#D4A44C" opacity="0.06" stroke="#D4A44C" stroke-width="2"/><path d="M30 148 Q30 158 34 162 Q65 170 100 162 Q135 170 166 162 Q170 158 170 148" stroke="#D4A44C" stroke-width="2" fill="#D4A44C" opacity="0.04"/><ellipse cx="100" cy="46" rx="14" ry="3.5" stroke="#D4A44C" stroke-width="2" fill="none"/><path d="M86 46 C86 46 83 58 81 66 C76 76 68 88 68 102 C68 118 82 130 100 130 C118 130 132 118 132 102 C132 88 124 76 119 66 C117 58 114 46 114 46" stroke="#D4A44C" stroke-width="2.5" fill="none"/><path d="M72 100 Q100 106 128 100 C129 104 130 108 130 110 C130 116 118 127 100 127 C82 127 70 116 70 110 C70 108 71 104 72 100 Z" fill="#D4A44C" opacity="0.14"/><line x1="100" y1="130" x2="100" y2="140" stroke="#D4A44C" stroke-width="2.5"/><ellipse cx="100" cy="142" rx="18" ry="4" stroke="#D4A44C" stroke-width="2" fill="none"/></svg>
+      <span>Black & Gold</span>
+    </div>
+    <div class="vc vw">
+      <svg viewBox="0 0 200 200" fill="none"><circle cx="100" cy="100" r="96" stroke="#0A0A0A" stroke-width="2.5"/><path d="M30 62 L30 148 Q65 156 100 148 L100 62 Q65 58 30 62 Z" fill="#0A0A0A" opacity="0.04" stroke="#0A0A0A" stroke-width="2"/><path d="M170 62 L170 148 Q135 156 100 148 L100 62 Q135 58 170 62 Z" fill="#0A0A0A" opacity="0.04" stroke="#0A0A0A" stroke-width="2"/><path d="M30 148 Q30 158 34 162 Q65 170 100 162 Q135 170 166 162 Q170 158 170 148" stroke="#0A0A0A" stroke-width="2" fill="#0A0A0A" opacity="0.03"/><ellipse cx="100" cy="46" rx="14" ry="3.5" stroke="#0A0A0A" stroke-width="2" fill="none"/><path d="M86 46 C86 46 83 58 81 66 C76 76 68 88 68 102 C68 118 82 130 100 130 C118 130 132 118 132 102 C132 88 124 76 119 66 C117 58 114 46 114 46" stroke="#0A0A0A" stroke-width="2.5" fill="none"/><path d="M72 100 Q100 106 128 100 C129 104 130 108 130 110 C130 116 118 127 100 127 C82 127 70 116 70 110 C70 108 71 104 72 100 Z" fill="#0A0A0A" opacity="0.08"/><line x1="100" y1="130" x2="100" y2="140" stroke="#0A0A0A" stroke-width="2.5"/><ellipse cx="100" cy="142" rx="18" ry="4" stroke="#0A0A0A" stroke-width="2" fill="none"/></svg>
+      <span>White</span>
+    </div>
+    <div class="vc vcr">
+      <svg viewBox="0 0 200 200" fill="none"><circle cx="100" cy="100" r="96" stroke="#7A5A1E" stroke-width="2.5"/><path d="M30 62 L30 148 Q65 156 100 148 L100 62 Q65 58 30 62 Z" fill="#7A5A1E" opacity="0.05" stroke="#7A5A1E" stroke-width="2"/><path d="M170 62 L170 148 Q135 156 100 148 L100 62 Q135 58 170 62 Z" fill="#7A5A1E" opacity="0.05" stroke="#7A5A1E" stroke-width="2"/><path d="M30 148 Q30 158 34 162 Q65 170 100 162 Q135 170 166 162 Q170 158 170 148" stroke="#7A5A1E" stroke-width="2" fill="#7A5A1E" opacity="0.04"/><ellipse cx="100" cy="46" rx="14" ry="3.5" stroke="#7A5A1E" stroke-width="2" fill="none"/><path d="M86 46 C86 46 83 58 81 66 C76 76 68 88 68 102 C68 118 82 130 100 130 C118 130 132 118 132 102 C132 88 124 76 119 66 C117 58 114 46 114 46" stroke="#7A5A1E" stroke-width="2.5" fill="none"/><path d="M72 100 Q100 106 128 100 C129 104 130 108 130 110 C130 116 118 127 100 127 C82 127 70 116 70 110 C70 108 71 104 72 100 Z" fill="#7A5A1E" opacity="0.08"/><line x1="100" y1="130" x2="100" y2="140" stroke="#7A5A1E" stroke-width="2.5"/><ellipse cx="100" cy="142" rx="18" ry="4" stroke="#7A5A1E" stroke-width="2" fill="none"/></svg>
+      <span>Cream</span>
+    </div>
+    <div class="vc vgo">
+      <svg viewBox="0 0 200 200" fill="none"><circle cx="100" cy="100" r="96" stroke="#0A0A0A" stroke-width="2.5"/><path d="M30 62 L30 148 Q65 156 100 148 L100 62 Q65 58 30 62 Z" fill="#0A0A0A" opacity="0.06" stroke="#0A0A0A" stroke-width="2"/><path d="M170 62 L170 148 Q135 156 100 148 L100 62 Q135 58 170 62 Z" fill="#0A0A0A" opacity="0.06" stroke="#0A0A0A" stroke-width="2"/><path d="M30 148 Q30 158 34 162 Q65 170 100 162 Q135 170 166 162 Q170 158 170 148" stroke="#0A0A0A" stroke-width="2" fill="#0A0A0A" opacity="0.05"/><ellipse cx="100" cy="46" rx="14" ry="3.5" stroke="#0A0A0A" stroke-width="2" fill="none"/><path d="M86 46 C86 46 83 58 81 66 C76 76 68 88 68 102 C68 118 82 130 100 130 C118 130 132 118 132 102 C132 88 124 76 119 66 C117 58 114 46 114 46" stroke="#0A0A0A" stroke-width="2.5" fill="none"/><path d="M72 100 Q100 106 128 100 C129 104 130 108 130 110 C130 116 118 127 100 127 C82 127 70 116 70 110 C70 108 71 104 72 100 Z" fill="#0A0A0A" opacity="0.1"/><line x1="100" y1="130" x2="100" y2="140" stroke="#0A0A0A" stroke-width="2.5"/><ellipse cx="100" cy="142" rx="18" ry="4" stroke="#0A0A0A" stroke-width="2" fill="none"/></svg>
+      <span>Gold</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== LOCKUP ===== -->
+<div class="section" style="padding-bottom:80px;">
+  <div class="st">Brand Lockup</div>
+  <div class="sc">
+    <svg viewBox="0 0 200 200" fill="none"><circle cx="100" cy="100" r="96" stroke="#D4A44C" stroke-width="2.5"/><path d="M30 62 L30 148 Q65 156 100 148 L100 62 Q65 58 30 62 Z" fill="#D4A44C" opacity="0.06" stroke="#D4A44C" stroke-width="2"/><path d="M170 62 L170 148 Q135 156 100 148 L100 62 Q135 58 170 62 Z" fill="#D4A44C" opacity="0.06" stroke="#D4A44C" stroke-width="2"/><path d="M30 148 Q30 158 34 162 Q65 170 100 162 Q135 170 166 162 Q170 158 170 148" stroke="#D4A44C" stroke-width="2" fill="#D4A44C" opacity="0.04"/><path d="M32 150 Q65 158 100 150 Q135 158 168 150" stroke="#D4A44C" stroke-width="1" fill="none" opacity="0.2"/><ellipse cx="100" cy="46" rx="14" ry="3.5" stroke="#D4A44C" stroke-width="2" fill="none"/><path d="M86 46 C86 46 83 58 81 66 C76 76 68 88 68 102 C68 118 82 130 100 130 C118 130 132 118 132 102 C132 88 124 76 119 66 C117 58 114 46 114 46" stroke="#D4A44C" stroke-width="2.5" fill="none"/><path d="M72 100 Q100 106 128 100 C129 104 130 108 130 110 C130 116 118 127 100 127 C82 127 70 116 70 110 C70 108 71 104 72 100 Z" fill="#D4A44C" opacity="0.14"/><line x1="100" y1="130" x2="100" y2="140" stroke="#D4A44C" stroke-width="2.5"/><ellipse cx="100" cy="142" rx="18" ry="4" stroke="#D4A44C" stroke-width="2" fill="none"/></svg>
+    <div class="dv"></div>
+    <span class="bn">MyWhiskeyPedia</span>
+    <span class="tl">Your whiskey journey, elevated</span>
+  </div>
+</div>
+
+</body>
+</html>
