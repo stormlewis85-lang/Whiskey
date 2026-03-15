@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { CircleUser, LogOut, BarChart3, Home, Menu, Users, UsersRound, Wine, Eye, Mic, Bell, Settings, UserCircle } from "lucide-react";
+import { CircleUser, LogOut, BarChart3, TrendingUp, Home, Menu, Users, UsersRound, Wine, Eye, Mic, Bell, Settings, UserCircle } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { Link, useLocation } from "wouter";
 import { useState } from "react";
@@ -63,6 +63,19 @@ export function Header() {
         >
           <BarChart3 className="h-4 w-4" />
           <span>Dashboard</span>
+        </button>
+      </Link>
+      <Link href="/analytics">
+        <button
+          onClick={() => setIsSheetOpen(false)}
+          className={`relative flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+            isActive('/analytics')
+              ? 'text-primary bg-accent after:absolute after:bottom-0 after:left-2 after:right-2 after:h-0.5 after:bg-primary after:rounded-full'
+              : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+          }`}
+        >
+          <TrendingUp className="h-4 w-4" />
+          <span>Analytics</span>
         </button>
       </Link>
       <Link href="/community">
@@ -147,15 +160,15 @@ export function Header() {
   );
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-xl safe-area-top hidden md:block">
+    <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-xl safe-area-top">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center gap-2">
           {/* Mobile menu button */}
-          {user && isMobile && (
+          {user && (
             <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="mr-2">
+                <Button variant="ghost" size="icon" className="mr-2 md:hidden">
                   <Menu className="h-5 w-5" />
                   <span className="sr-only">Toggle menu</span>
                 </Button>
@@ -235,8 +248,8 @@ export function Header() {
         </div>
 
         {/* Desktop Navigation */}
-        {user && !isMobile && (
-          <nav className="flex items-center gap-6">
+        {user && (
+          <nav className="hidden md:flex items-center gap-6">
             <NavLinks />
           </nav>
         )}
@@ -246,12 +259,12 @@ export function Header() {
           <ThemeToggle />
 
           {/* User menu for desktop */}
-          {user && !isMobile && (
+          {user && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="h-9 gap-2 px-2 text-muted-foreground hover:text-foreground"
+                  className="hidden md:flex h-9 gap-2 px-2 text-muted-foreground hover:text-foreground"
                 >
                   <CircleUser className="h-5 w-5" />
                   <span className="hidden sm:inline-block max-w-[100px] truncate">
