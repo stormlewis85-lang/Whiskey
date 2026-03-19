@@ -2399,7 +2399,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get user's public whiskeys (no auth required)
+  // Get user's whiskeys — full collection for own profile, public-only for others
   app.get("/api/users/:id/whiskeys", async (req: Request, res: Response) => {
     try {
       const userId = parseInt(req.params.id);
@@ -2407,8 +2407,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid user ID format" });
       }
 
-      const whiskeys = await storage.getPublicWhiskeys(userId);
-      res.json(whiskeys);
+      const isOwnProfile = req.session?.userId === userId;
+      if (isOwnProfile) {
+        const whiskeys = await storage.getWhiskeys(userId);
+        res.json(whiskeys);
+      } else {
+        const whiskeys = await storage.getPublicWhiskeys(userId, true);
+        res.json(whiskeys);
+      }
     } catch (error) {
       res.status(errorStatus(error)).json(safeError(error, "Failed to fetch user's whiskeys"));
     }
