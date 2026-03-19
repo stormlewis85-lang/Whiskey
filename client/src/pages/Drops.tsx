@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Header } from "@/components/Header";
+import { MobilePageHeader } from "@/components/MobilePageHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { StoreDropCard, type StoreDrop } from "@/components/drops/StoreDropCard";
@@ -83,7 +84,7 @@ const Drops = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {!isMobile && <Header />}
+      {isMobile ? <MobilePageHeader title="Drops" /> : <Header />}
 
       <div className="max-w-2xl mx-auto">
         {/* Page Header */}

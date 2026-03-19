@@ -3,6 +3,7 @@ import { useParams, Link } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet';
 import { Header } from '@/components/Header';
+import { MobilePageHeader } from '@/components/MobilePageHeader';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -239,6 +240,7 @@ const Profile = () => {
           <title>{displayName}'s Collection | MyWhiskeyPedia</title>
         </Helmet>
         <div className="min-h-screen bg-background">
+          <MobilePageHeader title="Profile" />
           <ProfileHeader
             name={displayName}
             initials={initials}
