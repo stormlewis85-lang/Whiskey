@@ -64,31 +64,23 @@ export function BottomNav() {
             <svg
               width="24"
               height="24"
-              viewBox="0 0 24 24"
+              viewBox="58 36 84 114"
               fill="none"
               className="text-primary-foreground"
               style={{ marginBottom: "1px" }}
             >
-              {/* Glencairn glass silhouette */}
-              <ellipse cx="12" cy="4.5" rx="4.5" ry="1.2" stroke="currentColor" strokeWidth="1.5" fill="none" />
-              <path
-                d="M7.5 4.5C7.5 4.5 6.8 7 6.2 9C5.2 11.5 3.5 14 3.5 17C3.5 19.5 7 22 12 22C17 22 20.5 19.5 20.5 17C20.5 14 18.8 11.5 17.8 9C17.2 7 16.5 4.5 16.5 4.5"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                fill="none"
-                strokeLinejoin="round"
-              />
-              {/* Whiskey level */}
-              <path
-                d="M5.5 15.5Q12 17 18.5 15.5C18.8 16 19 16.5 19 17C19 18.8 16 20.5 12 20.5C8 20.5 5 18.8 5 17C5 16.5 5.2 16 5.5 15.5Z"
-                fill="currentColor"
-                opacity="0.2"
-              />
+              {/* Exact Glencairn glass from Logo component */}
+              <ellipse cx="100" cy="46" rx="14" ry="3.5" stroke="currentColor" strokeWidth="2.5" fill="none" />
+              <path d="M86 46 C86 46 83 58 81 66 C76 76 68 88 68 102 C68 118 82 130 100 130 C118 130 132 118 132 102 C132 88 124 76 119 66 C117 58 114 46 114 46" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinejoin="round" />
+              {/* Whiskey fill */}
+              <path d="M72 100 Q100 106 128 100 C129 104 130 108 130 110 C130 116 118 127 100 127 C82 127 70 116 70 110 C70 108 71 104 72 100 Z" fill="currentColor" opacity="0.2" />
+              <path d="M72 100 Q100 106 128 100" stroke="currentColor" strokeWidth="1.2" fill="none" opacity="0.4" />
+              {/* Stem */}
+              <line x1="100" y1="130" x2="100" y2="140" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+              {/* Base */}
+              <ellipse cx="100" cy="142" rx="18" ry="4" stroke="currentColor" strokeWidth="2.5" fill="none" />
               {/* 4-point sparkle accent near rim */}
-              <path
-                d="M18.5 3L19 1.5L19.5 3L21 3.5L19.5 4L19 5.5L18.5 4L17 3.5Z"
-                fill="currentColor"
-              />
+              <path d="M122 40L124 34L126 40L132 42L126 44L124 50L122 44L116 42Z" fill="currentColor" />
             </svg>
             <span
               className="text-primary-foreground font-semibold"
