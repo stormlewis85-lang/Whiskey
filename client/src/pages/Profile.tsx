@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { useParams, Link } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet';
@@ -32,7 +32,8 @@ import { ProfileTabs } from '@/components/profile/ProfileTabs';
 import { MobileCollectionGrid } from '@/components/profile/MobileCollectionGrid';
 import { ProfileMenu } from '@/components/profile/ProfileMenu';
 import ProfileSettingsModal from '@/components/modals/ProfileSettingsModal';
-import WhiskeyDetailModal from '@/components/modals/WhiskeyDetailModal';
+
+const WhiskeyDetailModal = lazy(() => import('@/components/modals/WhiskeyDetailModal'));
 
 interface PublicProfile {
   user: {
@@ -369,18 +370,20 @@ const Profile = () => {
           onClose={() => setIsProfileSettingsOpen(false)}
         />
 
-        {/* Bottle detail modal */}
+        {/* Bottle detail modal — lazy-loaded to avoid blocking initial render */}
         {selectedWhiskey && (
-          <WhiskeyDetailModal
-            isOpen={isDetailModalOpen}
-            onClose={() => {
-              setIsDetailModalOpen(false);
-              setSelectedWhiskey(null);
-            }}
-            whiskey={selectedWhiskey}
-            onReview={() => {}}
-            onEdit={() => {}}
-          />
+          <Suspense fallback={null}>
+            <WhiskeyDetailModal
+              isOpen={isDetailModalOpen}
+              onClose={() => {
+                setIsDetailModalOpen(false);
+                setSelectedWhiskey(null);
+              }}
+              whiskey={selectedWhiskey}
+              onReview={() => {}}
+              onEdit={() => {}}
+            />
+          </Suspense>
         )}
       </>
     );
