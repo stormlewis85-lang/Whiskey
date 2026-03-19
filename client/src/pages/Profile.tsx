@@ -98,8 +98,8 @@ const Profile = () => {
     enabled: !!profile?.user?.id
   });
 
-  // Fetch XP/level for badge (own profile only)
-  const isOwnProfile = currentUser?.id === profile?.user?.id;
+  // Only mark own profile once profile data has loaded
+  const isOwnProfile = !!profile?.user?.id && currentUser?.id === profile.user.id;
   const { data: progressData } = useQuery<UserProgressData>({
     queryKey: ['progress'],
     queryFn: async () => {
@@ -171,6 +171,11 @@ const Profile = () => {
   const allReviews = whiskeys.flatMap((w) =>
     (w.notes || []).map((note) => ({ ...note, whiskeyName: w.name, whiskeyImage: w.image }))
   );
+
+  // Wishlist items for Wishlist tab
+  const wishlistItems = whiskeys
+    .filter((w) => w.isWishlist)
+    .map((w) => ({ id: String(w.id), name: w.name, imageUrl: w.image || undefined }));
 
   // Handle bottle tap-to-detail
   const handleBottleClick = (id: string) => {
@@ -340,27 +345,18 @@ const Profile = () => {
 
           {/* Wishlist tab */}
           {mobileTab === "Wishlist" && (
-            (() => {
-              const wishlistItems = whiskeys
-                .filter((w) => w.isWishlist)
-                .map((w) => ({
-                  id: String(w.id),
-                  name: w.name,
-                  imageUrl: w.image || undefined,
-                }));
-              return wishlistItems.length === 0 ? (
-                <EmptyState
-                  icon={Heart}
-                  title="Wishlist Empty"
-                  description="Save bottles you want to try by adding them to your wishlist."
-                />
-              ) : (
-                <MobileCollectionGrid
-                  items={wishlistItems}
-                  onItemClick={handleBottleClick}
-                />
-              );
-            })()
+            wishlistItems.length === 0 ? (
+              <EmptyState
+                icon={Heart}
+                title="Wishlist Empty"
+                description="Save bottles you want to try by adding them to your wishlist."
+              />
+            ) : (
+              <MobileCollectionGrid
+                items={wishlistItems}
+                onItemClick={handleBottleClick}
+              />
+            )
           )}
 
           {isOwnProfile && (
