@@ -129,7 +129,7 @@ const Profile = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['followStatus', profile?.user?.id] });
-      queryClient.invalidateQueries({ queryKey: ['profile', slug] });
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
       toast({ title: 'Followed!', description: `You are now following ${profile?.user?.displayName || profile?.user?.username}` });
     },
     onError: () => {
@@ -145,7 +145,7 @@ const Profile = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['followStatus', profile?.user?.id] });
-      queryClient.invalidateQueries({ queryKey: ['profile', slug] });
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
       toast({ title: 'Unfollowed', description: `You unfollowed ${profile?.user?.displayName || profile?.user?.username}` });
     },
     onError: () => {
