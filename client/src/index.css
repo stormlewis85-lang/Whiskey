@@ -453,6 +453,23 @@
   transform: scale(0.93);
 }
 
+/* Rick House atmosphere — slow radial pulse */
+@keyframes rick-atmosphere {
+  0%, 100% { opacity: 0.35; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(1.08); }
+}
+
+.rick-atmosphere-glow {
+  animation: rick-atmosphere 8s ease-in-out infinite;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(212, 164, 76, 0.12) 0%,
+    rgba(212, 164, 76, 0.04) 40%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
 /* ============================================
    HOVER EFFECTS
    ============================================ */
