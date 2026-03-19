@@ -159,18 +159,18 @@ export function getRickGreeting(
   lastSessionToday: boolean,
 ): string {
   if (sessionCount === 0) {
-    return "Welcome to the Rick House. Pull up a chair.";
+    return "Welcome to the Rick House.\nPull up a chair — the best pours happen slow.";
   }
   if (lastSessionToday) {
-    return "Back for another? I like the commitment.";
+    return "Back already? That's the sign of a serious palate.";
   }
 
   const hour = new Date().getHours();
-  const name = userName || "friend";
+  const name = userName ? userName.split(" ")[0] : "friend";
 
-  if (hour < 12) return "Morning pour? Bold choice.";
-  if (hour < 17) return `Afternoon, ${name}. What are we nosing today?`;
-  return "Evening. Perfect time to slow down with a glass.";
+  if (hour < 12) return `Morning pour, ${name}?\nBold choice. The palate's sharpest before noon.`;
+  if (hour < 17) return `Good afternoon, ${name}.\nWhat are we nosing today?`;
+  return `Evening, ${name}.\nThe quiet hours make the best pours.`;
 }
 
 // ── Helpers ──
