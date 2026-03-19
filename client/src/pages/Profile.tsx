@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useParams, Link } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet';
@@ -13,20 +13,18 @@ import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { apiRequest } from '@/lib/queryClient';
 import {
-  User,
   Wine,
   Star,
-  Users,
   UserPlus,
   UserMinus,
   Calendar,
   Loader2,
   Heart,
   Lock,
-  GitCompareArrows
+  GitCompareArrows,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Whiskey, ReviewNote } from '@shared/schema';
+import { Whiskey, ReviewNote, getLevelForXP } from '@shared/schema';
 import { EmptyState } from '@/components/EmptyState';
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
 import { ProfileStats } from '@/components/profile/ProfileStats';
@@ -34,6 +32,7 @@ import { ProfileTabs } from '@/components/profile/ProfileTabs';
 import { MobileCollectionGrid } from '@/components/profile/MobileCollectionGrid';
 import { ProfileMenu } from '@/components/profile/ProfileMenu';
 import ProfileSettingsModal from '@/components/modals/ProfileSettingsModal';
+import WhiskeyDetailModal from '@/components/modals/WhiskeyDetailModal';
 
 interface PublicProfile {
   user: {
@@ -57,6 +56,16 @@ interface PublicWhiskey extends Whiskey {
   notes: ReviewNote[];
 }
 
+interface UserProgressData {
+  xp: number;
+  level: number;
+  currentStreak: number;
+  longestStreak: number;
+  totalReviews: number;
+  totalChallengesCompleted: number;
+  totalFlavorIds: number;
+}
+
 const Profile = () => {
   const params = useParams();
   const slug = params.slug as string;
@@ -66,6 +75,8 @@ const Profile = () => {
   const isMobile = useIsMobile();
   const [mobileTab, setMobileTab] = useState("Collection");
   const [isProfileSettingsOpen, setIsProfileSettingsOpen] = useState(false);
+  const [selectedWhiskey, setSelectedWhiskey] = useState<PublicWhiskey | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   // Fetch public profile
   const { data: profile, isLoading: profileLoading, error: profileError } = useQuery<PublicProfile>({
@@ -87,6 +98,17 @@ const Profile = () => {
     enabled: !!profile?.user?.id
   });
 
+  // Fetch XP/level for badge (own profile only)
+  const isOwnProfile = currentUser?.id === profile?.user?.id;
+  const { data: progressData } = useQuery<UserProgressData>({
+    queryKey: ['progress'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/progress');
+      return res.json();
+    },
+    enabled: !!isOwnProfile
+  });
+
   // Fetch follow status if authenticated
   const { data: followStatus } = useQuery<{ isFollowing: boolean }>({
     queryKey: ['followStatus', profile?.user?.id],
@@ -94,7 +116,7 @@ const Profile = () => {
       const res = await apiRequest('GET', `/api/users/${profile?.user?.id}/following-status`);
       return res.json();
     },
-    enabled: !!profile?.user?.id && !!currentUser && currentUser.id !== profile?.user?.id
+    enabled: !!profile?.user?.id && !!currentUser && !isOwnProfile
   });
 
   // Follow mutation
@@ -131,7 +153,6 @@ const Profile = () => {
 
   const handleFollowToggle = () => {
     if (!profile?.user?.id) return;
-
     if (followStatus?.isFollowing) {
       unfollowMutation.mutate(profile.user.id);
     } else {
@@ -139,9 +160,26 @@ const Profile = () => {
     }
   };
 
-  const isOwnProfile = currentUser?.id === profile?.user?.id;
   const isFollowing = followStatus?.isFollowing || false;
   const isFollowLoading = followMutation.isPending || unfollowMutation.isPending;
+
+  // Derive badge from XP level, fallback to "Newcomer" if no progress data
+  const levelInfo = progressData ? getLevelForXP(progressData.xp) : null;
+  const badgeTitle = levelInfo?.title ?? undefined;
+
+  // Collect all reviews across all whiskeys
+  const allReviews = whiskeys.flatMap((w) =>
+    (w.notes || []).map((note) => ({ ...note, whiskeyName: w.name, whiskeyImage: w.image }))
+  );
+
+  // Handle bottle tap-to-detail
+  const handleBottleClick = (id: string) => {
+    const whiskey = whiskeys.find((w) => String(w.id) === id);
+    if (whiskey) {
+      setSelectedWhiskey(whiskey);
+      setIsDetailModalOpen(true);
+    }
+  };
 
   if (profileLoading || authLoading) {
     return (
@@ -199,8 +237,52 @@ const Profile = () => {
             name={displayName}
             initials={initials}
             handle={profile.user.profileSlug ? `@${profile.user.profileSlug}` : `@${profile.user.username}`}
-            badge="Connoisseur"
+            badge={badgeTitle}
+            profileImage={profile.user.profileImage}
+            bio={profile.user.bio}
+            isOwnProfile={isOwnProfile}
+            onSettingsClick={() => setIsProfileSettingsOpen(true)}
           />
+
+          {/* Follow / Compare buttons for other users */}
+          {!isOwnProfile && currentUser && (
+            <div className="flex gap-2 mx-5 mb-4">
+              <Button
+                onClick={handleFollowToggle}
+                disabled={isFollowLoading}
+                variant={isFollowing ? "outline" : "default"}
+                className={cn(
+                  "flex-1 gap-2",
+                  isFollowing ? "border-primary/30 text-foreground" : ""
+                )}
+              >
+                {isFollowLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : isFollowing ? (
+                  <>
+                    <UserMinus className="h-4 w-4" />
+                    Unfollow
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="h-4 w-4" />
+                    Follow
+                  </>
+                )}
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                className="flex-1 gap-2 border-border/50"
+              >
+                <Link href={`/compare/${profile.user.id}`}>
+                  <GitCompareArrows className="h-4 w-4" />
+                  Compare
+                </Link>
+              </Button>
+            </div>
+          )}
+
           <ProfileStats
             stats={[
               { value: profile.stats.whiskeyCount, label: "Bottles" },
@@ -214,6 +296,8 @@ const Profile = () => {
             activeTab={mobileTab}
             onTabChange={setMobileTab}
           />
+
+          {/* Collection tab */}
           {mobileTab === "Collection" && (
             whiskeysLoading ? (
               <div className="flex justify-center py-12">
@@ -226,22 +310,57 @@ const Profile = () => {
                 description="Start building your collection by adding your first bottle."
               />
             ) : (
-              <MobileCollectionGrid items={collectionItems} />
+              <MobileCollectionGrid
+                items={collectionItems}
+                onItemClick={handleBottleClick}
+              />
             )
           )}
+
+          {/* Reviews tab — wired to actual review data */}
           {mobileTab === "Reviews" && (
-            <EmptyState
-              icon={Star}
-              title="No Reviews Yet"
-              description="Review bottles in your collection to share your tasting notes."
-            />
+            whiskeysLoading ? (
+              <div className="flex justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : allReviews.length === 0 ? (
+              <EmptyState
+                icon={Star}
+                title="No Reviews Yet"
+                description="Review bottles in your collection to share your tasting notes."
+              />
+            ) : (
+              <div className="px-5 py-4 pb-[100px] space-y-3">
+                {allReviews.map((review) => (
+                  <MobileReviewCard key={review.id} review={review} />
+                ))}
+              </div>
+            )
           )}
+
+          {/* Wishlist tab */}
           {mobileTab === "Wishlist" && (
-            <EmptyState
-              icon={Heart}
-              title="Wishlist Empty"
-              description="Save bottles you want to try by adding them to your wishlist."
-            />
+            (() => {
+              const wishlistItems = whiskeys
+                .filter((w) => w.isWishlist)
+                .map((w) => ({
+                  id: String(w.id),
+                  name: w.name,
+                  imageUrl: w.image || undefined,
+                }));
+              return wishlistItems.length === 0 ? (
+                <EmptyState
+                  icon={Heart}
+                  title="Wishlist Empty"
+                  description="Save bottles you want to try by adding them to your wishlist."
+                />
+              ) : (
+                <MobileCollectionGrid
+                  items={wishlistItems}
+                  onItemClick={handleBottleClick}
+                />
+              );
+            })()
           )}
 
           {isOwnProfile && (
@@ -253,10 +372,25 @@ const Profile = () => {
           isOpen={isProfileSettingsOpen}
           onClose={() => setIsProfileSettingsOpen(false)}
         />
+
+        {/* Bottle detail modal */}
+        {selectedWhiskey && (
+          <WhiskeyDetailModal
+            isOpen={isDetailModalOpen}
+            onClose={() => {
+              setIsDetailModalOpen(false);
+              setSelectedWhiskey(null);
+            }}
+            whiskey={selectedWhiskey}
+            onReview={() => {}}
+            onEdit={() => {}}
+          />
+        )}
       </>
     );
   }
 
+  // Desktop layout
   return (
     <>
       <Helmet>
@@ -270,7 +404,6 @@ const Profile = () => {
           <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-transparent" />
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-              {/* Avatar */}
               <Avatar className="h-24 w-24 border-4 border-border shadow-warm-lg">
                 {profile.user.profileImage ? (
                   <AvatarImage src={profile.user.profileImage} alt={displayName} />
@@ -281,7 +414,6 @@ const Profile = () => {
                 )}
               </Avatar>
 
-              {/* User Info */}
               <div className="flex-1 text-center sm:text-left">
                 <h1 className="font-display text-3xl sm:text-4xl font-semibold text-foreground">{displayName}</h1>
                 <p className="text-muted-foreground text-sm mt-1 flex items-center justify-center sm:justify-start gap-2">
@@ -292,7 +424,6 @@ const Profile = () => {
                   <p className="text-foreground/80 mt-3 max-w-xl">{profile.user.bio}</p>
                 )}
 
-                {/* Stats */}
                 <div className="flex flex-wrap gap-4 mt-4 justify-center sm:justify-start">
                   <div className="text-center">
                     <div className="font-sans text-xl font-semibold tabular-nums text-foreground">{profile.stats.whiskeyCount}</div>
@@ -313,7 +444,6 @@ const Profile = () => {
                 </div>
               </div>
 
-              {/* Follow & Compare Buttons */}
               {!isOwnProfile && currentUser && (
                 <div className="flex gap-2">
                   <Button
@@ -322,9 +452,7 @@ const Profile = () => {
                     variant={isFollowing ? "outline" : "default"}
                     className={cn(
                       "gap-2 shadow-warm-sm",
-                      isFollowing
-                        ? "border-primary/30 text-foreground hover:bg-accent/50"
-                        : ""
+                      isFollowing ? "border-primary/30 text-foreground hover:bg-accent/50" : ""
                     )}
                   >
                     {isFollowLoading ? (
@@ -358,7 +486,6 @@ const Profile = () => {
           </div>
         </header>
 
-        {/* Main Content */}
         <main className="container mx-auto px-4 py-6">
           <div className="max-w-6xl mx-auto">
             <Tabs defaultValue="collection" className="w-full">
@@ -402,7 +529,43 @@ const Profile = () => {
   );
 };
 
-// Simple public whiskey card component
+// Review card for the mobile Reviews tab
+const MobileReviewCard = ({ review }: { review: ReviewNote & { whiskeyName: string; whiskeyImage: string | null } }) => {
+  const rating = review.rating || 0;
+  return (
+    <div className="bg-card border border-border/50 rounded-xl p-4 space-y-2">
+      <div className="flex items-center gap-3">
+        {review.whiskeyImage ? (
+          <img src={review.whiskeyImage} alt={review.whiskeyName} className="w-10 h-10 rounded-lg object-cover" />
+        ) : (
+          <div className="w-10 h-10 rounded-lg bg-accent/30 flex items-center justify-center">
+            <Wine className="w-5 h-5 text-muted-foreground/50" />
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          <div className="font-medium text-sm text-foreground truncate">{review.whiskeyName}</div>
+          <div className="text-xs text-muted-foreground">{review.date}</div>
+        </div>
+        <div className="flex items-center gap-0.5">
+          {[1, 2, 3, 4, 5].map((s) => (
+            <Star
+              key={s}
+              className={cn(
+                "w-3 h-3",
+                s <= rating ? "text-primary fill-primary" : "text-muted-foreground/30"
+              )}
+            />
+          ))}
+        </div>
+      </div>
+      {review.text && (
+        <p className="text-sm text-foreground/80 leading-relaxed line-clamp-3">{review.text}</p>
+      )}
+    </div>
+  );
+};
+
+// Desktop public whiskey card
 const PublicWhiskeyCard = ({ whiskey }: { whiskey: PublicWhiskey }) => {
   const rating = whiskey.rating || 0;
   const reviewCount = whiskey.notes?.length || 0;
@@ -414,7 +577,6 @@ const PublicWhiskeyCard = ({ whiskey }: { whiskey: PublicWhiskey }) => {
       isWishlist && "border-l-4 border-l-pink-500/50"
     )}>
       <div className="flex h-full">
-        {/* Left side: Image */}
         <div className="w-1/3 relative bg-accent/30">
           <div className="aspect-[3/4]">
             {whiskey.image ? (
@@ -439,8 +601,6 @@ const PublicWhiskeyCard = ({ whiskey }: { whiskey: PublicWhiskey }) => {
             )}
           </div>
         </div>
-
-        {/* Right side: Details */}
         <CardContent className="p-4 w-2/3 flex flex-col">
           <div className="flex-1">
             <h3 className="font-semibold text-base text-foreground line-clamp-2">
@@ -449,26 +609,18 @@ const PublicWhiskeyCard = ({ whiskey }: { whiskey: PublicWhiskey }) => {
             <p className="text-sm text-muted-foreground truncate mt-1">
               {whiskey.distillery || 'Unknown Distillery'}
             </p>
-
             {whiskey.type && (
-              <Badge
-                variant="secondary"
-                className="mt-2 text-xs"
-              >
+              <Badge variant="secondary" className="mt-2 text-xs">
                 {whiskey.type}
               </Badge>
             )}
-
-            {/* Rating */}
             <div className="flex items-center mt-3 gap-1">
               {[1, 2, 3, 4, 5].map((star) => (
                 <Star
                   key={star}
                   className={cn(
                     "w-3.5 h-3.5",
-                    star <= rating
-                      ? "text-amber-400 fill-amber-400"
-                      : "text-muted-foreground/30"
+                    star <= rating ? "text-amber-400 fill-amber-400" : "text-muted-foreground/30"
                   )}
                 />
               ))}

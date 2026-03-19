@@ -1,64 +1,70 @@
-import { Star } from "lucide-react";
+import { Star, Settings } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface ProfileHeaderProps {
   name: string;
   initials: string;
   handle: string;
   badge?: string;
+  profileImage?: string | null;
+  bio?: string | null;
+  isOwnProfile?: boolean;
+  onSettingsClick?: () => void;
 }
 
-export function ProfileHeader({ name, initials, handle, badge }: ProfileHeaderProps) {
+export function ProfileHeader({
+  name,
+  initials,
+  handle,
+  badge,
+  profileImage,
+  bio,
+  isOwnProfile,
+  onSettingsClick,
+}: ProfileHeaderProps) {
   return (
-    <div className="text-center relative" style={{ padding: "40px 20px 24px" }}>
+    <div className="text-center relative pt-10 px-5 pb-6">
       {/* Subtle gold gradient at top */}
-      <div
-        className="absolute top-0 left-0 right-0 pointer-events-none"
-        style={{
-          height: "120px",
-          background: "linear-gradient(180deg, rgba(212,164,76,0.08) 0%, transparent 100%)",
-        }}
-      />
+      <div className="absolute top-0 left-0 right-0 h-[120px] pointer-events-none bg-gradient-to-b from-primary/[0.08] to-transparent" />
+
+      {/* Settings icon for own profile */}
+      {isOwnProfile && onSettingsClick && (
+        <button
+          onClick={onSettingsClick}
+          className="absolute top-4 right-4 z-10 p-2 rounded-full bg-transparent border-none cursor-pointer transition-colors active:bg-accent/50"
+          aria-label="Profile settings"
+        >
+          <Settings className="w-5 h-5 text-muted-foreground" />
+        </button>
+      )}
 
       {/* Avatar */}
-      <div
-        className="relative mx-auto flex items-center justify-center rounded-full mb-3"
-        style={{
-          width: "80px",
-          height: "80px",
-          background: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.7))",
-          boxShadow: "0 4px 24px rgba(212, 164, 76, 0.25)",
-        }}
-      >
-        <span
-          className="font-display font-semibold"
-          style={{ fontSize: "1.8rem", color: "hsl(var(--background))" }}
-        >
-          {initials}
-        </span>
-      </div>
+      <Avatar className="relative mx-auto mb-3 h-20 w-20 border-2 border-primary/30 shadow-[0_4px_24px_rgba(212,164,76,0.25)]">
+        {profileImage ? (
+          <AvatarImage src={profileImage} alt={name} />
+        ) : (
+          <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-background font-display font-semibold text-[1.8rem]">
+            {initials}
+          </AvatarFallback>
+        )}
+      </Avatar>
 
       {/* Name */}
-      <div className="font-display font-medium mb-1" style={{ fontSize: "1.4rem" }}>
-        {name}
-      </div>
+      <div className="font-display font-medium text-[1.4rem] mb-1">{name}</div>
 
       {/* Handle */}
-      <div className="text-muted-foreground mb-2" style={{ fontSize: "0.8rem" }}>
-        {handle}
-      </div>
+      <div className="text-muted-foreground text-[0.8rem] mb-2">{handle}</div>
+
+      {/* Bio */}
+      {bio && (
+        <p className="text-foreground/70 text-sm max-w-xs mx-auto mb-3 leading-relaxed">
+          {bio}
+        </p>
+      )}
 
       {/* Badge */}
       {badge && (
-        <span
-          className="inline-flex items-center gap-1 text-primary uppercase"
-          style={{
-            background: "rgba(212, 164, 76, 0.12)",
-            padding: "4px 12px",
-            borderRadius: "20px",
-            fontSize: "0.65rem",
-            letterSpacing: "0.05em",
-          }}
-        >
+        <span className="inline-flex items-center gap-1 text-primary uppercase bg-primary/[0.12] px-3 py-1 rounded-full text-[0.65rem] tracking-[0.05em]">
           <Star className="w-3 h-3 fill-primary" />
           {badge}
         </span>

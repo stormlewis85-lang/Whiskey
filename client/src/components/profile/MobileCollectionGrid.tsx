@@ -1,3 +1,5 @@
+import { Wine } from "lucide-react";
+
 export interface CollectionItem {
   id: string;
   name: string;
@@ -11,24 +13,12 @@ interface MobileCollectionGridProps {
 
 export function MobileCollectionGrid({ items, onItemClick }: MobileCollectionGridProps) {
   return (
-    <div
-      className="grid"
-      style={{
-        gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))",
-        gap: "2px",
-        padding: "2px 20px 100px",
-      }}
-    >
+    <div className="grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-0.5 px-5 pb-[100px] pt-0.5">
       {items.map((item) => (
         <button
           key={item.id}
           onClick={() => onItemClick?.(item.id)}
-          className="relative overflow-hidden flex items-center justify-center bg-transparent border-none cursor-pointer p-0 transition-transform duration-150 active:scale-95"
-          style={{
-            aspectRatio: "1",
-            background: "hsl(var(--popover))",
-            borderRadius: "8px",
-          }}
+          className="relative overflow-hidden flex items-center justify-center bg-popover border-none cursor-pointer p-0 transition-transform duration-150 active:scale-95 rounded-lg aspect-square"
         >
           {item.imageUrl ? (
             <img
@@ -37,31 +27,12 @@ export function MobileCollectionGrid({ items, onItemClick }: MobileCollectionGri
               className="w-full h-full object-cover"
             />
           ) : (
-            <svg
-              width="30"
-              height="50"
-              viewBox="0 0 30 50"
-              fill="none"
-              style={{ color: "hsl(var(--primary) / 0.4)" }}
-            >
-              <rect x="10" y="0" width="10" height="8" rx="2" stroke="currentColor" strokeWidth="1.5" fill="none" />
-              <rect x="8" y="8" width="14" height="6" rx="1" stroke="currentColor" strokeWidth="1.5" fill="none" />
-              <path d="M6 14 L6 44 Q6 48 10 48 L20 48 Q24 48 24 44 L24 14 Z" stroke="currentColor" strokeWidth="1.5" fill="none" />
-            </svg>
+            <Wine className="w-8 h-8 text-primary/40" />
           )}
 
           {/* Name overlay */}
-          <div
-            className="absolute bottom-0 left-0 right-0"
-            style={{
-              padding: "6px",
-              background: "linear-gradient(transparent, rgba(0,0,0,0.8))",
-            }}
-          >
-            <span
-              className="text-foreground block truncate"
-              style={{ fontSize: "0.55rem" }}
-            >
+          <div className="absolute bottom-0 left-0 right-0 p-1.5 bg-gradient-to-t from-black/80 to-transparent">
+            <span className="text-foreground block truncate text-[0.55rem]">
               {item.name}
             </span>
           </div>
