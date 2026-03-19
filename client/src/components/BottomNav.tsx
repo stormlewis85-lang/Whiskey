@@ -1,14 +1,10 @@
-import { Home, Search, Bell, User, ScanLine } from "lucide-react";
+import { Home, Search, Bell, User, MessageSquare } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 
-interface BottomNavProps {
-  onScanClick?: () => void;
-}
-
-export function BottomNav({ onScanClick }: BottomNavProps) {
+export function BottomNav() {
   const [location] = useLocation();
   const { user } = useAuth();
 
@@ -37,6 +33,8 @@ export function BottomNav({ onScanClick }: BottomNavProps) {
     ? `/u/${(user as any).profileSlug}`
     : "/profile";
 
+  const rickActive = isActive("/rick-house");
+
   return (
     <nav
       className="fixed bottom-0 left-0 right-0 z-50 md:hidden safe-area-bottom"
@@ -52,20 +50,29 @@ export function BottomNav({ onScanClick }: BottomNavProps) {
         {/* Search */}
         <TabItem href="/search" icon={Search} label="Search" active={isActive("/search")} />
 
-        {/* Center Scan FAB */}
-        <button
-          onClick={onScanClick}
-          className="flex items-center justify-center rounded-full bg-primary cursor-pointer border-none"
-          style={{
-            width: "56px",
-            height: "56px",
-            marginTop: "-20px",
-            boxShadow: "0 4px 20px rgba(212, 164, 76, 0.3)",
-          }}
-          aria-label="Scan barcode"
-        >
-          <ScanLine className="w-6 h-6 text-primary-foreground" />
-        </button>
+        {/* Center Rick House FAB */}
+        <Link href="/rick-house">
+          <button
+            className="rick-fab flex flex-col items-center justify-center rounded-full bg-primary cursor-pointer border-none"
+            style={{
+              width: "58px",
+              height: "58px",
+              marginTop: "-22px",
+            }}
+            aria-label="Rick House — AI Tasting Guide"
+          >
+            <MessageSquare
+              className="w-6 h-6 text-primary-foreground"
+              style={{ marginBottom: "1px" }}
+            />
+            <span
+              className="text-primary-foreground font-semibold"
+              style={{ fontSize: "0.5rem", letterSpacing: "0.06em" }}
+            >
+              RICK
+            </span>
+          </button>
+        </Link>
 
         {/* Drops */}
         <TabItem

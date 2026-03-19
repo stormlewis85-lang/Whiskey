@@ -429,6 +429,31 @@
 }
 
 /* ============================================
+   RICK HOUSE NAV BUTTON
+   ============================================ */
+@keyframes rick-glow {
+  0%, 100% {
+    box-shadow:
+      0 4px 20px rgba(212, 164, 76, 0.35),
+      0 0 0 0 rgba(212, 164, 76, 0);
+  }
+  50% {
+    box-shadow:
+      0 4px 24px rgba(212, 164, 76, 0.5),
+      0 0 0 6px rgba(212, 164, 76, 0.08);
+  }
+}
+
+.rick-fab {
+  animation: rick-glow 3s ease-in-out infinite;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.rick-fab:active {
+  transform: scale(0.93);
+}
+
+/* ============================================
    HOVER EFFECTS
    ============================================ */
 .hover-lift {
