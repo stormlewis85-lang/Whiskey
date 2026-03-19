@@ -123,7 +123,7 @@ const Home = () => {
   if (isMobile) {
     return (
       <div className="min-h-screen bg-background max-w-2xl mx-auto">
-        <MobileHomeHeader hasNotifications />
+        <MobileHomeHeader />
 
         {/* Collection header + add button */}
         <div className="flex justify-between items-center px-5 pt-2 pb-3">

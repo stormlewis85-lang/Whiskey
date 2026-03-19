@@ -1,7 +1,5 @@
 import { useState } from "react";
 import {
-  Bell,
-  Search,
   Menu,
   Home,
   BarChart3,
@@ -11,6 +9,7 @@ import {
   Wine,
   Eye,
   Mic,
+  Bell,
   Settings,
   UserCircle,
   LogOut,
@@ -23,11 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import ProfileSettingsModal from "@/components/modals/ProfileSettingsModal";
 
-interface MobileHomeHeaderProps {
-  hasNotifications?: boolean;
-}
-
-export function MobileHomeHeader({ hasNotifications }: MobileHomeHeaderProps) {
+export function MobileHomeHeader() {
   const { user, logoutMutation } = useAuth();
   const [location] = useLocation();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -186,36 +181,6 @@ export function MobileHomeHeader({ hasNotifications }: MobileHomeHeaderProps) {
           </Link>
         </div>
 
-        {/* Action icons */}
-        <div className="flex items-center gap-1">
-          <button
-            className="relative flex items-center justify-center bg-transparent border-none cursor-pointer"
-            style={{ width: "44px", height: "44px", opacity: 0.7 }}
-          >
-            <Bell className="w-[22px] h-[22px] text-foreground" />
-            {hasNotifications && (
-              <span
-                className="absolute rounded-full"
-                style={{
-                  width: "8px",
-                  height: "8px",
-                  top: "8px",
-                  right: "8px",
-                  background: "hsl(var(--destructive))",
-                  border: "2px solid hsl(var(--background))",
-                }}
-              />
-            )}
-          </button>
-          <Link href="/search">
-            <span
-              className="flex items-center justify-center cursor-pointer"
-              style={{ width: "44px", height: "44px", opacity: 0.7 }}
-            >
-              <Search className="w-[22px] h-[22px] text-foreground" />
-            </span>
-          </Link>
-        </div>
       </div>
 
       <ProfileSettingsModal
