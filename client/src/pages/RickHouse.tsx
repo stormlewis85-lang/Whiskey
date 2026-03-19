@@ -93,7 +93,7 @@ const RickHouse = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {isMobile ? <MobilePageHeader title="Rick House" /> : <Header />}
+      {isMobile ? <MobilePageHeader /> : <Header />}
 
       {/* Zone 1 — The Atmosphere */}
       <RickAtmosphere

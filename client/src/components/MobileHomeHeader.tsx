@@ -169,12 +169,9 @@ export function MobileHomeHeader() {
           </Sheet>
 
           <Link href="/">
-            <span className="flex items-center gap-2.5 cursor-pointer">
+            <span className="flex items-center gap-2 cursor-pointer">
               <Logo size="nav" />
-              <span
-                className="font-display font-medium text-primary"
-                style={{ fontSize: "1.1rem" }}
-              >
+              <span className="font-heading text-lg text-[#D4A44C]">
                 MyWhiskeyPedia
               </span>
             </span>

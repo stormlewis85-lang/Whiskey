@@ -240,7 +240,7 @@ const Profile = () => {
           <title>{displayName}'s Collection | MyWhiskeyPedia</title>
         </Helmet>
         <div className="min-h-screen bg-background">
-          <MobilePageHeader title="Profile" />
+          <MobilePageHeader />
           <ProfileHeader
             name={displayName}
             initials={initials}

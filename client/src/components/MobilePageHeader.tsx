@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Logo } from "@/components/Logo";
 import {
   Menu,
   Home,
@@ -22,11 +23,10 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import ProfileSettingsModal from "@/components/modals/ProfileSettingsModal";
 
 interface MobilePageHeaderProps {
-  title: string;
   rightAction?: React.ReactNode;
 }
 
-export function MobilePageHeader({ title, rightAction }: MobilePageHeaderProps) {
+export function MobilePageHeader({ rightAction }: MobilePageHeaderProps) {
   const { user, logoutMutation } = useAuth();
   const [location] = useLocation();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -169,7 +169,12 @@ export function MobilePageHeader({ title, rightAction }: MobilePageHeaderProps) 
             </SheetContent>
           </Sheet>
 
-          <span className="font-display font-medium text-foreground text-lg">{title}</span>
+          <Link href="/">
+            <span className="flex items-center gap-2 cursor-pointer">
+              <Logo size="nav" />
+              <span className="font-heading text-lg text-[#D4A44C]">MyWhiskeyPedia</span>
+            </span>
+          </Link>
         </div>
 
         {/* Optional right action */}

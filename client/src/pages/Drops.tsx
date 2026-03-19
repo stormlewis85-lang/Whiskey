@@ -84,7 +84,7 @@ const Drops = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {isMobile ? <MobilePageHeader title="Drops" /> : <Header />}
+      {isMobile ? <MobilePageHeader /> : <Header />}
 
       <div className="max-w-2xl mx-auto">
         {/* Page Header */}
