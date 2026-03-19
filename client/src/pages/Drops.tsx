@@ -88,67 +88,36 @@ const Drops = () => {
 
       <div className="max-w-2xl mx-auto">
         {/* Page Header */}
-        <div className={`flex items-center justify-between ${isMobile ? "px-5 pt-4 pb-2" : "px-5 pt-8 pb-4"}`}>
-          <div>
-            <h1
-              className={`font-display font-medium text-foreground ${isMobile ? "text-3xl" : "text-4xl"}`}
-            >
-              Store Drops
-            </h1>
-            <p className="text-muted-foreground mt-1 text-sm">
-              Alerts from stores you follow
-            </p>
-          </div>
+        <section className="relative py-6 md:py-10 lg:py-14">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-transparent" />
+          <div className="relative px-5">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-label-caps text-primary mb-3">Alerts</p>
+                <h1 className="text-display-hero text-foreground">Store Drops</h1>
+                <p className="text-muted-foreground mt-3 text-sm sm:text-base">
+                  Latest releases from stores you follow
+                </p>
+              </div>
 
-          <div className="flex items-center gap-2">
-            {/* Notification bell */}
-            <button
-              className="relative flex items-center justify-center bg-transparent border-none cursor-pointer"
-              style={{
-                width: "40px",
-                height: "40px",
-                borderRadius: "12px",
-                background: "hsl(var(--popover))",
-                border: "1px solid rgba(255,255,255,0.06)",
-              }}
-            >
-              <Bell className="w-4.5 h-4.5 text-foreground" />
-              {unreadCount > 0 && (
-                <span
-                  className="absolute flex items-center justify-center font-bold text-white"
+              {/* Report drop button */}
+              {hasFollowedStores && (
+                <button
+                  onClick={() => setReportDropOpen(true)}
+                  className="flex items-center justify-center border-none cursor-pointer shrink-0 mt-2"
                   style={{
-                    top: "-4px",
-                    right: "-4px",
-                    minWidth: "18px",
-                    height: "18px",
-                    borderRadius: "9px",
+                    width: "40px",
+                    height: "40px",
+                    borderRadius: "12px",
                     background: "hsl(var(--primary))",
-                    fontSize: "0.6rem",
-                    padding: "0 4px",
                   }}
                 >
-                  {unreadCount > 99 ? "99+" : unreadCount}
-                </span>
+                  <Plus className="w-4.5 h-4.5 text-primary-foreground" />
+                </button>
               )}
-            </button>
-
-            {/* Report drop button */}
-            {hasFollowedStores && (
-              <button
-                onClick={() => setReportDropOpen(true)}
-                className="flex items-center justify-center border-none cursor-pointer"
-                style={{
-                  width: "40px",
-                  height: "40px",
-                  borderRadius: "12px",
-                  background: "hsl(var(--primary))",
-                }}
-              >
-                <Plus className="w-4.5 h-4.5 text-primary-foreground" />
-              </button>
-            )}
+            </div>
           </div>
-        </div>
+        </section>
 
         {/* Followed stores horizontal scroll */}
         {hasFollowedStores && (
