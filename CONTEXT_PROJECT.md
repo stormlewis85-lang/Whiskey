@@ -4,6 +4,9 @@
 >
 > **Domain:** Software | **Framework:** `.agent-framework/` (git submodule)
 
+## Domain
+software
+
 ## What This Is
 
 MyWhiskeyPedia is a premium whiskey collection and review platform that combines personal collection management with AI-powered tasting guidance and community features. It serves whiskey enthusiasts who want to track collections, get intelligent tasting recommendations, and connect with other collectors around rare bottle releases and store drops.
