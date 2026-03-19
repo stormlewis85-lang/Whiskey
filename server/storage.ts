@@ -1698,15 +1698,29 @@ export class DatabaseStorage implements IStorage {
 
   // ==================== PROFILE METHODS ====================
 
-  async getUserByProfileSlug(slug: string): Promise<User | undefined> {
+  async getUserByProfileSlug(slug: string, skipPublicCheck: boolean = false): Promise<User | undefined> {
+    // Try profileSlug first
+    const conditions = skipPublicCheck
+      ? [eq(users.profileSlug, slug)]
+      : [eq(users.profileSlug, slug), eq(users.isPublic, true)];
     const [user] = await db
       .select()
       .from(users)
-      .where(and(eq(users.profileSlug, slug), eq(users.isPublic, true)));
-    return user || undefined;
+      .where(and(...conditions));
+    if (user) return user;
+
+    // Fallback: try username
+    const usernameConditions = skipPublicCheck
+      ? [eq(users.username, slug)]
+      : [eq(users.username, slug), eq(users.isPublic, true)];
+    const [userByName] = await db
+      .select()
+      .from(users)
+      .where(and(...usernameConditions));
+    return userByName || undefined;
   }
 
-  async getPublicProfile(userId: number): Promise<{
+  async getPublicProfile(userId: number, skipPublicCheck: boolean = false): Promise<{
     user: PublicUser;
     stats: {
       totalBottles: number;
@@ -1719,7 +1733,7 @@ export class DatabaseStorage implements IStorage {
     followingCount: number;
   } | undefined> {
     const user = await this.getUser(userId);
-    if (!user || !user.isPublic) return undefined;
+    if (!user || (!skipPublicCheck && !user.isPublic)) return undefined;
 
     // Get public whiskeys
     const userWhiskeys = await db
@@ -1788,6 +1802,17 @@ export class DatabaseStorage implements IStorage {
       followersCount,
       followingCount,
     };
+  }
+
+  async getReviewCountForUser(userId: number): Promise<number> {
+    const userWhiskeys = await db
+      .select({ notes: whiskeys.notes })
+      .from(whiskeys)
+      .where(eq(whiskeys.userId, userId));
+    return userWhiskeys.reduce((count, w) => {
+      const notes = Array.isArray(w.notes) ? w.notes : [];
+      return count + notes.length;
+    }, 0);
   }
 
   async getPublicWhiskeys(userId: number, includeWishlist: boolean = false): Promise<Whiskey[]> {

@@ -2354,22 +2354,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get public profile by slug (no auth required)
+  // Get public profile by slug (no auth required, but auth-aware for own profile)
   app.get("/api/profile/:slug", async (req: Request, res: Response) => {
     try {
       const slug = req.params.slug;
-      // First find the user by their profile slug
-      const user = await storage.getUserByProfileSlug(slug);
+      const sessionUserId = req.session?.userId;
+
+      // Try to find user — first with public check, then check if it's own profile
+      let user = await storage.getUserByProfileSlug(slug);
+      let isOwnProfile = false;
+
+      if (!user && sessionUserId) {
+        // Try without public check — might be own profile that's private
+        user = await storage.getUserByProfileSlug(slug, true);
+        if (user && user.id === sessionUserId) {
+          isOwnProfile = true;
+        } else {
+          user = undefined; // Not own profile and not public
+        }
+      }
+
       if (!user) {
         return res.status(404).json({ message: "Profile not found or not public" });
       }
 
-      const profile = await storage.getPublicProfile(user.id);
+      const profile = await storage.getPublicProfile(user.id, isOwnProfile);
       if (!profile) {
         return res.status(404).json({ message: "Profile not found or not public" });
       }
 
-      res.json(profile);
+      // Normalize response shape for frontend
+      const reviewCount = await storage.getReviewCountForUser(user.id);
+      res.json({
+        user: profile.user,
+        stats: {
+          whiskeyCount: profile.stats.uniqueBottles,
+          reviewCount,
+          followersCount: profile.followersCount,
+          followingCount: profile.followingCount,
+        },
+      });
     } catch (error) {
       res.status(errorStatus(error)).json(safeError(error, "Failed to fetch profile"));
     }
