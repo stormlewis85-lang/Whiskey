@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
@@ -14,20 +13,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  BarChart3,
-  Wine,
-  EyeOff,
-  MessageSquare,
-  Users,
   Settings,
   Sun,
   Moon,
   Monitor,
   LogOut,
   ChevronRight,
-  Trophy,
-  TrendingUp,
-  Zap,
 } from "lucide-react";
 
 interface ProfileMenuProps {
@@ -50,8 +41,7 @@ function MenuItem({
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center gap-3 bg-transparent border-none cursor-pointer transition-colors active:bg-accent/50"
-      style={{ padding: "0 16px", minHeight: "48px" }}
+      className="w-full flex items-center gap-3 bg-transparent border-none cursor-pointer transition-colors active:bg-accent/50 px-4 min-h-[48px]"
     >
       <Icon
         className={cn(
@@ -61,10 +51,9 @@ function MenuItem({
       />
       <span
         className={cn(
-          "flex-1 text-left font-medium",
+          "flex-1 text-left font-medium text-[0.85rem]",
           variant === "destructive" ? "text-destructive" : "text-foreground"
         )}
-        style={{ fontSize: "0.85rem" }}
       >
         {label}
       </span>
@@ -74,9 +63,8 @@ function MenuItem({
 }
 
 export function ProfileMenu({ onOpenSettings }: ProfileMenuProps) {
-  const [, navigate] = useLocation();
   const { logoutMutation } = useAuth();
-  const { theme, setTheme, resolvedTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
 
@@ -98,68 +86,7 @@ export function ProfileMenu({ onOpenSettings }: ProfileMenuProps) {
   return (
     <>
       <div className="mx-5 mt-6 mb-24">
-        <div
-          className="text-muted-foreground uppercase font-medium mb-2 px-1"
-          style={{ fontSize: "0.7rem", letterSpacing: "0.08em" }}
-        >
-          Menu
-        </div>
-
         <div className="bg-card border border-border/50 rounded-xl overflow-hidden divide-y divide-border/50">
-          <MenuItem
-            icon={BarChart3}
-            label="Dashboard"
-            onClick={() => navigate("/dashboard")}
-            rightElement={chevron}
-          />
-          <MenuItem
-            icon={TrendingUp}
-            label="Analytics"
-            onClick={() => navigate("/analytics")}
-            rightElement={chevron}
-          />
-          <MenuItem
-            icon={Wine}
-            label="Flights"
-            onClick={() => navigate("/flights")}
-            rightElement={chevron}
-          />
-          <MenuItem
-            icon={EyeOff}
-            label="Blind Tastings"
-            onClick={() => navigate("/blind-tastings")}
-            rightElement={chevron}
-          />
-          <MenuItem
-            icon={MessageSquare}
-            label="Rick House"
-            onClick={() => navigate("/rick-house")}
-            rightElement={chevron}
-          />
-          <MenuItem
-            icon={Users}
-            label="Tasting Clubs"
-            onClick={() => navigate("/clubs")}
-            rightElement={chevron}
-          />
-          <MenuItem
-            icon={Trophy}
-            label="Challenges"
-            onClick={() => navigate("/challenges")}
-            rightElement={chevron}
-          />
-          <MenuItem
-            icon={TrendingUp}
-            label="Progress"
-            onClick={() => navigate("/progress")}
-            rightElement={chevron}
-          />
-          <MenuItem
-            icon={Zap}
-            label="Palate Exercises"
-            onClick={() => navigate("/exercises")}
-            rightElement={chevron}
-          />
           <MenuItem
             icon={Settings}
             label="Settings"
@@ -173,8 +100,7 @@ export function ProfileMenu({ onOpenSettings }: ProfileMenuProps) {
             rightElement={
               <button
                 onClick={(e) => { e.stopPropagation(); cycleTheme(); }}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-accent/50 border-none cursor-pointer"
-                style={{ fontSize: "0.75rem" }}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-accent/50 border-none cursor-pointer text-xs"
               >
                 <ThemeIcon className="w-3.5 h-3.5 text-muted-foreground" />
                 <span className="text-muted-foreground font-medium">{themeLabel}</span>
