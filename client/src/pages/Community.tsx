@@ -70,9 +70,9 @@ const FollowingReviewCard = ({ whiskey, review, user }: PublicReview) => {
   return (
     <Card className="group h-full flex flex-col bg-card border-border/50 shadow-warm-sm hover:shadow-warm hover:border-border transition-all duration-300">
       <CardHeader className="pb-3 pt-4">
-        <div className="flex justify-between items-start mb-3">
+        <div className="flex justify-between items-start mb-3 min-w-0">
           <Link href={user.profileSlug ? `/u/${user.profileSlug}` : '#'}>
-            <div className="flex items-center gap-2.5 cursor-pointer hover:opacity-80 transition-opacity">
+            <div className="flex items-center gap-2.5 cursor-pointer hover:opacity-80 transition-opacity min-w-0">
               <Avatar className="h-9 w-9 border-2 border-border">
                 {user.profileImage ? (
                   <AvatarImage src={user.profileImage} />
@@ -83,7 +83,7 @@ const FollowingReviewCard = ({ whiskey, review, user }: PublicReview) => {
                 )}
               </Avatar>
               <div>
-                <p className="text-sm font-medium text-foreground hover:text-foreground transition-colors">
+                <p className="text-sm font-medium text-foreground hover:text-foreground transition-colors truncate max-w-[120px]">
                   {displayName}
                 </p>
                 <p className="text-xs text-muted-foreground">{formatDate(review.date)}</p>
