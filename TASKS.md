@@ -63,11 +63,56 @@
 - **Status:** COMPLETE — findings logged in AUDIT-007-008-FINDINGS.md
 - **Summary:** Mock Drops data removed (replaced with "Coming Soon" placeholder), Drops page inline styles converted to Tailwind. 223 console.log instances and 6 `any` types flagged for future cleanup pass. CORS localhost guard already conditional on NODE_ENV.
 
+### [UIAUDIT-001] Fix Profile Page Auth State + Response Shape — IN PROGRESS
+- **Scope:** Standard
+- **Assigned:** Developer
+- **Priority:** P1
+- **Status:** CODE COMPLETE — awaiting deploy verification
+- **Root Cause:** `getUserByProfileSlug()` required `isPublic === true`, blocking private profiles from viewing own page. No username fallback when `profileSlug` is null. Response shape mismatch (API returned `stats.totalBottles`, frontend expected `stats.whiskeyCount`).
+- **Fixes Applied:**
+  - `storage.ts`: `getUserByProfileSlug()` — added `skipPublicCheck` param + username fallback lookup
+  - `storage.ts`: `getPublicProfile()` — added `skipPublicCheck` param for own-profile bypass
+  - `storage.ts`: Added `getReviewCountForUser()` method
+  - `routes.ts`: `/api/profile/:slug` — detects authenticated user viewing own profile, bypasses `isPublic` check, normalizes response shape to match frontend interface
+- **Cascading fixes:** Resolves audit items #1 (profile auth), #2 (no logout — was hidden behind broken ProfileMenu), #7 (hamburger/overflow — same root cause)
+
+### [UIAUDIT-002] Review Card Text Overflow — IN PROGRESS
+- **Scope:** Quick
+- **Assigned:** Developer
+- **Priority:** P2
+- **Status:** CODE COMPLETE — awaiting deploy verification
+- **Fixes Applied:**
+  - `card.tsx`: Added `overflow-hidden` to base Card component
+  - `Community.tsx`: Added `truncate max-w-[120px]` to username in FollowingReviewCard, `min-w-0` to flex containers for proper truncation
+
+### [UIAUDIT-003] Login Re-entry Point — CLOSED (Non-issue)
+- **Scope:** Quick
+- **Assigned:** Developer
+- **Priority:** P2
+- **Status:** CLOSED — verified working as designed
+- **Summary:** ProtectedRoute redirects to `/auth` when session expires. Auth page has both username/password and Google OAuth. No dead-end scenario.
+
 ---
 
 ## Queue
 
-_(Empty — all fix tasks completed)_
+### [UIAUDIT-004] Rick House Nav Prominence — IN PROGRESS
+- **Scope:** Medium
+- **Assigned:** Developer
+- **Priority:** P1
+- **Status:** CODE COMPLETE — awaiting deploy verification
+- **Decision:** Rick House replaces barcode scanner as center FAB. Scanner was broken (navigated to `/?barcode=` but Home didn't consume it) and duplicated inside AddWhiskeyModal.
+- **Fixes Applied:**
+  - `BottomNav.tsx`: Replaced ScanLine center FAB with Rick House button (MessageSquare icon + "RICK" label). Removed `onScanClick` prop. Added active state detection for `/rick-house`.
+  - `MobileShell.tsx`: Removed broken scanner state management and BarcodeScanner dialog. Simplified to shell wrapper.
+  - `index.css`: Added `rick-glow` keyframe animation — subtle 3s ambient pulse on the center button (warm gold shadow expansion). Press state scales down for tactile feedback.
+- **Nav layout:** Home | Search | [RICK] | Drops | Profile
+- **Scanner access:** Preserved in AddWhiskeyModal (Scan Barcode option) where it actually works with API lookup.
+
+### [UIAUDIT-005] Community Nav Presence
+- **Scope:** Medium
+- **Priority:** P3 (depends on community feature readiness)
+- **Summary:** Tasting Clubs, social features not accessible from mobile bottom tab. Needs dedicated entry point when community features are beta-ready.
 
 ---
 
