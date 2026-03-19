@@ -133,7 +133,7 @@ const RickHouse = () => {
           {isTastingSessionActive && (
             <Suspense
               fallback={
-                <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex items-center justify-center">
+                <div className="fixed inset-0 z-[60] bg-background/95 backdrop-blur-sm flex items-center justify-center">
                   <div className="animate-pulse text-muted-foreground">Loading Rick House...</div>
                 </div>
               }

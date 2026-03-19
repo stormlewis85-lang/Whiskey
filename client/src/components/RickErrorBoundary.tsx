@@ -41,7 +41,7 @@ class RickErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[60] bg-background/95 backdrop-blur-sm">
           <div className="flex flex-col items-center justify-center min-h-screen p-4">
             <Card className="max-w-md w-full border-border/50 shadow-warm-lg">
               <CardContent className="p-6 text-center space-y-4">

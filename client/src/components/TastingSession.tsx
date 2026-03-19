@@ -227,7 +227,7 @@ const TastingSession = ({ whiskey, mode, onClose, onComplete }: TastingSessionPr
   // Completion screen
   if (isCompleted && script) {
     return (
-      <div className="fixed inset-0 z-50 bg-background">
+      <div className="fixed inset-0 z-[60] bg-background">
         <div className="flex flex-col items-center justify-center min-h-screen p-4">
           <div className="max-w-lg w-full">
             <Card className="border-border/50 shadow-warm-lg">
@@ -290,7 +290,7 @@ const TastingSession = ({ whiskey, mode, onClose, onComplete }: TastingSessionPr
   // Loading state
   if (startSessionMutation.isPending || !script) {
     return (
-      <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm">
+      <div className="fixed inset-0 z-[60] bg-background/95 backdrop-blur-sm">
         <div className="flex flex-col items-center justify-center min-h-screen p-4">
           <div className="text-center space-y-4">
             <div className="relative">
@@ -312,7 +312,7 @@ const TastingSession = ({ whiskey, mode, onClose, onComplete }: TastingSessionPr
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-background flex flex-col">
+    <div className="fixed inset-0 z-[60] bg-background flex flex-col">
       {/* Header */}
       <header className="shrink-0 bg-gradient-to-r from-amber-950 via-amber-900 to-amber-950 text-white border-b border-amber-800/30">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
