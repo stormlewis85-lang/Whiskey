@@ -67,7 +67,6 @@ export function BottomNav() {
               viewBox="58 36 84 114"
               fill="none"
               className="text-primary-foreground"
-              style={{ marginBottom: "1px" }}
             >
               {/* Exact Glencairn glass from Logo component */}
               <ellipse cx="100" cy="46" rx="14" ry="3.5" stroke="currentColor" strokeWidth="2.5" fill="none" />
@@ -82,12 +81,6 @@ export function BottomNav() {
               {/* 4-point sparkle accent near rim */}
               <path d="M122 40L124 34L126 40L132 42L126 44L124 50L122 44L116 42Z" fill="currentColor" />
             </svg>
-            <span
-              className="text-primary-foreground font-semibold"
-              style={{ fontSize: "0.5rem", letterSpacing: "0.06em" }}
-            >
-              RICK
-            </span>
           </button>
         </Link>
 
