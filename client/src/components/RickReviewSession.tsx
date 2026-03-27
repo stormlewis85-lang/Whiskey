@@ -4,9 +4,8 @@ import { Whiskey } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, X, Mic, Volume2, VolumeX, CheckCircle, Star, ArrowLeft } from "lucide-react";
+import { Loader2, X, Volume2, VolumeX, Star, ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import AudioPlayer from "./AudioPlayer";
 
@@ -38,6 +37,18 @@ const PHASE_LABELS: Record<ReviewPhase, string> = {
   closing: 'Summary'
 };
 
+// Rick's guiding voice for each phase
+const PHASE_PROMPTS: Record<ReviewPhase, string> = {
+  intro: "Let's take our time with this one.",
+  visual: "Hold it up. Let the light do the talking.",
+  nose: "Bring it close. What finds you first?",
+  mouthfeel: "Notice the weight. The texture. The warmth.",
+  taste: "Now — what's the story on the palate?",
+  finish: "Swallow. What stays behind matters most.",
+  value: "The final measure. Was it worth the pour?",
+  closing: "Let's put it all together.",
+};
+
 // Phases that have scoring
 const SCORING_PHASES: ReviewPhase[] = ['nose', 'mouthfeel', 'taste', 'finish', 'value'];
 
@@ -63,37 +74,45 @@ interface RickReviewSessionProps {
   onComplete: (scores: ReviewScores) => void;
 }
 
+// Loading messages — Rick's personality
+const LOADING_MESSAGES = [
+  "Rick is studying the label...",
+  "Pulling up a stool, gathering his thoughts...",
+  "Every bottle has a story. Let's find this one...",
+  "Forty-two years of experience, distilled into this moment...",
+];
+
 const RickReviewSession = ({ whiskey, onClose, onComplete }: RickReviewSessionProps) => {
   const { toast } = useToast();
   const [script, setScript] = useState<RickReviewScript | null>(null);
   const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
-  const [isAudioEnabled, setIsAudioEnabled] = useState(false); // Audio optional, off by default
+  const [isAudioEnabled, setIsAudioEnabled] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
   const [phaseAudio, setPhaseAudio] = useState<Record<ReviewPhase, PhaseAudio | null>>({
-    intro: null,
-    visual: null,
-    nose: null,
-    mouthfeel: null,
-    taste: null,
-    finish: null,
-    value: null,
-    closing: null
+    intro: null, visual: null, nose: null, mouthfeel: null,
+    taste: null, finish: null, value: null, closing: null
   });
   const [isLoadingAudio, setIsLoadingAudio] = useState(false);
+  const [loadingMsgIndex, setLoadingMsgIndex] = useState(0);
 
   // Review scores state
   const [scores, setScores] = useState<ReviewScores>({
-    nose: 0,
-    mouthfeel: 0,
-    taste: 0,
-    finish: 0,
-    value: 0,
-    summary: ''
+    nose: 0, mouthfeel: 0, taste: 0, finish: 0, value: 0, summary: ''
   });
 
   const currentPhase = PHASES[currentPhaseIndex];
   const isCurrentScoringPhase = SCORING_PHASES.includes(currentPhase);
   const isSummaryPhase = currentPhase === 'closing';
+
+  // Rotate loading messages
+  useEffect(() => {
+    if (!script) {
+      const interval = setInterval(() => {
+        setLoadingMsgIndex((i) => (i + 1) % LOADING_MESSAGES.length);
+      }, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [script]);
 
   // Generate review guide mutation
   const generateGuideMutation = useMutation({
@@ -127,7 +146,6 @@ const RickReviewSession = ({ whiskey, onClose, onComplete }: RickReviewSessionPr
         phase
       });
       const data = await response.json();
-
       setPhaseAudio(prev => ({
         ...prev,
         [phase]: {
@@ -138,13 +156,10 @@ const RickReviewSession = ({ whiskey, onClose, onComplete }: RickReviewSessionPr
         }
       }));
     } catch (error) {
-      console.error('Failed to load audio:', error);
       setPhaseAudio(prev => ({
         ...prev,
         [phase]: {
-          audio: null,
-          contentType: null,
-          textOnly: true,
+          audio: null, contentType: null, textOnly: true,
           error: error instanceof Error ? error.message : 'Failed to load audio'
         }
       }));
@@ -170,11 +185,10 @@ const RickReviewSession = ({ whiskey, onClose, onComplete }: RickReviewSessionPr
   };
 
   const handleNext = () => {
-    // Check if current phase requires a score
     if (isCurrentScoringPhase && scores[currentPhase as keyof ReviewScores] === 0) {
       toast({
         title: "Score Required",
-        description: `Please rate the ${PHASE_LABELS[currentPhase]} before continuing.`,
+        description: `Please rate the ${PHASE_LABELS[currentPhase].toLowerCase()} before continuing.`,
         variant: "destructive"
       });
       return;
@@ -183,7 +197,6 @@ const RickReviewSession = ({ whiskey, onClose, onComplete }: RickReviewSessionPr
     if (currentPhaseIndex < PHASES.length - 1) {
       setCurrentPhaseIndex(prev => prev + 1);
     } else {
-      // Complete the review
       setIsCompleted(true);
     }
   };
@@ -202,23 +215,33 @@ const RickReviewSession = ({ whiskey, onClose, onComplete }: RickReviewSessionPr
     setIsAudioEnabled(prev => !prev);
   };
 
-  // Star Rating Component
-  const StarRating = ({ value, onChange, size = "lg" }: { value: number; onChange: (v: number) => void; size?: "sm" | "lg" }) => (
-    <div className="flex items-center gap-1">
+  // Haptic feedback
+  const triggerHaptic = (pattern: number | number[] = 50) => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(pattern);
+    }
+  };
+
+  // ── Star Rating ──
+
+  const ScoreInput = ({ value, onChange }: { value: number; onChange: (v: number) => void }) => (
+    <div className="flex items-center justify-center gap-2">
       {[1, 2, 3, 4, 5].map((star) => (
         <button
           key={star}
           type="button"
-          onClick={() => onChange(star)}
-          className="focus:outline-none focus:ring-2 focus:ring-amber-500 rounded"
+          onClick={() => {
+            onChange(star);
+            triggerHaptic(30);
+          }}
+          className="focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-full p-1 transition-transform active:scale-90"
         >
           <Star
             className={cn(
-              "transition-all",
-              size === "lg" ? "h-10 w-10" : "h-6 w-6",
+              "h-9 w-9 sm:h-10 sm:w-10 transition-all duration-200",
               star <= value
-                ? "text-amber-400 fill-amber-400"
-                : "text-muted-foreground/30 hover:text-amber-300"
+                ? "text-primary fill-primary drop-shadow-[0_0_6px_rgba(212,164,76,0.4)]"
+                : "text-muted-foreground/20 hover:text-primary/40"
             )}
           />
         </button>
@@ -226,279 +249,342 @@ const RickReviewSession = ({ whiskey, onClose, onComplete }: RickReviewSessionPr
     </div>
   );
 
-  // Completion screen
+  // ── Progress indicator — minimal line ──
+
+  const ProgressBar = () => {
+    const progress = ((currentPhaseIndex + 1) / PHASES.length) * 100;
+    return (
+      <div className="h-[2px] bg-border/30 w-full">
+        <div
+          className="h-full bg-primary/60 transition-all duration-500 ease-out"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+    );
+  };
+
+  // ── Phase stepper — refined dots ──
+
+  const PhaseStepper = () => (
+    <div className="flex items-center justify-center gap-1.5 py-3 px-4">
+      {PHASES.map((phase, index) => (
+        <button
+          key={phase}
+          onClick={() => {
+            if (index <= currentPhaseIndex) {
+              setCurrentPhaseIndex(index);
+              triggerHaptic(20);
+            }
+          }}
+          disabled={index > currentPhaseIndex}
+          className={cn(
+            "transition-all duration-300 rounded-full",
+            index === currentPhaseIndex
+              ? "w-6 h-2 bg-primary"
+              : index < currentPhaseIndex
+                ? "w-2 h-2 bg-primary/40 cursor-pointer hover:bg-primary/60"
+                : "w-2 h-2 bg-muted-foreground/15"
+          )}
+          aria-label={`${PHASE_LABELS[phase]}${index <= currentPhaseIndex ? ' (visited)' : ''}`}
+        />
+      ))}
+    </div>
+  );
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // COMPLETION SCREEN
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
   if (isCompleted && script) {
     const overallScore = (scores.nose + scores.mouthfeel + scores.taste + scores.finish + scores.value) / 5;
 
     return (
       <div className="fixed inset-0 z-50 bg-background flex flex-col">
-        <header className="shrink-0 bg-gradient-to-r from-amber-950 via-amber-900 to-amber-950 text-white border-b border-amber-800/30 p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Mic className="h-5 w-5 text-amber-400" />
-              <h1 className="font-semibold text-amber-50">Review Complete</h1>
+        {/* Thin gold accent */}
+        <div className="h-[2px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
+
+        <main className="flex-1 overflow-y-auto">
+          <div className="max-w-md mx-auto px-6 py-10 sm:py-14">
+
+            {/* Animated check */}
+            <div className="flex justify-center mb-8">
+              <div className="rick-check-enter w-14 h-14 rounded-full border border-primary/30 bg-primary/10 flex items-center justify-center">
+                <Check className="h-7 w-7 text-primary" strokeWidth={2.5} />
+              </div>
             </div>
-          </div>
-        </header>
 
-        <main className="flex-1 overflow-y-auto p-4">
-          <div className="max-w-lg mx-auto">
-            <Card className="border-border/50 shadow-warm-lg">
-              <CardContent className="p-6 sm:p-8 text-center space-y-6">
-                <div className="mx-auto w-16 h-16 bg-amber-500/20 rounded-full flex items-center justify-center">
-                  <CheckCircle className="h-10 w-10 text-amber-500" />
-                </div>
+            {/* Whiskey name — editorial */}
+            <div className="rick-fade-up rick-fade-up-1 text-center mb-10">
+              <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground/50 font-medium mb-2">
+                Review Complete
+              </p>
+              <h1 className="font-display text-2xl sm:text-3xl text-foreground tracking-tight leading-tight">
+                {whiskey.name}
+              </h1>
+              {whiskey.distillery && (
+                <p className="text-sm text-muted-foreground/50 mt-1 tracking-wide">{whiskey.distillery}</p>
+              )}
+            </div>
 
-                <div className="space-y-2">
-                  <h2 className="text-2xl font-bold text-foreground">Great Work!</h2>
-                  <p className="text-muted-foreground">{whiskey.name}</p>
-                </div>
-
-                {/* Score Summary */}
-                <div className="text-left space-y-3 border-t border-border/50 pt-4">
-                  <h3 className="font-semibold text-foreground text-center">Your Scores</h3>
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    {SCORING_PHASES.map(phase => (
-                      <div key={phase} className="flex justify-between p-2 bg-accent/30 rounded">
-                        <span className="text-muted-foreground">{PHASE_LABELS[phase]}</span>
-                        <span className="font-bold text-foreground">{scores[phase as keyof ReviewScores]}/5</span>
+            {/* Score circles */}
+            <div className="rick-fade-up rick-fade-up-2 mb-10">
+              <div className="flex items-end justify-center gap-3 sm:gap-4">
+                {SCORING_PHASES.map((phase) => {
+                  const score = scores[phase as keyof ReviewScores] as number;
+                  return (
+                    <div key={phase} className="text-center">
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border border-border/40 bg-card flex items-center justify-center mx-auto mb-1.5">
+                        <span className="font-display text-xl sm:text-2xl font-bold text-foreground tabular-nums">{score}</span>
                       </div>
-                    ))}
-                  </div>
-                  <div className="flex justify-between p-3 bg-amber-500/10 rounded-lg border border-amber-500/20">
-                    <span className="font-semibold text-amber-700 dark:text-amber-400">Overall</span>
-                    <span className="font-bold text-amber-700 dark:text-amber-400">{overallScore.toFixed(1)}/5</span>
-                  </div>
-                </div>
+                      <p className="text-[10px] text-muted-foreground/60 font-medium">{PHASE_LABELS[phase]}</p>
+                    </div>
+                  );
+                })}
+              </div>
 
-                {/* Quip */}
-                {script.quip && (
-                  <div className="p-4 bg-accent/30 rounded-lg">
-                    <p className="text-muted-foreground italic">"{script.quip}"</p>
-                    <p className="text-sm text-muted-foreground mt-2">— Rick House</p>
-                  </div>
-                )}
-
-                <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    onClick={onClose}
-                  >
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    Cancel
-                  </Button>
-                  <Button
-                    className="flex-1 bg-amber-600 hover:bg-amber-700 text-white"
-                    onClick={handleComplete}
-                  >
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    Save Review
-                  </Button>
+              {/* Overall — prominent */}
+              <div className="flex items-center justify-center mt-6 gap-3">
+                <div className="h-px w-8 bg-primary/20" />
+                <div className="flex items-baseline gap-2">
+                  <span className="font-display text-3xl font-bold text-primary tabular-nums">
+                    {overallScore.toFixed(1)}
+                  </span>
+                  <span className="text-xs text-muted-foreground/40 uppercase tracking-wider">overall</span>
                 </div>
-              </CardContent>
-            </Card>
+                <div className="h-px w-8 bg-primary/20" />
+              </div>
+            </div>
+
+            {/* Rick's quip */}
+            {script.quip && (
+              <div className="rick-fade-up rick-fade-up-3 text-center mb-10">
+                <div className="flex items-center justify-center gap-3 mb-4">
+                  <div className="h-px w-10 bg-border/40" />
+                  <div className="h-1 w-1 rounded-full bg-primary/30" />
+                  <div className="h-px w-10 bg-border/40" />
+                </div>
+                <p className="font-display text-lg text-foreground/70 leading-relaxed italic">
+                  "{script.quip}"
+                </p>
+                <p className="text-xs text-primary/40 mt-2 tracking-wide">— Rick</p>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="rick-fade-up rick-fade-up-4 space-y-3">
+              <Button
+                className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-medium tracking-wide"
+                onClick={handleComplete}
+              >
+                <Check className="h-4 w-4 mr-2" />
+                Save Review
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full h-10 text-muted-foreground/60 hover:text-muted-foreground"
+                onClick={onClose}
+              >
+                Discard
+              </Button>
+            </div>
           </div>
         </main>
       </div>
     );
   }
 
-  // Loading state
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // LOADING STATE
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
   if (generateGuideMutation.isPending || !script) {
     return (
-      <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm">
-        <div className="flex flex-col items-center justify-center min-h-screen p-4">
-          <div className="text-center space-y-4">
-            <Mic className="h-16 w-16 text-amber-500 animate-pulse mx-auto" />
-            <div className="space-y-2">
-              <h2 className="text-xl font-semibold text-foreground">
-                Rick is preparing your review guide...
-              </h2>
-              <p className="text-muted-foreground">{whiskey.name}</p>
-            </div>
-            <Loader2 className="h-6 w-6 animate-spin mx-auto text-amber-500" />
-          </div>
+      <div className="fixed inset-0 z-50 bg-background">
+        <div className="flex flex-col items-center justify-center min-h-screen px-6">
+          {/* Glencairn glass — same as TastingSession for brand consistency */}
+          <svg
+            width="48"
+            height="48"
+            viewBox="58 36 84 114"
+            fill="none"
+            className="text-primary animate-pulse mb-8"
+          >
+            <ellipse cx="100" cy="46" rx="14" ry="3.5" stroke="currentColor" strokeWidth="2.5" fill="none" />
+            <path d="M86 46 C86 46 83 58 81 66 C76 76 68 88 68 102 C68 118 82 130 100 130 C118 130 132 118 132 102 C132 88 124 76 119 66 C117 58 114 46 114 46" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinejoin="round" />
+            <path d="M72 100 Q100 106 128 100 C129 104 130 108 130 110 C130 116 118 127 100 127 C82 127 70 116 70 110 C70 108 71 104 72 100 Z" fill="currentColor" opacity="0.15" />
+            <line x1="100" y1="130" x2="100" y2="140" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+            <ellipse cx="100" cy="142" rx="18" ry="4" stroke="currentColor" strokeWidth="2.5" fill="none" />
+          </svg>
+          <p className="font-display text-lg text-foreground/70 text-center transition-opacity duration-500">
+            {LOADING_MESSAGES[loadingMsgIndex]}
+          </p>
+          <p className="text-sm text-muted-foreground/40 mt-2 tracking-wide">{whiskey.name}</p>
         </div>
       </div>
     );
   }
 
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // MAIN SESSION
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col">
-      {/* Header */}
-      <header className="shrink-0 bg-gradient-to-r from-amber-950 via-amber-900 to-amber-950 text-white border-b border-amber-800/30">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Mic className="h-5 w-5 text-amber-400" />
-            <div>
-              <h1 className="font-semibold text-amber-50 text-sm sm:text-base truncate max-w-[200px] sm:max-w-none">
-                {whiskey.name}
-              </h1>
-              <p className="text-xs text-amber-200/70">Review with Rick</p>
-            </div>
+
+      {/* ── Header: clean, minimal ── */}
+      <header className="shrink-0">
+        {/* Progress line */}
+        <ProgressBar />
+
+        <div className="px-4 py-3 flex items-center justify-between">
+          <div className="flex-1 min-w-0">
+            <h1 className="font-display text-sm sm:text-base text-foreground truncate">
+              {whiskey.name}
+            </h1>
+            <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground/40 font-medium">
+              Review with Rick
+            </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 shrink-0 ml-3">
             <Button
               variant="ghost"
               size="icon"
-              className="text-amber-200 hover:text-white hover:bg-amber-700/40"
+              className="h-9 w-9 text-muted-foreground/50 hover:text-foreground"
               onClick={toggleAudio}
               title={isAudioEnabled ? "Disable audio" : "Enable audio"}
             >
               {isAudioEnabled ? (
-                <Volume2 className="h-5 w-5" />
+                <Volume2 className="h-4 w-4" />
               ) : (
-                <VolumeX className="h-5 w-5" />
+                <VolumeX className="h-4 w-4" />
               )}
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              className="text-amber-200 hover:text-white hover:bg-amber-700/40"
+              className="h-9 w-9 text-muted-foreground/50 hover:text-foreground"
               onClick={onClose}
             >
-              <X className="h-5 w-5" />
+              <X className="h-4 w-4" />
             </Button>
           </div>
         </div>
 
-        {/* Phase Progress */}
-        <div className="px-4 pb-3">
-          <div className="flex items-center justify-between max-w-xl mx-auto">
-            {PHASES.map((phase, index) => (
-              <div key={phase} className="flex items-center">
-                <div
-                  className={cn(
-                    "flex flex-col items-center cursor-pointer transition-all",
-                    index <= currentPhaseIndex ? "opacity-100" : "opacity-50"
-                  )}
-                  onClick={() => index <= currentPhaseIndex && setCurrentPhaseIndex(index)}
-                >
-                  <div
-                    className={cn(
-                      "w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-[10px] sm:text-xs font-medium transition-all",
-                      index === currentPhaseIndex
-                        ? "bg-amber-500 text-white scale-110"
-                        : index < currentPhaseIndex
-                          ? "bg-amber-600/60 text-white"
-                          : "bg-amber-900/50 text-amber-300/50"
-                    )}
-                  >
-                    {index + 1}
-                  </div>
-                </div>
-                {index < PHASES.length - 1 && (
-                  <div
-                    className={cn(
-                      "w-3 sm:w-6 h-0.5 mx-0.5 sm:mx-1",
-                      index < currentPhaseIndex
-                        ? "bg-amber-500/60"
-                        : "bg-amber-900/50"
-                    )}
-                  />
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* Phase dots */}
+        <PhaseStepper />
       </header>
 
-      {/* Main Content */}
+      {/* ── Main Content ── */}
       <main className="flex-1 overflow-y-auto">
-        <div className="container mx-auto px-4 py-6 max-w-2xl pb-32">
-          <Card className="border-border/50 shadow-warm-lg">
-            <CardContent className="p-4 sm:p-6">
-              {/* Phase Title */}
-              <div className="mb-4 sm:mb-6">
-                <h2 className="text-xl sm:text-2xl font-bold text-foreground">
-                  {PHASE_LABELS[currentPhase]}
-                </h2>
-              </div>
+        <div className="max-w-xl mx-auto px-6 py-6 pb-32">
 
-              {/* Rick's Guidance */}
-              <div className="prose prose-amber dark:prose-invert max-w-none mb-6">
-                <p className="text-base sm:text-lg text-foreground leading-relaxed whitespace-pre-line">
-                  {script[currentPhase]}
+          {/* Phase label + Rick's prompt */}
+          <div className="mb-8">
+            <p className="text-[10px] uppercase tracking-[0.2em] text-primary/50 font-medium mb-1">
+              {PHASE_LABELS[currentPhase]}
+            </p>
+            <p className="font-display text-lg sm:text-xl text-foreground/50 italic leading-relaxed">
+              {PHASE_PROMPTS[currentPhase]}
+            </p>
+          </div>
+
+          {/* Rick's guidance text */}
+          <div className="mb-8">
+            <p className="text-base sm:text-lg text-foreground/80 leading-relaxed whitespace-pre-line">
+              {script[currentPhase]}
+            </p>
+          </div>
+
+          {/* Audio Player (if enabled) */}
+          {isAudioEnabled && (
+            <div className="mb-8">
+              <AudioPlayer
+                audioBase64={phaseAudio[currentPhase]?.audio}
+                contentType={phaseAudio[currentPhase]?.contentType || 'audio/mpeg'}
+                isLoading={isLoadingAudio && !phaseAudio[currentPhase]}
+                textOnly={phaseAudio[currentPhase]?.textOnly}
+                error={phaseAudio[currentPhase]?.error}
+                showSkipButtons={false}
+                autoPlay={true}
+              />
+            </div>
+          )}
+
+          {/* ── Scoring ── */}
+          {isCurrentScoringPhase && (
+            <div className="pt-6 border-t border-border/20">
+              <div className="text-center space-y-5">
+                <p className="text-xs text-muted-foreground/50 uppercase tracking-[0.15em] font-medium">
+                  Your rating
                 </p>
-              </div>
-
-              {/* Audio Player (if enabled) */}
-              {isAudioEnabled && (
-                <AudioPlayer
-                  audioBase64={phaseAudio[currentPhase]?.audio}
-                  contentType={phaseAudio[currentPhase]?.contentType || 'audio/mpeg'}
-                  isLoading={isLoadingAudio && !phaseAudio[currentPhase]}
-                  textOnly={phaseAudio[currentPhase]?.textOnly}
-                  error={phaseAudio[currentPhase]?.error}
-                  showSkipButtons={false}
-                  autoPlay={true}
-                  className="mb-6"
+                <ScoreInput
+                  value={scores[currentPhase as keyof ReviewScores] as number}
+                  onChange={(v) => handleScoreChange(currentPhase as keyof ReviewScores, v)}
                 />
-              )}
+                {isCurrentScoringPhase && (scores[currentPhase as keyof Omit<ReviewScores, 'summary'>] as number) > 0 && (
+                  <p className="font-display text-2xl text-primary tabular-nums">
+                    {scores[currentPhase as keyof Omit<ReviewScores, 'summary'>] as number}
+                    <span className="text-sm text-muted-foreground/30 ml-1">/ 5</span>
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
 
-              {/* Scoring Input (for scoring phases) */}
-              {isCurrentScoringPhase && (
-                <div className="border-t border-border/50 pt-6">
-                  <div className="text-center space-y-4">
-                    <p className="text-sm text-muted-foreground">
-                      Rate the {PHASE_LABELS[currentPhase].toLowerCase()}
-                    </p>
-                    <StarRating
-                      value={scores[currentPhase as keyof ReviewScores] as number}
-                      onChange={(v) => handleScoreChange(currentPhase as keyof ReviewScores, v)}
-                    />
-                    {scores[currentPhase as keyof ReviewScores] > 0 && (
-                      <p className="text-lg font-semibold text-amber-600 dark:text-amber-400">
-                        {scores[currentPhase as keyof ReviewScores]} / 5
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Summary Input (for closing phase) */}
-              {isSummaryPhase && (
-                <div className="border-t border-border/50 pt-6">
-                  <div className="space-y-3">
-                    <label className="text-sm font-medium text-foreground">
-                      Your Summary (optional)
-                    </label>
-                    <Textarea
-                      placeholder="Capture your overall thoughts about this whiskey..."
-                      value={scores.summary}
-                      onChange={(e) => setScores(prev => ({ ...prev, summary: e.target.value }))}
-                      className="min-h-[120px] resize-none"
-                    />
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          {/* ── Summary textarea ── */}
+          {isSummaryPhase && (
+            <div className="pt-6 border-t border-border/20">
+              <div className="space-y-3">
+                <label className="text-xs text-muted-foreground/50 uppercase tracking-[0.15em] font-medium">
+                  Your thoughts <span className="normal-case tracking-normal text-muted-foreground/30">(optional)</span>
+                </label>
+                <Textarea
+                  placeholder="What will you remember about this pour?"
+                  value={scores.summary}
+                  onChange={(e) => setScores(prev => ({ ...prev, summary: e.target.value }))}
+                  className="min-h-[140px] resize-none bg-transparent border-border/30 focus:border-primary/30 text-foreground/80 placeholder:text-muted-foreground/25"
+                />
+              </div>
+            </div>
+          )}
         </div>
       </main>
 
-      {/* Fixed Navigation Footer */}
-      <footer className="shrink-0 bg-background/95 backdrop-blur-sm border-t border-border/50 p-4">
-        <div className="container mx-auto max-w-2xl flex items-center justify-between gap-4">
+      {/* ── Navigation Footer ── */}
+      <footer className="shrink-0 bg-background border-t border-border/20 safe-area-bottom">
+        <div className="max-w-xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
           <Button
-            variant="outline"
+            variant="ghost"
             onClick={handlePrevious}
             disabled={currentPhaseIndex === 0}
-            className="flex-1 sm:flex-none"
+            className="text-muted-foreground/50 hover:text-foreground disabled:opacity-20 min-h-[44px]"
           >
-            Previous
+            <ArrowLeft className="h-4 w-4 mr-1.5" />
+            Back
           </Button>
 
-          <span className="text-sm text-muted-foreground hidden sm:block">
-            {currentPhaseIndex + 1} of {PHASES.length}
+          <span className="text-[10px] text-muted-foreground/30 uppercase tracking-wider tabular-nums">
+            {currentPhaseIndex + 1} / {PHASES.length}
           </span>
 
           <Button
-            onClick={handleNext}
-            className="bg-amber-600 hover:bg-amber-700 text-white flex-1 sm:flex-none"
+            onClick={() => {
+              handleNext();
+              triggerHaptic(currentPhaseIndex === PHASES.length - 1 ? [50, 50, 50] : 30);
+            }}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground min-h-[44px] px-6 font-medium tracking-wide"
           >
-            {currentPhaseIndex === PHASES.length - 1 ? "Finish" : "Next"}
+            {currentPhaseIndex === PHASES.length - 1 ? (
+              <>
+                Finish
+                <Check className="h-4 w-4 ml-1.5" />
+              </>
+            ) : (
+              <>
+                Continue
+                <ArrowRight className="h-4 w-4 ml-1.5" />
+              </>
+            )}
           </Button>
         </div>
       </footer>

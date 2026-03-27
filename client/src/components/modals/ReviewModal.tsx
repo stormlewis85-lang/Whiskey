@@ -979,7 +979,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey, existingReview }: ReviewModalPr
 
               <Button
                 variant="outline"
-                className="w-full min-h-20 py-4 justify-start gap-4 text-left"
+                className="w-full min-h-20 py-4 justify-start gap-4 text-left whitespace-normal"
                 onClick={() => {
                   setShowRickSession(true);
                 }}
@@ -995,7 +995,7 @@ const ReviewModal = ({ isOpen, onClose, whiskey, existingReview }: ReviewModalPr
 
               <Button
                 variant="outline"
-                className="w-full min-h-20 py-4 justify-start gap-4 text-left"
+                className="w-full min-h-20 py-4 justify-start gap-4 text-left whitespace-normal"
                 onClick={() => setReviewMode('regular')}
               >
                 <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center shrink-0">

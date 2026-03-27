@@ -8,11 +8,12 @@ import { RickShelf } from "@/components/rick/RickShelf";
 import { RickJournal } from "@/components/rick/RickJournal";
 import { generateSuggestions } from "@/lib/rick-suggestions";
 import { useAuth } from "@/hooks/use-auth";
-import type { Whiskey } from "@shared/schema";
+import type { Whiskey, ReviewNote } from "@shared/schema";
 
 const TastingModeModal = lazy(() => import("@/components/modals/TastingModeModal"));
 const TastingSession = lazy(() => import("@/components/TastingSession"));
 const RickErrorBoundary = lazy(() => import("@/components/RickErrorBoundary"));
+const ReviewModal = lazy(() => import("@/components/modals/ReviewModal"));
 
 interface SessionHistoryItem {
   id: number;
@@ -34,6 +35,10 @@ const RickHouse = () => {
   const [isTastingSessionActive, setIsTastingSessionActive] = useState(false);
   const [tastingMode, setTastingMode] = useState<"guided" | "notes">("guided");
   const [selectedWhiskeyId, setSelectedWhiskeyId] = useState<string>("");
+
+  // Review modal state (opened after tasting completion)
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [existingReview, setExistingReview] = useState<ReviewNote | undefined>(undefined);
 
   // Data queries
   const { data: sessions = [] } = useQuery<SessionHistoryItem[]>({
@@ -89,6 +94,21 @@ const RickHouse = () => {
   const handleSessionEnd = () => {
     setIsTastingSessionActive(false);
     queryClient.invalidateQueries({ queryKey: ["/api/rick/sessions"] });
+  };
+
+  const handleSessionComplete = () => {
+    setIsTastingSessionActive(false);
+    queryClient.invalidateQueries({ queryKey: ["/api/rick/sessions"] });
+
+    // Open ReviewModal for the whiskey they just tasted
+    if (selectedWhiskey) {
+      if (selectedWhiskey.notes && Array.isArray(selectedWhiskey.notes) && selectedWhiskey.notes.length > 0) {
+        setExistingReview(selectedWhiskey.notes[selectedWhiskey.notes.length - 1] as ReviewNote);
+      } else {
+        setExistingReview(undefined);
+      }
+      setIsReviewModalOpen(true);
+    }
   };
 
   return (
@@ -149,11 +169,23 @@ const RickHouse = () => {
                   whiskey={selectedWhiskey}
                   mode={tastingMode}
                   onClose={handleSessionEnd}
-                  onComplete={handleSessionEnd}
+                  onComplete={handleSessionComplete}
                 />
               </RickErrorBoundary>
             </Suspense>
           )}
+
+          <Suspense fallback={null}>
+            <ReviewModal
+              isOpen={isReviewModalOpen}
+              onClose={() => {
+                setIsReviewModalOpen(false);
+                setExistingReview(undefined);
+              }}
+              whiskey={selectedWhiskey}
+              existingReview={existingReview}
+            />
+          </Suspense>
         </>
       )}
     </div>
