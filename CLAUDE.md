@@ -1,78 +1,23 @@
-# CLAUDE.md — MyWhiskeyPedia Agent System Configuration
+# CLAUDE.md — MyWhiskeyPedia Configuration
 
-> This project uses a structured agent system. Read this file first on every session.
+> This file is read automatically at the start of every Claude Code session.
 
-## Agent Framework
+## Agent System
 
-- **Framework:** `.agent-framework/` (git submodule — DO NOT MODIFY)
-- **Framework repo:** github.com/stormlewis85-lang/agent-master-repo
-- **Domain:** Software (see `.agent-framework/domains/software.md`)
+**Read `./agents-master/CLAUDE.md` for the full agent workflow, pipeline, hierarchy, and session protocol. Follow it.**
 
-## Context Files
+This file is the project-level config. The submodule file defines how the agent team works.
 
-1. Read `.agent-framework/CONTEXT_MASTER.md` for universal standards
-2. Read `.agent-framework/domains/software.md` for domain behavior
-3. Read `./CONTEXT_PROJECT.md` for project-specific details
-4. Read `./PATTERNS.md` for codebase conventions (if it exists)
-5. Read `./specs/` directory for detailed system documentation
-6. Project context overrides framework where there's a conflict
+## Project Overview
 
-## Project State
+MyWhiskeyPedia is a whiskey review and discovery platform with a 6-component weighted scoring system.
 
-- **Tasks:** `./TASKS.md` - PM-owned task tracker, single source of truth
-- **Decisions:** `./DECISIONS.md` - Architectural and feature decision log
-- **Research:** `./RESEARCH.md` - Research findings and landscape analysis
-- **Patterns:** `./PATTERNS.md` - Codebase conventions (owned by Architect, read by Developer and Test)
-- **Autopilot:** `./autopilot-rules.md` - Unattended execution rules (optional, read by PM in Autopilot mode)
+## Tech Stack
 
-## Session Start Protocol
-
-### Interactive Mode (Default)
-
-1. Read this file (CLAUDE.md)
-2. Read TASKS.md to understand current project state
-3. Resume work where the last session left off
-4. Check DECISIONS.md if the current task involves architectural choices
-5. Check RESEARCH.md if the current task involves previously researched topics
-6. Read relevant `specs/` files for the area being modified
-
-### Autopilot Mode (Ralph Loop)
-
-1. Read this file (CLAUDE.md)
-2. Read autopilot-rules.md for execution boundaries
-3. Read TASKS.md - identify next Autopilot-eligible task
-4. PM validates the task against autopilot rules:
-   - Within scope ceiling? (Quick/Standard only unless rules say otherwise)
-   - Outside risk boundaries? (skip if it touches restricted areas)
-   - Dependencies met? (prior tasks complete, gates passed)
-5. If no eligible tasks remain, exit cleanly with status summary
-6. If eligible task found, PM assigns agents and executes the pipeline
-7. On completion, update TASKS.md, commit, exit - next iteration gets fresh context
-
-## Pipeline
-
-```
-Storm > PM > Research > Architect > Developer > Test > QA > Docs
-```
-
-Not every task uses every step. PM determines the pipeline per task.
-
-## Hierarchy
-
-- **Tier 1:** PM Agent (orchestrator - all work flows through PM)
-- **Tier 2:** Research, Architect, Developer, Test, QA, Docs (always available)
-- **Tier 3:** Specialists activated for this project (see CONTEXT_PROJECT.md)
-- **Meta:** Agent Creator (activated only when capability gaps are identified)
-
-## Token Economy
-
-- PM assigns scope tiers: **Quick** / **Standard** / **Deep** / **Autopilot**
-- Agents match effort and verbosity to the assigned tier
-- Minimum viable agent team per task - not every task needs the full pipeline
-- Check DECISIONS.md and RESEARCH.md before regenerating prior analysis
-- Be brief by default. Offer to elaborate when depth might help.
-
----
+- TypeScript (strict mode)
+- Drizzle ORM + PostgreSQL
+- JWT auth (httpOnly cookie) + Google OAuth
+- Async/await over promises
 
 ## Project-Specific Rules
 
@@ -84,33 +29,44 @@ The 6-component weighted scoring system is core IP. See `specs/REVIEW-SYSTEM.md`
 
 JWT stored in httpOnly cookie. Google OAuth for authentication. Check `specs/API.md` for the full auth flow. Known issue: delete operations may have session token bugs.
 
-### Before Making Changes
+## Context Files
 
-1. Read the relevant spec file in `specs/` for the area you are modifying
-2. Run existing tests to establish baseline
-3. Make atomic commits with descriptive messages
+1. Read `./CONTEXT_PROJECT.md` for project-specific details
+2. Read `./TASKS.md` for current task state and backlog
+3. Read `./DECISIONS.md` for architectural decisions with rationale
+4. Read relevant `specs/` files for the area being modified
 
-### Code Style
+## Key Files
+
+| File | Purpose |
+|------|---------|
+| `specs/ARCHITECTURE.md` | System design and folder structure |
+| `specs/DATABASE.md` | Schema and relationships |
+| `specs/API.md` | All endpoints with request/response |
+| `specs/TESTING.md` | Test plan and verification |
+| `specs/REVIEW-SYSTEM.md` | 6-component weighted scoring system |
+
+## Code Style
 
 - TypeScript strict mode
 - Async/await over promises
 - Error handling on all API calls
 - No console.log in production code (use proper logging)
 
-### Database Changes
+## Database Changes
 
 - ORM: Drizzle ORM (PostgreSQL)
 - Never modify schema directly
 - Create migration files for all changes
 - Test migrations on a copy first
 
-### Testing Requirements
+## Testing Requirements
 
 - All API endpoints must have test coverage
 - Frontend components need smoke tests
 - Run full test suite before marking task complete
 
-### Git Commit Format
+## Git Commit Format
 
 ```
 type: brief description
@@ -120,17 +76,6 @@ type: brief description
 ```
 
 Types: feat, fix, test, docs, refactor, chore
-
-## Spec Files Reference
-
-| File | Purpose |
-|------|---------|
-| `specs/ARCHITECTURE.md` | System design and folder structure |
-| `specs/DATABASE.md` | Schema and relationships |
-| `specs/API.md` | All endpoints with request/response |
-| `specs/TESTING.md` | Test plan and verification |
-| `specs/REVIEW-SYSTEM.md` | 6-component weighted scoring system |
-| `specs/TASKS.md` | Legacy task tracking (superseded by root TASKS.md) |
 
 ## Golden Rules
 
