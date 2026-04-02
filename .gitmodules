@@ -1,11 +1,3 @@
-[submodule "agent-master-repo"]
-	path = agent-master-repo
-	url = https://github.com/stormlewis85-lang/agent-master-repo
-	branch = _project
-[submodule ".agent-framework"]
-	path = .agent-framework
-	url = https://github.com/stormlewis85-lang/agent-master-repo.git
-	branch = _project
 [submodule "agents-master"]
 	path = agents-master
 	url = https://github.com/stormlewis85-lang/agent-master-repo.git
