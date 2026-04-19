@@ -1,19 +1,10 @@
 {
+  "thinking": true,
+  "outputStyle": "explanatory",
   "enabledPlugins": {
     "typescript-lsp@claude-plugins-official": true,
     "pyright-lsp@claude-plugins-official": true
   },
-  "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash .agent-framework/.claude/hooks/log-lsp-errors.sh"
-          }
-        ]
-      }
-    ]
-  }
+  "_hooks_note": "TODO: Restore PostToolUse hook when log-lsp-errors.sh is vendored into this project. The previous path (.agent-framework/.claude/hooks/log-lsp-errors.sh) was broken — no such directory exists. The canonical hook lives in the master framework at Agents/.claude/hooks/log-lsp-errors.sh but is not copied into per-project submodules.",
+  "hooks": {}
 }

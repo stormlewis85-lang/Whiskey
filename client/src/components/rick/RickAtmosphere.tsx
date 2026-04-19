@@ -1,4 +1,5 @@
 import { getRickGreeting } from "@/lib/rick-suggestions";
+import { useMemo } from "react";
 
 interface RickAtmosphereProps {
   userName: string | null;
@@ -9,9 +10,14 @@ interface RickAtmosphereProps {
 export function RickAtmosphere({ userName, sessionCount, lastSessionToday }: RickAtmosphereProps) {
   const greeting = getRickGreeting(userName, sessionCount, lastSessionToday);
 
+  const { line1, line2 } = useMemo(() => {
+    const lines = greeting.split("\n").filter(Boolean);
+    return { line1: lines[0] || "", line2: lines.slice(1).join(" ") || "" };
+  }, [greeting]);
+
   return (
     <section className="relative overflow-hidden pt-12 pb-10 px-5">
-      {/* Ambient radial glow — boosted visibility */}
+      {/* Ambient radial glow */}
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="rick-atmosphere-glow w-[360px] h-[360px] rounded-full" />
       </div>
@@ -33,10 +39,13 @@ export function RickAtmosphere({ userName, sessionCount, lastSessionToday }: Ric
           <ellipse cx="100" cy="142" rx="18" ry="4" stroke="currentColor" strokeWidth="2.5" fill="none" />
         </svg>
 
-        {/* Greeting — Rick's voice */}
-        <p className="font-display text-lg text-foreground/80 max-w-[280px] leading-relaxed whitespace-pre-line">
-          {greeting}
-        </p>
+        {/* Greeting — hero scale with deliberate line breaks */}
+        <h1 className="text-display-hero text-foreground leading-[1.1]">{line1}</h1>
+        {line2 && (
+          <p className="font-display text-xl text-muted-foreground mt-2 max-w-[320px] leading-relaxed">
+            {line2}
+          </p>
+        )}
       </div>
     </section>
   );

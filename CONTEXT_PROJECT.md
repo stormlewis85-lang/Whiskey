@@ -29,6 +29,7 @@ MyWhiskeyPedia is a premium whiskey collection and review platform that combines
 
 ## Design System
 
+- **Status:** Active — see `/DESIGN.md` (v2.0) for the full specification
 - **Aesthetic:** "Black & Gold" — inspired by Glenfiddich, The Macallan
 - **Primary background:** #0A0A0A (near-black)
 - **Gold accent:** #D4A44C — used sparingly as a "precious" element (stars, CTAs, active states only)

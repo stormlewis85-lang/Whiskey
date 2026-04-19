@@ -69,3 +69,13 @@ _Decisions made during agent-driven development will be logged below._
 - **Decision:** Pre-seeded challenge catalog with 5 challenge types and user enrollment model
 - **Context:** Could do dynamic challenge generation or fixed catalog
 - **Rationale:** Fixed catalog with seedDefaultChallenges() for predictable content. 5 types: review_streak (consistency), flavor_hunt (identification), explore_type (diversity), blind_identify (skill), community_challenge (social). User joins challenges via user_challenges table tracking progress/status. Challenges can be recurring (re-enrollable after completion). Auto-completes and awards XP when progress >= goalCount.
+
+### D-011: DESIGN.md v2.0 — Formalized Design System
+- **Decision:** Create DESIGN.md v2.0 at project root as the authoritative design system document, synced to actual codebase HSL custom properties
+- **Context:** Existing DESIGN.md v1.0 had hardcoded hex values that drifted from the actual CSS custom property system. No Rick House design language documented. Stitch MCP integration requires a formal DESIGN.md per STITCH_CONTEXT.md workflow.
+- **Rationale:** DESIGN.md is the durable artifact that survives even if tools change. Synced all color values to the actual HSL system in `index.css`. Added Rick House sub-design language (atmosphere glow, FAB glow, completion animations, voice/tone). Added Gold Rule as explicit design law with allowed/forbidden lists and opacity scale. Supersedes legacy DESIGN_SYSTEM.md and DESIGN_SYSTEM_V2.md.
+
+### D-012: Rick House Page — 3-Zone Architecture Validated
+- **Decision:** Rick House page uses three-zone layout: Atmosphere (ambient header), Shelf (AI suggestion cards), Journal (tasting history)
+- **Context:** Existing Rick House components (`RickAtmosphere.tsx`, `RickShelf.tsx`, `RickJournal.tsx`) already implement this pattern. High-fidelity screen confirms the design direction.
+- **Rationale:** The three zones create a progression from mood-setting (Atmosphere) to action (Shelf) to reflection (Journal). The page does something even if the user does nothing — suggestions are pre-generated from collection data. "Bartender who's there when you want him" pattern. Validated via high-fidelity HTML mockup at `/rick-house-redesign.html`.

@@ -1,13 +1,14 @@
 import { useState, lazy, Suspense, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Header } from "@/components/Header";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { MobilePageHeader } from "@/components/MobilePageHeader";
 import { RickAtmosphere } from "@/components/rick/RickAtmosphere";
 import { RickShelf } from "@/components/rick/RickShelf";
 import { RickJournal } from "@/components/rick/RickJournal";
 import { generateSuggestions } from "@/lib/rick-suggestions";
 import { useAuth } from "@/hooks/use-auth";
+import { ArrowLeft } from "lucide-react";
 import type { Whiskey, ReviewNote } from "@shared/schema";
 
 const TastingModeModal = lazy(() => import("@/components/modals/TastingModeModal"));
@@ -111,9 +112,25 @@ const RickHouse = () => {
     }
   };
 
+  const [, navigate] = useLocation();
+
   return (
-    <div className="min-h-screen bg-background">
-      {isMobile ? <MobilePageHeader /> : <Header />}
+    <div className="min-h-screen" style={{ backgroundColor: "#050505" }}>
+      {/* Rick House header — no standard chrome */}
+      {isMobile ? (
+        <div className="flex items-center px-5 pt-4 pb-2">
+          <button
+            onClick={() => navigate("/")}
+            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Step out
+          </button>
+          <span className="ml-auto text-label-caps text-muted-foreground/50">Rick House</span>
+        </div>
+      ) : (
+        <Header />
+      )}
 
       {/* Zone 1 — The Atmosphere */}
       <RickAtmosphere
@@ -122,6 +139,15 @@ const RickHouse = () => {
         lastSessionToday={lastSessionToday}
       />
 
+      {/* Zone divider */}
+      <div className="px-5 mt-8">
+        <div className="flex items-center gap-3">
+          <div className="h-px flex-1 bg-border/50" />
+          <span className="text-label-caps text-muted-foreground/50">THE SHELF</span>
+          <div className="h-px flex-1 bg-border/50" />
+        </div>
+      </div>
+
       {/* Zone 2 — The Shelf */}
       <RickShelf
         suggestions={suggestions}
@@ -129,8 +155,17 @@ const RickHouse = () => {
         onSelectWhiskey={handleSelectWhiskey}
       />
 
+      {/* Zone divider */}
+      <div className="px-5 mt-8">
+        <div className="flex items-center gap-3">
+          <div className="h-px flex-1 bg-border/50" />
+          <span className="text-label-caps text-muted-foreground/50">THE JOURNAL</span>
+          <div className="h-px flex-1 bg-border/50" />
+        </div>
+      </div>
+
       {/* Zone 3 — The Journal */}
-      <div className="mt-8">
+      <div className="mt-4">
         <RickJournal sessions={journalSessions} onResume={handleResumeSession} />
       </div>
 

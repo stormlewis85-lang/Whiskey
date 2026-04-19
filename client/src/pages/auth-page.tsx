@@ -14,7 +14,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Loader2, Check, ArrowRight } from "lucide-react";
+import { Loader2, ArrowRight } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -74,6 +74,7 @@ export default function AuthPage() {
   const [betaCode, setBetaCode] = useState("");
   const [betaValidated, setBetaValidated] = useState(false);
   const [betaError, setBetaError] = useState<string | null>(null);
+  const [showBetaOnLogin, setShowBetaOnLogin] = useState(false);
   const searchString = useSearch();
 
   // Check for OAuth errors in URL
@@ -160,60 +161,27 @@ export default function AuthPage() {
     return <Redirect to="/" />;
   }
 
-  const features = [
-    "Track your whiskey collection",
-    "Detailed tasting notes & reviews",
-    "Discover flavor profiles",
-    "Share with the community",
-  ];
-
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-background">
-      {/* Left side - Branding & Features */}
-      <div className="relative lg:flex-1 lg:flex lg:flex-col lg:justify-center px-6 py-12 lg:px-16 bg-gradient-to-br from-amber-950 via-amber-900 to-amber-950 text-white overflow-hidden">
-        {/* Decorative elements */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-20 left-10 w-32 h-32 rounded-full bg-amber-500 blur-3xl" />
-          <div className="absolute bottom-20 right-10 w-48 h-48 rounded-full bg-amber-400 blur-3xl" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full bg-amber-600 blur-3xl" />
-        </div>
-
-        {/* Subtle grain texture overlay */}
-        <div className="absolute inset-0 opacity-[0.03]" style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`
-        }} />
+      {/* Left side - V2 brand panel */}
+      <div className="relative lg:flex-1 lg:flex lg:flex-col lg:justify-center px-6 py-12 lg:px-16 overflow-hidden" style={{ backgroundColor: "hsl(var(--background))" }}>
+        {/* Subtle ambient gold glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full opacity-[0.06]" style={{ background: "radial-gradient(ellipse at center, hsl(var(--primary)), transparent 70%)" }} />
 
         <div className="relative z-10 max-w-lg mx-auto lg:mx-0">
-          {/* Logo */}
-          <div className="flex items-center gap-3 mb-8">
-            <Logo size="small" className="w-14 h-14" />
-            <div>
-              <h1 className="text-2xl font-heading text-[#D4A44C] tracking-tight">MyWhiskeyPedia</h1>
-              <p className="text-amber-300/80 text-sm">Your personal whiskey journal</p>
-            </div>
+          {/* Logo — restrained */}
+          <div className="flex items-center gap-3 mb-12">
+            <Logo size="small" className="w-10 h-10" />
+            <span className="text-lg font-heading text-primary tracking-tight">MyWhiskeyPedia</span>
           </div>
 
-          {/* Tagline */}
-          <h2 className="text-3xl lg:text-4xl font-bold mb-4 leading-tight">
-            Savor every pour.
-            <br />
-            <span className="text-amber-400">Remember every note.</span>
-          </h2>
-          <p className="text-amber-100/70 text-lg mb-8 leading-relaxed">
-            Build your collection, refine your palate, and discover what makes each whiskey unique.
+          {/* Single Playfair headline */}
+          <h1 className="font-display text-foreground leading-[1.1] tracking-tight" style={{ fontSize: "clamp(2.5rem, 5vw, 3.5rem)" }}>
+            Every bottle has a story worth keeping.
+          </h1>
+          <p className="mt-5 text-lg text-muted-foreground leading-relaxed max-w-md">
+            Every bottle, every pour, every note — finally somewhere worth keeping them.
           </p>
-
-          {/* Features list */}
-          <ul className="space-y-3 hidden lg:block">
-            {features.map((feature, index) => (
-              <li key={index} className="flex items-center gap-3 text-amber-100/80">
-                <div className="flex-shrink-0 w-5 h-5 rounded-full bg-amber-500/20 flex items-center justify-center">
-                  <Check className="w-3 h-3 text-amber-400" />
-                </div>
-                {feature}
-              </li>
-            ))}
-          </ul>
         </div>
       </div>
 
@@ -273,20 +241,29 @@ export default function AuthPage() {
                     </p>
                   </div>
 
-                  {/* Beta code input */}
+                  {/* Collapsed beta code disclosure */}
                   <div className="mb-4">
-                    <label className="text-sm font-medium text-foreground mb-1.5 block">
-                      Beta Invite Code
-                    </label>
-                    <Input
-                      placeholder="Enter your invite code"
-                      value={betaCode}
-                      onChange={(e) => setBetaCode(e.target.value)}
-                      className="h-11"
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Required for new accounts. Returning users can sign in without a code.
-                    </p>
+                    {showBetaOnLogin ? (
+                      <div>
+                        <label className="text-sm font-medium text-foreground mb-1.5 block">
+                          Beta Invite Code
+                        </label>
+                        <Input
+                          placeholder="Enter your invite code"
+                          value={betaCode}
+                          onChange={(e) => setBetaCode(e.target.value)}
+                          className="h-11"
+                        />
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setShowBetaOnLogin(true)}
+                        className="text-sm text-muted-foreground hover:text-foreground transition-colors underline underline-offset-4"
+                      >
+                        Have an invite code? Enter it
+                      </button>
+                    )}
                   </div>
 
                   {/* Google OAuth Button */}

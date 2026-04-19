@@ -92,9 +92,99 @@
 - **Status:** CLOSED — verified working as designed
 - **Summary:** ProtectedRoute redirects to `/auth` when session expires. Auth page has both username/password and Google OAuth. No dead-end scenario.
 
+### [BETA-001] Collection Empty State Rework — CODE COMPLETE
+- **Scope:** Standard
+- **Assigned:** Developer
+- **Priority:** P1 (beta blocker)
+- **Status:** CODE COMPLETE — awaiting visual verification
+- **File:** `client/src/components/CollectionGrid.tsx`
+- **Acceptance criteria:**
+  - [ ] No centered icon pattern
+  - [ ] Headline uses Playfair Display at display scale
+  - [ ] Three distinct secondary CTAs (not buried in a "pro tip")
+  - [ ] Rick House teaser present
+  - [ ] Left-aligned editorial layout
+
+### [BETA-002] Auth Page Left Panel Rework — CODE COMPLETE
+- **Scope:** Standard
+- **Assigned:** Developer
+- **Priority:** P1 (beta blocker)
+- **Status:** CODE COMPLETE — awaiting visual verification
+- **File:** `client/src/pages/auth-page.tsx`
+- **Acceptance criteria:**
+  - [ ] No amber/warm gradient anywhere on auth page
+  - [ ] Background uses V2 near-black tokens
+  - [ ] Headline is Playfair Display at 42px+
+  - [ ] No feature checklist
+  - [ ] Invite code collapsed on Sign In tab
+  - [ ] Returning users see sign-in form immediately
+
+### [BETA-003] Rick House Atmospheric Rework — CODE COMPLETE
+- **Scope:** Standard
+- **Assigned:** Developer
+- **Priority:** P1 (beta blocker)
+- **Files:** `client/src/pages/RickHouse.tsx`, `client/src/components/rick/RickAtmosphere.tsx`, `client/src/components/MobileShell.tsx`, `client/src/components/BottomNav.tsx`
+- **Acceptance criteria:**
+  - [ ] Standard nav completely hidden during Rick House
+  - [ ] "← Step out" is the only navigation affordance
+  - [ ] Greeting text is hero-scale, not body-scale
+  - [ ] Zone labels visible between sections
+  - [ ] Perceptible background darkness shift vs. rest of app
+
+### [BETA-004] Mobile Collection Header Typography — CODE COMPLETE
+- **Scope:** Quick
+- **Assigned:** Developer
+- **Priority:** P2
+- **File:** `client/src/pages/Home.tsx`
+- **Acceptance criteria:**
+  - [ ] Page title uses `text-display-hero` clamp on mobile
+  - [ ] Username presented as kicker, not possessive in title
+  - [ ] Visually distinct from surrounding body text
+
+### [BETA-005] Bottle Card Mobile Hover Fix + Status Labels — CODE COMPLETE
+- **Scope:** Standard
+- **Assigned:** Developer
+- **Priority:** P2
+- **File:** `client/src/components/WhiskeyCard.tsx`
+- **Acceptance criteria:**
+  - [ ] No gradient overlay visible on mobile by default
+  - [ ] ⋯ handle opens bottom sheet with card actions
+  - [ ] Status shows as text pill, not color-only dot
+  - [ ] Desktop hover behavior unchanged
+
 ---
 
 ## Queue
+
+### [DESIGN-001] Formalize Design System as DESIGN.md — COMPLETE
+- **Scope:** Standard
+- **Assigned:** UI/UX Agent
+- **Priority:** P1
+- **Status:** COMPLETE
+- **Completed:** 2026-03-22
+- **Summary:** Extracted full design system from `tailwind.config.ts`, `index.css`, `Logo.tsx`, `BottomNav.tsx`, and Rick House components. Created DESIGN.md v2.0 at project root as single source of truth. Covers: color system (HSL custom properties), Gold Rule (precious accent constraint), typography stack, spacing, elevation, card system, bottom nav pattern, logo usage, Rick House sub-design language, motion, accessibility. Updated CONTEXT_PROJECT.md design system status to Active.
+
+### [DESIGN-002] Rick House Center FAB Icon — 3 Concepts — COMPLETE
+- **Scope:** Standard
+- **Assigned:** UI/UX Agent
+- **Priority:** P1
+- **Status:** COMPLETE — 3 concepts presented, awaiting Storm's selection
+- **Completed:** 2026-03-22
+- **Summary:** Three production-ready SVG icon concepts for the Rick House center FAB:
+  - **A: Glencairn + Sparkle** — refined current icon with AI sparkle accent. Strongest brand tie, but duplicates logo.
+  - **B: Nosing Glass + Aroma Lines** — glass with rising vapor lines. Best at communicating "tasting." May read as "hot drink."
+  - **C: Diamond Pour** — abstract gem with pour stream. Most unique and geometric. Most abstract risk.
+- **Decision needed:** Storm selects icon concept → Developer implements.
+
+### [DESIGN-003] Rick House Full Page Layout — High-Fidelity Screen — COMPLETE
+- **Scope:** Standard
+- **Assigned:** UI/UX Agent → Developer
+- **Priority:** P1
+- **Status:** COMPLETE — `rick-house-redesign.html` ready for review
+- **Completed:** 2026-03-22
+- **Summary:** Full high-fidelity mobile screen (375px viewport) in HTML/CSS following DESIGN.md v2.0. Three zones: Atmosphere (ambient gold glow + Glencairn + contextual greeting), Shelf (3 suggestion cards with conversational prompts), Journal (tasting history with Rick notes and completion accents). Bottom nav included for full context. Stitch MCP attempted but returned empty — screen hand-crafted directly.
+- **Output:** `/rick-house-redesign.html` — open in browser to review
+- **Next:** Storm reviews → Developer translates to React components (existing `RickAtmosphere.tsx`, `RickShelf.tsx`, `RickJournal.tsx` are already close to this design)
 
 ### [UIAUDIT-004] Rick House Nav Prominence — IN PROGRESS
 - **Scope:** Medium

@@ -126,16 +126,18 @@ const Home = () => {
         <MobileHomeHeader />
 
         {/* Collection header + add button */}
-        <div className="flex justify-between items-center px-5 pt-2 pb-3">
+        <div className="flex justify-between items-start px-5 pt-4 pb-3">
           <div>
-            <p className="text-label-caps text-primary text-xs uppercase tracking-wider mb-0.5">Your Collection</p>
-            <h1 className="font-display text-lg text-foreground font-medium">
-              {user?.displayName || user?.username}'s Collection
+            <p className="text-label-caps text-muted-foreground mb-1">
+              {(user?.displayName || user?.username || "").toUpperCase()}'S SHELF
+            </p>
+            <h1 className="text-display-hero text-foreground leading-[1.1]">
+              Collection
             </h1>
           </div>
           <Button
             onClick={openAddWhiskeyModal}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-warm-sm h-9 px-3"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-warm-sm h-9 px-3 mt-2"
           >
             <PlusIcon className="h-4 w-4 mr-1" />
             Add
