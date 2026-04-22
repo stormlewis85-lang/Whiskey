@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rick House — MyWhiskeyPedia</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Serif+Display&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0A0A0A;
+      --card: #121212;
+      --card-hover: #171717;
+      --foreground: #EDE9E3;
+      --gold: #D4A44C;
+      --muted: #8A8078;
+      --border: rgba(212, 164, 76, 0.1);
+      --border-hover: rgba(212, 164, 76, 0.3);
+      --accent-surface: #252220;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--foreground);
+      font-family: 'DM Sans', system-ui, sans-serif;
+      max-width: 375px;
+      margin: 0 auto;
+      min-height: 100vh;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ================================
+       ZONE 1 — THE ATMOSPHERE
+       ================================ */
+    .atmosphere {
+      position: relative;
+      padding: 48px 20px 40px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      min-height: 280px;
+      justify-content: center;
+    }
+
+    .atmosphere-glow {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 360px;
+      height: 360px;
+      border-radius: 50%;
+      background: radial-gradient(
+        ellipse at center,
+        rgba(212, 164, 76, 0.18) 0%,
+        rgba(212, 164, 76, 0.08) 35%,
+        rgba(212, 164, 76, 0.02) 60%,
+        transparent 80%
+      );
+      animation: breathe 8s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    @keyframes breathe {
+      0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+      50% { opacity: 0.75; transform: translate(-50%, -50%) scale(1.08); }
+    }
+
+    .glass-icon {
+      position: relative;
+      z-index: 1;
+      margin-bottom: 28px;
+      opacity: 0.8;
+    }
+
+    .greeting {
+      position: relative;
+      z-index: 1;
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 18px;
+      font-weight: 400;
+      line-height: 1.55;
+      color: rgba(237, 233, 227, 0.8);
+      max-width: 280px;
+      white-space: pre-line;
+    }
+
+    /* ================================
+       SHARED — SECTION LABEL
+       ================================ */
+    .section-label {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+
+    /* ================================
+       ZONE 2 — THE SHELF
+       ================================ */
+    .shelf {
+      padding: 0 20px;
+    }
+
+    .shelf-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .suggestion-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      gap: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .suggestion-card:hover {
+      border-color: var(--border-hover);
+      background: var(--card-hover);
+    }
+
+    .suggestion-card:active {
+      transform: scale(0.98);
+    }
+
+    .bottle-thumb {
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+      background: var(--accent-surface);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .bottle-thumb svg {
+      opacity: 0.3;
+    }
+
+    .bottle-thumb-pair {
+      display: flex;
+      flex-shrink: 0;
+    }
+
+    .bottle-thumb-pair .bottle-thumb:last-child {
+      margin-left: -12px;
+    }
+
+    .suggestion-text {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .suggestion-text p {
+      font-size: 14px;
+      line-height: 1.5;
+      color: rgba(237, 233, 227, 0.9);
+    }
+
+    .taste-cta {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--gold);
+      margin-top: 8px;
+      display: inline-block;
+    }
+
+    .choose-own {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-family: 'DM Sans', system-ui, sans-serif;
+      font-size: 14px;
+      cursor: pointer;
+      padding: 16px 0 8px;
+      width: 100%;
+      transition: color 0.2s;
+    }
+
+    .choose-own:hover {
+      color: var(--foreground);
+    }
+
+    .choose-own svg {
+      transition: transform 0.2s;
+    }
+
+    .choose-own:hover svg {
+      transform: translateY(2px);
+    }
+
+    /* ================================
+       ZONE 3 — THE JOURNAL
+       ================================ */
+    .journal {
+      padding: 32px 20px 140px;
+    }
+
+    .journal-entries {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .journal-entry {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      gap: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .journal-entry:hover {
+      border-color: var(--border-hover);
+      background: var(--card-hover);
+    }
+
+    .journal-entry:active {
+      transform: scale(0.98);
+    }
+
+    .journal-entry.completed {
+      border-left: 3px solid rgba(245, 158, 11, 0.6);
+    }
+
+    .journal-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .journal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .whiskey-name {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: 15px;
+      color: var(--foreground);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .rating {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      flex-shrink: 0;
+    }
+
+    .rating svg {
+      color: var(--gold);
+      fill: var(--gold);
+    }
+
+    .rating span {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--gold);
+    }
+
+    .journal-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .journal-meta svg {
+      width: 12px;
+      height: 12px;
+      flex-shrink: 0;
+    }
+
+    .rick-note {
+      font-style: italic;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    /* ================================
+       BOTTOM NAV (reference only)
+       ================================ */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 375px;
+      min-height: 84px;
+      background: linear-gradient(to top, var(--bg) 70%, transparent);
+      display: flex;
+      justify-content: space-around;
+      align-items: flex-start;
+      padding-top: 12px;
+      z-index: 50;
+    }
+
+    .nav-tab {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      min-height: 44px;
+      min-width: 44px;
+      padding: 4px 8px;
+      opacity: 0.4;
+      transition: opacity 0.2s;
+    }
+
+    .nav-tab.active {
+      opacity: 1;
+    }
+
+    .nav-tab svg {
+      width: 24px;
+      height: 24px;
+      color: var(--foreground);
+    }
+
+    .nav-tab.active svg {
+      color: var(--gold);
+    }
+
+    .nav-tab span {
+      font-size: 0.6rem;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      color: var(--foreground);
+    }
+
+    .nav-tab.active span {
+      color: var(--gold);
+    }
+
+    .fab {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: var(--gold);
+      border: none;
+      cursor: pointer;
+      margin-top: -22px;
+      animation: fab-glow 3s ease-in-out infinite;
+      transition: transform 0.2s ease;
+    }
+
+    .fab:active {
+      transform: scale(0.93);
+    }
+
+    .fab svg {
+      color: var(--bg);
+      margin-bottom: 1px;
+    }
+
+    .fab span {
+      font-size: 0.5rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      color: var(--bg);
+    }
+
+    @keyframes fab-glow {
+      0%, 100% {
+        box-shadow:
+          0 4px 20px rgba(212, 164, 76, 0.35),
+          0 0 0 0 rgba(212, 164, 76, 0);
+      }
+      50% {
+        box-shadow:
+          0 4px 24px rgba(212, 164, 76, 0.5),
+          0 0 0 6px rgba(212, 164, 76, 0.08);
+      }
+    }
+
+    /* ================================
+       ENTRANCE ANIMATIONS
+       ================================ */
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .animate-in {
+      opacity: 0;
+      animation: fade-up 0.5s ease-out forwards;
+    }
+
+    .delay-1 { animation-delay: 0ms; }
+    .delay-2 { animation-delay: 75ms; }
+    .delay-3 { animation-delay: 150ms; }
+    .delay-4 { animation-delay: 225ms; }
+    .delay-5 { animation-delay: 300ms; }
+    .delay-6 { animation-delay: 375ms; }
+    .delay-7 { animation-delay: 450ms; }
+    .delay-8 { animation-delay: 525ms; }
+
+    /* ================================
+       REDUCED MOTION
+       ================================ */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ══════════════════════════════════
+       ZONE 1 — THE ATMOSPHERE
+       ══════════════════════════════════ -->
+  <section class="atmosphere">
+    <div class="atmosphere-glow"></div>
+
+    <!-- Glencairn glass silhouette -->
+    <svg class="glass-icon" width="52" height="52" viewBox="58 36 84 114" fill="none">
+      <ellipse cx="100" cy="46" rx="14" ry="3.5" stroke="#D4A44C" stroke-width="2.5" fill="none"/>
+      <path d="M86 46 C86 46 83 58 81 66 C76 76 68 88 68 102 C68 118 82 130 100 130 C118 130 132 118 132 102 C132 88 124 76 119 66 C117 58 114 46 114 46" stroke="#D4A44C" stroke-width="2.5" fill="none" stroke-linejoin="round"/>
+      <path d="M72 100 Q100 106 128 100 C129 104 130 108 130 110 C130 116 118 127 100 127 C82 127 70 116 70 110 C70 108 71 104 72 100 Z" fill="#D4A44C" opacity="0.15"/>
+      <path d="M72 100 Q100 106 128 100" stroke="#D4A44C" stroke-width="1.2" fill="none" opacity="0.3"/>
+      <line x1="100" y1="130" x2="100" y2="140" stroke="#D4A44C" stroke-width="2.5" stroke-linecap="round"/>
+      <ellipse cx="100" cy="142" rx="18" ry="4" stroke="#D4A44C" stroke-width="2.5" fill="none"/>
+    </svg>
+
+    <p class="greeting">Evening, Storm.
+The quiet hours make the best pours.</p>
+  </section>
+
+  <!-- ══════════════════════════════════
+       ZONE 2 — THE SHELF
+       ══════════════════════════════════ -->
+  <section class="shelf">
+    <p class="section-label animate-in delay-2">The Shelf</p>
+
+    <div class="shelf-cards">
+      <!-- Suggestion 1: Wheated bourbon exploration -->
+      <div class="suggestion-card animate-in delay-3">
+        <div class="bottle-thumb">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: #8A8078">
+            <path d="M8 22h8M12 18v4M12 2v2M6 6l1.5 10a4 4 0 0 0 4 4h1a4 4 0 0 0 4-4L18 6"/>
+            <path d="M6 6h12"/>
+          </svg>
+        </div>
+        <div class="suggestion-text">
+          <p>You've got the Weller 107 on your shelf. Wheated bourbons have a story — want to explore it?</p>
+          <span class="taste-cta">Taste with Rick</span>
+        </div>
+      </div>
+
+      <!-- Suggestion 2: Head-to-head comparison -->
+      <div class="suggestion-card animate-in delay-4">
+        <div class="bottle-thumb-pair">
+          <div class="bottle-thumb">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: #8A8078">
+              <path d="M8 22h8M12 18v4M12 2v2M6 6l1.5 10a4 4 0 0 0 4 4h1a4 4 0 0 0 4-4L18 6"/>
+              <path d="M6 6h12"/>
+            </svg>
+          </div>
+          <div class="bottle-thumb">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: #8A8078">
+              <path d="M8 22h8M12 18v4M12 2v2M6 6l1.5 10a4 4 0 0 0 4 4h1a4 4 0 0 0 4-4L18 6"/>
+              <path d="M6 6h12"/>
+            </svg>
+          </div>
+        </div>
+        <div class="suggestion-text">
+          <p>Your Jack Daniel's 10 and 12 Year are sitting side by side. Two years makes more difference than you'd think.</p>
+          <span class="taste-cta">Taste with Rick</span>
+        </div>
+      </div>
+
+      <!-- Suggestion 3: Blind spot nudge -->
+      <div class="suggestion-card animate-in delay-5">
+        <div class="bottle-thumb">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: #8A8078">
+            <path d="M8 22h8M12 18v4M12 2v2M6 6l1.5 10a4 4 0 0 0 4 4h1a4 4 0 0 0 4-4L18 6"/>
+            <path d="M6 6h12"/>
+          </svg>
+        </div>
+        <div class="suggestion-text">
+          <p>You've reviewed 3 bourbons this month but haven't touched your scotch. Curious?</p>
+          <span class="taste-cta">Taste with Rick</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Choose your own -->
+    <button class="choose-own animate-in delay-6">
+      <span>Or choose your own</span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M6 9l6 6 6-6"/>
+      </svg>
+    </button>
+  </section>
+
+  <!-- ══════════════════════════════════
+       ZONE 3 — THE JOURNAL
+       ══════════════════════════════════ -->
+  <section class="journal">
+    <p class="section-label animate-in delay-6">Tasting Journal</p>
+
+    <div class="journal-entries">
+      <!-- Entry 1 — Completed, with Rick note -->
+      <div class="journal-entry completed animate-in delay-7">
+        <div class="bottle-thumb">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: #8A8078">
+            <path d="M8 22h8M12 18v4M12 2v2M6 6l1.5 10a4 4 0 0 0 4 4h1a4 4 0 0 0 4-4L18 6"/>
+            <path d="M6 6h12"/>
+          </svg>
+        </div>
+        <div class="journal-content">
+          <div class="journal-header">
+            <span class="whiskey-name">Eagle Rare 10 Year</span>
+            <div class="rating">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.27 5.82 22 7 14.14 2 9.27l6.91-1.01L12 2z"/>
+              </svg>
+              <span>4.2</span>
+            </div>
+          </div>
+          <div class="journal-meta">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+            </svg>
+            <span>Mar 18, 2026</span>
+          </div>
+          <p class="rick-note">"You picked up leather and dried cherry before I even mentioned them."</p>
+        </div>
+      </div>
+
+      <!-- Entry 2 — Completed -->
+      <div class="journal-entry completed animate-in delay-7">
+        <div class="bottle-thumb">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: #8A8078">
+            <path d="M8 22h8M12 18v4M12 2v2M6 6l1.5 10a4 4 0 0 0 4 4h1a4 4 0 0 0 4-4L18 6"/>
+            <path d="M6 6h12"/>
+          </svg>
+        </div>
+        <div class="journal-content">
+          <div class="journal-header">
+            <span class="whiskey-name">Blanton's Single Barrel</span>
+            <div class="rating">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.27 5.82 22 7 14.14 2 9.27l6.91-1.01L12 2z"/>
+              </svg>
+              <span>4.5</span>
+            </div>
+          </div>
+          <div class="journal-meta">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+            </svg>
+            <span>Mar 12, 2026</span>
+          </div>
+          <p class="rick-note">"The honey and orange peel came through strong. Your palate is sharpening."</p>
+        </div>
+      </div>
+
+      <!-- Entry 3 — In progress -->
+      <div class="journal-entry animate-in delay-8">
+        <div class="bottle-thumb">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: #8A8078">
+            <path d="M8 22h8M12 18v4M12 2v2M6 6l1.5 10a4 4 0 0 0 4 4h1a4 4 0 0 0 4-4L18 6"/>
+            <path d="M6 6h12"/>
+          </svg>
+        </div>
+        <div class="journal-content">
+          <div class="journal-header">
+            <span class="whiskey-name">Lagavulin 16</span>
+            <div class="rating">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.27 5.82 22 7 14.14 2 9.27l6.91-1.01L12 2z"/>
+              </svg>
+              <span>4.8</span>
+            </div>
+          </div>
+          <div class="journal-meta">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+            </svg>
+            <span>Mar 8, 2026</span>
+            <span style="color: #F59E0B; font-weight: 500;">In progress</span>
+          </div>
+          <p class="rick-note">"We got through the nose but didn't finish. The peat is waiting."</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════
+       BOTTOM NAV (reference)
+       ══════════════════════════════════ -->
+  <nav class="bottom-nav">
+    <!-- Home -->
+    <button class="nav-tab">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+        <polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+      <span>Home</span>
+    </button>
+
+    <!-- Search -->
+    <button class="nav-tab">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/>
+        <path d="M21 21l-4.35-4.35"/>
+      </svg>
+      <span>Search</span>
+    </button>
+
+    <!-- Center FAB — Rick House -->
+    <button class="fab" aria-label="Rick House — AI Tasting Guide">
+      <svg width="24" height="24" viewBox="58 36 84 114" fill="none" style="color: #0A0A0A; margin-bottom: 1px;">
+        <ellipse cx="100" cy="46" rx="14" ry="3.5" stroke="currentColor" stroke-width="2.5" fill="none"/>
+        <path d="M86 46 C86 46 83 58 81 66 C76 76 68 88 68 102 C68 118 82 130 100 130 C118 130 132 118 132 102 C132 88 124 76 119 66 C117 58 114 46 114 46" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linejoin="round"/>
+        <path d="M72 100 Q100 106 128 100 C129 104 130 108 130 110 C130 116 118 127 100 127 C82 127 70 116 70 110 C70 108 71 104 72 100 Z" fill="currentColor" opacity="0.2"/>
+        <path d="M72 100 Q100 106 128 100" stroke="currentColor" stroke-width="1.2" fill="none" opacity="0.4"/>
+        <line x1="100" y1="130" x2="100" y2="140" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+        <ellipse cx="100" cy="142" rx="18" ry="4" stroke="currentColor" stroke-width="2.5" fill="none"/>
+        <path d="M122 40L124 34L126 40L132 42L126 44L124 50L122 44L116 42Z" fill="currentColor"/>
+      </svg>
+      <span style="font-size: 0.5rem; font-weight: 600; letter-spacing: 0.06em; color: #0A0A0A;">RICK</span>
+    </button>
+
+    <!-- Drops -->
+    <button class="nav-tab">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+      </svg>
+      <span>Drops</span>
+    </button>
+
+    <!-- Profile -->
+    <button class="nav-tab">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+        <circle cx="12" cy="7" r="4"/>
+      </svg>
+      <span>Profile</span>
+    </button>
+  </nav>
+
+</body>
+</html>

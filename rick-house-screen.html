@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rick House — MyWhiskeyPedia</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=DM+Serif+Display&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --gold: #D4A44C;
+      --bg: #0A0A0A;
+      --card: #111111;
+      --card-hover: #1A1A1A;
+      --foreground: #EDE9E3;
+      --muted: #888888;
+      --muted-foreground: #A0A0A0;
+      --gold-border: rgba(212, 164, 76, 0.1);
+      --gold-border-strong: rgba(212, 164, 76, 0.2);
+    }
+
+    body {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      background-color: var(--bg);
+      color: var(--foreground);
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .font-serif { font-family: 'DM Serif Display', Georgia, serif; }
+    .font-brand { font-family: 'Playfair Display', Georgia, serif; }
+
+    @keyframes glow {
+      0%, 100% { box-shadow: 0 0 15px rgba(212,164,76,0.15), 0 0 40px rgba(212,164,76,0.05); }
+      50% { box-shadow: 0 0 25px rgba(212,164,76,0.25), 0 0 60px rgba(212,164,76,0.08); }
+    }
+
+    @keyframes ambientShift {
+      0%, 100% { opacity: 0.12; transform: scale(1); }
+      50% { opacity: 0.18; transform: scale(1.05); }
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .animate-glow { animation: glow 3s ease-in-out infinite; }
+    .animate-ambient { animation: ambientShift 8s ease-in-out infinite; }
+    .animate-fade-in { animation: fadeInUp 0.5s ease-out forwards; }
+    .animate-fade-in-delay-1 { animation: fadeInUp 0.5s ease-out 0.1s forwards; opacity: 0; }
+    .animate-fade-in-delay-2 { animation: fadeInUp 0.5s ease-out 0.2s forwards; opacity: 0; }
+    .animate-fade-in-delay-3 { animation: fadeInUp 0.5s ease-out 0.3s forwards; opacity: 0; }
+
+    .journal-entry:not(:last-child) {
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+
+    /* Scrollbar styling */
+    ::-webkit-scrollbar { width: 0; }
+  </style>
+</head>
+<body class="min-h-screen pb-24">
+
+  <!-- ============================================================ -->
+  <!-- ZONE 1 — THE ATMOSPHERE                                       -->
+  <!-- ============================================================ -->
+  <section class="relative overflow-hidden pt-12 pb-10 px-6">
+    <!-- Ambient gradient background -->
+    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+      <div class="w-[300px] h-[300px] rounded-full bg-[#D4A44C] blur-[120px] animate-ambient" style="opacity: 0.12;"></div>
+    </div>
+    <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#0A0A0A] pointer-events-none"></div>
+
+    <!-- Content -->
+    <div class="relative z-10 flex flex-col items-center text-center">
+      <!-- Glencairn glass visual anchor -->
+      <div class="mb-6 animate-fade-in">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="56" height="56" fill="none">
+          <path d="M17 7 C17 7 14.5 19 14.5 22 C14.5 27 18 30 20.5 31 L20.5 38 L17.5 38 C16.8 38 16.8 40 17.5 40 L30.5 40 C31.2 40 31.2 38 30.5 38 L27.5 38 L27.5 31 C30 30 33.5 27 33.5 22 C33.5 19 31 7 31 7 C30.7 6 30 6 29.5 6 L18.5 6 C18 6 17.3 6 17 7Z"
+                fill="#D4A44C" opacity="0.25"/>
+          <path d="M17 7 C17 7 14.5 19 14.5 22 C14.5 27 18 30 20.5 31 L20.5 38 L17.5 38 C16.8 38 16.8 40 17.5 40 L30.5 40 C31.2 40 31.2 38 30.5 38 L27.5 38 L27.5 31 C30 30 33.5 27 33.5 22 C33.5 19 31 7 31 7 C30.7 6 30 6 29.5 6 L18.5 6 C18 6 17.3 6 17 7Z"
+                stroke="#D4A44C" stroke-width="1" fill="none" opacity="0.4"/>
+        </svg>
+      </div>
+
+      <!-- Greeting -->
+      <h1 class="font-serif text-[22px] leading-tight text-[#EDE9E3] mb-2 animate-fade-in-delay-1">
+        What are we pouring tonight?
+      </h1>
+      <p class="text-[13px] text-[#888] animate-fade-in-delay-2">
+        Rick has a few ideas based on your shelf.
+      </p>
+    </div>
+  </section>
+
+
+  <!-- ============================================================ -->
+  <!-- ZONE 2 — THE SHELF                                            -->
+  <!-- ============================================================ -->
+  <section class="px-6 pb-8">
+    <!-- Section label -->
+    <div class="flex items-center justify-between mb-4 animate-fade-in-delay-2">
+      <span class="text-[11px] font-medium uppercase tracking-[0.05em] text-[#888]">Rick's Suggestions</span>
+      <span class="text-[11px] text-[#555]">Based on your collection</span>
+    </div>
+
+    <!-- Suggestion Cards -->
+    <div class="space-y-3">
+
+      <!-- Card 1 -->
+      <div class="bg-[#111] border border-[rgba(212,164,76,0.1)] rounded-xl p-4 hover:bg-[#1A1A1A] hover:border-[rgba(212,164,76,0.2)] transition-all duration-200 cursor-pointer animate-fade-in-delay-2">
+        <div class="flex gap-4">
+          <!-- Bottle thumbnail -->
+          <div class="w-14 h-14 rounded-lg bg-[#1A1A1A] flex items-center justify-center flex-shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#555" stroke-width="1.5" stroke-linecap="round">
+              <rect x="9" y="2" width="6" height="3" rx="1"/>
+              <path d="M10 5 L10 8 C7 10 7 12 7 14 L7 20 C7 21 8 22 9 22 L15 22 C16 22 17 21 17 20 L17 14 C17 12 17 10 14 8 L14 5"/>
+            </svg>
+          </div>
+          <!-- Content -->
+          <div class="flex-1 min-w-0">
+            <p class="text-[14px] text-[#EDE9E3] leading-snug mb-1">
+              You've got the Weller 107 on your shelf. Wheated bourbons have a story — want to explore it?
+            </p>
+            <span class="text-[11px] text-[#D4A44C]">Guided Tasting &middot; ~15 min</span>
+          </div>
+          <!-- Arrow -->
+          <div class="flex items-center flex-shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 18l6-6-6-6"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="bg-[#111] border border-[rgba(212,164,76,0.1)] rounded-xl p-4 hover:bg-[#1A1A1A] hover:border-[rgba(212,164,76,0.2)] transition-all duration-200 cursor-pointer animate-fade-in-delay-3">
+        <div class="flex gap-4">
+          <div class="w-14 h-14 rounded-lg bg-[#1A1A1A] flex items-center justify-center flex-shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#555" stroke-width="1.5" stroke-linecap="round">
+              <rect x="9" y="2" width="6" height="3" rx="1"/>
+              <path d="M10 5 L10 8 C7 10 7 12 7 14 L7 20 C7 21 8 22 9 22 L15 22 C16 22 17 21 17 20 L17 14 C17 12 17 10 14 8 L14 5"/>
+            </svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-[14px] text-[#EDE9E3] leading-snug mb-1">
+              Your Jack Daniel's 10 and 12 Year are sitting side by side. Two years makes more difference than you'd think.
+            </p>
+            <span class="text-[11px] text-[#D4A44C]">Side-by-Side &middot; ~20 min</span>
+          </div>
+          <div class="flex items-center flex-shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 18l6-6-6-6"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="bg-[#111] border border-[rgba(212,164,76,0.1)] rounded-xl p-4 hover:bg-[#1A1A1A] hover:border-[rgba(212,164,76,0.2)] transition-all duration-200 cursor-pointer animate-fade-in-delay-3">
+        <div class="flex gap-4">
+          <div class="w-14 h-14 rounded-lg bg-[#1A1A1A] flex items-center justify-center flex-shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#555" stroke-width="1.5" stroke-linecap="round">
+              <circle cx="12" cy="12" r="9"/>
+              <path d="M12 3 C12 3 8 8 8 12 C8 16 12 21 12 21 C12 21 16 16 16 12 C16 8 12 3 12 3Z"/>
+              <line x1="3" y1="12" x2="21" y2="12"/>
+            </svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-[14px] text-[#EDE9E3] leading-snug mb-1">
+              You've reviewed 3 bourbons this month but haven't touched your scotch. Curious?
+            </p>
+            <span class="text-[11px] text-[#D4A44C]">Exploration &middot; Rick's pick</span>
+          </div>
+          <div class="flex items-center flex-shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 18l6-6-6-6"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Choose Your Own — quiet, doesn't compete -->
+    <button class="w-full mt-4 py-3 px-4 rounded-xl border border-[rgba(255,255,255,0.06)] text-[13px] text-[#888] hover:text-[#A0A0A0] hover:border-[rgba(255,255,255,0.1)] transition-all duration-200 text-center">
+      Choose your own bottle
+    </button>
+  </section>
+
+
+  <!-- ============================================================ -->
+  <!-- ZONE 3 — THE JOURNAL                                          -->
+  <!-- ============================================================ -->
+  <section class="px-6 pb-8">
+    <!-- Section divider -->
+    <div class="border-t border-[rgba(255,255,255,0.04)] mb-6"></div>
+
+    <!-- Section label -->
+    <div class="flex items-center justify-between mb-5">
+      <span class="text-[11px] font-medium uppercase tracking-[0.05em] text-[#888]">Your Tasting Journal</span>
+      <button class="text-[11px] text-[#555] hover:text-[#888] transition-colors">View All</button>
+    </div>
+
+    <!-- Journal entries — leather-bound notebook feel -->
+    <div class="bg-[#111] border border-[rgba(212,164,76,0.1)] rounded-xl overflow-hidden">
+
+      <!-- Entry 1 -->
+      <div class="journal-entry p-4 hover:bg-[#1A1A1A] transition-colors cursor-pointer">
+        <div class="flex gap-3">
+          <!-- Bottle image -->
+          <div class="w-12 h-12 rounded-lg bg-[#1A1A1A] flex items-center justify-center flex-shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#555" stroke-width="1.5" stroke-linecap="round">
+              <rect x="9" y="2" width="6" height="3" rx="1"/>
+              <path d="M10 5 L10 8 C7 10 7 12 7 14 L7 20 C7 21 8 22 9 22 L15 22 C16 22 17 21 17 20 L17 14 C17 12 17 10 14 8 L14 5"/>
+            </svg>
+          </div>
+          <!-- Content -->
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-serif text-[15px] text-[#EDE9E3]">Buffalo Trace</span>
+              <div class="flex items-center gap-0.5">
+                <!-- 4 gold stars, 1 empty -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="#D4A44C" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="#D4A44C" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="#D4A44C" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="#D4A44C" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="#333" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              </div>
+            </div>
+            <p class="text-[12px] text-[#A0A0A0] italic leading-snug mb-1.5">
+              "You picked up leather and dried cherry before I even mentioned them."
+            </p>
+            <span class="text-[11px] text-[#555]">Mar 19 &middot; Guided Tasting</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Entry 2 -->
+      <div class="journal-entry p-4 hover:bg-[#1A1A1A] transition-colors cursor-pointer">
+        <div class="flex gap-3">
+          <div class="w-12 h-12 rounded-lg bg-[#1A1A1A] flex items-center justify-center flex-shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#555" stroke-width="1.5" stroke-linecap="round">
+              <rect x="9" y="2" width="6" height="3" rx="1"/>
+              <path d="M10 5 L10 8 C7 10 7 12 7 14 L7 20 C7 21 8 22 9 22 L15 22 C16 22 17 21 17 20 L17 14 C17 12 17 10 14 8 L14 5"/>
+            </svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-serif text-[15px] text-[#EDE9E3]">Weller Special Reserve</span>
+              <div class="flex items-center gap-0.5">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="#D4A44C" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="#D4A44C" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="#D4A44C" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="#333" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="#333" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              </div>
+            </div>
+            <p class="text-[12px] text-[#A0A0A0] italic leading-snug mb-1.5">
+              "Softer than the 107 — more vanilla, less spice. You noticed that immediately."
+            </p>
+            <span class="text-[11px] text-[#555]">Mar 15 &middot; Side-by-Side</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Entry 3 -->
+      <div class="journal-entry p-4 hover:bg-[#1A1A1A] transition-colors cursor-pointer">
+        <div class="flex gap-3">
+          <div class="w-12 h-12 rounded-lg bg-[#1A1A1A] flex items-center justify-center flex-shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#555" stroke-width="1.5" stroke-linecap="round">
+              <rect x="9" y="2" width="6" height="3" rx="1"/>
+              <path d="M10 5 L10 8 C7 10 7 12 7 14 L7 20 C7 21 8 22 9 22 L15 22 C16 22 17 21 17 20 L17 14 C17 12 17 10 14 8 L14 5"/>
+            </svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-serif text-[15px] text-[#EDE9E3]">Laphroaig 10</span>
+              <div class="flex items-center gap-0.5">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="#D4A44C" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="#D4A44C" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="#D4A44C" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="#D4A44C" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="#D4A44C" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              </div>
+            </div>
+            <p class="text-[12px] text-[#A0A0A0] italic leading-snug mb-1.5">
+              "First Islay. You went straight for the peat monster and didn't flinch."
+            </p>
+            <span class="text-[11px] text-[#555]">Mar 10 &middot; Guided Tasting</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ============================================================ -->
+  <!-- BOTTOM NAV BAR                                                -->
+  <!-- ============================================================ -->
+  <nav class="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-md border-t border-white/5 z-50">
+    <div class="flex items-end justify-around px-4 h-16 max-w-lg mx-auto">
+      <!-- Home -->
+      <button class="flex flex-col items-center gap-0.5 py-2 min-w-[48px]">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+        <span class="text-[10px] text-[#888]">Home</span>
+      </button>
+      <!-- Search -->
+      <button class="flex flex-col items-center gap-0.5 py-2 min-w-[48px]">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <span class="text-[10px] text-[#888]">Search</span>
+      </button>
+      <!-- Center FAB — Rick House (active) -->
+      <div class="flex flex-col items-center -mt-6">
+        <button class="w-14 h-14 rounded-full bg-[#D4A44C] flex items-center justify-center shadow-xl animate-glow">
+          <!-- Using Glencairn silhouette as placeholder — swap for chosen icon -->
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28" fill="none">
+            <path d="M10.5 10 C10.5 10 9.2 16 9.2 17.5 C9.2 19.8 11 21.2 12.5 21.7 L12.5 24 L11 24 C10.6 24 10.6 25 11 25 L17 25 C17.4 25 17.4 24 17 24 L15.5 24 L15.5 21.7 C17 21.2 18.8 19.8 18.8 17.5 C18.8 16 17.5 10 17.5 10 C17.3 9.5 17 9.5 16.5 9.5 L11.5 9.5 C11 9.5 10.7 9.5 10.5 10Z"
+                  fill="#0A0A0A" stroke="none"/>
+            <path d="M11.5 8.5 C11.5 7 12.5 7 12.5 5.5 C12.5 4.5 11.5 4.5 11.5 3.5" stroke="#0A0A0A" stroke-width="1.3" stroke-linecap="round" fill="none"/>
+            <path d="M14 8 C14 6.5 15 6.5 15 5 C15 4 14 4 14 3" stroke="#0A0A0A" stroke-width="1.3" stroke-linecap="round" fill="none"/>
+            <path d="M16.5 8.5 C16.5 7 17.5 7 17.5 5.5 C17.5 4.5 16.5 4.5 16.5 3.5" stroke="#0A0A0A" stroke-width="1.3" stroke-linecap="round" fill="none"/>
+          </svg>
+        </button>
+        <span class="text-[10px] text-[#D4A44C] mt-1 font-medium">Rick</span>
+      </div>
+      <!-- Collection -->
+      <button class="flex flex-col items-center gap-0.5 py-2 min-w-[48px]">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>
+        </svg>
+        <span class="text-[10px] text-[#888]">Collection</span>
+      </button>
+      <!-- Profile -->
+      <button class="flex flex-col items-center gap-0.5 py-2 min-w-[48px]">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
+        </svg>
+        <span class="text-[10px] text-[#888]">Profile</span>
+      </button>
+    </div>
+  </nav>
+
+</body>
+</html>
