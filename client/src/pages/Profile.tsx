@@ -87,7 +87,8 @@ const Profile = () => {
       const res = await apiRequest('GET', `/api/profile/${slug}`);
       return res.json();
     },
-    enabled: !!slug
+    enabled: !!slug,
+    staleTime: 0,
   });
 
   // Fetch user's public whiskeys

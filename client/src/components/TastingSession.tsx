@@ -72,6 +72,7 @@ const PHASE_PROMPTS: Record<TastingPhase, string> = {
 interface TastingSessionProps {
   whiskey: Whiskey;
   mode: 'guided' | 'notes';
+  resumeSessionId?: number;
   onClose: () => void;
   onComplete: () => void;
 }
@@ -92,7 +93,7 @@ const LOADING_MESSAGES = [
   "Opening the cellar...",
 ];
 
-const TastingSession = ({ whiskey, mode, onClose, onComplete }: TastingSessionProps) => {
+const TastingSession = ({ whiskey, mode, resumeSessionId, onClose, onComplete }: TastingSessionProps) => {
   const { toast } = useToast();
   const [session, setSession] = useState<TastingSessionData | null>(null);
   const [script, setScript] = useState<RickScript | null>(null);
@@ -125,6 +126,10 @@ const TastingSession = ({ whiskey, mode, onClose, onComplete }: TastingSessionPr
   // Start session mutation
   const startSessionMutation = useMutation({
     mutationFn: async () => {
+      if (resumeSessionId) {
+        const response = await apiRequest("GET", `/api/rick/session/${resumeSessionId}`);
+        return response.json();
+      }
       const response = await apiRequest("POST", "/api/rick/start-session", {
         whiskeyId: whiskey.id,
         mode
@@ -134,11 +139,13 @@ const TastingSession = ({ whiskey, mode, onClose, onComplete }: TastingSessionPr
     onSuccess: (data) => {
       setSession(data.session);
       setScript(data.script);
-      RickAnalytics.sessionStarted(whiskey.id, whiskey.name, mode);
+      if (!resumeSessionId) {
+        RickAnalytics.sessionStarted(whiskey.id, whiskey.name, mode);
+      }
     },
     onError: (error) => {
       toast({
-        title: "Failed to start session",
+        title: resumeSessionId ? "Failed to resume session" : "Failed to start session",
         description: error instanceof Error ? error.message : "Unknown error",
         variant: "destructive"
       });

@@ -1571,6 +1571,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get a single tasting session (for resuming in-progress sessions)
+  app.get("/api/rick/session/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const sessionId = parseInt(req.params.id);
+      const userId = getUserId(req);
+
+      if (isNaN(sessionId)) {
+        return res.status(400).json({ message: "Invalid session ID" });
+      }
+
+      const session = await storage.getTastingSession(sessionId, userId);
+      if (!session) {
+        return res.status(404).json({ message: "Session not found" });
+      }
+
+      const whiskey = await storage.getWhiskey(session.whiskeyId, userId);
+
+      res.json({
+        session: {
+          id: session.id,
+          whiskeyId: session.whiskeyId,
+          mode: session.mode,
+          startedAt: session.startedAt,
+          completedAt: session.completedAt,
+        },
+        script: session.scriptJson,
+        whiskeyName: whiskey?.name || 'Unknown',
+      });
+    } catch (error) {
+      console.error('Get session error:', error);
+      res.status(errorStatus(error)).json(safeError(error, "Failed to get session"));
+    }
+  });
+
   // Update a tasting session (mark phases complete, store responses)
   app.patch("/api/rick/session/:id", isAuthenticated, async (req: Request, res: Response) => {
     try {

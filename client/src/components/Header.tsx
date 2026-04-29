@@ -202,8 +202,8 @@ export function Header() {
                     </div>
                   </div>
 
-                  {/* Navigation */}
-                  <nav className="flex flex-col gap-1 py-6">
+                  {/* Navigation — scrollable so footer stays pinned */}
+                  <nav className="flex flex-col gap-1 py-6 overflow-y-auto flex-1 min-h-0">
                     <NavLinks />
                   </nav>
 

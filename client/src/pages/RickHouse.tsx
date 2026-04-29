@@ -36,6 +36,7 @@ const RickHouse = () => {
   const [isTastingSessionActive, setIsTastingSessionActive] = useState(false);
   const [tastingMode, setTastingMode] = useState<"guided" | "notes">("guided");
   const [selectedWhiskeyId, setSelectedWhiskeyId] = useState<string>("");
+  const [resumeSessionId, setResumeSessionId] = useState<number | undefined>(undefined);
 
   // Review modal state (opened after tasting completion)
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
@@ -86,19 +87,22 @@ const RickHouse = () => {
     setIsTastingModeModalOpen(true);
   };
 
-  const handleResumeSession = (session: { whiskeyId: number; mode: "guided" | "notes" }) => {
+  const handleResumeSession = (session: { id: number; whiskeyId: number; mode: "guided" | "notes"; completedAt: string | null }) => {
     setSelectedWhiskeyId(String(session.whiskeyId));
     setTastingMode(session.mode);
+    setResumeSessionId(session.completedAt ? undefined : session.id);
     setIsTastingSessionActive(true);
   };
 
   const handleSessionEnd = () => {
     setIsTastingSessionActive(false);
+    setResumeSessionId(undefined);
     queryClient.invalidateQueries({ queryKey: ["/api/rick/sessions"] });
   };
 
   const handleSessionComplete = () => {
     setIsTastingSessionActive(false);
+    setResumeSessionId(undefined);
     queryClient.invalidateQueries({ queryKey: ["/api/rick/sessions"] });
 
     // Open ReviewModal for the whiskey they just tasted
@@ -179,6 +183,7 @@ const RickHouse = () => {
               whiskey={selectedWhiskey}
               onSelectMode={(mode) => {
                 setTastingMode(mode);
+                setResumeSessionId(undefined);
                 setIsTastingModeModalOpen(false);
                 setIsTastingSessionActive(true);
               }}
@@ -203,6 +208,7 @@ const RickHouse = () => {
                 <TastingSession
                   whiskey={selectedWhiskey}
                   mode={tastingMode}
+                  resumeSessionId={resumeSessionId}
                   onClose={handleSessionEnd}
                   onComplete={handleSessionComplete}
                 />
