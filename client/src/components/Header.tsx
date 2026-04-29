@@ -1,10 +1,11 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { CircleUser, LogOut, BarChart3, TrendingUp, Home, Menu, Users, UsersRound, Wine, Eye, Mic, Bell, Settings, UserCircle } from "lucide-react";
+import { CircleUser, LogOut, BarChart3, TrendingUp, Home, Menu, Users, UsersRound, Wine, Eye, Mic, Bell, Settings, UserCircle, Sun, Moon, Monitor } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { Link, useLocation } from "wouter";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useTheme } from "next-themes";
 import { ThemeToggle } from "@/components/theme-toggle";
 import ProfileSettingsModal from "@/components/modals/ProfileSettingsModal";
 import {
@@ -25,8 +26,21 @@ export function Header() {
   const { user, logoutMutation } = useAuth();
   const [location] = useLocation();
   const isMobile = useIsMobile();
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isProfileSettingsOpen, setIsProfileSettingsOpen] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
+
+  const cycleTheme = () => {
+    if (theme === "light") setTheme("dark");
+    else if (theme === "dark") setTheme("system");
+    else setTheme("light");
+  };
+
+  const themeLabel = !mounted ? "System" : theme === "light" ? "Light" : theme === "dark" ? "Dark" : "System";
+  const ThemeIcon = !mounted ? Monitor : theme === "light" ? Sun : theme === "dark" ? Moon : Monitor;
 
   const handleLogout = () => {
     logoutMutation.mutate();
@@ -217,6 +231,15 @@ export function Header() {
                     >
                       <Settings className="mr-2 h-4 w-4" />
                       <span>Profile Settings</span>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start"
+                      onClick={cycleTheme}
+                    >
+                      <ThemeIcon className="mr-2 h-4 w-4" />
+                      <span>Theme</span>
+                      <span className="ml-auto text-xs text-muted-foreground">{themeLabel}</span>
                     </Button>
                     <Button
                       variant="ghost"

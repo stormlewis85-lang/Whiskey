@@ -2,9 +2,10 @@ import { useState, useCallback } from "react";
 import { Whiskey } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { PencilIcon, Star, Wine, Heart, MoreHorizontal } from "lucide-react";
+import { PencilIcon, Star, Wine, Heart, MoreHorizontal, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { GlencairnIcon } from "@/components/GlencairnIcon";
 
 interface WhiskeyCardProps {
   whiskey: Whiskey;
@@ -15,10 +16,10 @@ interface WhiskeyCardProps {
 
 const getStatusPill = (status: string | null | undefined): { label: string; className: string } | null => {
   switch (status) {
-    case 'sealed': return { label: 'Sealed', className: 'bg-primary/15 text-primary border-primary/20' };
-    case 'open': return { label: 'Open', className: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20' };
+    case 'sealed': return { label: 'Sealed', className: 'bg-amber-950 text-primary border-amber-900' };
+    case 'open': return { label: 'Open', className: 'bg-emerald-950 text-emerald-400 border-emerald-900' };
     case 'finished': return { label: 'Finished', className: 'bg-muted text-muted-foreground border-border' };
-    case 'gifted': return { label: 'Gifted', className: 'bg-pink-500/15 text-pink-400 border-pink-500/20' };
+    case 'gifted': return { label: 'Gifted', className: 'bg-pink-950 text-pink-400 border-pink-900' };
     default: return null;
   }
 };
@@ -60,7 +61,7 @@ const WhiskeyCard = ({ whiskey, onViewDetails, onReview, onEdit }: WhiskeyCardPr
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center">
-              <Wine className="w-20 h-32 text-muted-foreground/20" />
+              <GlencairnIcon className="w-20 h-32 text-muted-foreground/20" />
             </div>
           )}
 
@@ -101,6 +102,17 @@ const WhiskeyCard = ({ whiskey, onViewDetails, onReview, onEdit }: WhiskeyCardPr
             <span className="absolute bottom-4 left-4 px-2 py-0.5 text-xs font-bold bg-background/80 backdrop-blur-sm rounded text-foreground">
               x{whiskey.quantity}
             </span>
+          )}
+
+          {/* Gold review CTA — mobile only */}
+          {isMobile && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onReview(whiskey); }}
+              className="absolute bottom-3 right-3 w-9 h-9 rounded-full bg-primary flex items-center justify-center shadow-lg hover:bg-primary/90 transition-colors"
+              aria-label="Review this whiskey"
+            >
+              <Plus className="w-4 h-4 text-primary-foreground" />
+            </button>
           )}
         </div>
 
@@ -171,7 +183,7 @@ const WhiskeyCard = ({ whiskey, onViewDetails, onReview, onEdit }: WhiskeyCardPr
       {/* Mobile bottom sheet */}
       {showBottomSheet && (
         <div
-          className="fixed inset-0 z-50 md:hidden"
+          className="fixed inset-0 z-[60] md:hidden"
           onClick={() => setShowBottomSheet(false)}
         >
           <div className="absolute inset-0 bg-black/60" />

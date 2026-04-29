@@ -27,11 +27,11 @@ import {
 import { cn } from '@/lib/utils';
 import { Whiskey, ReviewNote, getLevelForXP } from '@shared/schema';
 import { EmptyState } from '@/components/EmptyState';
+import { GlencairnIcon } from '@/components/GlencairnIcon';
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
 import { ProfileStats } from '@/components/profile/ProfileStats';
 import { ProfileTabs } from '@/components/profile/ProfileTabs';
 import { MobileCollectionGrid } from '@/components/profile/MobileCollectionGrid';
-import { ProfileMenu } from '@/components/profile/ProfileMenu';
 import ProfileSettingsModal from '@/components/modals/ProfileSettingsModal';
 
 const WhiskeyDetailModal = lazy(() => import('@/components/modals/WhiskeyDetailModal'));
@@ -362,9 +362,7 @@ const Profile = () => {
             )
           )}
 
-          {isOwnProfile && (
-            <ProfileMenu onOpenSettings={() => setIsProfileSettingsOpen(true)} />
-          )}
+          {/* Settings/Theme/Logout moved to hamburger menu (SPRINT-2-004) */}
         </div>
 
         <ProfileSettingsModal
@@ -540,7 +538,7 @@ const MobileReviewCard = ({ review }: { review: ReviewNote & { whiskeyName: stri
           <img src={review.whiskeyImage} alt={review.whiskeyName} className="w-10 h-10 rounded-lg object-cover" />
         ) : (
           <div className="w-10 h-10 rounded-lg bg-accent/30 flex items-center justify-center">
-            <Wine className="w-5 h-5 text-muted-foreground/50" />
+            <GlencairnIcon className="w-5 h-5 text-muted-foreground/50" />
           </div>
         )}
         <div className="flex-1 min-w-0">
@@ -588,7 +586,7 @@ const PublicWhiskeyCard = ({ whiskey }: { whiskey: PublicWhiskey }) => {
               />
             ) : (
               <div className="h-full w-full flex items-center justify-center p-2">
-                <Wine className="h-8 w-8 text-muted-foreground/50" />
+                <GlencairnIcon className="h-8 w-8 text-muted-foreground/50" />
               </div>
             )}
             {isWishlist && (

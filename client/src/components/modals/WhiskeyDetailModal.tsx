@@ -226,6 +226,7 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit, onTast
       });
 
       queryClient.invalidateQueries({ queryKey: ['/api/whiskeys'] });
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
 
       setIsDeleteDialogOpen(false);
       onClose();

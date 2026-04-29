@@ -99,6 +99,7 @@ const AddWhiskeyModal = ({ isOpen, onClose }: AddWhiskeyModalProps) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/whiskeys"] });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
       toast({
         title: isWishlistMode ? "Added to Wishlist" : "Whiskey Added",
         description: isWishlistMode

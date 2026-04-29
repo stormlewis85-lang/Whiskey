@@ -74,6 +74,7 @@ const EditWhiskeyModal = ({ isOpen, onClose, whiskey }: EditWhiskeyModalProps) =
         description: "Your whiskey has been updated successfully.",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/whiskeys'] });
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
       onClose();
     },
     onError: (error) => {
@@ -112,6 +113,7 @@ const EditWhiskeyModal = ({ isOpen, onClose, whiskey }: EditWhiskeyModalProps) =
         description: "Your whiskey has been removed from your collection.",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/whiskeys'] });
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
       setIsDeleteDialogOpen(false);
       onClose();
     },
