@@ -1,14 +1,14 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { CircleUser, LogOut, BarChart3, TrendingUp, Home, Menu, Users, UsersRound, Eye, Mic, Bell, Settings, UserCircle, Sun, Moon, Monitor } from "lucide-react";
+import { CircleUser, LogOut, BarChart3, TrendingUp, Home, Menu, Users, UsersRound, Eye, Mic, Bell, Settings, UserCircle } from "lucide-react";
 import { GlencairnIcon } from "@/components/GlencairnIcon";
 import { Logo } from "@/components/Logo";
 import { Link, useLocation } from "wouter";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useTheme } from "next-themes";
 import { ThemeToggle } from "@/components/theme-toggle";
 import ProfileSettingsModal from "@/components/modals/ProfileSettingsModal";
+import { MobileNavMenu } from "@/components/MobileNavMenu";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,21 +27,8 @@ export function Header() {
   const { user, logoutMutation } = useAuth();
   const [location] = useLocation();
   const isMobile = useIsMobile();
-  const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isProfileSettingsOpen, setIsProfileSettingsOpen] = useState(false);
-
-  useEffect(() => { setMounted(true); }, []);
-
-  const cycleTheme = () => {
-    if (theme === "light") setTheme("dark");
-    else if (theme === "dark") setTheme("system");
-    else setTheme("light");
-  };
-
-  const themeLabel = !mounted ? "System" : theme === "light" ? "Light" : theme === "dark" ? "Dark" : "System";
-  const ThemeIcon = !mounted ? Monitor : theme === "light" ? Sun : theme === "dark" ? Moon : Monitor;
 
   const handleLogout = () => {
     logoutMutation.mutate();
@@ -189,74 +176,7 @@ export function Header() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-[280px] sm:w-[320px]">
-                <div className="flex flex-col h-full pb-20">
-                  {/* User info */}
-                  <div className="flex items-center gap-3 pb-6 pt-2 border-b border-border">
-                    <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
-                      <CircleUser className="h-6 w-6 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-foreground">
-                        {user.displayName || user.username}
-                      </p>
-                      <p className="text-sm text-muted-foreground">Welcome back</p>
-                    </div>
-                  </div>
-
-                  {/* Navigation — scrollable so footer stays pinned */}
-                  <nav className="flex flex-col gap-1 py-6 overflow-y-auto flex-1 min-h-0">
-                    <NavLinks />
-                  </nav>
-
-                  {/* Footer with settings and logout */}
-                  <div className="mt-auto pt-6 border-t border-border space-y-1">
-                    {(user as any).profileSlug && (
-                      <Link href={`/u/${(user as any).profileSlug}`}>
-                        <Button
-                          variant="ghost"
-                          className="w-full justify-start"
-                          onClick={() => setIsSheetOpen(false)}
-                        >
-                          <UserCircle className="mr-2 h-4 w-4" />
-                          <span>View Profile</span>
-                        </Button>
-                      </Link>
-                    )}
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start"
-                      onClick={() => {
-                        setIsSheetOpen(false);
-                        setIsProfileSettingsOpen(true);
-                      }}
-                    >
-                      <Settings className="mr-2 h-4 w-4" />
-                      <span>Profile Settings</span>
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start"
-                      onClick={cycleTheme}
-                    >
-                      <ThemeIcon className="mr-2 h-4 w-4" />
-                      <span>Theme</span>
-                      <span className="ml-auto text-xs text-muted-foreground">{themeLabel}</span>
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
-                      onClick={() => {
-                        setIsSheetOpen(false);
-                        handleLogout();
-                      }}
-                      disabled={logoutMutation.isPending}
-                    >
-                      <LogOut className="mr-2 h-4 w-4" />
-                      <span>Log out</span>
-                      {logoutMutation.isPending && <span className="ml-2">...</span>}
-                    </Button>
-                  </div>
-                </div>
+                <MobileNavMenu onClose={() => setIsSheetOpen(false)} />
               </SheetContent>
             </Sheet>
           )}

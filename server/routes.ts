@@ -2398,13 +2398,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let user = await storage.getUserByProfileSlug(slug);
       let isOwnProfile = false;
 
-      if (!user && sessionUserId) {
-        // Try without public check — might be own profile that's private
+      if (user && sessionUserId && user.id === sessionUserId) {
+        isOwnProfile = true;
+      } else if (!user && sessionUserId) {
         user = await storage.getUserByProfileSlug(slug, true);
         if (user && user.id === sessionUserId) {
           isOwnProfile = true;
         } else {
-          user = undefined; // Not own profile and not public
+          user = undefined;
         }
       }
 
@@ -2415,6 +2416,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const profile = await storage.getPublicProfile(user.id, isOwnProfile);
       if (!profile) {
         return res.status(404).json({ message: "Profile not found or not public" });
+      }
+
+      // DEBUG: verify bottle count matches dashboard (remove after QA)
+      if (isOwnProfile) {
+        const allWhiskeys = await storage.getWhiskeys(user.id);
+        const dashboardTotal = allWhiskeys.length;
+        const dashboardNonWishlist = allWhiskeys.filter((w: any) => !w.isWishlist).length;
+        console.log(`[CRIT-001 DEBUG] Profile slug=${slug} isOwnProfile=${isOwnProfile} profileCount=${profile.stats.uniqueBottles} dashboardTotal=${dashboardTotal} dashboardNonWishlist=${dashboardNonWishlist}`);
       }
 
       // Normalize response shape for frontend
