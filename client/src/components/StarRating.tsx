@@ -98,7 +98,7 @@ export function StarRating({
   };
 
   return (
-    <div className="flex items-center">
+    <div className="flex items-center gap-1">
       {renderStars()}
     </div>
   );

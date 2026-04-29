@@ -2,7 +2,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { CircleUser, LogOut, BarChart3, TrendingUp, Home, Menu, Users, UsersRound, Eye, Mic, Bell, Settings, UserCircle } from "lucide-react";
 import { GlencairnIcon } from "@/components/GlencairnIcon";
-import { Logo } from "@/components/Logo";
+import { BrandLogo } from "@/components/BrandLogo";
 import { Link, useLocation } from "wouter";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -181,14 +181,7 @@ export function Header() {
             </Sheet>
           )}
 
-          <Link href="/">
-            <span className="flex items-center gap-2 cursor-pointer">
-              <Logo size="nav" />
-              <span className="font-display font-medium text-lg text-primary">
-                MyWhiskeyPedia
-              </span>
-            </span>
-          </Link>
+          <BrandLogo />
         </div>
 
         {/* Desktop Navigation */}

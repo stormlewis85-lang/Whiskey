@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Menu } from "lucide-react";
-import { Logo } from "@/components/Logo";
-import { Link } from "wouter";
+import { BrandLogo } from "@/components/BrandLogo";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { MobileNavMenu } from "@/components/MobileNavMenu";
@@ -15,7 +14,7 @@ export function MobileHomeHeader() {
       style={{ padding: "8px 20px 16px" }}
     >
       {/* Hamburger + Logo */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-2">
         <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon" className="-ml-2">
@@ -28,14 +27,7 @@ export function MobileHomeHeader() {
           </SheetContent>
         </Sheet>
 
-        <Link href="/">
-          <span className="flex items-center gap-2 cursor-pointer">
-            <Logo size="nav" />
-            <span className="font-display font-medium text-lg text-primary">
-              MyWhiskeyPedia
-            </span>
-          </span>
-        </Link>
+        <BrandLogo />
       </div>
     </div>
   );

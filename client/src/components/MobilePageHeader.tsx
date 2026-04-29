@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { Logo } from "@/components/Logo";
+import { BrandLogo } from "@/components/BrandLogo";
 import { Menu } from "lucide-react";
-import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { MobileNavMenu } from "@/components/MobileNavMenu";
@@ -16,7 +15,7 @@ export function MobilePageHeader({ rightAction }: MobilePageHeaderProps) {
   return (
     <div className="flex items-center justify-between px-5 py-2">
       {/* Hamburger + Title */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-2">
         <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon" className="-ml-2">
@@ -29,12 +28,7 @@ export function MobilePageHeader({ rightAction }: MobilePageHeaderProps) {
           </SheetContent>
         </Sheet>
 
-        <Link href="/">
-          <span className="flex items-center gap-2 cursor-pointer">
-            <Logo size="nav" />
-            <span className="font-display font-medium text-lg text-primary">MyWhiskeyPedia</span>
-          </span>
-        </Link>
+        <BrandLogo />
       </div>
 
       {/* Optional right action */}
