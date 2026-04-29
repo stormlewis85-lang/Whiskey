@@ -1,7 +1,7 @@
 import { Whiskey } from "@shared/schema";
 import { calculateAverageRating, calculateAveragePrice, calculateTotalValue } from "@/lib/utils/calculations";
 import ExportButton from "./ExportButton";
-import { Wine, Star, TrendingUp, Heart } from "lucide-react";
+import { Star, TrendingUp, Heart } from "lucide-react";
 
 interface CollectionStatsProps {
   whiskeys: Whiskey[];

@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { WhiskeyCategory } from '@/components/ui/whiskey-category';
-import { Loader2, Star, Home, AlertCircle, Calendar, Wine } from 'lucide-react';
+import { Loader2, Star, Home, AlertCircle, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'wouter';
 import ReviewLikes from '@/components/ReviewLikes';

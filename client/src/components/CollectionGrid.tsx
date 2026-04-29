@@ -4,7 +4,7 @@ import WhiskeyCard from "./WhiskeyCard";
 import WhiskeyListView from "./WhiskeyListView";
 import SkeletonCard from "./SkeletonCard";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, PlusIcon, Wine, LayoutGrid, List, ArrowRight } from "lucide-react";
+import { AlertCircle, PlusIcon, LayoutGrid, List, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const INITIAL_COUNT = 30;

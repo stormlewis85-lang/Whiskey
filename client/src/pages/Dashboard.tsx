@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { Header } from "@/components/Header";
-import { Loader2, Home, Wine, Star, TrendingUp, DollarSign, BarChart3, AlertCircle } from "lucide-react";
+import { Loader2, Home, Star, TrendingUp, DollarSign, BarChart3, AlertCircle } from "lucide-react";
+import { GlencairnIcon } from "@/components/GlencairnIcon";
 import { Link } from "wouter";
 import { calculateAverageRating } from "@/lib/utils/calculations";
 
@@ -283,7 +284,7 @@ export default function Dashboard() {
             {
               label: "Total Whiskeys",
               value: whiskeys.length.toString(),
-              icon: Wine,
+              icon: GlencairnIcon,
               color: "text-muted-foreground",
               bgColor: "bg-muted",
             },

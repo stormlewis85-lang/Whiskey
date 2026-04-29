@@ -30,11 +30,11 @@ import {
   ArrowLeft,
   Star,
   Droplets,
-  Wine,
   ShoppingBag,
   Bookmark,
   Target,
 } from "lucide-react";
+import { GlencairnIcon } from "@/components/GlencairnIcon";
 import { Link } from "wouter";
 import { useAnalyticsData, PalateProfile } from "@/hooks/use-analytics-data";
 import { RadarChart } from "@/components/RadarChart";
@@ -606,7 +606,7 @@ export default function Analytics() {
               {/* Collection counts */}
               <div className="grid grid-cols-2 gap-px rounded-xl overflow-hidden border border-border/30 bg-border/30 h-fit">
                 <div className="bg-card/50 py-5 text-center">
-                  <Wine className="h-4 w-4 text-primary/40 mx-auto mb-2" />
+                  <GlencairnIcon className="h-4 w-4 text-primary/40 mx-auto mb-2" />
                   <p className="font-display text-2xl font-bold text-foreground tabular-nums">{analytics.ownedCount}</p>
                   <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground/40 font-medium mt-0.5">Owned</p>
                 </div>

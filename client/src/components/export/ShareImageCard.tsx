@@ -1,6 +1,7 @@
 import React, { forwardRef } from 'react';
 import { Whiskey, ReviewNote } from '@shared/schema';
-import { Star, Wine } from 'lucide-react';
+import { Star } from 'lucide-react';
+import { GlencairnIcon } from "@/components/GlencairnIcon";
 import { Logo } from '@/components/Logo';
 import { cn } from '@/lib/utils';
 
@@ -90,7 +91,7 @@ export const ShareImageCard = forwardRef<HTMLDivElement, ShareImageCardProps>(
               </div>
             ) : (
               <div className="h-24 w-24 bg-amber-900/30 rounded-2xl flex items-center justify-center border border-amber-700/30">
-                <Wine className="h-12 w-12 text-amber-500/70" />
+                <GlencairnIcon className="h-12 w-12 text-amber-500/70" />
               </div>
             )}
           </div>
@@ -283,7 +284,7 @@ export const ShareImageCardFull = forwardRef<HTMLDivElement, ShareImageCardProps
                 justifyContent: 'center',
                 border: '1px solid rgba(180, 83, 9, 0.3)',
               }}>
-                <Wine style={{ height: 96 * scale, width: 96 * scale, color: 'rgba(245, 158, 11, 0.7)' }} />
+                <GlencairnIcon style={{ height: 96 * scale, width: 96 * scale, color: 'rgba(245, 158, 11, 0.7)' }} />
               </div>
             )}
           </div>
@@ -392,7 +393,7 @@ export const ShareImageCardFull = forwardRef<HTMLDivElement, ShareImageCardProps
               borderTop: '1px solid rgba(180, 83, 9, 0.3)',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 * scale }}>
-                <Wine style={{ height: 28 * scale, width: 28 * scale, color: '#f59e0b' }} />
+                <GlencairnIcon style={{ height: 28 * scale, width: 28 * scale, color: '#f59e0b' }} />
                 <span style={{
                   color: '#fbbf24',
                   fontWeight: 600,

@@ -13,9 +13,10 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Flight, FlightWhiskey, Whiskey } from "@shared/schema";
 import {
-  Plus, Wine, Calendar, Trash2, GripVertical, Star,
+  Plus, Calendar, Trash2, GripVertical, Star,
   Droplets, DollarSign, Clock, PenLine, ChevronRight
 } from "lucide-react";
+import { GlencairnIcon } from "@/components/GlencairnIcon";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -192,7 +193,7 @@ const Flights = () => {
             <div className="relative mb-8">
               <div className="absolute inset-0 bg-primary/20 rounded-full blur-3xl scale-150" />
               <div className="relative w-24 h-24 rounded-full bg-card border border-primary/20 flex items-center justify-center">
-                <Wine className="w-10 h-10 text-primary" />
+                <GlencairnIcon className="w-10 h-10 text-primary" />
               </div>
             </div>
             <h3 className="font-display text-2xl md:text-3xl text-foreground text-center">No flights yet</h3>
@@ -322,7 +323,7 @@ const Flights = () => {
               {/* Whiskeys in Flight */}
               {selectedFlight.whiskeys.length === 0 ? (
                 <div className="text-center py-8">
-                  <Wine className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
+                  <GlencairnIcon className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
                   <p className="text-muted-foreground mb-4">No whiskeys in this flight yet</p>
                   <Button onClick={() => setIsAddWhiskeyModalOpen(true)}>
                     <Plus className="h-4 w-4 mr-2" />

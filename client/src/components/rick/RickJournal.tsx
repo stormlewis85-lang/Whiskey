@@ -1,4 +1,5 @@
-import { Wine, Star, BookOpen, Mic } from "lucide-react";
+import { Star, BookOpen, Mic } from "lucide-react";
+import { GlencairnIcon } from "@/components/GlencairnIcon";
 import { cn } from "@/lib/utils";
 
 interface JournalSession {
@@ -83,7 +84,7 @@ function JournalEntry({
           {session.whiskeyImage ? (
             <img src={session.whiskeyImage} alt={session.whiskeyName} className="w-full h-full object-cover" />
           ) : (
-            <Wine className="w-5 h-5 text-muted-foreground/40" />
+            <GlencairnIcon className="w-5 h-5 text-muted-foreground/40" />
           )}
         </div>
 

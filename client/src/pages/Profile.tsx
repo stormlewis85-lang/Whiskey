@@ -14,7 +14,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { apiRequest } from '@/lib/queryClient';
 import {
-  Wine,
   Star,
   UserPlus,
   UserMinus,
@@ -314,7 +313,7 @@ const Profile = () => {
               </div>
             ) : collectionItems.length === 0 ? (
               <EmptyState
-                icon={Wine}
+                icon={GlencairnIcon}
                 title="No Bottles Yet"
                 description="Start building your collection by adding your first bottle."
               />
@@ -491,7 +490,7 @@ const Profile = () => {
             <Tabs defaultValue="collection" className="w-full">
               <TabsList className="mb-6">
                 <TabsTrigger value="collection" className="gap-2">
-                  <Wine className="h-4 w-4" />
+                  <GlencairnIcon className="h-4 w-4" />
                   Collection ({whiskeys.length})
                 </TabsTrigger>
               </TabsList>
@@ -504,7 +503,7 @@ const Profile = () => {
                 ) : whiskeys.length === 0 ? (
                   <Card className="border-dashed">
                     <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                      <Wine className="h-12 w-12 text-muted-foreground/50 mb-4" />
+                      <GlencairnIcon className="h-12 w-12 text-muted-foreground/50 mb-4" />
                       <h3 className="text-lg font-medium text-muted-foreground">No public whiskeys yet</h3>
                       <p className="text-sm text-muted-foreground/70 mt-1">
                         {isOwnProfile

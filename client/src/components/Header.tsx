@@ -1,6 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { CircleUser, LogOut, BarChart3, TrendingUp, Home, Menu, Users, UsersRound, Wine, Eye, Mic, Bell, Settings, UserCircle, Sun, Moon, Monitor } from "lucide-react";
+import { CircleUser, LogOut, BarChart3, TrendingUp, Home, Menu, Users, UsersRound, Eye, Mic, Bell, Settings, UserCircle, Sun, Moon, Monitor } from "lucide-react";
+import { GlencairnIcon } from "@/components/GlencairnIcon";
 import { Logo } from "@/components/Logo";
 import { Link, useLocation } from "wouter";
 import { useState, useEffect } from "react";
@@ -127,7 +128,7 @@ export function Header() {
               : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
           }`}
         >
-          <Wine className="h-4 w-4" />
+          <GlencairnIcon className="h-4 w-4" />
           <span>Flights</span>
         </button>
       </Link>
@@ -188,7 +189,7 @@ export function Header() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-[280px] sm:w-[320px]">
-                <div className="flex flex-col h-full">
+                <div className="flex flex-col h-full pb-20">
                   {/* User info */}
                   <div className="flex items-center gap-3 pb-6 pt-2 border-b border-border">
                     <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">

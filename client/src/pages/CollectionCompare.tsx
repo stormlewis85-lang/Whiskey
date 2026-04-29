@@ -10,11 +10,11 @@ import { Progress } from '@/components/ui/progress';
 import { useRoute } from 'wouter';
 import {
   GitCompareArrows,
-  Wine,
   Star,
   Layers,
   ArrowLeft
 } from 'lucide-react';
+import { GlencairnIcon } from "@/components/GlencairnIcon";
 import { Button } from '@/components/ui/button';
 import { Link } from 'wouter';
 import { cn } from '@/lib/utils';
@@ -49,7 +49,7 @@ const BottleList = ({
 }) => (
   <div>
     <h3 className={cn('text-sm font-medium mb-3 flex items-center gap-2', color)}>
-      <Wine className="h-4 w-4" />
+      <GlencairnIcon className="h-4 w-4" />
       {title} ({bottles.length})
     </h3>
     {bottles.length === 0 ? (

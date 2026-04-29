@@ -20,7 +20,6 @@ import {
   UserPlus,
   Star,
   Share2,
-  Wine,
   Heart,
   Loader2,
   Activity,
@@ -28,6 +27,7 @@ import {
   ArrowLeftRight,
   ArrowRight
 } from 'lucide-react';
+import { GlencairnIcon } from "@/components/GlencairnIcon";
 import { cn } from '@/lib/utils';
 import { Whiskey, ReviewNote, User } from '@shared/schema';
 import ReviewLikes from '@/components/ReviewLikes';
@@ -184,7 +184,7 @@ const UserSuggestionCard = ({ user, onFollow }: { user: SuggestedUser; onFollow:
             )}
             <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
-                <Wine className="h-3 w-3" />
+                <GlencairnIcon className="h-3 w-3" />
                 {user.whiskeyCount} whiskeys
               </span>
               <span className="flex items-center gap-1">
@@ -385,7 +385,7 @@ const activityText = (item: ActivityItem): string => {
 const activityIcon = (type: string) => {
   switch (type) {
     case 'follow': return <UserPlus className="h-3.5 w-3.5 text-blue-400" />;
-    case 'add_bottle': return <Wine className="h-3.5 w-3.5 text-green-400" />;
+    case 'add_bottle': return <GlencairnIcon className="h-3.5 w-3.5 text-green-400" />;
     case 'review': return <Star className="h-3.5 w-3.5 text-primary" />;
     case 'like': return <Heart className="h-3.5 w-3.5 text-red-400" />;
     case 'trade_list': return <ArrowLeftRight className="h-3.5 w-3.5 text-violet-400" />;

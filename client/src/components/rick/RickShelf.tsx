@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Wine, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
+import { GlencairnIcon } from "@/components/GlencairnIcon";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Whiskey } from "@shared/schema";
 import type { RickSuggestion } from "@/lib/rick-suggestions";
@@ -74,7 +75,7 @@ export function RickShelf({ suggestions, availableWhiskeys, onSelectWhiskey }: R
       {/* Empty collection */}
       {availableWhiskeys.length === 0 && (
         <div className="text-center py-8">
-          <Wine className="w-8 h-8 text-muted-foreground/40 mx-auto mb-3" />
+          <GlencairnIcon className="w-8 h-8 text-muted-foreground/40 mx-auto mb-3" />
           <p className="text-muted-foreground text-sm">
             Add bottles to your collection to get started with Rick.
           </p>
@@ -146,7 +147,7 @@ function BottleThumbnail({
       {image ? (
         <img src={image} alt={name} className="w-full h-full object-cover" />
       ) : (
-        <Wine className="w-5 h-5 text-muted-foreground/40" />
+        <GlencairnIcon className="w-5 h-5 text-muted-foreground/40" />
       )}
     </div>
   );

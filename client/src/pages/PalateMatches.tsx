@@ -13,11 +13,11 @@ import { Link } from 'wouter';
 import {
   Users,
   Fingerprint,
-  Wine,
   ArrowRight,
   TrendingUp,
   Loader2
 } from 'lucide-react';
+import { GlencairnIcon } from "@/components/GlencairnIcon";
 import { cn } from '@/lib/utils';
 
 interface PalateProfile {
@@ -233,7 +233,7 @@ export default function PalateMatches() {
               ) : (
                 <Card className="bg-card border-border/50">
                   <CardContent className="p-6 text-center">
-                    <Wine className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                    <GlencairnIcon className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
                     <p className="text-sm text-muted-foreground">
                       Review some whiskeys to build your palate profile
                     </p>

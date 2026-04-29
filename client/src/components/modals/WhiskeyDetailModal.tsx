@@ -11,8 +11,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { GlencairnIcon } from "@/components/GlencairnIcon";
 import {
-  Wine, Pencil as PencilIcon, Star, Upload, Edit, Trash2,
+  Pencil as PencilIcon, Star, Upload, Edit, Trash2,
   BookOpen, PenIcon, XIcon, AlertTriangle, Loader2,
   DollarSign, BarChart2, Eye, Calendar, MapPin, Droplets, Clock,
   Heart, Package, PackageOpen, Gift, CheckCircle2, Plus, Minus, ArrowRight,
@@ -416,7 +417,7 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit, onTast
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <Wine className="h-16 w-16 text-muted-foreground/30" />
+                    <GlencairnIcon className="h-16 w-16 text-muted-foreground/30" />
                   </div>
                 )}
                 <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">

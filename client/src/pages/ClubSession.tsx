@@ -12,8 +12,9 @@ import { Whiskey, ClubSession as ClubSessionType } from "@shared/schema";
 import { SessionRatingCard } from "@/components/clubs/SessionRatingCard";
 import { RevealGrid } from "@/components/clubs/RevealGrid";
 import {
-  Plus, Play, Eye, CheckCircle, Trash2, Wine
+  Plus, Play, Eye, CheckCircle, Trash2
 } from "lucide-react";
+import { GlencairnIcon } from "@/components/GlencairnIcon";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -314,7 +315,7 @@ const ClubSession = () => {
               </div>
             ) : (
               <div className="text-center py-12">
-                <Wine className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
+                <GlencairnIcon className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
                 <p className="text-sm text-muted-foreground">
                   Add whiskeys to the lineup to get started.
                 </p>

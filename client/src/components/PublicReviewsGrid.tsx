@@ -6,7 +6,8 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Star, Share2, Wine, AlertCircle } from 'lucide-react';
+import { Star, Share2, AlertCircle } from 'lucide-react';
+import { GlencairnIcon } from "@/components/GlencairnIcon";
 import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
 import ReviewLikes from './ReviewLikes';
@@ -194,7 +195,7 @@ const PublicReviewsGrid = ({ limit = 6, className = '' }: PublicReviewsGridProps
       ) : (
         <div className="bg-card border border-border/50 rounded-xl shadow-warm-sm p-10 text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-6">
-            <Wine className="h-8 w-8 text-muted-foreground" />
+            <GlencairnIcon className="h-8 w-8 text-muted-foreground" />
           </div>
           <h3 className="text-xl font-semibold text-foreground">No reviews yet</h3>
           <p className="mt-2 text-muted-foreground max-w-md mx-auto">

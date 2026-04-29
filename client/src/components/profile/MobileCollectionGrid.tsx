@@ -1,4 +1,4 @@
-import { Wine } from "lucide-react";
+import { GlencairnIcon } from "@/components/GlencairnIcon";
 
 export interface CollectionItem {
   id: string;
@@ -27,7 +27,7 @@ export function MobileCollectionGrid({ items, onItemClick }: MobileCollectionGri
               className="w-full h-full object-cover"
             />
           ) : (
-            <Wine className="w-8 h-8 text-primary/40" />
+            <GlencairnIcon className="w-8 h-8 text-primary/40" />
           )}
 
           {/* Name overlay */}

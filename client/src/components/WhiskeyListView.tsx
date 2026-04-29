@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Whiskey } from "@shared/schema";
-import { Star, Wine, Heart } from "lucide-react";
+import { Star, Heart } from "lucide-react";
+import { GlencairnIcon } from "@/components/GlencairnIcon";
 import { cn } from "@/lib/utils";
 
 interface WhiskeyListViewProps {
@@ -69,7 +70,7 @@ const WhiskeyListView = ({ whiskeys, onViewDetails, onReview, onEdit }: WhiskeyL
                         onError={() => handleImageError(whiskey.id)}
                       />
                     ) : (
-                      <Wine className="w-4 h-4 text-muted-foreground/40" />
+                      <GlencairnIcon className="w-4 h-4 text-muted-foreground/40" />
                     )}
                   </div>
                 </td>

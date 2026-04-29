@@ -6,7 +6,6 @@ import {
   TrendingUp,
   Users,
   UsersRound,
-  Wine,
   Eye,
   Mic,
   Bell,
@@ -15,6 +14,7 @@ import {
   LogOut,
   CircleUser,
 } from "lucide-react";
+import { GlencairnIcon } from "@/components/GlencairnIcon";
 import { Logo } from "@/components/Logo";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
@@ -101,7 +101,7 @@ export function MobileHomeHeader() {
                   </Link>
                   <Link href="/flights">
                     <button onClick={() => setIsSheetOpen(false)} className={navLinkClass("/flights")}>
-                      <Wine className="h-4 w-4" />
+                      <GlencairnIcon className="h-4 w-4" />
                       <span>Flights</span>
                     </button>
                   </Link>

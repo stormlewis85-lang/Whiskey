@@ -2,7 +2,8 @@ import React from 'react';
 import { Whiskey, ReviewNote } from '@shared/schema';
 import { StarRating } from '@/components/StarRating';
 import { Badge } from '@/components/ui/badge';
-import { Wine, Star, Calendar, AlertCircle } from 'lucide-react';
+import { Star, Calendar, AlertCircle } from 'lucide-react';
+import { GlencairnIcon } from "@/components/GlencairnIcon";
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
@@ -200,7 +201,7 @@ export function ReviewDetailPage({ whiskey, review }: ReviewDetailPageProps) {
             />
           ) : (
             <div className="h-64 w-full max-w-[180px] flex flex-col items-center justify-center text-muted-foreground/30 rounded-lg border border-dashed border-border/40">
-              <Wine className="h-16 w-16 mb-2" />
+              <GlencairnIcon className="h-16 w-16 mb-2" />
               <span className="text-xs tracking-wide">No Image</span>
             </div>
           )}

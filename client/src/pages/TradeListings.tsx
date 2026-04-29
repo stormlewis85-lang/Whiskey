@@ -33,13 +33,13 @@ import {
   ArrowLeftRight,
   Search,
   Plus,
-  Wine,
   MapPin,
   Tag,
   Loader2,
   Trash2,
   Globe
 } from 'lucide-react';
+import { GlencairnIcon } from "@/components/GlencairnIcon";
 import { cn } from '@/lib/utils';
 
 interface TradeListingWithDetails {
@@ -139,7 +139,7 @@ const TradeCard = ({
             />
           ) : (
             <div className="w-16 h-20 bg-muted rounded-md flex items-center justify-center border border-border/50">
-              <Wine className="h-6 w-6 text-muted-foreground" />
+              <GlencairnIcon className="h-6 w-6 text-muted-foreground" />
             </div>
           )}
           <div className="flex-1 min-w-0">
@@ -411,7 +411,7 @@ export default function TradeListings() {
                   Browse
                 </TabsTrigger>
                 <TabsTrigger value="mine" className="gap-2">
-                  <Wine className="h-4 w-4" />
+                  <GlencairnIcon className="h-4 w-4" />
                   My Listings
                 </TabsTrigger>
               </TabsList>

@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { Whiskey } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { PencilIcon, Star, Wine, Heart, MoreHorizontal, Plus } from "lucide-react";
+import { PencilIcon, Star, Heart, MoreHorizontal, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { GlencairnIcon } from "@/components/GlencairnIcon";
@@ -208,7 +208,7 @@ const WhiskeyCard = ({ whiskey, onViewDetails, onReview, onEdit }: WhiskeyCardPr
                 variant="outline"
                 className="w-full justify-start h-12 text-sm border-border/50"
               >
-                <Wine className="h-4 w-4 mr-3" />
+                <GlencairnIcon className="h-4 w-4 mr-3" />
                 Details
               </Button>
               <Button

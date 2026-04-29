@@ -1735,13 +1735,12 @@ export class DatabaseStorage implements IStorage {
     const user = await this.getUser(userId);
     if (!user || (!skipPublicCheck && !user.isPublic)) return undefined;
 
-    // Get public whiskeys
     const userWhiskeys = await db
       .select()
       .from(whiskeys)
       .where(and(
         eq(whiskeys.userId, userId),
-        eq(whiskeys.isPublic, true),
+        ...(skipPublicCheck ? [] : [eq(whiskeys.isPublic, true)]),
         eq(whiskeys.isWishlist, false)
       ));
 
