@@ -1,87 +1,44 @@
-# CLAUDE.md — MyWhiskeyPedia Configuration
+# CLAUDE.md
 
-> This file is read automatically at the start of every Claude Code session.
+## Rules
+- NEVER write code, create files, or build unless Storm explicitly says "build", "create", "code", or "ship".
+- ALWAYS read TASKS.md before starting work. Resume where the last session left off.
+- ALWAYS check DECISIONS.md before making architectural choices. Do not re-decide what's been decided.
+- ALWAYS check RESEARCH.md before investigating previously researched topics.
+- ALWAYS assign a scope tier (Quick/Standard/Deep) before activating agents.
+- ALWAYS use Done/Open/Watch format for handoffs between agents.
+- ALWAYS flag blockers immediately. Do not guess at solutions.
+- NEVER skip QA sign-off before marking work complete.
+- ONE question to Storm at a time. Do not frontload.
+- Be brief by default. Offer to elaborate when depth might help.
 
-## Agent System
+## Pipeline
+Storm → PM → Research → Architect → Developer → Test → QA → Docs
+PM determines which steps apply per task. Not every task uses every step.
 
-**Read `./agents-master/CLAUDE.md` for the full agent workflow, pipeline, hierarchy, and session protocol. Follow it.**
+## Agent Delegation Rules
+- When spawning @explore, specify EXACTLY which files or directories to examine and what question to answer. Never say "explore the codebase" — say "read src/lib/format-date.ts and src/db/schema.ts and report the date handling patterns." Cap explore at 5 files unless PM explicitly approves more.
+- For ANY task that touches more than 3 files or involves refactoring: delegate to subagents, do not handle in main context.
+- Use the Explore-Plan-Execute pattern: spawn explore subagent first to map files, then plan subagent to design approach, then execute.
+- ALWAYS delegate testing to the test subagent — Developer does NOT write tests.
+- ALWAYS delegate code review to the qa subagent — the agent that wrote code does NOT review it.
+- When delegating, include in the prompt: exact file paths, what to look for, pattern to follow, and scope boundary.
+- DO NOT role-play agent phases in one context. If PM says "route through the team," spawn actual subagents.
+- You can invoke subagents explicitly with @agent-name.
 
-This file is the project-level config. The submodule file defines how the agent team works.
+## Agents
+- Subagents: `.claude/agents/` — each has defined authority and constraints in its system prompt.
+- PM Agent is the orchestrator. All work flows through PM.
+- Activate minimum viable team per task.
 
-## Project Overview
+## Project State
+- `TASKS.md` — Single source of truth for project state (PM-owned)
+- `DECISIONS.md` — Architectural and feature decisions with rationale
+- `RESEARCH.md` — Research findings and landscape analysis
+- `CONTEXT_PROJECT.md` — Project-specific details, tech stack, active specialists
+- `CONTEXT_MASTER.md` — Universal standards (in agents-master/)
 
-MyWhiskeyPedia is a whiskey review and discovery platform with a 6-component weighted scoring system.
-
-## Tech Stack
-
-- TypeScript (strict mode)
-- Drizzle ORM + PostgreSQL
-- JWT auth (httpOnly cookie) + Google OAuth
-- Async/await over promises
-
-## Project-Specific Rules
-
-### CRITICAL: Review Scoring System
-
-The 6-component weighted scoring system is core IP. See `specs/REVIEW-SYSTEM.md` for full details. Do NOT modify the weighting algorithm without explicit instruction from Storm.
-
-### CRITICAL: Auth Flow
-
-JWT stored in httpOnly cookie. Google OAuth for authentication. Check `specs/API.md` for the full auth flow. Known issue: delete operations may have session token bugs.
-
-## Context Files
-
-1. Read `./CONTEXT_PROJECT.md` for project-specific details
-2. Read `./TASKS.md` for current task state and backlog
-3. Read `./DECISIONS.md` for architectural decisions with rationale
-4. Read relevant `specs/` files for the area being modified
-
-## Key Files
-
-| File | Purpose |
-|------|---------|
-| `specs/ARCHITECTURE.md` | System design and folder structure |
-| `specs/DATABASE.md` | Schema and relationships |
-| `specs/API.md` | All endpoints with request/response |
-| `specs/TESTING.md` | Test plan and verification |
-| `specs/REVIEW-SYSTEM.md` | 6-component weighted scoring system |
-
-## Code Style
-
-- TypeScript strict mode
-- Async/await over promises
-- Error handling on all API calls
-- No console.log in production code (use proper logging)
-
-## Database Changes
-
-- ORM: Drizzle ORM (PostgreSQL)
-- Never modify schema directly
-- Create migration files for all changes
-- Test migrations on a copy first
-
-## Testing Requirements
-
-- All API endpoints must have test coverage
-- Frontend components need smoke tests
-- Run full test suite before marking task complete
-
-## Git Commit Format
-
-```
-type: brief description
-
-- Detail 1
-- Detail 2
-```
-
-Types: feat, fix, test, docs, refactor, chore
-
-## Golden Rules
-
-1. Always discuss and plan before building. Never code unless Storm says to build. (Exception: Autopilot mode executes pre-approved tasks.)
-2. Minimum viable team per task.
-3. No redundant work - check existing docs first.
-4. Own your lane - do not do another agent's job.
-5. Flag blockers immediately.
-6. Ship incrementally.
+## Scope Tiers
+- **Quick** — One agent, minimal context, short response.
+- **Standard** — Normal pipeline, concise. Most work falls here.
+- **Deep** — Full research, architecture review, multi-agent. Major decisions only.
