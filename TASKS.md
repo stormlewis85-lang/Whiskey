@@ -7,6 +7,27 @@
 
 ## Active Tasks
 
+### [FW-V34-002] Investigate delete-operation auth bug — OPEN
+- **Scope:** Standard
+- **Assigned:** Developer (Security review on fix)
+- **Source:** Architect finding during FW-V34-001 (2026-06-03)
+- **Detail:** Suspected race in `isAuthenticated` dual path (`server/auth.ts`): session-destroy in delete handlers vs Bearer-token fallback writing to session (`req.session.save`). Matches the known delete-op session token bug in CONTEXT_PROJECT.md § Known Issues.
+- **Gate:** Reproduce the 401, fix, and add a regression test in tests/ (whiskey-delete.test.ts exists as a starting point).
+
+### [FW-V34-003] Migrate console.log residue to logger — OPEN
+- **Scope:** Quick
+- **Assigned:** Developer
+- **Source:** Architect finding during FW-V34-001 (2026-06-03)
+- **Detail:** `server/routes.ts:85,87,95-96` contain Replit-era `console.log` calls violating Key Constraint #5. Replace with `logger` from `server/lib/logger.ts`. Sweep for any others while in there.
+- **Gate:** `grep -rn "console.log" server/` returns zero hits outside logger.ts.
+
+### [FW-V34-004] Audit existing tests against PATTERNS.md conventions — OPEN
+- **Scope:** Quick
+- **Assigned:** Test
+- **Source:** QA gap note during FW-V34-001 (2026-06-03)
+- **Detail:** 6 test files exist flat in `tests/` (auth, whiskey-crud, distillery, whiskey-delete, review-edit, review-crud). PATTERNS.md documents a mirror-the-source convention (`tests/server/storage.test.ts`). Audit coverage quality and either align file layout or amend the convention in PATTERNS.md to match reality.
+- **Gate:** Test Agent report: per-file verdict + PATTERNS.md updated if the convention changes (Architect approves the amendment).
+
 ### [FW-V34-001] PATTERNS.md population (v3.4 pipeline validation) — COMPLETE
 - **Scope:** Standard
 - **Assigned:** Architect → QA
