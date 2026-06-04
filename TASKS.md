@@ -7,12 +7,14 @@
 
 ## Active Tasks
 
-### [FW-V34-002] Investigate delete-operation auth bug — OPEN
+### [FW-V34-002] Delete-operation auth bug — COMPLETE
 - **Scope:** Standard
-- **Assigned:** Developer (Security review on fix)
-- **Source:** Architect finding during FW-V34-001 (2026-06-03)
-- **Detail:** Suspected race in `isAuthenticated` dual path (`server/auth.ts`): session-destroy in delete handlers vs Bearer-token fallback writing to session (`req.session.save`). Matches the known delete-op session token bug in CONTEXT_PROJECT.md § Known Issues.
-- **Gate:** Reproduce the 401, fix, and add a regression test in tests/ (whiskey-delete.test.ts exists as a starting point).
+- **Pipeline:** PM diagnosis → Developer fix → Test (regression) → Security review → condition applied
+- **Completed:** 2026-06-04
+- **Root cause:** `isAuthenticated` fired `req.session.destroy(() => {})` on stale sessions WITHOUT awaiting, then the Bearer fallback wrote `userId` + `save()` into the session being destroyed underneath it — intermittent 401/500 depending on PgStore timing. Same pattern in `GET /api/user`.
+- **Fix:** awaited `req.session.regenerate()` (atomic destroy+fresh session) at both sites + fail-closed `!req.session` guards before token-path session writes (second guard per Security review condition).
+- **Gate results:** 4/4 hermetic regression tests (tests/auth-middleware.test.ts) incl. deterministic race-order assertion; tsc clean (5 pre-existing storage.ts errors, none new); integration suite A/B: 36 failures before fix → 32 after, zero new failures. Security verdict: APPROVE-WITH-CONDITIONS, condition applied and re-verified.
+- **Watch:** 32 pre-existing integration test failures (suite needs live server + DB state — feeds FW-V34-004); `req.session.save` error suppression (pre-existing) if store reliability degrades; rate-limit token+stale-cookie path at community-features scale.
 
 ### [FW-V34-003] Migrate console.log residue to logger — OPEN
 - **Scope:** Quick

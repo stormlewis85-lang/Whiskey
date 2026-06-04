@@ -47,10 +47,16 @@ export async function isAuthenticated(req: Request, res: Response, next: NextFun
 
       if (user) {
         return next();
-      } else {
-        req.session.destroy(() => {});
-        // Fall through to token auth
       }
+      // Stale session (user no longer exists — e.g., deleted account).
+      // regenerate() = destroy + fresh session, AWAITED, so the token
+      // fallback below always has a live session object to write into.
+      // The previous fire-and-forget destroy() raced the fallback's
+      // session.save(), causing intermittent 401/500 on delete flows (FW-V34-002).
+      await new Promise<void>((resolve, reject) =>
+        req.session.regenerate((err) => (err ? reject(err) : resolve()))
+      );
+      // Fall through to token auth
     } catch {
       // Fall through to token auth
     }
@@ -78,6 +84,13 @@ export async function isAuthenticated(req: Request, res: Response, next: NextFun
 
     if (user.tokenExpiry && new Date(user.tokenExpiry) < new Date()) {
       return res.status(401).json({ message: "Not authenticated - Token expired" });
+    }
+
+    // Guard: downstream handlers read req.session.userId, so a live session
+    // is required. If regenerate failed above, fail closed rather than
+    // writing into a destroyed/undefined session.
+    if (!req.session) {
+      return res.status(500).json({ message: "Authentication verification failed" });
     }
 
     req.session.userId = user.id;
@@ -336,12 +349,16 @@ export function setupAuth(app: express.Express) {
           return res.json(sanitizeUser(sessionUser));
         } else {
           logger.info(`User not found for session userId ${req.session.userId}`);
-          // Clear invalid session
-          req.session.destroy((err) => {
-            if (err) {
-              logger.error("Error destroying invalid session:", err);
-            }
-          });
+          // Clear invalid session — awaited regenerate (not fire-and-forget
+          // destroy) so the token path below has a live session (FW-V34-002)
+          await new Promise<void>((resolve) =>
+            req.session.regenerate((err) => {
+              if (err) {
+                logger.error("Error regenerating invalid session:", err);
+              }
+              resolve();
+            })
+          );
           // Continue to try token auth
         }
       }
@@ -350,7 +367,13 @@ export function setupAuth(app: express.Express) {
       const authHeader = req.headers.authorization;
       if (authHeader && authHeader.startsWith('Bearer ')) {
         const token = authHeader.substring(7); // Remove 'Bearer ' prefix
-        
+
+        // Fail closed if regenerate above failed and left no live session
+        // (Security review condition, FW-V34-002)
+        if (!req.session) {
+          return res.status(500).json({ message: "Authentication verification failed" });
+        }
+
         const tokenUser = await storage.getUserByToken(token);
         if (tokenUser) {
           // Check token expiry
