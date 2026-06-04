@@ -7,6 +7,13 @@
 
 ## Active Tasks
 
+### [FW-V34-001] PATTERNS.md population (v3.4 pipeline validation) — COMPLETE
+- **Scope:** Standard
+- **Assigned:** Architect → QA
+- **Completed:** 2026-06-03
+- **Summary:** PATTERNS.md authored from codebase conventions (8 sections, file:line citations). QA verdict: APPROVE-WITH-CORRECTIONS — caught Architect's false "tests/ does not exist" claim (6 test files exist); corrections applied. This task doubled as the v3.4 framework deployment validation (MIGRATION.md step 5).
+- **Watch:** console.log residue in server/routes.ts:85,87,95-96; session-destroy/token race suspected in delete-op auth bug; Test Agent should audit the 6 existing test files against the documented naming convention.
+
 ### [AUDIT-001] End-to-End Feature Walkthrough — COMPLETE
 - **Scope:** Standard
 - **Assigned:** Developer, Test
