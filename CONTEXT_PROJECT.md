@@ -1,11 +1,50 @@
 # CONTEXT_PROJECT.md — MyWhiskeyPedia
 
-> Project-specific context for the agent team. Read after `.agent-framework/CONTEXT_MASTER.md` and `.agent-framework/domains/software.md`.
+> Project-specific context for the agent team. Read after the framework's CONTEXT_MASTER.md and domains/software.md (in the agents-master/ submodule).
 >
-> **Domain:** Software | **Framework:** `.agent-framework/` (git submodule)
+> **Domain:** Software | **Framework:** `agents-master/` (git submodule)
 
 ## Domain
 software
+
+## Project Capabilities
+
+<!-- Canonical declaration. PM checks this against each agent's Project Requirements at activation. -->
+
+### Framework
+- agents-master version: v3.4 (submodule @ 91a498b, deployed 2026-06-03)
+- Last reconciled: 2026-06-03
+
+### Infrastructure
+- Language runtimes: Node.js (TypeScript via Vite/tsx)
+- Package manager: npm
+- Unit/integration testing: Vitest (vitest.config.ts; tests/ directory)
+- E2E testing: none declared
+- Database: PostgreSQL + Drizzle ORM (migration-based — never modify schema directly)
+- CI/CD: none declared (Digital Ocean App Platform deploys)
+- Chrome available: yes (interactive sessions)
+- Secrets management: .env / Digital Ocean env vars (post-security-audit conventions)
+
+### Active Agents
+- Tier 2 (Core): PM, Research, Architect, Developer, Test, QA, Docs
+- Tier 3 (Specialists): UI/UX, API, Data, DevOps, Security (see Active Tier 3 Specialists below)
+- Meta: /agent-create command — no standing Agent Creator agent
+
+### Active Domain
+software
+
+### File Structure
+- specs/ directory holds detailed architecture/database/API/testing docs (non-standard, canonical for implementation detail)
+- DESIGN.md v2.0 active (Black & Gold system)
+- PATTERNS.md seeded 2026-06-03 — Architect to populate from existing code
+- Root CONTEXT_MASTER.md is a stale duplicate; canonical copy lives in the framework submodule
+
+### Integrated Services
+- Anthropic Claude API (Rick House tasting guide, bottle enrichment)
+- Google OAuth (auth)
+- Digital Ocean Spaces CDN (images)
+- Instagram Graph API (planned, Phase 1 community features)
+- Stripe (planned, monetization)
 
 ## What This Is
 

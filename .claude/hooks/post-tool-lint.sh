@@ -4,7 +4,14 @@
 set -euo pipefail
 
 INPUT=$(cat)
-FILE_PATH=$(echo "$INPUT" | python -c "import sys,json; d=json.load(sys.stdin).get('tool_input',{}); print(d.get('file_path', d.get('path', '')))" 2>/dev/null || echo "")
+
+# Pure-bash JSON field extraction — no Python, no jq (TASK-008).
+# Same parser as pre-tool-guard.sh.
+_json_str() {
+  printf '%s' "$INPUT" | sed -n 's/.*"'"$1"'"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1
+}
+FILE_PATH=$(_json_str "file_path")
+[ -z "$FILE_PATH" ] && FILE_PATH=$(_json_str "path")
 
 # Skip if no file path or file doesn't exist
 [ -z "$FILE_PATH" ] && exit 0
@@ -54,7 +61,7 @@ case "$EXT" in
     ;;
 esac
 
-# Log result
-echo "$(date '+%Y-%m-%d %H:%M:%S') | LINT | $LINT_RESULT | $FILE_PATH" >> "$LOG_DIR/file-ops.log"
+# Log result (UTC, same format as pre-tool-guard — TASK-008)
+echo "$(date -u '+%Y-%m-%dT%H:%M:%SZ') | LINT | $LINT_RESULT | $FILE_PATH" >> "$LOG_DIR/file-ops.log"
 
 exit 0

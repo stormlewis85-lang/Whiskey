@@ -1,11 +1,11 @@
 # CLAUDE.md
 
 ## Rules
-- NEVER write code, create files, or build unless Storm explicitly says "build", "create", "code", or "ship".
+- NEVER write code, create files, or build unless Storm explicitly authorizes with one of: "build," "implement," "write the code," "go ahead and code," or "I approve the plan." "Execute" alone is NOT sufficient (see CONTEXT_MASTER.md Golden Rule 1).
 - ALWAYS read TASKS.md before starting work. Resume where the last session left off.
 - ALWAYS check DECISIONS.md before making architectural choices. Do not re-decide what's been decided.
 - ALWAYS check RESEARCH.md before investigating previously researched topics.
-- ALWAYS assign a scope tier (Quick/Standard/Deep) before activating agents.
+- ALWAYS assign a scope tier (Quick/Standard/Deep/Autopilot) before activating agents.
 - ALWAYS use Done/Open/Watch format for handoffs between agents.
 - ALWAYS flag blockers immediately. Do not guess at solutions.
 - NEVER skip QA sign-off before marking work complete.
@@ -42,3 +42,4 @@ PM determines which steps apply per task. Not every task uses every step.
 - **Quick** — One agent, minimal context, short response.
 - **Standard** — Normal pipeline, concise. Most work falls here.
 - **Deep** — Full research, architecture review, multi-agent. Major decisions only.
+- **Autopilot** — Unattended execution of pre-approved tasks via Ralph Loop per autopilot-rules.md. PM pre-validates against autopilot-rules; only qualifying tasks run unattended.

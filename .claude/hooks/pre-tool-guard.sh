@@ -34,6 +34,14 @@ if [ ! -f "$SESSION_MARKER" ]; then
   date -u '+%Y-%m-%dT%H:%M:%SZ' > "$SESSION_MARKER"
 fi
 
+# Parse failure is never silent (TASK-008): if we know the tool but not the
+# file, log it loudly instead of falling through to ALLOW with an empty name.
+if [ -n "$TOOL_NAME" ] && [ -z "$FILE_PATH" ]; then
+  echo "$(date -u '+%Y-%m-%dT%H:%M:%SZ') | PARSE-FAIL | $TOOL_NAME | (no file_path in payload)" >> "$LOG_DIR/file-ops.log"
+  echo "[pre-tool-guard] WARNING: could not extract file_path for $TOOL_NAME — guard not applied to this call" >&2
+  exit 0
+fi
+
 # HARD BLOCK: Files only Storm modifies
 BLOCKED_FILES="CLAUDE.md CONTEXT_MASTER.md"
 BASENAME=$(basename "$FILE_PATH" 2>/dev/null || echo "")
