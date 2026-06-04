@@ -12,7 +12,7 @@ software
 <!-- Canonical declaration. PM checks this against each agent's Project Requirements at activation. -->
 
 ### Framework
-- agents-master version: v3.4 (submodule @ 91a498b, deployed 2026-06-03)
+- agents-master version: v3.4 (submodule @ 79eaa4c on framework-main — DEC-007 branch-based split; agents-master/ is now the flat framework)
 - Last reconciled: 2026-06-03
 
 ### Infrastructure
@@ -36,7 +36,8 @@ software
 ### File Structure
 - specs/ directory holds detailed architecture/database/API/testing docs (non-standard, canonical for implementation detail)
 - DESIGN.md v2.0 active (Black & Gold system)
-- PATTERNS.md seeded 2026-06-03 — Architect to populate from existing code
+- PATTERNS.md populated 2026-06-03 (FW-V34-001, QA-verified)
+- domains/ + skills/ (universal + software) seeded at project root 2026-06-03 per standard layout (DEC-007)
 - Root CONTEXT_MASTER.md is a stale duplicate; canonical copy lives in the framework submodule
 
 ### Integrated Services
