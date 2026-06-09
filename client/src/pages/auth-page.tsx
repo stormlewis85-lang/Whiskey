@@ -176,7 +176,7 @@ export default function AuthPage() {
           </div>
 
           {/* Single Playfair headline */}
-          <h1 className="font-display text-foreground leading-[1.1] tracking-tight" style={{ fontSize: "clamp(2.5rem, 5vw, 3.5rem)" }}>
+          <h1 className="font-display text-foreground leading-[1.1] tracking-tight" style={{ fontSize: "clamp(42px, 5vw, 3.5rem)" }}>
             Every bottle has a story worth keeping.
           </h1>
           <p className="mt-5 text-lg text-muted-foreground leading-relaxed max-w-md">
