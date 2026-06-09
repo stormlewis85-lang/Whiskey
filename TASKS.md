@@ -101,11 +101,12 @@
 - **Status:** COMPLETE — findings logged in AUDIT-007-008-FINDINGS.md
 - **Summary:** Mock Drops data removed (replaced with "Coming Soon" placeholder), Drops page inline styles converted to Tailwind. 223 console.log instances and 6 `any` types flagged for future cleanup pass. CORS localhost guard already conditional on NODE_ENV.
 
-### [UIAUDIT-001] Fix Profile Page Auth State + Response Shape — IN PROGRESS
+### [UIAUDIT-001] Fix Profile Page Auth State + Response Shape — QA-VERIFIED (code)
 - **Scope:** Standard
-- **Assigned:** Developer
+- **Assigned:** Developer → QA
 - **Priority:** P1
-- **Status:** CODE COMPLETE — awaiting deploy verification
+- **Status:** QA APPROVED 2026-06-08 (code-level) — 4/4 logic criteria MET; response shape COMPLETE (every `stats.*` + `user.*` field Profile.tsx reads is present; `uniqueBottles`→`whiskeyCount` remap at routes.ts:2435, stale `totalBottles` not leaked). Cascading logout/#7 = NEEDS LIVE TEST (live outside scope files). Shippable.
+- **Quick fix DONE 2026-06-08 (folded into branch):** removed the `[CRIT-001 DEBUG]` block (was routes.ts:2422-2428) — eliminated the extra per-request `getWhiskeys()` query on own-profile loads. tsc clean.
 - **Root Cause:** `getUserByProfileSlug()` required `isPublic === true`, blocking private profiles from viewing own page. No username fallback when `profileSlug` is null. Response shape mismatch (API returned `stats.totalBottles`, frontend expected `stats.whiskeyCount`).
 - **Fixes Applied:**
   - `storage.ts`: `getUserByProfileSlug()` — added `skipPublicCheck` param + username fallback lookup
@@ -114,11 +115,12 @@
   - `routes.ts`: `/api/profile/:slug` — detects authenticated user viewing own profile, bypasses `isPublic` check, normalizes response shape to match frontend interface
 - **Cascading fixes:** Resolves audit items #1 (profile auth), #2 (no logout — was hidden behind broken ProfileMenu), #7 (hamburger/overflow — same root cause)
 
-### [UIAUDIT-002] Review Card Text Overflow — IN PROGRESS
+### [UIAUDIT-002] Review Card Text Overflow — QA-VERIFIED (code)
 - **Scope:** Quick
-- **Assigned:** Developer
+- **Assigned:** Developer → QA
 - **Priority:** P2
-- **Status:** CODE COMPLETE — awaiting deploy verification
+- **Status:** QA APPROVED 2026-06-08 (code-level) — 3 MET + 1 NEEDS LIVE VISUAL. Card `overflow-hidden` (card.tsx:12), username `truncate max-w-[120px]` (Community.tsx:86), flex `min-w-0` (Community.tsx:73,75); whiskey/distillery/review all line-clamped. Shippable.
+- **Watch (not blocking):** review body uses BOTH a JS 150-char substring and CSS `line-clamp-4` → possible double-ellipsis; confirm in a long-username/long-review smoke test.
 - **Fixes Applied:**
   - `card.tsx`: Added `overflow-hidden` to base Card component
   - `Community.tsx`: Added `truncate max-w-[120px]` to username in FollowingReviewCard, `min-w-0` to flex containers for proper truncation
@@ -176,26 +178,32 @@
   - [~] Background darkness shift — code-confirmed darker (`#050505` RickHouse.tsx:122 vs app `#0A0A0A`); **NEEDS LIVE VISUAL** for final confirmation
 - **Watch:** atmospheric "Step out" treatment only applies when `isMobile`; desktop renders standard `<Header />` (RickHouse.tsx:135-137) — gap only if desktop immersion was intended. Hidden-nav uses exact `.includes()` — any `/rick-house/*` sub-route would re-show nav (none exist yet).
 
-### [BETA-004] Mobile Collection Header Typography — CODE COMPLETE
+### [BETA-004] Mobile Collection Header Typography — QA-VERIFIED (code)
 - **Scope:** Quick
-- **Assigned:** Developer
+- **Assigned:** Developer → QA
 - **Priority:** P2
+- **Status:** QA APPROVED 2026-06-08 (code-level) — 3/3 MET. Shippable; pending visual sign-off.
 - **File:** `client/src/pages/Home.tsx`
 - **Acceptance criteria:**
-  - [ ] Page title uses `text-display-hero` clamp on mobile
-  - [ ] Username presented as kicker, not possessive in title
-  - [ ] Visually distinct from surrounding body text
+  - [x] Page title uses `text-display-hero` clamp on mobile (`<h1>` Home.tsx:136 → clamp(2.5rem,8vw,5rem))
+  - [x] Username is a kicker (`text-label-caps` "{NAME}'S SHELF" above title, Home.tsx:133-135); `<h1>` reads only "Collection"
+  - [x] Visually distinct (display font + 600 weight + hero clamp vs caps kicker)
+- **Watch (follow-up, not this deploy):** desktop header (Home.tsx:317-320) still uses old possessive "{name}'s Collection" — cross-platform inconsistency.
 
-### [BETA-005] Bottle Card Mobile Hover Fix + Status Labels — CODE COMPLETE
+### [BETA-005] Bottle Card Mobile Hover Fix + Status Labels — QA-VERIFIED (code)
 - **Scope:** Standard
-- **Assigned:** Developer
+- **Assigned:** Developer → QA
 - **Priority:** P2
+- **Status:** QA APPROVED 2026-06-08 (code-level) — 4/4 MET. Shippable; pending visual sign-off.
 - **File:** `client/src/components/WhiskeyCard.tsx`
 - **Acceptance criteria:**
-  - [ ] No gradient overlay visible on mobile by default
-  - [ ] ⋯ handle opens bottom sheet with card actions
-  - [ ] Status shows as text pill, not color-only dot
-  - [ ] Desktop hover behavior unchanged
+  - [x] No gradient overlay on mobile (hover panel gated `hidden md:block` + translate-off — WhiskeyCard.tsx:148)
+  - [x] ⋯ handle opens bottom sheet (`handleMenuTap`→`setShowBottomSheet` :36-39, sheet :184-224 with Edit/Details/Review)
+  - [x] Status is a text pill ("Sealed/Open/Finished/Gifted" — :17-25, :75-79), not a color-only dot
+  - [x] Desktop hover unchanged (md: action bar + scale/glow/name-color retained :147-180)
+- **Watch (follow-ups, not this deploy):**
+  - Bottom sheet is hand-rolled (plain divs) vs the shared `ui/sheet` primitive used by 6 other components; lacks focus-trap/Esc/role=dialog — **LARGER** a11y+refactor follow-up.
+  - ⋯ handle + Heart gate on `useIsMobile()` (JS hook), so possible first-paint flash before it resolves (criterion 1 overlay is pure CSS, unaffected).
 
 ---
 
@@ -231,11 +239,13 @@
 - **Output:** `/rick-house-redesign.html` — open in browser to review
 - **Next:** Storm reviews → Developer translates to React components (existing `RickAtmosphere.tsx`, `RickShelf.tsx`, `RickJournal.tsx` are already close to this design)
 
-### [UIAUDIT-004] Rick House Nav Prominence — IN PROGRESS
+### [UIAUDIT-004] Rick House Nav Prominence — QA-VERIFIED (code), 1 design call open
 - **Scope:** Medium
-- **Assigned:** Developer
+- **Assigned:** Developer → QA
 - **Priority:** P1
-- **Status:** CODE COMPLETE — awaiting deploy verification
+- **Status:** QA APPROVED 2026-06-08 (code-level) — scanner removal complete, FAB is Rick House. **Criterion 1 "MessageSquare + RICK label" NOT MET as written:** FAB renders the brand Glencairn-glass SVG, no text label (BottomNav.tsx:62-83) — arguably better, but a **DESIGN CALL for Storm**: accept the glass (update criteria) or swap to MessageSquare + "RICK". `onScanClick` removed (zero hits), MobileShell scanner/dialog gone, `rick-glow` keyframe applied (index.css:434-450). BarcodeScanner NOT orphaned (reachable via AddWhiskeyModal + Home empty-state Scan CTA).
+- **Quick fix DONE 2026-06-08 (folded into branch):** deleted dead `rickActive` var (BottomNav.tsx). tsc clean.
+- **Design call RESOLVED 2026-06-08:** Storm kept the Glencairn-glass FAB (declined the MessageSquare+"RICK" swap). Criterion 1 reads as the glass treatment for this deploy; final glyph-legibility at 24px is part of the visual pass.
 - **Decision:** Rick House replaces barcode scanner as center FAB. Scanner was broken (navigated to `/?barcode=` but Home didn't consume it) and duplicated inside AddWhiskeyModal.
 - **Fixes Applied:**
   - `BottomNav.tsx`: Replaced ScanLine center FAB with Rick House button (MessageSquare icon + "RICK" label). Removed `onScanClick` prop. Added active state detection for `/rick-house`.
