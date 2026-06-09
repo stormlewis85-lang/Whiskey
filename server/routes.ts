@@ -52,6 +52,7 @@ import fs from "fs";
 import { setupAuth, isAuthenticated } from "./auth";
 import { uploadToSpaces, isSpacesConfigured, deleteFromSpaces, getKeyFromUrl, testSpacesConnection } from "./spaces";
 import rateLimit from "express-rate-limit";
+import logger from "./lib/logger";
 
 // Stricter rate limiter for AI endpoints — protects Anthropic API credits
 const aiRateLimiter = rateLimit({
@@ -82,16 +83,16 @@ function parsePaginationParams(req: Request, defaults: { limit?: number; offset?
 
 // Ensure upload directory exists - use a consistent path that works in all environments
 const uploadDir = path.join(process.cwd(), "uploads");
-console.log("Serving uploads from:", uploadDir);
+logger.info("Serving uploads from:", uploadDir);
 if (!fs.existsSync(uploadDir)) {
-  console.log("Creating uploads directory:", uploadDir);
+  logger.info("Creating uploads directory:", uploadDir);
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
 // Make sure directory is writable
 try {
   fs.accessSync(uploadDir, fs.constants.W_OK);
-  console.log("Uploads directory is writable");
+  logger.info("Uploads directory is writable");
 } catch (err) {
   console.error("Error: Uploads directory is not writable:", err);
 }
@@ -215,18 +216,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // User must be authenticated to see their collection
       if (!req.session || !req.session.userId) {
-        console.log('Unauthenticated request to /api/whiskeys - returning empty array');
+        logger.warn('Unauthenticated request to /api/whiskeys - returning empty array');
         return res.json([]);
       }
 
       const userId = req.session.userId;
-      console.log(`Getting whiskeys for authenticated user ID: ${userId}`);
+      logger.info(`Getting whiskeys for authenticated user ID: ${userId}`);
 
       const whiskeys = await storage.getWhiskeys(userId);
 
-      console.log(`Retrieved ${whiskeys.length} whiskey(s) for user ID: ${userId}`);
+      logger.info(`Retrieved ${whiskeys.length} whiskey(s) for user ID: ${userId}`);
       if (whiskeys.length > 0) {
-        console.log('Sample whiskey data:', {
+        logger.info('Sample whiskey data:', {
           id: whiskeys[0].id,
           name: whiskeys[0].name,
           userId: whiskeys[0].userId
@@ -272,14 +273,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Ensure the whiskey is associated with the current user
       const userId = req.session.userId;
-      console.log(`Creating new whiskey for user ID: ${userId}`);
+      logger.info(`Creating new whiskey for user ID: ${userId}`);
       
       const whiskey = {
         ...req.body,
         userId: userId
       };
       
-      console.log("New whiskey data:", { 
+      logger.info("New whiskey data:", {
         name: whiskey.name, 
         distillery: whiskey.distillery,
         userId: whiskey.userId
@@ -287,7 +288,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const validatedData = insertWhiskeySchema.parse(whiskey);
       const newWhiskey = await storage.createWhiskey(validatedData);
-      console.log(`Successfully created whiskey ID ${newWhiskey.id} for user ${userId}`);
+      logger.info(`Successfully created whiskey ID ${newWhiskey.id} for user ${userId}`);
 
       // Log activity
       await storage.logActivity({
@@ -458,23 +459,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       next();
     });
   }, async (req: Request, res: Response) => {
-    console.log("Image upload request received for whiskey ID:", req.params.id);
-    console.log("Request files:", req.file ? `File: ${req.file.filename}, size: ${req.file.size}` : "No file");
+    logger.info("Image upload request received for whiskey ID:", req.params.id);
+    logger.info("Request files:", req.file ? `File: ${req.file.filename}, size: ${req.file.size}` : "No file");
 
     try {
       const id = parseInt(req.params.id);
 
       if (isNaN(id)) {
-        console.log("Invalid ID format:", req.params.id);
+        logger.warn("Invalid ID format:", req.params.id);
         return res.status(400).json({ message: "Invalid ID format" });
       }
 
       if (!req.file) {
-        console.log("No image file found in request");
+        logger.warn("No image file found in request");
         return res.status(400).json({ message: "No image uploaded" });
       }
 
-      console.log("File uploaded successfully:", req.file.filename);
+      logger.info("File uploaded successfully:", req.file.filename);
 
       // Validate magic bytes before processing (defense in depth)
       const tempPath = path.join(uploadDir, req.file.filename);
@@ -492,11 +493,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       try {
         const dimensions = await processImage(tempPath, processedPath);
-        console.log(`Image processed: ${dimensions.width}x${dimensions.height}`);
+        logger.info(`Image processed: ${dimensions.width}x${dimensions.height}`);
 
         // Delete the temporary original file
         fs.unlinkSync(tempPath);
-        console.log("Deleted temp file:", tempPath);
+        logger.info("Deleted temp file:", tempPath);
       } catch (processError) {
         console.error("Image processing error:", processError);
         // Clean up temp file on error
@@ -507,7 +508,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Verify processed file exists
       try {
         fs.accessSync(processedPath, fs.constants.R_OK);
-        console.log("Processed file exists and is readable:", processedPath);
+        logger.info("Processed file exists and is readable:", processedPath);
       } catch (err) {
         console.error("Processed file permission error:", err);
         return res.status(500).json(safeError(err, "File permission error"));
@@ -517,14 +518,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let imagePath: string;
       if (isSpacesConfigured()) {
         try {
-          console.log("Uploading to DigitalOcean Spaces...");
+          logger.info("Uploading to DigitalOcean Spaces...");
           imagePath = await uploadToSpaces(processedPath, `bottles/${processedFilename}`, 'image/webp');
-          console.log("Uploaded to Spaces:", imagePath);
+          logger.info("Uploaded to Spaces:", imagePath);
 
           // Delete local processed file after successful upload
           try {
             fs.unlinkSync(processedPath);
-            console.log("Deleted local processed file after Spaces upload");
+            logger.info("Deleted local processed file after Spaces upload");
           } catch (e) {
             console.warn("Could not delete local file after Spaces upload:", e);
           }
@@ -539,12 +540,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try { fs.unlinkSync(processedPath); } catch (e) { /* ignore */ }
         return res.status(500).json({ message: "Image storage not configured. Contact support." });
       }
-      console.log("Image path:", imagePath);
+      logger.info("Image path:", imagePath);
       
       // Get userId from session or token
       const userId = req.session.userId;
       if (!userId) {
-        console.log("No userId in session, cannot update whiskey");
+        logger.warn("No userId in session, cannot update whiskey");
         return res.status(401).json({ message: "Not authenticated" });
       }
       
@@ -552,7 +553,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const whiskey = await storage.getWhiskey(id, userId);
 
       if (!whiskey) {
-        console.log("Whiskey not found or not owned by user, cleaning up image");
+        logger.warn("Whiskey not found or not owned by user, cleaning up image");
         // Clean up the uploaded image
         if (imagePath.startsWith('http')) {
           // Delete from Spaces
@@ -560,7 +561,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (key) {
             try {
               await deleteFromSpaces(key);
-              console.log("Deleted from Spaces:", key);
+              logger.info("Deleted from Spaces:", key);
             } catch (e) {
               console.error("Error deleting from Spaces:", e);
             }
@@ -578,17 +579,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Update the whiskey with the new image path
       const updatedWhiskey = await storage.updateWhiskey(id, { image: imagePath }, userId);
-      console.log("Whiskey updated with image path:", updatedWhiskey ? "success" : "failed");
+      logger.info("Whiskey updated with image path:", updatedWhiskey ? "success" : "failed");
 
       if (!updatedWhiskey) {
-        console.log("Failed to update whiskey with image path, cleaning up image");
+        logger.warn("Failed to update whiskey with image path, cleaning up image");
         // Clean up the uploaded image
         if (imagePath.startsWith('http')) {
           const key = getKeyFromUrl(imagePath);
           if (key) {
             try {
               await deleteFromSpaces(key);
-              console.log("Deleted from Spaces after update failure:", key);
+              logger.info("Deleted from Spaces after update failure:", key);
             } catch (e) {
               console.error("Error deleting from Spaces:", e);
             }
@@ -604,10 +605,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Ensure the image is properly served
-      console.log("Full image file path:", processedPath);
-      console.log("File exists:", fs.existsSync(processedPath));
+      logger.info("Full image file path:", processedPath);
+      logger.info("File exists:", fs.existsSync(processedPath));
 
-      console.log("Image upload successful, returning response");
+      logger.info("Image upload successful, returning response");
       res.json({
         success: true,
         whiskey: updatedWhiskey,
@@ -621,7 +622,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Serve uploaded images
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
-  console.log("Serving uploads from:", path.join(process.cwd(), 'uploads'));
+  logger.info("Serving uploads from:", path.join(process.cwd(), 'uploads'));
 
   // Get a specific review by whiskey ID and review ID (requires authentication)
   app.get("/api/whiskeys/:id/reviews/:reviewId", async (req: Request, res: Response) => {
@@ -651,7 +652,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Log for debugging
-      console.log("Looking for review:", reviewId, "in whiskey notes:", whiskey.notes.map(n => n.id));
+      logger.info("Looking for review:", reviewId, "in whiskey notes:", whiskey.notes.map(n => n.id));
       
       // Find the review with string comparison for safety
       const review = whiskey.notes.find(note => String(note.id) === String(reviewId));
@@ -2133,7 +2134,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/barcode/:code", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const barcode = req.params.code;
-      console.log(`Barcode lookup request: ${barcode}`);
+      logger.info(`Barcode lookup request: ${barcode}`);
 
       // Step 1: Check if user already has a whiskey with this barcode in their collection
       const userWhiskeys = await storage.getWhiskeys(req.session.userId);
@@ -2142,7 +2143,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
 
       if (existingWhiskey) {
-        console.log(`Found in user collection: ${existingWhiskey.name}`);
+        logger.info(`Found in user collection: ${existingWhiskey.name}`);
         return res.json({
           found: true,
           source: 'collection',
@@ -2169,7 +2170,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
 
       if (matchedWhiskey) {
-        console.log(`Found in database: ${matchedWhiskey.name}`);
+        logger.info(`Found in database: ${matchedWhiskey.name}`);
         return res.json({
           found: true,
           source: 'database',
@@ -2190,7 +2191,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Step 3: Not in local DB - use UPC lookup service with Claude enrichment
-      console.log('Not found locally, using UPC lookup service...');
+      logger.info('Not found locally, using UPC lookup service...');
       const { lookupWhiskeyByUPC } = await import('./upc-lookup-service');
       const lookupResult = await lookupWhiskeyByUPC(barcode);
 
@@ -2214,8 +2215,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid media type. Must be image/jpeg, image/png, image/gif, or image/webp" });
       }
 
-      console.log('Image identification request received');
-      console.log('Media type:', mediaType);
+      logger.info('Image identification request received');
+      logger.info('Media type:', mediaType);
 
       // Remove data URL prefix if present
       let base64Data = image;
@@ -2423,7 +2424,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const allWhiskeys = await storage.getWhiskeys(user.id);
         const dashboardTotal = allWhiskeys.length;
         const dashboardNonWishlist = allWhiskeys.filter((w: any) => !w.isWishlist).length;
-        console.log(`[CRIT-001 DEBUG] Profile slug=${slug} isOwnProfile=${isOwnProfile} profileCount=${profile.stats.uniqueBottles} dashboardTotal=${dashboardTotal} dashboardNonWishlist=${dashboardNonWishlist}`);
+        logger.info(`[CRIT-001 DEBUG] Profile slug=${slug} isOwnProfile=${isOwnProfile} profileCount=${profile.stats.uniqueBottles} dashboardTotal=${dashboardTotal} dashboardNonWishlist=${dashboardNonWishlist}`);
       }
 
       // Normalize response shape for frontend
