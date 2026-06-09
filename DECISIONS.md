@@ -10,9 +10,10 @@
 These decisions were made before the agent system was deployed. They are documented here so agents have context.
 
 ### D-000: Tech Stack Selection
-- **Decision:** React 18 + TypeScript + Vite / Express.js / PostgreSQL + Drizzle ORM
-- **Context:** Originally built on Replit with vanilla setup, migrated to Digital Ocean App Platform for production
-- **Rationale:** Familiar stack with strong TypeScript support. Drizzle chosen for type-safe queries and migration tooling.
+- **Decision:** React 18 + TypeScript + Vite / Express.js / PostgreSQL (Neon serverless) + Drizzle ORM / wouter (routing) / Passport + express-session (auth)
+- **Context:** Originally built on Replit with vanilla setup; `.replit` autoscale config still present in repo. Neon serverless for PostgreSQL hosting. wouter chosen over React Router for lightweight SPA routing. Dual auth: local (Passport/bcrypt) + Google OAuth via separate module.
+- **Rationale:** Familiar stack with strong TypeScript support. Drizzle chosen for type-safe queries. Schema managed via `drizzle-kit push` (push-based, not migration files). Neon serverless for free tier and branching. wouter for minimal bundle impact.
+- **Reconciliation note (2026-06-07):** Original entry omitted Neon, wouter, dual auth mode, ElevenLabs, and Resend. Updated to reflect verified codebase state.
 
 ### D-001: Black and Gold Design System
 - **Decision:** Near-black backgrounds (#0A0A0A) with sparse gold accents (#D4A44C)
