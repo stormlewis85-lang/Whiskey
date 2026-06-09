@@ -2419,14 +2419,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Profile not found or not public" });
       }
 
-      // DEBUG: verify bottle count matches dashboard (remove after QA)
-      if (isOwnProfile) {
-        const allWhiskeys = await storage.getWhiskeys(user.id);
-        const dashboardTotal = allWhiskeys.length;
-        const dashboardNonWishlist = allWhiskeys.filter((w: any) => !w.isWishlist).length;
-        logger.info(`[CRIT-001 DEBUG] Profile slug=${slug} isOwnProfile=${isOwnProfile} profileCount=${profile.stats.uniqueBottles} dashboardTotal=${dashboardTotal} dashboardNonWishlist=${dashboardNonWishlist}`);
-      }
-
       // Normalize response shape for frontend
       const reviewCount = await storage.getReviewCountForUser(user.id);
       res.json({
