@@ -1,4 +1,5 @@
 import { useState, lazy, Suspense } from "react";
+import { useLocation } from "wouter";
 import { Whiskey, ReviewNote } from "@shared/schema";
 import { Header } from "@/components/Header";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -28,6 +29,7 @@ import { useAuth } from "@/hooks/use-auth";
 const Home = () => {
   const { user } = useAuth();
   const isMobile = useIsMobile();
+  const [, navigate] = useLocation();
   
   // Modals state
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -189,6 +191,9 @@ const Home = () => {
             onReview={openReviewModal}
             onEdit={openEditWhiskeyModal}
             onAddNew={openAddWhiskeyModal}
+            onScanBarcode={openBarcodeScanner}
+            onImportCsv={openImportModal}
+            onBrowseCatalog={() => navigate("/search")}
           />
         </div>
 
@@ -380,7 +385,7 @@ const Home = () => {
         {isLoading ? <SkeletonStats /> : <CollectionStats whiskeys={whiskeys || []} />}
         
         {/* Collection Grid */}
-        <CollectionGrid 
+        <CollectionGrid
           whiskeys={filteredWhiskeys || []}
           isLoading={isLoading}
           isError={isError}
@@ -388,6 +393,9 @@ const Home = () => {
           onReview={openReviewModal}
           onEdit={openEditWhiskeyModal}
           onAddNew={openAddWhiskeyModal}
+          onScanBarcode={openBarcodeScanner}
+          onImportCsv={openImportModal}
+          onBrowseCatalog={() => navigate("/search")}
         />
         
         {/* Import and Export Buttons at bottom */}

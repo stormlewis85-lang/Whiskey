@@ -18,6 +18,9 @@ interface CollectionGridProps {
   onReview: (whiskey: Whiskey) => void;
   onEdit: (whiskey: Whiskey) => void;
   onAddNew: () => void;
+  onScanBarcode?: () => void;
+  onImportCsv?: () => void;
+  onBrowseCatalog?: () => void;
 }
 
 const CollectionGrid = ({
@@ -27,7 +30,10 @@ const CollectionGrid = ({
   onViewDetails,
   onReview,
   onEdit,
-  onAddNew
+  onAddNew,
+  onScanBarcode,
+  onImportCsv,
+  onBrowseCatalog
 }: CollectionGridProps) => {
   // All hooks must be declared before any conditional returns
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -94,21 +100,21 @@ const CollectionGrid = ({
 
         <div className="flex flex-wrap gap-3 mt-8">
           <button
-            onClick={onAddNew}
+            onClick={() => onScanBarcode?.()}
             className="text-sm text-muted-foreground hover:text-foreground transition-colors underline underline-offset-4"
           >
             Scan a barcode
           </button>
           <span className="text-muted-foreground/40">·</span>
           <button
-            onClick={onAddNew}
+            onClick={() => onImportCsv?.()}
             className="text-sm text-muted-foreground hover:text-foreground transition-colors underline underline-offset-4"
           >
             Import CSV
           </button>
           <span className="text-muted-foreground/40">·</span>
           <button
-            onClick={onAddNew}
+            onClick={() => onBrowseCatalog?.()}
             className="text-sm text-muted-foreground hover:text-foreground transition-colors underline underline-offset-4"
           >
             Browse catalog
