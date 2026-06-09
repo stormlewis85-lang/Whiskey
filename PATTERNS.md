@@ -60,7 +60,7 @@
 - **Runner:** Vitest (`npm test` = `vitest run`, `npm run test:watch` = `vitest`) — `package.json:8-9`.
 - **Test location:** Tests live in the `tests/` directory at project root. Six test files exist as of 2026-06-03: auth, whiskey-crud, distillery, whiskey-delete, review-edit, review-crud. Coverage gaps remain — see `specs/TESTING.md` for the full test plan. <!-- QA correction 2026-06-03: Architect's initial read missed the tests/ directory -->
 
-- **File naming:** Mirror the source path — `server/storage.ts` → `tests/server/storage.test.ts`.
+- **File naming:** Flat, feature-scoped under `tests/` — one file per behavior area (`auth.test.ts`, `whiskey-crud.test.ts`, `review-edit.test.ts`). For hermetic unit tests of a single server module, name after the module under test (`auth-middleware.test.ts` covers `isAuthenticated` in `server/auth.ts`). Integration tests run against the live Express app via `fetch` at `http://localhost:5000`; unit tests mock `server/db` + `server/storage` and import the module directly. (The "mirror the source path" rule was retired 2026-06-08 — FW-V34-004: integration tests don't map 1:1 to a source module and would collide, e.g. `auth.test.ts` + `auth-middleware.test.ts`.)
 - **HTTP integration tests:** Use `supertest` (declared in devDependencies, `package.json:116`) against the Express app instance.
 - **Do not test review scoring internals** — see `specs/REVIEW-SYSTEM.md`. Test the API surface (request/response shapes and status codes) only.
 
