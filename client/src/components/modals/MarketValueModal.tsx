@@ -49,6 +49,11 @@ export default function MarketValueModal({
   // Fetch market value history for this whiskey
   const { data: marketValues, isLoading, isError } = useQuery<MarketValue[]>({
     queryKey: ["/api/whiskeys", whiskey.id, "market-values"],
+    // Default getQueryFn only fetches queryKey[0]; the nested path needs an explicit queryFn
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/whiskeys/${whiskey.id}/market-values`);
+      return await res.json();
+    },
     enabled: isOpen,
   });
   
