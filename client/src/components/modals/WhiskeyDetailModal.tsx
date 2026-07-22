@@ -720,7 +720,7 @@ const WhiskeyDetailModal = ({ isOpen, onClose, whiskey, onReview, onEdit, onTast
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                            onClick={() => navigate(`/reviews/${whiskey.id}/${note.id}`)}
+                            onClick={() => navigate(`/whiskey/${whiskey.id}/review/${note.id}`)}
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
