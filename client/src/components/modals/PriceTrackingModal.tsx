@@ -50,6 +50,11 @@ export default function PriceTrackingModal({
   // Fetch price history for this whiskey
   const { data: priceHistory, isLoading, isError } = useQuery<PriceTrack[]>({
     queryKey: ["/api/whiskeys", whiskey.id, "prices"],
+    // Default getQueryFn only fetches queryKey[0]; the nested path needs an explicit queryFn
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/whiskeys/${whiskey.id}/prices`);
+      return await res.json();
+    },
     enabled: isOpen,
   });
   
