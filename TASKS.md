@@ -7,6 +7,23 @@
 
 ## Active Tasks
 
+### [ROUTE-SWEEP] Route Integrity Audit — MECHANICAL FIXES APPLIED, PRODUCT CALLS HELD
+- **Scope:** Deep (3 parallel Explore inventories: router registry / nav targets / API calls vs Express)
+- **Branch:** `fix/route-integrity-audit` (off `fw-v34-beta-and-cleanup` tip — main is its ancestor; main untouched)
+- **Date:** 2026-07-22
+- **Method:** Reconciled 27 registered wouter routes × ~95 nav call sites × ~130 client API calls × 151 Express endpoints, primary sources only.
+- **Applied (QA APPROVED 2026-07-22, tsc clean — 5 pre-existing errors, none new):**
+  - [ROUTE-001] `WhiskeyDetailModal.tsx:723` Eye button navigated to unregistered `/reviews/:id/:noteId` → repointed to `/whiskey/:id/review/:reviewId`. **This was the completed-review 404.**
+  - [ROUTE-002] `MarketValueModal.tsx` GET hit `/api/whiskeys` (default getQueryFn uses queryKey[0]) instead of `/api/whiskeys/:id/market-values` → explicit queryFn added.
+  - [ROUTE-003] `PriceTrackingModal.tsx` — same class → explicit queryFn to `/api/whiskeys/:id/prices`.
+  - [ROUTE-004] `not-found.tsx` rendered a second BottomNav (MobileShell already provides it) → removed.
+- **NOT reproducible in current code (likely stale prod deploy or manual URL — verify deployed SHA):**
+  - "Taste with Rick" entry 404 — every tasting entry (Home, RickHouse, WhiskeyDetailModal, RickShelf) is modal-state, zero route navigation in the flow.
+  - `/stores/:id` 404 — every client nav is singular `/store/${id}` (registered); plural exists only as API paths. No git history of a plural client link.
+  - Nav-less 404 chrome — fixed on main 2026-03-04 (`0e6f426`); remaining gap: `BottomNav.tsx:24` returns null when logged out (product call, held).
+- **Held for Storm (product decisions):** see findings report — BETA-001 `/search`→Community "Browse catalog" repoint; logged-out 404 affordance; `/privacy` + Challenges/Progress/Exercises cluster unreachable by nav; orphans (MobileBottleDetail, ReviewModal.tsx.bak deletion needs per-item confirmation).
+- **Doc drift flagged:** PREREQ-004/PHASE5-001 claims ProfileMenu links to Dashboard/Flights/Rick House/Challenges/Progress/Exercises — ProfileMenu.tsx today has only Settings/Theme/Logout.
+
 ### [FW-V34-002] Delete-operation auth bug — COMPLETE
 - **Scope:** Standard
 - **Pipeline:** PM diagnosis → Developer fix → Test (regression) → Security review → condition applied
