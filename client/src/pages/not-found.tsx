@@ -3,8 +3,10 @@ import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { Header } from "@/components/Header";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function NotFound() {
+  const { user } = useAuth();
   return (
     <div className="min-h-screen w-full bg-background">
       <Header />
@@ -20,11 +22,19 @@ export default function NotFound() {
               The page you're looking for doesn't exist or has been moved.
             </p>
 
-            <Link href="/">
-              <Button variant="outline" className="mt-6">
-                Back to Collection
-              </Button>
-            </Link>
+            {user ? (
+              <Link href="/">
+                <Button variant="outline" className="mt-6">
+                  Back to Collection
+                </Button>
+              </Link>
+            ) : (
+              <Link href="/auth">
+                <Button variant="outline" className="mt-6">
+                  Sign In
+                </Button>
+              </Link>
+            )}
           </CardContent>
         </Card>
       </div>
