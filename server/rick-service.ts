@@ -7,6 +7,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { storage } from './storage';
 import { getRickConfig } from './rick-config';
+import logger from './lib/logger';
 
 // TypeScript interface for Rick's tasting script
 export interface RickScript {
@@ -582,4 +583,157 @@ export async function generateRickReviewGuide(input: GenerateReviewGuideInput): 
     script,
     whiskeyName: whiskey.name
   };
+}
+
+// ==================== ASK RICK (mid-session Q&A) ====================
+
+// A single question/answer exchange, scoped to one phase of a session
+export interface AskExchange {
+  question: string;
+  answer: string;
+  handBack: string;
+  at: string;
+}
+
+export interface AskRickInput {
+  whiskey: { name: string; distillery?: string | null; type?: string | null; age?: number | null; abv?: number | null; price?: number | null };
+  phase: string; // one of: visual | nose | palate | finish | ricksTake
+  phaseProse: string; // Rick's existing script prose for this phase
+  question: string;
+  priorExchanges?: AskExchange[]; // earlier Q&A for this same phase, oldest first
+}
+
+export interface AskRickResult {
+  answer: string;
+  handBack: string;
+}
+
+const ASK_PHASE_LABELS: Record<string, string> = {
+  visual: 'Visual',
+  nose: 'Nose',
+  palate: 'Palate',
+  finish: 'Finish',
+  ricksTake: "Rick's Take",
+};
+
+// Build the prompt for a single in-session question
+function buildAskPrompt(
+  rickCharacter: string,
+  whiskey: AskRickInput['whiskey'],
+  phase: string,
+  phaseProse: string,
+  question: string,
+  priorExchanges: AskExchange[]
+): string {
+  const phaseLabel = ASK_PHASE_LABELS[phase] || phase;
+
+  const whiskeyDetails = `
+## Whiskey Being Tasted
+- Name: ${whiskey.name}
+- Distillery: ${whiskey.distillery || 'Unknown'}
+- Type: ${whiskey.type || 'Whiskey'}
+- Age: ${whiskey.age ? `${whiskey.age} years` : 'No Age Statement'}
+- ABV: ${whiskey.abv ? `${whiskey.abv}%` : 'Unknown'}
+- Price: ${whiskey.price ? `$${whiskey.price}` : 'Unknown'}
+`;
+
+  let historySection = '';
+  if (priorExchanges.length > 0) {
+    historySection = `
+## Earlier in this ${phaseLabel} phase, they already asked you:
+${priorExchanges.map((ex, i) => `${i + 1}. Q: "${ex.question}"\n   A: "${ex.answer}"`).join('\n')}
+
+Don't repeat yourself — build on what you already told them.
+`;
+  }
+
+  return `${rickCharacter}
+
+---
+
+# Current Task
+
+The taster is mid-session, currently in the **${phaseLabel}** phase of a guided tasting. Here's what you (Rick) already told them for this phase:
+
+"${phaseProse}"
+${whiskeyDetails}
+${historySection}
+They just interrupted with a question:
+
+"${question}"
+
+Answer them in character as Rick — short and conversational, like you're standing right there with the glass in front of you. 2-4 sentences, no bullet points, no headers, no markdown. Then give a one-line hand-back that gently nudges their attention back to the glass in front of them (back to looking/nosing/sipping, matched to the ${phaseLabel} phase) — a separate, short sentence.
+
+Return ONLY valid JSON matching this structure:
+
+{
+  "answer": "string - Rick's in-character answer, 2-4 sentences",
+  "handBack": "string - one short sentence bringing them back to the tasting"
+}
+
+Remember: No markdown, no code blocks, just the raw JSON object.`;
+}
+
+// Parse Claude's response to an ask-Rick question
+function parseAskResponse(responseText: string): AskRickResult {
+  let jsonStr = responseText.trim();
+
+  const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+  if (jsonMatch) {
+    jsonStr = jsonMatch[0];
+  }
+
+  try {
+    const parsed = JSON.parse(jsonStr);
+
+    if (typeof parsed.answer !== 'string' || typeof parsed.handBack !== 'string') {
+      throw new Error('Missing or invalid answer/handBack field');
+    }
+
+    return { answer: parsed.answer, handBack: parsed.handBack };
+  } catch (error) {
+    logger.error('Failed to parse Rick ask response', error, responseText);
+    throw new Error('Failed to parse AI response as valid answer');
+  }
+}
+
+/**
+ * Answer a single in-session question, in character as Rick, grounded in
+ * the session's whiskey, the current phase's prose, and any prior exchanges
+ * asked during that same phase. Short answer + a one-line hand-back to the
+ * tasting — depth is bounded, this never replaces the main script.
+ */
+export async function askRick(input: AskRickInput): Promise<AskRickResult> {
+  const config = getRickConfig();
+
+  if (!config.anthropicApiKey) {
+    throw new Error('Anthropic API key not configured');
+  }
+
+  const rickCharacter = loadRickPrompt();
+
+  const prompt = buildAskPrompt(
+    rickCharacter,
+    input.whiskey,
+    input.phase,
+    input.phaseProse,
+    input.question,
+    input.priorExchanges || []
+  );
+
+  logger.info(`Ask Rick: phase=${input.phase} whiskey=${input.whiskey.name}`);
+
+  const Anthropic = (await import("@anthropic-ai/sdk")).default;
+  const anthropic = new Anthropic({ apiKey: config.anthropicApiKey });
+
+  const message = await anthropic.messages.create({
+    model: "claude-sonnet-5",
+    thinking: { type: "disabled" },
+    max_tokens: 512,
+    messages: [{ role: "user", content: prompt }]
+  });
+
+  const responseText = message.content[0].type === 'text' ? message.content[0].text : '';
+
+  return parseAskResponse(responseText);
 }

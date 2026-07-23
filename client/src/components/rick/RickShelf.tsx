@@ -1,18 +1,32 @@
 import { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Star } from "lucide-react";
 import { GlencairnIcon } from "@/components/GlencairnIcon";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Whiskey } from "@shared/schema";
 import type { RickSuggestion } from "@/lib/rick-suggestions";
 import { cn } from "@/lib/utils";
 
+// ── 1e — Shelf provenance ──
+// Spec: scratchpad/design/rick-session-surfaces-spec.md §1e.
+// Provenance lines only render when the underlying data exists (no
+// "★ undefined", no empty separators). The ★ glyph is the only gold in this
+// slice — "Taste with Rick" stays non-gold.
+
+// Minimal session shape needed to derive "Last tasted with Rick" — matches
+// the fields already present on RickHouse's SessionHistoryItem.
+export interface ShelfSessionInfo {
+  whiskeyId: number;
+  completedAt: string | null;
+}
+
 interface RickShelfProps {
   suggestions: RickSuggestion[];
   availableWhiskeys: Whiskey[];
+  sessions: ShelfSessionInfo[];
   onSelectWhiskey: (whiskey: Whiskey) => void;
 }
 
-export function RickShelf({ suggestions, availableWhiskeys, onSelectWhiskey }: RickShelfProps) {
+export function RickShelf({ suggestions, availableWhiskeys, sessions, onSelectWhiskey }: RickShelfProps) {
   const [showManual, setShowManual] = useState(suggestions.length === 0);
   const [manualId, setManualId] = useState("");
 
@@ -31,6 +45,7 @@ export function RickShelf({ suggestions, availableWhiskeys, onSelectWhiskey }: R
             <SuggestionCard
               key={`${s.whiskey.id}-${s.secondWhiskey?.id || ""}`}
               suggestion={s}
+              sessions={sessions}
               onTap={() => onSelectWhiskey(s.whiskey)}
             />
           ))}
@@ -87,13 +102,31 @@ export function RickShelf({ suggestions, availableWhiskeys, onSelectWhiskey }: R
 
 function SuggestionCard({
   suggestion,
+  sessions,
   onTap,
 }: {
   suggestion: RickSuggestion;
+  sessions: ShelfSessionInfo[];
   onTap: () => void;
 }) {
   const { whiskey, secondWhiskey, prompt, type } = suggestion;
   const isComparison = type === "head-to-head" && secondWhiskey;
+
+  // "★ {score} · Your review · {Mon YYYY}" — only when a rating AND a review
+  // date exist (never render a partial/undefined provenance line).
+  const hasReview = !!whiskey.rating && whiskey.rating > 0 && !!whiskey.lastReviewed;
+  const reviewMeta = hasReview
+    ? `${Number(whiskey.rating).toFixed(1)} · Your review · ${formatMonYear(whiskey.lastReviewed as unknown as string)}`
+    : null;
+
+  // "Last tasted with Rick · {Mon D}" — only when a completed session exists
+  // for this bottle; most recent completion wins.
+  const lastCompleted = sessions
+    .filter((s) => s.whiskeyId === whiskey.id && s.completedAt)
+    .sort((a, b) => new Date(b.completedAt as string).getTime() - new Date(a.completedAt as string).getTime())[0];
+  const lastTastedMeta = lastCompleted
+    ? `Last tasted with Rick · ${formatMonDay(lastCompleted.completedAt as string)}`
+    : null;
 
   return (
     <button
@@ -121,11 +154,42 @@ function SuggestionCard({
         {/* Prompt */}
         <div className="flex-1 min-w-0">
           <p className="text-sm text-foreground/90 leading-relaxed">{prompt}</p>
-          <p className="text-xs text-primary mt-2 font-medium">Taste with Rick</p>
+
+          {(reviewMeta || lastTastedMeta) && (
+            <div className="mt-2 space-y-1">
+              {reviewMeta && (
+                <p className="text-[13px] flex items-center gap-1" style={{ color: "#A69C8D" }}>
+                  <Star className="w-3 h-3 shrink-0" style={{ color: "#D4A44C" }} fill="#D4A44C" />
+                  {reviewMeta}
+                </p>
+              )}
+              {lastTastedMeta && (
+                <p className="text-[12px]" style={{ color: "#7A7060" }}>
+                  {lastTastedMeta}
+                </p>
+              )}
+            </div>
+          )}
+
+          <p className="text-xs mt-2 font-medium" style={{ color: "#D8D1C6" }}>
+            Taste with Rick
+          </p>
         </div>
       </div>
     </button>
   );
+}
+
+function formatMonYear(dateStr: string): string {
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+}
+
+function formatMonDay(dateStr: string): string {
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
 function BottleThumbnail({

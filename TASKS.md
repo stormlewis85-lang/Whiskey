@@ -33,6 +33,23 @@
 - **Remaining watch (untested live):** QA 5d — ReviewModal stability during ["/api/whiskeys"] refetch after completing a tasting (needs a future real completion; watch during next session); W1 no-exit spinner on resume-GET failure (follow-up task); resume-completed path component-test gap (backlog).
 - **Open:** run the Claude Design (Figma) session against DESIGN-BRIEF-RICK-SESSION.md; Storm may archive the prod duplicate "In progress" journal row whenever (it now resumes harmlessly)
 
+### [RICK-DESIGN] Rick Session Surfaces — design implemented, QA blockers IN FIX (2026-07-23)
+- **Scope:** Deep (Storm: "Implement: Rick Session Surfaces.dc.html" — design imported from Claude Design project 2dbe64fe via DesignSync; Storm picked variant **1c** — text stepper "Nose · 2 of 5", gold on CTA)
+- **Branch:** `feat/rick-session-surfaces` (off main tip; uncommitted pending QA-blocker fixes)
+- **Spec:** scratchpad design/rick-session-surfaces-spec.md (session-local); source of truth = the .dc.html in the Claude Design project
+- **Built (4 Dev slices, tsc 5-baseline held throughout):**
+  - 1a mode sheet: "How do we take this one?" — "Guide me" / "Score as we go" (routes to RickReviewSession; "Just the Notes" REMOVED), localStorage remembers choice, "Pull up a chair" CTA; Home.tsx parity included
+  - 1c session screen: lightness-only header band, text stepper, restyled phase card + minimal audio player, single gold Continue CTA; no mic icons
+  - 1d completion→re-score→bridge: new TastingCompletion.tsx; re-score only w/ prior review (skippable); bridge seeds phase prose into visualNotes/noseNotes/tasteNotes/finishNotes; re-score scales the FIVE weighted components (visual excluded, matches ReviewModal weights READ-ONLY) and recomputes rating; share overlay reuses html2canvas; ReviewModal no longer auto-opens post-tasting
+  - 1e journal/shelf provenance: session rows carry NO score ("Rick's take + your notes · no score"); gold ★ only on review provenance; shelf "Last tasted with Rick" line
+  - Server: POST /api/rick/ask (auth, aiRateLimiter, ownership 404, completed 400, ≤500 chars; exchanges persisted into scriptJson — NO schema change) + askRick() in rick-service (claude-sonnet-5, thinking disabled, logger)
+- **Gates:** Test — 21/21 hermetic green (7 rick-suggestions regression + 4 auth + 10 NEW rick-ask); tsc 5 before/after every slice; `npm run build` clean; 55 integration fails = pre-existing live-server dependency (documented). QA — **APPROVE-WITH-CONDITIONS, 2 BLOCKING**:
+  - B1 TastingCompletion scale(): undefined-guard short-circuits zero-baseline fallback → re-score on a review w/o component scores silently zeros rating — **FIXED & VERIFIED** (scale() restructured: current>0 → proportional path unchanged, undefined stays undefined; current<=0 → all five weighted components = clamp(round(target)) so rating recomputes to target, not 0; all 4 acceptance cases pass; tsc 5-baseline held)
+  - B2 Home.tsx guided onComplete still opens ReviewModal after bridge save (duplicate-review risk) — **FIXED & VERIFIED** (both mobile+desktop guided blocks mirror RickHouse handleSessionComplete: close + invalidate ["/api/rick/sessions"]+["/api/whiskeys"], no ReviewModal; score-mode paths unchanged; tsc 5-baseline held)
+- **PM adjudications on QA watch items:** journal amber left-accent KEEP (DESIGN.md-sanctioned); loading Glencairn gold KEEP (brand-mark extraction); no in-session mute → RICK-UX-05 still Storm's product call; ReviewModal Mic icon → backlog (D-013 cleanup); TastingNoteCard.tsx orphaned — deletion awaits Storm per-item confirmation; Ask-Rick scriptJson read-modify-write race accepted (client serializes)
+- **COMMITTED (2026-07-23):** `721fdf0` feat + `73a560a` docs on `feat/rick-session-surfaces`. PM re-verified post-fix: 21/21 hermetic tests, tsc 5-baseline, prod build clean, diff surface = 10 expected files (no deps/lockfile/schema).
+- **Open:** Storm merge go (merge = prod deploy) → QA live checklist (9 items, incl. B1/B2 regression guards, Ask Rick persistence + guards, share PNG, legacy notes-mode sessions)
+
 ### [MODEL-001] Retired Anthropic model — all AI features down since 2026-06-15 — DEPLOYED & VERIFIED 2026-07-22
 - **Deploy verification (2026-07-22, post-merge):** production flipped to post-merge bundle `index-CDaj0KBM.js` ~4 min after push; confirmed by direct re-check. ROUTE-005..010 closeout shipped in the same deploy.
 - **CLOSED (2026-07-22):** Storm's signed-in Rick smoke test PASSED live in production — AI features confirmed restored end-to-end. All MODEL-001 verification complete.

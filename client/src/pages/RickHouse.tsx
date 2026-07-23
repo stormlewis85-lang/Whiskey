@@ -13,6 +13,7 @@ import type { Whiskey, ReviewNote } from "@shared/schema";
 
 const TastingModeModal = lazy(() => import("@/components/modals/TastingModeModal"));
 const TastingSession = lazy(() => import("@/components/TastingSession"));
+const RickReviewSession = lazy(() => import("@/components/RickReviewSession"));
 const RickErrorBoundary = lazy(() => import("@/components/RickErrorBoundary"));
 const ReviewModal = lazy(() => import("@/components/modals/ReviewModal"));
 
@@ -34,6 +35,7 @@ const RickHouse = () => {
   // Tasting flow state
   const [isTastingModeModalOpen, setIsTastingModeModalOpen] = useState(false);
   const [isTastingSessionActive, setIsTastingSessionActive] = useState(false);
+  const [isRickReviewSessionActive, setIsRickReviewSessionActive] = useState(false);
   const [tastingMode, setTastingMode] = useState<"guided" | "notes">("guided");
   const [selectedWhiskeyId, setSelectedWhiskeyId] = useState<string>("");
   const [resumeSessionId, setResumeSessionId] = useState<number | undefined>(undefined);
@@ -101,20 +103,13 @@ const RickHouse = () => {
   };
 
   const handleSessionComplete = () => {
+    // The seeded-review bridge (TastingCompletion, rendered inside
+    // TastingSession) now owns review creation/updates for a completed
+    // tasting — this handler just closes the session and refreshes data.
     setIsTastingSessionActive(false);
     setResumeSessionId(undefined);
     queryClient.invalidateQueries({ queryKey: ["/api/rick/sessions"] });
     queryClient.invalidateQueries({ queryKey: ["/api/whiskeys"] });
-
-    // Open ReviewModal for the whiskey they just tasted
-    if (selectedWhiskey) {
-      if (selectedWhiskey.notes && Array.isArray(selectedWhiskey.notes) && selectedWhiskey.notes.length > 0) {
-        setExistingReview(selectedWhiskey.notes[selectedWhiskey.notes.length - 1] as ReviewNote);
-      } else {
-        setExistingReview(undefined);
-      }
-      setIsReviewModalOpen(true);
-    }
   };
 
   const [, navigate] = useLocation();
@@ -157,6 +152,7 @@ const RickHouse = () => {
       <RickShelf
         suggestions={suggestions}
         availableWhiskeys={availableWhiskeys}
+        sessions={sessions}
         onSelectWhiskey={handleSelectWhiskey}
       />
 
@@ -183,13 +179,60 @@ const RickHouse = () => {
               onClose={() => setIsTastingModeModalOpen(false)}
               whiskey={selectedWhiskey}
               onSelectMode={(mode) => {
-                setTastingMode(mode);
                 setResumeSessionId(undefined);
                 setIsTastingModeModalOpen(false);
-                setIsTastingSessionActive(true);
+                if (mode === "score") {
+                  setIsRickReviewSessionActive(true);
+                } else {
+                  setTastingMode("guided");
+                  setIsTastingSessionActive(true);
+                }
               }}
             />
           </Suspense>
+
+          {isRickReviewSessionActive && (
+            <Suspense
+              fallback={
+                <div className="fixed inset-0 z-[60] bg-background/95 backdrop-blur-sm flex items-center justify-center">
+                  <div className="animate-pulse text-muted-foreground">Loading Rick House...</div>
+                </div>
+              }
+            >
+              <RickErrorBoundary
+                onClose={() => setIsRickReviewSessionActive(false)}
+                onRetry={() => {
+                  setIsRickReviewSessionActive(false);
+                  setTimeout(() => setIsRickReviewSessionActive(true), 100);
+                }}
+              >
+                <RickReviewSession
+                  whiskey={selectedWhiskey}
+                  onClose={() => setIsRickReviewSessionActive(false)}
+                  onComplete={() => {
+                    // Rick-guided score-as-we-go session finished — hand off to the
+                    // regular review flow the same way a completed TastingSession does.
+                    // NOTE: the six component scores computed by RickReviewSession are
+                    // not yet forwarded into ReviewModal from this entry point (that
+                    // wiring lives inside ReviewModal's own "Review with Rick" path,
+                    // out of this slice's file scope — see handoff Open items).
+                    setIsRickReviewSessionActive(false);
+                    queryClient.invalidateQueries({ queryKey: ["/api/whiskeys"] });
+                    if (
+                      selectedWhiskey.notes &&
+                      Array.isArray(selectedWhiskey.notes) &&
+                      selectedWhiskey.notes.length > 0
+                    ) {
+                      setExistingReview(selectedWhiskey.notes[selectedWhiskey.notes.length - 1] as ReviewNote);
+                    } else {
+                      setExistingReview(undefined);
+                    }
+                    setIsReviewModalOpen(true);
+                  }}
+                />
+              </RickErrorBoundary>
+            </Suspense>
+          )}
 
           {isTastingSessionActive && (
             <Suspense
