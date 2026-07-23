@@ -117,7 +117,7 @@ const CollectionGrid = ({
             onClick={() => onBrowseCatalog?.()}
             className="text-sm text-muted-foreground hover:text-foreground transition-colors underline underline-offset-4"
           >
-            Browse catalog
+            Browse the community
           </button>
         </div>
 
