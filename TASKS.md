@@ -7,6 +7,15 @@
 
 ## Active Tasks
 
+### [MODEL-001] Retired Anthropic model — all AI features down since 2026-06-15 — FIXED, AWAITING MERGE
+- **Scope:** Standard (hotfix)
+- **Branch:** `fix/retired-anthropic-model` (off main tip)
+- **Root cause:** All 7 server AI call sites hardcoded `claude-sonnet-4-20250514`, retired by Anthropic 2026-06-15 → API 404 not_found_error → errorStatus() propagated 404 to clients. Proven by live probe (old ID 404s; `claude-sonnet-5` resolves).
+- **Retro-explains:** the original "taste with Rick" 404 report (network-layer via /api/rick/start-session, not a router miss) and "404 failed to generate review".
+- **Fix:** 7 sites → `claude-sonnet-5` + `thinking: {type:"disabled"}` (Sonnet 5 defaults to adaptive thinking when param omitted; 5 sites read content[0] expecting text). Files: rick-service.ts ×3, routes.ts ×2, upc-lookup-service.ts, image-identify-service.ts.
+- **Gates:** tsc baseline unchanged (5 pre-existing); live probe of exact request shape returned text-first content, 0 thinking tokens; QA APPROVE-WITH-CONDITIONS — condition (verify model ID resolves live) satisfied by probe.
+- **Watch:** Sonnet 5 intro pricing $2/$10 per MTok through 2026-08-31, then $3/$15; new tokenizer ~30% more tokens/text — watch AI-feature cost after merge. Test-gap noted by QA: no payload-assertion test on messages.create args (backlog).
+
 ### [ROUTE-SWEEP] Route Integrity Audit — MECHANICAL FIXES APPLIED, PRODUCT CALLS HELD
 - **Scope:** Deep (3 parallel Explore inventories: router registry / nav targets / API calls vs Express)
 - **Branch:** `fix/route-integrity-audit` (off `fw-v34-beta-and-cleanup` tip — main is its ancestor; main untouched)
