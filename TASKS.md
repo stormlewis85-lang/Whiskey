@@ -7,7 +7,8 @@
 
 ## Active Tasks
 
-### [MODEL-001] Retired Anthropic model — all AI features down since 2026-06-15 — MERGED 2026-07-22
+### [MODEL-001] Retired Anthropic model — all AI features down since 2026-06-15 — DEPLOYED & VERIFIED 2026-07-22
+- **Deploy verification (2026-07-22, post-merge):** production flipped to post-merge bundle `index-CDaj0KBM.js` ~4 min after push; confirmed by direct re-check. ROUTE-005..010 closeout shipped in the same deploy. Remaining human check: signed-in smoke of Rick review guide (AI endpoints auth-gated) — doubles as start of Storm's visual pass on BETA items.
 - **Scope:** Standard (hotfix)
 - **Branch:** `fix/retired-anthropic-model` (off main tip)
 - **Root cause:** All 7 server AI call sites hardcoded `claude-sonnet-4-20250514`, retired by Anthropic 2026-06-15 → API 404 not_found_error → errorStatus() propagated 404 to clients. Proven by live probe (old ID 404s; `claude-sonnet-5` resolves).
