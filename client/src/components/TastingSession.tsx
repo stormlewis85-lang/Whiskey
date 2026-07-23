@@ -139,6 +139,11 @@ const TastingSession = ({ whiskey, mode, resumeSessionId, onClose, onComplete }:
     onSuccess: (data) => {
       setSession(data.session);
       setScript(data.script);
+      // Resuming a session that's already completed — render the existing
+      // completion view instead of replaying phase 1.
+      if (data.session?.completedAt) {
+        setIsCompleted(true);
+      }
       if (!resumeSessionId) {
         RickAnalytics.sessionStarted(whiskey.id, whiskey.name, mode);
       }
@@ -188,9 +193,10 @@ const TastingSession = ({ whiskey, mode, resumeSessionId, onClose, onComplete }:
     }
   };
 
-  // Load audio when phase changes
+  // Load audio when phase changes — skip entirely when viewing a completed
+  // session's record view (no phase audio should ever fetch/play there).
   useEffect(() => {
-    if (script && isAudioEnabled) {
+    if (script && isAudioEnabled && !isCompleted) {
       loadPhaseAudio(currentPhase, script[currentPhase]);
       const nextPhaseIndex = PHASES.indexOf(currentPhase) + 1;
       if (nextPhaseIndex < PHASES.length) {
@@ -202,7 +208,7 @@ const TastingSession = ({ whiskey, mode, resumeSessionId, onClose, onComplete }:
         }, 1000);
       }
     }
-  }, [currentPhase, script, isAudioEnabled]);
+  }, [currentPhase, script, isAudioEnabled, isCompleted]);
 
   // Complete session mutation
   const completeSessionMutation = useMutation({

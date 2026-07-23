@@ -21,13 +21,23 @@ export function generateSuggestions(
   whiskeys: Whiskey[],
   sessions: SessionInfo[],
 ): RickSuggestion[] {
-  const owned = whiskeys.filter((w) => !w.isWishlist && w.status !== "finished");
+  // Whiskeys with a completed session in the last 30 days are "recently
+  // tasted" and should not be re-suggested by any branch below.
+  const RECENT_TASTED_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  const recentlyTastedIds = new Set(
+    sessions
+      .filter((s) => s.completedAt && now - new Date(s.completedAt).getTime() < RECENT_TASTED_WINDOW_MS)
+      .map((s) => s.whiskeyId),
+  );
+
+  const owned = whiskeys.filter(
+    (w) => !w.isWishlist && w.status !== "finished" && !recentlyTastedIds.has(w.id),
+  );
   if (owned.length === 0) return [];
 
   const suggestions: RickSuggestion[] = [];
   const usedIds = new Set<number>();
-
-  const tastedIds = new Set(sessions.map((s) => s.whiskeyId));
 
   // ── Priority 1: Head-to-head comparisons ──
   const byDistillery = groupBy(owned, (w) => w.distillery?.toLowerCase().trim());

@@ -90,7 +90,7 @@ const RickHouse = () => {
   const handleResumeSession = (session: { id: number; whiskeyId: number; mode: "guided" | "notes"; completedAt: string | null }) => {
     setSelectedWhiskeyId(String(session.whiskeyId));
     setTastingMode(session.mode);
-    setResumeSessionId(session.completedAt ? undefined : session.id);
+    setResumeSessionId(session.id);
     setIsTastingSessionActive(true);
   };
 
@@ -104,6 +104,7 @@ const RickHouse = () => {
     setIsTastingSessionActive(false);
     setResumeSessionId(undefined);
     queryClient.invalidateQueries({ queryKey: ["/api/rick/sessions"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/whiskeys"] });
 
     // Open ReviewModal for the whiskey they just tasted
     if (selectedWhiskey) {
