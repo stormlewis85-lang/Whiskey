@@ -7,7 +7,16 @@
 
 ## Active Tasks
 
-### [ROUTE-SWEEP] Route Integrity Audit — MECHANICAL FIXES APPLIED, PRODUCT CALLS HELD
+### [ROUTE-SWEEP] Route Integrity Audit — CLOSEOUT APPLIED (2026-07-22), 2 ITEMS REMAIN OPEN
+- **Closeout (Storm confirmed "close any findings you can"; Developer → QA APPROVED, tsc baseline unchanged; branch `fix/route-sweep-closeout`):**
+  - [ROUTE-005] Empty-state CTA relabeled "Browse the community" (label now matches /search→Community; catalog build stays open as product decision)
+  - [ROUTE-006] 404 page CTA auth-aware — signed-out users get "Sign In"→/auth (QA watch: brief "Sign In" flash while auth query loads; optional isLoading gate)
+  - [ROUTE-007] /privacy linked from auth-page footer (was zero inbound links)
+  - [ROUTE-008] Challenges/Progress/Exercises added to mobile hamburger + desktop user dropdown (cluster was self-linking only)
+  - [ROUTE-009] Duplicate /uploads static mount removed from routes.ts (index.ts:111 canonical)
+  - [ROUTE-010] ReviewModal.tsx.bak deleted (git-recoverable)
+- **Still open:** whiskey catalog surface (build/drop decision); MobileBottleDetail.tsx + bottle/* family orphan (delete vs. wire into a future bottle-detail page — architecture call)
+- **Original sweep record:**
 - **Scope:** Deep (3 parallel Explore inventories: router registry / nav targets / API calls vs Express)
 - **Branch:** `fix/route-integrity-audit` (off `fw-v34-beta-and-cleanup` tip — main is its ancestor; main untouched)
 - **Date:** 2026-07-22
