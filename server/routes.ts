@@ -2734,7 +2734,8 @@ Provide tasting notes in this JSON format only, no other text:
 Be specific and realistic for this style of whiskey. Use common tasting descriptors like vanilla, caramel, oak, honey, spice, fruit, etc.`;
 
       const message = await anthropic.messages.create({
-        model: "claude-sonnet-4-20250514",
+        model: "claude-sonnet-5",
+        thinking: { type: "disabled" },
         max_tokens: 1024,
         messages: [{ role: "user", content: prompt }]
       });
@@ -2826,7 +2827,8 @@ Provide enhanced notes in this JSON format only, no other text:
 Important: Keep it authentic—don't invent flavors they didn't mention or imply, but elaborate on what they observed. Use their voice and style.`;
 
       const message = await anthropic.messages.create({
-        model: "claude-sonnet-4-20250514",
+        model: "claude-sonnet-5",
+        thinking: { type: "disabled" },
         max_tokens: 1024,
         messages: [{ role: "user", content: prompt }]
       });

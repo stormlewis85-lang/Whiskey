@@ -309,7 +309,8 @@ Return ONLY valid JSON.`;
     console.log('HAS REAL PRODUCT NAME:', hasRealProductName);
     console.log('PRODUCT INFO:', productInfo);
     const message = await getAnthropicClient().messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-5',
+      thinking: { type: 'disabled' },
       max_tokens: 500,
       messages: [
         {

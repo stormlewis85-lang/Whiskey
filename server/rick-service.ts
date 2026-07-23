@@ -277,7 +277,8 @@ export async function generateRickScript(input: GenerateScriptInput): Promise<Ge
   const anthropic = new Anthropic({ apiKey: config.anthropicApiKey });
 
   const message = await anthropic.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: "claude-sonnet-5",
+    thinking: { type: "disabled" },
     max_tokens: 2048,
     messages: [{ role: "user", content: prompt }]
   });
@@ -488,7 +489,8 @@ Guidelines:
   const anthropic = new Anthropic({ apiKey: config.anthropicApiKey });
 
   const message = await anthropic.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: "claude-sonnet-5",
+    thinking: { type: "disabled" },
     max_tokens: 1024,
     messages: [{ role: "user", content: prompt }]
   });
@@ -554,7 +556,8 @@ export async function generateRickReviewGuide(input: GenerateReviewGuideInput): 
   const anthropic = new Anthropic({ apiKey: config.anthropicApiKey });
 
   const message = await anthropic.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: "claude-sonnet-5",
+    thinking: { type: "disabled" },
     max_tokens: 2048,
     messages: [{ role: "user", content: prompt }]
   });
