@@ -620,10 +620,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Serve uploaded images
-  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
-  logger.info("Serving uploads from:", path.join(process.cwd(), 'uploads'));
-
   // Get a specific review by whiskey ID and review ID (requires authentication)
   app.get("/api/whiskeys/:id/reviews/:reviewId", async (req: Request, res: Response) => {
     try {

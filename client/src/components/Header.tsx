@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { CircleUser, LogOut, BarChart3, TrendingUp, Home, Menu, Users, UsersRound, Eye, Mic, Bell, Settings, UserCircle } from "lucide-react";
+import { CircleUser, LogOut, BarChart3, TrendingUp, Home, Menu, Users, UsersRound, Eye, Mic, Bell, Settings, UserCircle, Trophy, Gauge, Brain } from "lucide-react";
 import { GlencairnIcon } from "@/components/GlencairnIcon";
 import { BrandLogo } from "@/components/BrandLogo";
 import { Link, useLocation } from "wouter";
@@ -232,6 +232,24 @@ export function Header() {
                   <Settings className="mr-2 h-4 w-4" />
                   <span>Profile Settings</span>
                 </DropdownMenuItem>
+                <Link href="/challenges">
+                  <DropdownMenuItem className="cursor-pointer">
+                    <Trophy className="mr-2 h-4 w-4" />
+                    <span>Challenges</span>
+                  </DropdownMenuItem>
+                </Link>
+                <Link href="/progress">
+                  <DropdownMenuItem className="cursor-pointer">
+                    <Gauge className="mr-2 h-4 w-4" />
+                    <span>Progress</span>
+                  </DropdownMenuItem>
+                </Link>
+                <Link href="/exercises">
+                  <DropdownMenuItem className="cursor-pointer">
+                    <Brain className="mr-2 h-4 w-4" />
+                    <span>Palate Exercises</span>
+                  </DropdownMenuItem>
+                </Link>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={handleLogout}

@@ -563,6 +563,12 @@ export default function AuthPage() {
           <p className="text-center text-xs text-muted-foreground mt-6">
             By continuing, you agree to enjoy whiskey responsibly.
           </p>
+
+          <p className="mt-6 text-center text-xs text-muted-foreground">
+            <Link href="/privacy" className="underline underline-offset-4 hover:text-foreground">
+              Privacy Policy
+            </Link>
+          </p>
         </div>
       </div>
     </div>

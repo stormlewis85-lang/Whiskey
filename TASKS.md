@@ -7,7 +7,7 @@
 
 ## Active Tasks
 
-### [MODEL-001] Retired Anthropic model — all AI features down since 2026-06-15 — FIXED, AWAITING MERGE
+### [MODEL-001] Retired Anthropic model — all AI features down since 2026-06-15 — MERGED 2026-07-22
 - **Scope:** Standard (hotfix)
 - **Branch:** `fix/retired-anthropic-model` (off main tip)
 - **Root cause:** All 7 server AI call sites hardcoded `claude-sonnet-4-20250514`, retired by Anthropic 2026-06-15 → API 404 not_found_error → errorStatus() propagated 404 to clients. Proven by live probe (old ID 404s; `claude-sonnet-5` resolves).
@@ -16,7 +16,16 @@
 - **Gates:** tsc baseline unchanged (5 pre-existing); live probe of exact request shape returned text-first content, 0 thinking tokens; QA APPROVE-WITH-CONDITIONS — condition (verify model ID resolves live) satisfied by probe.
 - **Watch:** Sonnet 5 intro pricing $2/$10 per MTok through 2026-08-31, then $3/$15; new tokenizer ~30% more tokens/text — watch AI-feature cost after merge. Test-gap noted by QA: no payload-assertion test on messages.create args (backlog).
 
-### [ROUTE-SWEEP] Route Integrity Audit — MECHANICAL FIXES APPLIED, PRODUCT CALLS HELD
+### [ROUTE-SWEEP] Route Integrity Audit — CLOSEOUT APPLIED (2026-07-22), 2 ITEMS REMAIN OPEN
+- **Closeout (Storm confirmed "close any findings you can"; Developer → QA APPROVED, tsc baseline unchanged; branch `fix/route-sweep-closeout`):**
+  - [ROUTE-005] Empty-state CTA relabeled "Browse the community" (label now matches /search→Community; catalog build stays open as product decision)
+  - [ROUTE-006] 404 page CTA auth-aware — signed-out users get "Sign In"→/auth (QA watch: brief "Sign In" flash while auth query loads; optional isLoading gate)
+  - [ROUTE-007] /privacy linked from auth-page footer (was zero inbound links)
+  - [ROUTE-008] Challenges/Progress/Exercises added to mobile hamburger + desktop user dropdown (cluster was self-linking only)
+  - [ROUTE-009] Duplicate /uploads static mount removed from routes.ts (index.ts:111 canonical)
+  - [ROUTE-010] ReviewModal.tsx.bak deleted (git-recoverable)
+- **TABLED (Storm, 2026-07-22):** whiskey catalog surface — tabled, no build; MobileBottleDetail.tsx + bottle/* family — tabled, leaning WIRE into a future bottle-detail page (do not delete)
+- **Original sweep record:**
 - **Scope:** Deep (3 parallel Explore inventories: router registry / nav targets / API calls vs Express)
 - **Branch:** `fix/route-integrity-audit` (off `fw-v34-beta-and-cleanup` tip — main is its ancestor; main untouched)
 - **Date:** 2026-07-22
