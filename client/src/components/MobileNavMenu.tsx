@@ -21,6 +21,9 @@ import {
   Sun,
   Moon,
   Monitor,
+  Trophy,
+  Gauge,
+  Brain,
 } from "lucide-react";
 
 interface MobileNavMenuProps {
@@ -64,6 +67,9 @@ export function MobileNavMenu({ onClose }: MobileNavMenuProps) {
     { href: "/blind-tastings", label: "Blind Tastings", icon: Eye },
     { href: "/rick-house", label: "Rick House", icon: Mic },
     { href: "/drops", label: "Drops", icon: Bell },
+    { href: "/challenges", label: "Challenges", icon: Trophy },
+    { href: "/progress", label: "Progress", icon: Gauge },
+    { href: "/exercises", label: "Palate Exercises", icon: Brain },
   ];
 
   return (
