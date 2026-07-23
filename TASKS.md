@@ -15,7 +15,7 @@
   - [ROUTE-008] Challenges/Progress/Exercises added to mobile hamburger + desktop user dropdown (cluster was self-linking only)
   - [ROUTE-009] Duplicate /uploads static mount removed from routes.ts (index.ts:111 canonical)
   - [ROUTE-010] ReviewModal.tsx.bak deleted (git-recoverable)
-- **Still open:** whiskey catalog surface (build/drop decision); MobileBottleDetail.tsx + bottle/* family orphan (delete vs. wire into a future bottle-detail page — architecture call)
+- **TABLED (Storm, 2026-07-22):** whiskey catalog surface — tabled, no build; MobileBottleDetail.tsx + bottle/* family — tabled, leaning WIRE into a future bottle-detail page (do not delete)
 - **Original sweep record:**
 - **Scope:** Deep (3 parallel Explore inventories: router registry / nav targets / API calls vs Express)
 - **Branch:** `fix/route-integrity-audit` (off `fw-v34-beta-and-cleanup` tip — main is its ancestor; main untouched)
