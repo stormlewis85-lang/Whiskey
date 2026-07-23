@@ -1,13 +1,19 @@
-import { Star, BookOpen, Mic } from "lucide-react";
 import { GlencairnIcon } from "@/components/GlencairnIcon";
 import { cn } from "@/lib/utils";
+
+// ── 1e — Journal provenance ──
+// Spec: scratchpad/design/rick-session-surfaces-spec.md §1e.
+// Session rows never show a score/star (RICK-UX-04 conflation fix) — the
+// review's rating lived on the whiskey, not the session, and showing it here
+// implied the session itself was scored. This journal only renders tasting
+// SESSIONS (no separate review-derived rows exist in this data), so no
+// review-row variant is implemented — see handoff notes.
 
 interface JournalSession {
   id: number;
   whiskeyId: number;
   whiskeyName: string;
   whiskeyImage?: string | null;
-  whiskeyRating?: number;
   mode: "guided" | "notes";
   startedAt: string;
   completedAt: string | null;
@@ -64,8 +70,10 @@ function JournalEntry({
   onTap: () => void;
 }) {
   const isCompleted = !!session.completedAt;
-  const date = formatDate(session.startedAt);
-  const rating = session.whiskeyRating || 0;
+  const when = formatWhen(isCompleted ? (session.completedAt as string) : session.startedAt);
+  const meta = isCompleted
+    ? `${when} · Rick's take + your notes · no score`
+    : `${when} · In progress`;
 
   return (
     <button
@@ -88,41 +96,27 @@ function JournalEntry({
           )}
         </div>
 
-        {/* Content */}
+        {/* Content — no score/star on session rows (spec §1e). */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between gap-2">
-            <h3 className="font-medium text-sm text-foreground truncate">{session.whiskeyName}</h3>
-            {rating > 0 && (
-              <div className="flex items-center gap-0.5 shrink-0">
-                <Star className="w-3 h-3 text-primary fill-primary" />
-                <span className="text-xs text-primary font-medium">{rating}</span>
-              </div>
-            )}
-          </div>
-          <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-            {session.mode === "guided" ? (
-              <BookOpen className="w-3 h-3" />
-            ) : (
-              <Mic className="w-3 h-3" />
-            )}
-            <span>{date}</span>
-            {!isCompleted && (
-              <span className="text-amber-500 font-medium">In progress</span>
-            )}
-          </div>
+          <h3 className="text-[15px] font-medium truncate" style={{ color: "#EDE8E0" }}>
+            Tasting with Rick — {session.whiskeyName}
+          </h3>
+          <p className="text-[12px] mt-1 truncate" style={{ color: "#8A8072" }}>
+            {meta}
+          </p>
         </div>
       </div>
     </button>
   );
 }
 
-function formatDate(dateStr: string): string {
+// "Tonight" if the reference date is today, else "Mon D" (no year — spec §1e).
+function formatWhen(dateStr: string): string {
   try {
-    return new Date(dateStr).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
+    const d = new Date(dateStr);
+    if (Number.isNaN(d.getTime())) return "Unknown date";
+    if (d.toDateString() === new Date().toDateString()) return "Tonight";
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   } catch {
     return "Unknown date";
   }

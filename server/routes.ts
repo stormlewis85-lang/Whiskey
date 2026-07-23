@@ -1656,6 +1656,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Ask Rick a question mid-phase — in-character answer grounded in the
+  // session's whiskey + current phase prose + any prior exchanges for that
+  // phase. Persists the exchange into scriptJson.exchanges[phase]. Depth is
+  // bounded: this never blocks the session's forward-only Continue flow.
+  app.post("/api/rick/ask", aiRateLimiter, isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = getUserId(req);
+      const { sessionId, phase, question } = req.body;
+
+      if (!sessionId || typeof sessionId !== 'number') {
+        return res.status(400).json({ message: "sessionId is required and must be a number" });
+      }
+
+      const validPhases = ['visual', 'nose', 'palate', 'finish', 'ricksTake'];
+      if (!phase || typeof phase !== 'string' || !validPhases.includes(phase)) {
+        return res.status(400).json({ message: `phase is required and must be one of: ${validPhases.join(', ')}` });
+      }
+
+      if (!question || typeof question !== 'string' || !question.trim()) {
+        return res.status(400).json({ message: "question is required and cannot be empty" });
+      }
+
+      const trimmedQuestion = question.trim();
+      if (trimmedQuestion.length > 500) {
+        return res.status(400).json({ message: "question is too long (max 500 characters)" });
+      }
+
+      // Scoped to the requesting user — returns null for missing/foreign sessions
+      const session = await storage.getTastingSession(sessionId, userId);
+      if (!session) {
+        return res.status(404).json({ message: "Session not found" });
+      }
+
+      if (session.completedAt) {
+        return res.status(400).json({ message: "This session is complete — its record is read-only" });
+      }
+
+      const whiskey = await storage.getWhiskey(session.whiskeyId, userId);
+      if (!whiskey) {
+        return res.status(404).json({ message: "Whiskey not found or not accessible" });
+      }
+
+      const currentScript = (session.scriptJson as Record<string, unknown>) || {};
+      const phaseProse = typeof currentScript[phase] === 'string' ? (currentScript[phase] as string) : '';
+      const exchangesByPhase = (currentScript.exchanges as Record<string, any[]>) || {};
+      const priorExchanges = Array.isArray(exchangesByPhase[phase]) ? exchangesByPhase[phase] : [];
+
+      const { askRick } = await import('./rick-service');
+      const result = await askRick({
+        whiskey,
+        phase,
+        phaseProse,
+        question: trimmedQuestion,
+        priorExchanges,
+      });
+
+      const newExchange = {
+        question: trimmedQuestion,
+        answer: result.answer,
+        handBack: result.handBack,
+        at: new Date().toISOString(),
+      };
+
+      const updated = await storage.updateTastingSession(sessionId, userId, {
+        scriptJson: {
+          ...currentScript,
+          exchanges: {
+            ...exchangesByPhase,
+            [phase]: [...priorExchanges, newExchange],
+          },
+        },
+      });
+
+      if (!updated) {
+        return res.status(500).json({ message: "Failed to save exchange" });
+      }
+
+      await storage.logAiUsage(userId, 'rick-ask', session.whiskeyId);
+
+      res.json({ answer: result.answer, handBack: result.handBack });
+    } catch (error) {
+      logger.error("Ask Rick error:", error);
+      res.status(errorStatus(error)).json(safeError(error, "Failed to get an answer from Rick"));
+    }
+  });
+
   // Complete a tasting session and optionally link to a review
   app.post("/api/rick/complete-session", isAuthenticated, async (req: Request, res: Response) => {
     try {

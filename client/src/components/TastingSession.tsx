@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { Whiskey } from "@shared/schema";
+import { Whiskey, ReviewNote } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -15,11 +15,19 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, X, Mic, Volume2, VolumeX, PenLine, ArrowLeft, Share2 } from "lucide-react";
+import { Loader2, Share2, Play, Pause, ArrowUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import AudioPlayer from "./AudioPlayer";
 import { RickAnalytics } from "@/lib/analytics";
-import { TastingNoteCard } from "./rick/TastingNoteCard";
+import TastingCompletion from "./rick/TastingCompletion";
+
+// A single Ask Rick question/answer exchange, scoped to one phase
+interface AskExchange {
+  question: string;
+  answer: string;
+  handBack: string;
+  at: string;
+}
 
 // Rick Script interface matching the backend
 interface RickScript {
@@ -37,6 +45,8 @@ interface RickScript {
     personalized: boolean;
     communityReviewCount: number;
   };
+  // Persisted Ask Rick exchanges, keyed by phase — hydrated on resume
+  exchanges?: Record<string, AskExchange[]>;
 }
 
 // Session from API
@@ -69,6 +79,15 @@ const PHASE_PROMPTS: Record<TastingPhase, string> = {
   ricksTake: "Here's what I think.",
 };
 
+// Ask Rick — 2 static contextual prompt chips per phase (client-side, kept simple)
+const ASK_RICK_CHIPS: Record<TastingPhase, [string, string]> = {
+  visual: ["What do the legs actually tell me?", "Why does color matter?"],
+  nose: ["What am I smelling if it's sharper than caramel?", "How do I nose without burning out?"],
+  palate: ["Where should I feel this on my tongue?", "What's the mashbill doing here?"],
+  finish: ["Is a long finish always better?", "What's the oak doing at the end?"],
+  ricksTake: ["Compare it to something I'd know", "Is this worth the price?"],
+};
+
 interface TastingSessionProps {
   whiskey: Whiskey;
   mode: 'guided' | 'notes';
@@ -93,6 +112,129 @@ const LOADING_MESSAGES = [
   "Opening the cellar...",
 ];
 
+// ── 1c minimal audio player ──
+// Session-screen player: 36px outline play/pause, 2px hairline progress,
+// "m:ss / m:ss" time. No gold, no skip controls (phases advance forward-only
+// via the Continue CTA, not by scrubbing audio).
+interface MinimalAudioPlayerProps {
+  audioBase64?: string | null;
+  contentType?: string;
+  isLoading?: boolean;
+  textOnly?: boolean;
+  error?: string;
+  autoPlay?: boolean;
+  className?: string;
+}
+
+const MinimalAudioPlayer = ({
+  audioBase64,
+  contentType = "audio/mpeg",
+  isLoading = false,
+  textOnly = false,
+  error,
+  autoPlay = false,
+  className,
+}: MinimalAudioPlayerProps) => {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+
+  const audioSrc = audioBase64 ? `data:${contentType};base64,${audioBase64}` : null;
+
+  useEffect(() => {
+    setIsPlaying(false);
+    setCurrentTime(0);
+    setDuration(0);
+  }, [audioSrc]);
+
+  useEffect(() => {
+    if (autoPlay && audioSrc && audioRef.current && !isLoading && !textOnly) {
+      const playPromise = audioRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => setIsPlaying(false));
+      }
+    }
+  }, [audioSrc, autoPlay, isLoading, textOnly]);
+
+  const formatTime = (time: number) => {
+    if (!Number.isFinite(time)) return "0:00";
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+  };
+
+  const handlePlayPause = () => {
+    if (!audioRef.current) return;
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play();
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className={cn("flex items-center gap-2 text-[12px]", className)} style={{ color: "#8A8072" }}>
+        <Loader2 className="h-4 w-4 animate-spin" />
+        Loading audio...
+      </div>
+    );
+  }
+
+  if (textOnly || !audioSrc) {
+    return (
+      <div className={cn("text-[12px]", className)} style={{ color: "#7A7060" }}>
+        {error || "Audio unavailable — read along with Rick."}
+      </div>
+    );
+  }
+
+  const progress = duration > 0 ? Math.min(currentTime / duration, 1) : 0;
+
+  return (
+    <div className={cn("flex items-center gap-3", className)}>
+      <audio
+        ref={audioRef}
+        src={audioSrc}
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
+        onTimeUpdate={() => setCurrentTime(audioRef.current?.currentTime ?? 0)}
+        onLoadedMetadata={() => setDuration(audioRef.current?.duration ?? 0)}
+        onEnded={() => {
+          setIsPlaying(false);
+          setCurrentTime(0);
+        }}
+      />
+      <button
+        type="button"
+        onClick={handlePlayPause}
+        aria-label={isPlaying ? "Pause" : "Play"}
+        className="shrink-0 flex items-center justify-center w-9 h-9 rounded-full border"
+        style={{ borderColor: "rgba(237,232,224,0.25)" }}
+      >
+        {isPlaying ? (
+          <Pause className="h-4 w-4" style={{ color: "#EDE8E0" }} fill="currentColor" />
+        ) : (
+          <Play className="h-4 w-4 ml-0.5" style={{ color: "#EDE8E0" }} fill="currentColor" />
+        )}
+      </button>
+      <div
+        className="flex-1 h-[2px] rounded-full overflow-hidden"
+        style={{ backgroundColor: "rgba(237,232,224,0.14)" }}
+      >
+        <div
+          className="h-full rounded-full transition-all duration-300"
+          style={{ width: `${progress * 100}%`, backgroundColor: "#B5AC9F" }}
+        />
+      </div>
+      <span className="shrink-0 text-[12px] tabular-nums" style={{ color: "#8A8072" }}>
+        {formatTime(currentTime)} / {formatTime(duration)}
+      </span>
+    </div>
+  );
+};
+
 const TastingSession = ({ whiskey, mode, resumeSessionId, onClose, onComplete }: TastingSessionProps) => {
   const { toast } = useToast();
   const [session, setSession] = useState<TastingSessionData | null>(null);
@@ -110,6 +252,11 @@ const TastingSession = ({ whiskey, mode, resumeSessionId, onClose, onComplete }:
     ricksTake: null
   });
   const [isLoadingAudio, setIsLoadingAudio] = useState(false);
+
+  // ── ASK RICK — exchanges by phase, hydrated from scriptJson on load/resume ──
+  const [exchangesByPhase, setExchangesByPhase] = useState<Record<string, AskExchange[]>>({});
+  const [askInput, setAskInput] = useState("");
+  const [pendingQuestion, setPendingQuestion] = useState<{ phase: TastingPhase; question: string } | null>(null);
 
   const currentPhase = PHASES[currentPhaseIndex];
 
@@ -139,6 +286,8 @@ const TastingSession = ({ whiskey, mode, resumeSessionId, onClose, onComplete }:
     onSuccess: (data) => {
       setSession(data.session);
       setScript(data.script);
+      // Resume: rehydrate any Ask Rick exchanges already persisted for this session
+      setExchangesByPhase(data.script?.exchanges || {});
       // Resuming a session that's already completed — render the existing
       // completion view instead of replaying phase 1.
       if (data.session?.completedAt) {
@@ -232,6 +381,52 @@ const TastingSession = ({ whiskey, mode, resumeSessionId, onClose, onComplete }:
     }
   });
 
+  // Ask Rick a question mid-phase — depth is bounded, never blocks Continue
+  const askRickMutation = useMutation({
+    mutationFn: async (vars: { phase: TastingPhase; question: string }) => {
+      if (!session) throw new Error("No active session");
+      const response = await apiRequest("POST", "/api/rick/ask", {
+        sessionId: session.id,
+        phase: vars.phase,
+        question: vars.question,
+      });
+      return response.json();
+    },
+    onSuccess: (data, vars) => {
+      const newExchange: AskExchange = {
+        question: vars.question,
+        answer: data.answer,
+        handBack: data.handBack,
+        at: new Date().toISOString(),
+      };
+      setExchangesByPhase((prev) => ({
+        ...prev,
+        [vars.phase]: [...(prev[vars.phase] || []), newExchange],
+      }));
+      setPendingQuestion(null);
+    },
+    onError: (error, vars) => {
+      setPendingQuestion(null);
+      // Keep the question in the input so they don't have to retype it
+      if (vars.phase === currentPhase) {
+        setAskInput(vars.question);
+      }
+      toast({
+        title: "Rick didn't catch that",
+        description: error instanceof Error ? error.message : "Unknown error",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const submitAskRick = (question: string) => {
+    const trimmed = question.trim();
+    if (!trimmed || askRickMutation.isPending) return;
+    setPendingQuestion({ phase: currentPhase, question: trimmed });
+    setAskInput("");
+    askRickMutation.mutate({ phase: currentPhase, question: trimmed });
+  };
+
   // Start session on mount
   useEffect(() => {
     startSessionMutation.mutate();
@@ -256,17 +451,6 @@ const TastingSession = ({ whiskey, mode, resumeSessionId, onClose, onComplete }:
     }
   };
 
-  const handlePrevious = () => {
-    if (currentPhaseIndex > 0) {
-      triggerHaptic(20);
-      setCurrentPhaseIndex(prev => prev - 1);
-    }
-  };
-
-  const toggleAudio = () => {
-    setIsAudioEnabled(prev => !prev);
-  };
-
   const handleCloseAttempt = () => {
     if (session && !isCompleted) {
       setShowExitConfirm(true);
@@ -275,79 +459,28 @@ const TastingSession = ({ whiskey, mode, resumeSessionId, onClose, onComplete }:
     }
   };
 
-  const todayDate = new Date().toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-
-  // ── COMPLETION SCREEN ──
+  // ── COMPLETION SCREEN (1d) — completion → re-score → seeded review bridge ──
   if (isCompleted && script) {
+    // Most recent review for this whiskey, if one exists (whiskey.notes is
+    // jsonb — same cast pattern RickHouse.tsx uses at its call sites).
+    const notes = Array.isArray(whiskey.notes) ? (whiskey.notes as unknown as ReviewNote[]) : [];
+    const existingReview = notes.length > 0 ? notes[notes.length - 1] : undefined;
+
+    const sessionDate = new Date(session?.completedAt || session?.startedAt || Date.now()).toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+
     return (
-      <div className="fixed inset-0 z-[60] bg-background overflow-y-auto">
-        <div className="flex flex-col items-center min-h-screen px-5 py-10">
-          <div className="max-w-md w-full space-y-8">
-
-            {/* Animated check */}
-            <div className="flex justify-center">
-              <div className="rick-check-enter w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="text-primary">
-                  <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
-            </div>
-
-            {/* Rick's closing words — hero element */}
-            <div className="rick-fade-up rick-fade-up-1 text-center space-y-2">
-              {script.quip ? (
-                <p className="font-display text-xl text-foreground/90 leading-relaxed italic">
-                  "{script.quip}"
-                </p>
-              ) : (
-                <p className="font-display text-xl text-foreground/90">
-                  Well poured, well tasted.
-                </p>
-              )}
-              <p className="text-primary/60 text-sm">— Rick</p>
-            </div>
-
-            {/* Shareable Tasting Note Card */}
-            <div className="rick-fade-up rick-fade-up-2">
-              <TastingNoteCard
-                whiskeyName={whiskey.name}
-                distillery={whiskey.distillery}
-                rating={whiskey.rating || 0}
-                ricksSummary={script.ricksTake}
-                quip={script.quip}
-                date={todayDate}
-                mode={mode}
-              />
-            </div>
-
-            {/* Actions */}
-            <div className="rick-fade-up rick-fade-up-3 space-y-3">
-              <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  className="flex-1 border-border/50"
-                  onClick={onClose}
-                >
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back
-                </Button>
-                <Button
-                  className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
-                  onClick={onComplete}
-                >
-                  <PenLine className="h-4 w-4 mr-2" />
-                  Write Review
-                </Button>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </div>
+      <TastingCompletion
+        whiskey={whiskey}
+        script={script}
+        sessionDate={sessionDate}
+        existingReview={existingReview}
+        onClose={onClose}
+        onSaved={onComplete}
+      />
     );
   }
 
@@ -384,90 +517,66 @@ const TastingSession = ({ whiskey, mode, resumeSessionId, onClose, onComplete }:
     <>
       <div className="fixed inset-0 z-[60] bg-background flex flex-col">
         {/* Header */}
-        <header className="shrink-0 bg-gradient-to-r from-amber-950 via-amber-900 to-amber-950 text-white border-b border-amber-800/30">
-          <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Mic className="h-5 w-5 text-amber-400" />
-              <div>
-                <h1 className="font-semibold text-amber-50">{whiskey.name}</h1>
-                <p className="text-xs text-amber-200/70">
-                  {mode === 'guided' ? 'Guided Tasting with Rick' : 'Quick Notes'}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-amber-200 hover:text-white hover:bg-amber-700/40"
-                onClick={toggleAudio}
-              >
-                {isAudioEnabled ? (
-                  <Volume2 className="h-5 w-5" />
-                ) : (
-                  <VolumeX className="h-5 w-5" />
-                )}
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-amber-200 hover:text-white hover:bg-amber-700/40"
+        <header
+          className="shrink-0"
+          style={{ background: "linear-gradient(180deg, #100E0B 0%, #050505 100%)" }}
+        >
+          <div className="container mx-auto px-4 sm:px-6 pt-4 pb-3">
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
                 onClick={handleCloseAttempt}
+                className="text-[13px] transition-colors hover:opacity-80"
+                style={{ color: "#A69C8D" }}
               >
-                <X className="h-5 w-5" />
-              </Button>
+                ← Step out
+              </button>
+              <span
+                className="font-display text-[12px] uppercase tracking-[0.24em]"
+                style={{ color: "#7A7060" }}
+              >
+                RICK HOUSE
+              </span>
+            </div>
+
+            <div className="mt-3">
+              <h1 className="font-heading text-[26px] font-normal leading-tight" style={{ color: "#EDE8E0" }}>
+                {whiskey.name}
+              </h1>
+              {(whiskey.type || whiskey.proof) && (
+                <p className="mt-0.5 text-[13px]" style={{ color: "#A69C8D" }}>
+                  {[whiskey.type, whiskey.proof ? `${whiskey.proof} proof` : null]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </p>
+              )}
             </div>
           </div>
 
-          {/* Phase Progress — visible on ALL screen sizes */}
+          {/* 1c text stepper — phase name + "N of 5" + hairline progress */}
           {mode === 'guided' && (
-            <div className="px-4 pb-3">
-              <div className="flex items-center justify-between max-w-xl mx-auto">
-                {PHASES.map((phase, index) => (
-                  <div key={phase} className="flex items-center">
-                    <div
-                      className={cn(
-                        "flex flex-col items-center cursor-pointer transition-all",
-                        index <= currentPhaseIndex ? "opacity-100" : "opacity-50"
-                      )}
-                      onClick={() => index <= currentPhaseIndex && setCurrentPhaseIndex(index)}
-                    >
-                      <div
-                        className={cn(
-                          "w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-all",
-                          index === currentPhaseIndex
-                            ? "bg-amber-500 text-white scale-110"
-                            : index < currentPhaseIndex
-                              ? "bg-amber-600/60 text-white"
-                              : "bg-amber-900/50 text-amber-300/50"
-                        )}
-                      >
-                        {index + 1}
-                      </div>
-                      {/* Phase labels — now visible on mobile too */}
-                      <span
-                        className={cn(
-                          "text-[9px] sm:text-[10px] mt-1",
-                          index === currentPhaseIndex
-                            ? "text-amber-200"
-                            : "text-amber-400/50"
-                        )}
-                      >
-                        {PHASE_LABELS[phase]}
-                      </span>
-                    </div>
-                    {index < PHASES.length - 1 && (
-                      <div
-                        className={cn(
-                          "w-6 sm:w-12 h-0.5 mx-0.5 sm:mx-1",
-                          index < currentPhaseIndex
-                            ? "bg-amber-500/60"
-                            : "bg-amber-900/50"
-                        )}
-                      />
-                    )}
-                  </div>
-                ))}
+            <div className="px-4 sm:px-6 pb-4">
+              <div className="max-w-xl mx-auto">
+                <div className="flex items-center justify-between">
+                  <span className="text-[14px] font-semibold" style={{ color: "#EDE8E0" }}>
+                    {PHASE_LABELS[currentPhase]}
+                  </span>
+                  <span className="text-[12px]" style={{ color: "#8A8072" }}>
+                    {currentPhaseIndex + 1} of {PHASES.length}
+                  </span>
+                </div>
+                <div
+                  className="mt-2 h-[2px] w-full rounded-full overflow-hidden"
+                  style={{ backgroundColor: "rgba(237,232,224,0.12)" }}
+                >
+                  <div
+                    className="h-full rounded-full transition-all duration-300"
+                    style={{
+                      width: `${((currentPhaseIndex + 1) / PHASES.length) * 100}%`,
+                      backgroundColor: "#B5AC9F",
+                    }}
+                  />
+                </div>
               </div>
             </div>
           )}
@@ -534,71 +643,177 @@ const TastingSession = ({ whiskey, mode, resumeSessionId, onClose, onComplete }:
               </div>
             </div>
           ) : (
-            /* Guided View — phase by phase */
+            /* Guided View — phase by phase (1c) */
             <>
-              <Card className="border-border/50 shadow-warm-lg">
-                <CardContent className="p-6">
-                  {/* Rick's phase prompt — his voice guiding you */}
-                  <p className="text-primary/70 text-sm italic mb-4">
-                    {PHASE_PROMPTS[currentPhase]}
-                  </p>
+              <div
+                className="rounded-[14px] border p-5"
+                style={{ backgroundColor: "#0D0C0A", borderColor: "rgba(237,232,224,0.08)" }}
+              >
+                {/* Stage direction — Rick's phase prompt (italic, NOT gold) */}
+                <p className="text-[13px] italic mb-3" style={{ color: "#C9C1B4" }}>
+                  {PHASE_PROMPTS[currentPhase]}
+                </p>
 
-                  {/* Phase Title */}
-                  <h2 className="text-2xl font-bold text-foreground mb-6">
-                    {PHASE_LABELS[currentPhase]}
-                  </h2>
+                {/* Rick's prose, in quotes */}
+                <p
+                  className="text-[15px] leading-[1.6] whitespace-pre-line"
+                  style={{ color: "#D8D1C6" }}
+                >
+                  "{script[currentPhase]}"
+                </p>
 
-                  {/* Script Content */}
-                  <div className="prose prose-amber dark:prose-invert max-w-none">
-                    <p className="text-lg text-foreground leading-relaxed whitespace-pre-line">
-                      {script[currentPhase]}
+                {/* Minimal audio player */}
+                {isAudioEnabled && (
+                  <MinimalAudioPlayer
+                    audioBase64={phaseAudio[currentPhase]?.audio}
+                    contentType={phaseAudio[currentPhase]?.contentType || 'audio/mpeg'}
+                    isLoading={isLoadingAudio && !phaseAudio[currentPhase]}
+                    textOnly={phaseAudio[currentPhase]?.textOnly}
+                    error={phaseAudio[currentPhase]?.error}
+                    autoPlay={true}
+                    className="mt-5"
+                  />
+                )}
+              </div>
+
+              {/* ASK RICK — optional in-session depth path (1c). Guided mode only;
+                  hidden on completed/record views since this whole branch already
+                  returns via TastingCompletion once isCompleted is true. */}
+              <div className="mt-5">
+                <p
+                  className="text-[12px] font-semibold uppercase"
+                  style={{ color: "#8A8072", letterSpacing: "0.12em" }}
+                >
+                  Ask Rick — optional
+                </p>
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {ASK_RICK_CHIPS[currentPhase].map((chip) => (
+                    <button
+                      key={chip}
+                      type="button"
+                      onClick={() => submitAskRick(chip)}
+                      disabled={askRickMutation.isPending}
+                      className="rounded-full border px-[14px] py-[9px] text-[13px] text-left transition-opacity hover:opacity-80 disabled:opacity-50"
+                      style={{ borderColor: "rgba(237,232,224,0.16)", color: "#D8D1C6" }}
+                    >
+                      {chip}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Exchange history for this phase — chronological, persists across phase nav */}
+                {(exchangesByPhase[currentPhase] || []).map((exchange, i) => (
+                  <div key={`${currentPhase}-${i}`} className="mt-4">
+                    <div className="flex justify-end">
+                      <div
+                        className="max-w-[280px] px-[15px] py-[11px] text-[14px]"
+                        style={{
+                          backgroundColor: "#1B1712",
+                          color: "#EDE8E0",
+                          borderTopLeftRadius: 14,
+                          borderTopRightRadius: 14,
+                          borderBottomRightRadius: 4,
+                          borderBottomLeftRadius: 14,
+                        }}
+                      >
+                        {exchange.question}
+                      </div>
+                    </div>
+                    <div className="mt-2">
+                      <p
+                        className="text-[12px] font-semibold"
+                        style={{ color: "#8A8072", letterSpacing: "0.12em" }}
+                      >
+                        RICK
+                      </p>
+                      <p
+                        className="mt-1 text-[15px] leading-[1.65] whitespace-pre-line"
+                        style={{ color: "#D8D1C6" }}
+                      >
+                        {exchange.answer}
+                      </p>
+                      <p className="mt-1.5 text-[13px] italic" style={{ color: "#C9C1B4" }}>
+                        {exchange.handBack}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Pending exchange — user bubble shows immediately; no spinner, just a quiet line */}
+                {pendingQuestion?.phase === currentPhase && (
+                  <div className="mt-4">
+                    <div className="flex justify-end">
+                      <div
+                        className="max-w-[280px] px-[15px] py-[11px] text-[14px]"
+                        style={{
+                          backgroundColor: "#1B1712",
+                          color: "#EDE8E0",
+                          borderTopLeftRadius: 14,
+                          borderTopRightRadius: 14,
+                          borderBottomRightRadius: 4,
+                          borderBottomLeftRadius: 14,
+                        }}
+                      >
+                        {pendingQuestion.question}
+                      </div>
+                    </div>
+                    <p className="mt-2 text-[13px] italic" style={{ color: "#8A8072" }}>
+                      Rick's thinking…
                     </p>
                   </div>
+                )}
 
-                  {/* Audio Player */}
-                  {isAudioEnabled && (
-                    <AudioPlayer
-                      audioBase64={phaseAudio[currentPhase]?.audio}
-                      contentType={phaseAudio[currentPhase]?.contentType || 'audio/mpeg'}
-                      isLoading={isLoadingAudio && !phaseAudio[currentPhase]}
-                      textOnly={phaseAudio[currentPhase]?.textOnly}
-                      error={phaseAudio[currentPhase]?.error}
-                      onEnded={() => {}}
-                      onSkipBack={currentPhaseIndex > 0 ? handlePrevious : undefined}
-                      onSkipForward={currentPhaseIndex < PHASES.length - 1 ? handleNext : undefined}
-                      showSkipButtons={true}
-                      autoPlay={true}
-                      className="mt-6"
-                    />
-                  )}
-                </CardContent>
-              </Card>
+                {/* Free input pill */}
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    submitAskRick(askInput);
+                  }}
+                  className="mt-4 flex items-center gap-2 rounded-full border py-1.5 pl-4 pr-1.5"
+                  style={{ backgroundColor: "#0D0C0A", borderColor: "rgba(237,232,224,0.10)" }}
+                >
+                  <input
+                    type="text"
+                    value={askInput}
+                    onChange={(e) => setAskInput(e.target.value)}
+                    placeholder={
+                      (exchangesByPhase[currentPhase]?.length || 0) > 0
+                        ? "Ask a follow-up…"
+                        : "Ask anything about this pour…"
+                    }
+                    disabled={askRickMutation.isPending}
+                    className="flex-1 bg-transparent text-[14px] outline-none placeholder:text-[#7A7060] disabled:opacity-60"
+                    style={{ color: "#EDE8E0" }}
+                  />
+                  <button
+                    type="submit"
+                    disabled={!askInput.trim() || askRickMutation.isPending}
+                    aria-label="Ask Rick"
+                    className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full disabled:opacity-40"
+                    style={{ backgroundColor: "rgba(237,232,224,0.1)" }}
+                  >
+                    <ArrowUp className="h-4 w-4" style={{ color: "#B5AC9F" }} />
+                  </button>
+                </form>
+              </div>
             </>
           )}
           </div>
         </main>
 
-        {/* Navigation Footer — guided mode */}
+        {/* Footer — guided mode: single gold Continue CTA, forward-only (1c) */}
         {mode === 'guided' && (
-          <footer className="shrink-0 bg-background/95 backdrop-blur-sm border-t border-border/50 p-4 sm:p-6">
-            <div className="container mx-auto max-w-2xl flex items-center justify-between gap-4">
-              <Button
-                variant="outline"
-                onClick={handlePrevious}
-                disabled={currentPhaseIndex === 0}
-                className="flex-1 sm:flex-none min-h-[44px]"
-              >
-                Previous
-              </Button>
-
-              <span className="text-sm text-muted-foreground">
-                {currentPhaseIndex + 1} of {PHASES.length}
-              </span>
-
+          <footer
+            className="shrink-0 border-t p-4 sm:p-6"
+            style={{ backgroundColor: "#050505", borderColor: "rgba(237,232,224,0.08)" }}
+          >
+            <div className="container mx-auto max-w-2xl">
               <Button
                 onClick={handleNext}
-                className="bg-amber-600 hover:bg-amber-700 text-white flex-1 sm:flex-none min-h-[44px]"
                 disabled={completeSessionMutation.isPending}
+                className="w-full h-[52px] rounded-[10px] font-semibold hover:opacity-90 disabled:opacity-60"
+                style={{ backgroundColor: "#D4A44C", color: "#1A1200" }}
               >
                 {completeSessionMutation.isPending ? (
                   <>
@@ -608,7 +823,7 @@ const TastingSession = ({ whiskey, mode, resumeSessionId, onClose, onComplete }:
                 ) : currentPhaseIndex === PHASES.length - 1 ? (
                   "Complete"
                 ) : (
-                  "Next"
+                  `Continue to ${PHASE_LABELS[PHASES[currentPhaseIndex + 1]]}`
                 )}
               </Button>
             </div>
