@@ -377,6 +377,7 @@
 
 ## Backlog
 
+- Tests: payload-assertion test capturing `messages.create` args (model ID + `thinking` param) at one AI call site — guards against future model-retirement regressions (MODEL-001 QA gap, 2026-07-22)
 - ~~Phase 5: Palate Development~~ — COMPLETE (PHASE5-001)
 - Trade board: add in-app messaging/offers for trade negotiations
 - Drops page: implement real store integration (currently "Coming Soon")
