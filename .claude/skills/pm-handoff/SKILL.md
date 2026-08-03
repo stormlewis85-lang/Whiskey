@@ -22,14 +22,33 @@ ACCEPTANCE CRITERIA: [what "done" looks like — testable, not vague]
 DO NOT: [explicit boundaries — what to avoid, where not to explore]
 ```
 
-## Rules
+## Agent-Specific Constraints
 
-- NEVER say "explore the codebase" — specify which files and what question to answer.
-- NEVER delegate without file paths. If you don't know the paths, use Glob/Grep to find them BEFORE spawning the subagent.
-- Cap @explore at 5 files for Quick, 10 for Standard. If more are needed, state why.
-- Cap @developer at the files listed in FILES TO CREATE/MODIFY. No scope creep.
-- @test receives the source file path AND the test pattern to follow. Nothing else.
-- @qa receives only the files that changed and the acceptance criteria. No exploration.
+### @explore
+- Cap at 5 files for Quick, 10 for Standard.
+- MUST specify which files to read and what question to answer.
+- NEVER say "explore the codebase."
+
+### @architect
+- Receives the specific design question and relevant prior decisions from DECISIONS.md.
+- Cap at 3-5 files to review. No codebase exploration.
+- Returns a decision, not a research report.
+
+### @developer
+- Receives ONLY the files to create/modify and the pattern to follow.
+- Cap at the files listed. No scope creep. No exploration.
+- If the task has more than 10 files, split into parallel batches of 5-7 with EXACT file lists per batch.
+
+### @test
+- Receives ONLY: the source file being tested, the test directory, and one existing test file as pattern.
+- 3 files max in FILES TO READ. No codebase exploration.
+- NEVER hand off "write tests for this feature" — hand off "write tests for src/lib/format-date.ts following the pattern in tests/unit/format-id.test.ts."
+
+### @qa
+- Receives ONLY: the list of changed files and the acceptance criteria.
+- QA does NOT explore. QA reads the diff and the acceptance criteria, then verdicts.
+- For refactors: include the grep/search command that proves completion (e.g., "run grep -r toLocaleDateString src/ — expect zero results").
+- Cap at changed files only. If 20 files changed, QA reads 20 files. QA does NOT read unchanged files for context.
 
 ## Examples
 
@@ -44,16 +63,28 @@ ACCEPTANCE CRITERIA: formatCapaId(42) returns "CAPA-0042", handles null/undefine
 DO NOT: modify any existing files, explore beyond src/lib/
 ```
 
-### Bad handoff (causes token blowout):
+### Good handoff (to @test):
 ```
-Build a CAPA ID formatter. Look at the codebase to understand the patterns.
+TASK: Write unit tests for format-date.ts
+SCOPE: Quick
+FILES TO READ: src/lib/format-date.ts, tests/unit/format-id.test.ts (pattern)
+FILES TO CREATE/MODIFY: tests/unit/format-date.test.ts
+PATTERN TO FOLLOW: tests/unit/format-id.test.ts
+ACCEPTANCE CRITERIA: Cover null/undefined, invalid input, each format function, edge cases
+DO NOT: read any files outside src/lib/ and tests/unit/, do not modify source code
 ```
 
-### Good handoff (to @explore):
+### Good handoff (to @qa):
 ```
-TASK: Find all date formatting patterns in the codebase
-SCOPE: Quick
-FILES TO READ: src/components/capa-list.tsx, src/components/capa-detail.tsx, src/components/timeline.tsx
-ACCEPTANCE CRITERIA: List every .toLocaleDateString() or date formatting call with file path and line
-DO NOT: read files outside src/components/, do not suggest fixes
+TASK: Review T-022 toLocaleDateString refactor
+SCOPE: Standard
+FILES TO READ: [list of 20 changed files]
+ACCEPTANCE CRITERIA: zero toLocaleDateString() in src/, all replacements use formatDate/formatDateTime/formatShortDate, npm run build passes
+GATE CHECK: run "grep -r toLocaleDateString src/" — must return empty
+DO NOT: explore files that were not changed, do not review architecture or style — correctness only
+```
+
+### Bad handoff (causes 87k token QA burn):
+```
+Review the date utility refactor across the codebase. Make sure everything looks right.
 ```
