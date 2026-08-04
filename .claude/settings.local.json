@@ -31,7 +31,10 @@
       "Bash(cd:*)",
       "Bash(npx dotenv:*)",
       "Bash(set:*)",
-      "Bash(docker run:*)"
+      "Bash(docker run:*)",
+      "Bash(python 'C:\\\\Users\\\\storm\\\\Documents\\\\Storm Center -Obsidian/_custodian/vault-audit.py' --atlas-missing)",
+      "mcp__claude_ai_Notion__notion-fetch",
+      "mcp__claude_ai_Notion__notion-update-page"
     ]
   }
 }
